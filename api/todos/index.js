@@ -29,8 +29,16 @@ module.exports = async (request, response) => {
             return Todo.aggregate().match({ state }).pipeline();
         },
         () => {
-            const { parseProjectId } = request.query;
-            if (!parseProjectId) return [];
+            let { page, limit } = request.query;
+            page = page || 1;
+            limit = parseInt(limit) || 10;
+            return Todo.aggregate()
+                .sort("field -createdAt")
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .pipeline();
+        },
+        () => {
             return Todo.aggregate()
                 .lookup({
                     from: "projects",
@@ -40,12 +48,48 @@ module.exports = async (request, response) => {
                 })
                 .pipeline();
         },
+        () => {
+            return Todo.aggregate()
+                .project({
+                    _id: 0,
+                    id: { $toString: "$_id" },
+                    projectId: 1,
+                    project: 1,
+                    name: 1,
+                    state: 1,
+                    priority: 1,
+                    tags: 1,
+                    isDone: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                })
+                .pipeline();
+        },
     ];
 
     try {
         const executeResults = await serialExecution(tasks);
         const todos = await Todo.aggregate(executeResults.flat());
-        response.status(200).json(buildRD.success(todos));
+        const totalDocuments = await Todo.find({
+            projectId: new ObjectId(request.query.projectId),
+        })
+            .countDocuments()
+            .exec();
+        const totalPages = Math.ceil(
+            totalDocuments / parseInt(request.query.limit) || 1
+        );
+        response.status(200).json(
+            buildRD.success({
+                todos,
+                payload: {
+                    count: todos.length,
+                    total: totalDocuments,
+                    page: parseInt(request.query.page) || 1,
+                    limit: parseInt(request.query.limit) || 10,
+                    totalPages,
+                },
+            })
+        );
     } catch (error) {
         response.status(500).json(buildRD.error(error.message));
     }

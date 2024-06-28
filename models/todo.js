@@ -5,7 +5,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 const todoSchema = new mongoose.Schema({
     projectId: { type: ObjectId, ref: "Project" },
     name: { type: String, required: true },
-    description: { type: String },
+    description: { type: String, default: "" },
     state: { type: String, default: "todo" },
     priority: { type: Number, default: 0 },
     tags: [{ type: String }],
@@ -13,8 +13,8 @@ const todoSchema = new mongoose.Schema({
     isDone: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     isArchived: { type: Boolean, default: false },
-    createAt: { type: Date, default: Date.now },
-    updateAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
 });
 
 const Todo = mongoose.model("Todo", todoSchema);

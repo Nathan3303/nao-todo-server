@@ -27,6 +27,7 @@ module.exports = async function updateProject(request, response) {
                 $set: {
                     name,
                     description,
+                    updatedAt: new Date(),
                 },
             }
         );
