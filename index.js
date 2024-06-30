@@ -1,8 +1,16 @@
 const express = require("express");
 const connectMongo = require("./db");
 const cors = require("cors");
+const https = require("https");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
+
+const sslOptions = {
+    key: fs.readFileSync(path.join(__dirname, "ssl/privkey.pem")),
+    cert: fs.readFileSync(path.join(__dirname, "ssl/fullchain.pem")),
+};
 
 app.use(cors());
 app.use(express.json());
@@ -15,8 +23,8 @@ app.use("/api/todo", require("./api/todo"));
 
 app.use("/", (_, res) => res.end("Hello World!"));
 
-connectMongo("localhost", "naotodo").then(() => {
-    app.listen(3002, () => {
+connectMongo("127.0.0.1", "naotodo").then(() => {
+    https.createServer(sslOptions, app).listen(3002, () => {
         console.log("NaoTodoServer is running on port 3002");
     });
 });
