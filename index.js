@@ -35,6 +35,6 @@ mongoose
                 app
             )
             .listen(3002, () => {
-                console.log("NaoTodoServer is running on port 3002");
+                console.log("NaoTodoServer(prod) is running on port 3002");
             });
     });

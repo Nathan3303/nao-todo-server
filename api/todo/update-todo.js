@@ -7,7 +7,7 @@ module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
     const { userToken, id } = request.query;
-    const { name, description, state, priority } = request.body;
+    const { name, description, state, priority, dueDate } = request.body;
 
     if (!id) {
         response.status(200).json(buildRD.error("Todo id is required"));
@@ -28,15 +28,29 @@ module.exports = async function createTodo(request, response) {
                     description,
                     state,
                     priority,
-                    updatedAt: new Date(),
+                    dueDate,
+                    updatedAt: Date.now(),
                 },
             }
         );
+        const todo = await Todo.findById(id).select({
+            _id: 0,
+            id: { $toString: "$_id" },
+            description: 1,
+            projectId: 1,
+            project: 1,
+            name: 1,
+            state: 1,
+            priority: 1,
+            tags: 1,
+            isDone: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            dueDate: 1,
+        });
         if (updateResult && updateResult.modifiedCount) {
             // console.log(updateResult);
-            response
-                .status(200)
-                .json(buildRD.success("Todo updated successfully"));
+            response.status(200).json(buildRD.success(todo));
         } else {
             response.status(200).json(buildRD.error("Todo update failed"));
         }

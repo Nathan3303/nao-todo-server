@@ -7,12 +7,16 @@ const todoSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, default: "" },
     state: { type: String, default: "todo" },
-    priority: { type: Number, default: 0 },
+    priority: { type: String, default: "low" },
     tags: [{ type: String }],
-    dueData: { type: Date },
+    dueDate: {
+        startAt: { type: Date, default: Date.now },
+        endAt: { type: Date, default: null },
+    },
     isDone: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     isArchived: { type: Boolean, default: false },
+    isPinned: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });

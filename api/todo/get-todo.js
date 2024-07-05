@@ -26,6 +26,7 @@ module.exports = async function createTodo(request, response) {
             isDone: 1,
             createdAt: 1,
             updatedAt: 1,
+            dueDate: 1,
         });
         if (todo) {
             // console.log(todo);
