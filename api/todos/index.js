@@ -3,10 +3,25 @@ const serialExecution = require("../../utils/serial-execution");
 const buildRD = require("../../utils/build-response-data");
 const { checkMethod, checkQueryLength } = require("../../utils");
 const ObjectId = require("mongoose").Types.ObjectId;
+const { verifyJWT } = require("../../utils/make-jwt");
 
 module.exports = async (request, response) => {
     if (checkMethod(request, response, "GET")) return;
     if (checkQueryLength(request, response)) return;
+
+    const { authorization } = request.headers;
+    if (!authorization) {
+        response
+            .status(200)
+            .json(buildRD.error("Authorization header is missing."));
+        return;
+    }
+    const token = authorization.replace("Bearer ", "");
+    const verifyResult = verifyJWT(token);
+    if (!verifyResult) {
+        response.status(200).json(buildRD.error("Invalid token."));
+        return;
+    }
 
     try {
         let basic = await serialExecution([

@@ -12,6 +12,7 @@ app.use("/api/project", require("./api/project"));
 app.use("/api/projects", require("./api/projects"));
 app.use("/api/todos", require("./api/todos"));
 app.use("/api/todo", require("./api/todo"));
+app.use("/api/analysis", require("./api/analysis"));
 
 app.use("/", (_, res) => res.end("Hello World!"));
 
