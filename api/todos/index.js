@@ -128,12 +128,16 @@ module.exports = async (request, response) => {
         groupByState = groupByState.flat();
         groupByPriority = groupByPriority.flat();
 
+        const total = await Todo.aggregate(
+            basic.concat([{ $count: "totalCount" }])
+        );
         const todos = await Todo.aggregate(basic.concat(query));
         const stateCount = await Todo.aggregate(groupByState);
         const priorityCount = await Todo.aggregate(groupByPriority);
 
         // console.log(stateCount, priorityCount);
 
+        const _total = total.length ? total[0].totalCount : 0;
         let totalCount = 0;
         const countByState = stateCount.reduce((acc, cur) => {
             const { _id, totalTodos } = cur;
@@ -149,7 +153,8 @@ module.exports = async (request, response) => {
 
         const payload = {
             countInfo: {
-                count: todos.length,
+                length: todos.length,
+                count: _total,
                 total: totalCount,
                 byState: countByState,
                 byPriority: countByPriority,
@@ -158,7 +163,7 @@ module.exports = async (request, response) => {
                 page: parseInt(request.query.page) || 1,
                 limit: parseInt(request.query.limit) || 10,
                 totalPages: Math.ceil(
-                    totalCount / parseInt(request.query.limit) || 1
+                    _total / parseInt(request.query.limit) || 1
                 ),
             },
         };
