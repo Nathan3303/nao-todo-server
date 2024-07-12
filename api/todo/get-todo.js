@@ -1,4 +1,5 @@
 const Todo = require("../../models/todo");
+const Event = require("../../models/event");
 const buildRD = require("../../utils/build-response-data");
 const { checkMethod } = require("../../utils");
 
@@ -28,8 +29,17 @@ module.exports = async function createTodo(request, response) {
             updatedAt: 1,
             dueDate: 1,
         });
+        const events = await Event.find({ todoId: id })
+            .sort({ createdAt: -1 })
+            .select({
+                _id: 0,
+                id: { $toString: "$_id" },
+                title: 1,
+                isDone: 1,
+                isTopped: 1,
+            });
         if (todo) {
-            // console.log(todo);
+            todo._doc.events = events || [];
             response.status(200).json(buildRD.success(todo));
         }
     } catch (error) {
