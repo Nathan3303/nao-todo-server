@@ -7,6 +7,11 @@ module.exports = async function createTodo(request, response) {
 
     const { userId, projectId, name } = request.body;
 
+    if (!userId) {
+        response.status(200).json(buildRD.error("userId is required"));
+        return;
+    }
+
     if (!projectId) {
         response.status(200).json(buildRD.error("projectId is required"));
         return;
@@ -17,7 +22,7 @@ module.exports = async function createTodo(request, response) {
     }
 
     try {
-        const createResult = await Todo.create({ name, projectId });
+        const createResult = await Todo.create({ name, projectId, userId });
         if (createResult) {
             console.log(createResult);
             response.status(200).json(buildRD.success(createResult));

@@ -26,6 +26,13 @@ module.exports = async (request, response) => {
     try {
         let basic = await serialExecution([
             () => {
+                const { userId } = request.query;
+                if (!userId) return [];
+                return Todo.aggregate()
+                    .match({ userId: new ObjectId(userId) })
+                    .pipeline();
+            },
+            () => {
                 const { projectId } = request.query;
                 if (!projectId) return [];
                 return Todo.aggregate()
@@ -92,6 +99,8 @@ module.exports = async (request, response) => {
                         createdAt: 1,
                         updatedAt: 1,
                         description: 1,
+                        isPinned: 1,
+                        dueDate: 1,
                     })
                     .pipeline();
             },

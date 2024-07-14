@@ -24,7 +24,7 @@ module.exports = async function createEvent(request, response) {
             todoId: new ObjectId(todoId),
         })
         if (createResult) {
-            console.log(createResult);
+            // console.log(createResult);
             response.status(200).json(buildRD.success(createResult));
         }
     } catch (error) {

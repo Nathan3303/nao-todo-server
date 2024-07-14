@@ -28,16 +28,15 @@ module.exports = async function createTodo(request, response) {
             createdAt: 1,
             updatedAt: 1,
             dueDate: 1,
+            isPinned: 1,
         });
-        const events = await Event.find({ todoId: id })
-            .sort({ createdAt: -1 })
-            .select({
-                _id: 0,
-                id: { $toString: "$_id" },
-                title: 1,
-                isDone: 1,
-                isTopped: 1,
-            });
+        const events = await Event.find({ todoId: id }).select({
+            _id: 0,
+            id: { $toString: "$_id" },
+            title: 1,
+            isDone: 1,
+            isTopped: 1,
+        });
         if (todo) {
             todo._doc.events = events || [];
             response.status(200).json(buildRD.success(todo));

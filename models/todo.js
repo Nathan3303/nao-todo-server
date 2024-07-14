@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const todoSchema = new mongoose.Schema({
+    userId: { type: ObjectId, ref: "User" },
     projectId: { type: ObjectId, ref: "Project" },
     name: { type: String, required: true },
     description: { type: String, default: "" },
