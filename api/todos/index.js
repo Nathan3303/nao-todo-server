@@ -26,6 +26,13 @@ module.exports = async (request, response) => {
     try {
         let basic = await serialExecution([
             () => {
+                const { id } = request.query;
+                if (!id) return [];
+                return Todo.aggregate()
+                    .match({ _id: new ObjectId(id) })
+                    .pipeline();
+            },
+            () => {
                 const { userId } = request.query;
                 if (!userId) return [];
                 return Todo.aggregate()
@@ -60,6 +67,13 @@ module.exports = async (request, response) => {
                 const splitedPriority = priority.split(",");
                 return Todo.aggregate()
                     .match({ priority: { $in: splitedPriority } })
+                    .pipeline();
+            },
+            () => {
+                const { isPinned } = request.query;
+                if (!isPinned) return [];
+                return Todo.aggregate()
+                    .match({ isPinned: !!isPinned })
                     .pipeline();
             },
         ]);

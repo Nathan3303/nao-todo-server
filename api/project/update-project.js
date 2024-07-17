@@ -7,36 +7,34 @@ module.exports = async function updateProject(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
     const { projectId } = request.query;
-    const { name, description } = request.body;
+    const { title, description } = request.body;
 
     if (!projectId) {
         response.status(200).json(buildRD.error("Project ID is required."));
         return;
     }
-    if (name === "") {
-        response.status(200).json(buildRD.error("Project name is required."));
+    if (title === "") {
+        response.status(200).json(buildRD.error("Project title is required."));
         return;
     }
 
     try {
         const updateRes = await Project.updateOne(
-            {
-                _id: new ObjectId(projectId),
-            },
+            { _id: new ObjectId(projectId) },
             {
                 $set: {
-                    name,
+                    title,
                     description,
-                    updatedAt: new Date(),
+                    updatedAt: Date.now(),
                 },
             }
         );
-
-        console.log(updateRes);
-
-        response
-            .status(200)
-            .json(buildRD.success("Project updated successfully."));
+        // console.log(updateRes);
+        if (updateRes && updateRes.modifiedCount > 0) {
+            response
+                .status(200)
+                .json(buildRD.success("Project updated successfully."));
+        }
     } catch (error) {
         response.status(200).json(buildRD.error(error.message));
     }

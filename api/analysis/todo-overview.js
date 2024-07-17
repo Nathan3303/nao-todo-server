@@ -1,22 +1,24 @@
 const Todo = require("../../models/todo");
 const buildRD = require("../../utils/build-response-data");
 const moment = require("moment");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 module.exports = async (request, response) => {
+    const { projectId } = request.query;
+
+    if (!projectId) {
+        response.status(200).json(buildRD.error("projectId is required"));
+        return;
+    }
+
     try {
         const now = moment().utcOffset(8);
         const today = now.toDate();
         const pass15days = now.subtract(15, "days").toDate();
-        console.log(today, pass15days);
+        // console.log(projectId);
         const pipeline = [
-            {
-                $match: {
-                    createdAt: {
-                        $gt: pass15days,
-                        $lte: today,
-                    },
-                },
-            },
+            { $match: { projectId: new ObjectId(projectId) } },
+            { $match: { createdAt: { $gt: pass15days, $lte: today } } },
             {
                 $group: {
                     _id: {
@@ -42,10 +44,9 @@ module.exports = async (request, response) => {
                     },
                 },
             },
-            {
-                $sort: { _id: 1 },
-            },
+            { $sort: { _id: 1 } },
         ];
+        // console.log(pipeline);
         const todosInMonth = await Todo.aggregate(pipeline).exec();
         response.status(200).json(buildRD.success(todosInMonth));
     } catch (error) {

@@ -8,7 +8,8 @@ module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
     const { userToken, id } = request.query;
-    const { name, description, state, priority, dueDate, isPinned } = request.body;
+    const { name, description, state, priority, dueDate, isPinned } =
+        request.body;
 
     if (!id) {
         response.status(200).json(buildRD.error("Todo id is required"));
@@ -52,15 +53,13 @@ module.exports = async function createTodo(request, response) {
                 dueDate: 1,
                 isPinned: 1,
             });
-            const events = await Event.find({ todoId: id })
-                .sort({ createdAt: -1 })
-                .select({
-                    _id: 0,
-                    id: { $toString: "$_id" },
-                    title: 1,
-                    isDone: 1,
-                    isTopped: 1,
-                });
+            const events = await Event.find({ todoId: id }).select({
+                _id: 0,
+                id: { $toString: "$_id" },
+                title: 1,
+                isDone: 1,
+                isTopped: 1,
+            });
             // console.log(updateResult);
             if (todo) {
                 todo._doc.events = events || [];

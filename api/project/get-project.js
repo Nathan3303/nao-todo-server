@@ -1,33 +1,22 @@
 const Project = require("../../models/project");
 const serialExecution = require("../../utils/serial-execution");
 const buildRD = require("../../utils/build-response-data");
-const { checkMethod, checkQueryLength } = require("../../utils");
-const ObjectId = require("mongoose").Types.ObjectId;
+
+const { matchProjectById } = require("./pipelines");
 
 module.exports = async function getProject(request, response) {
-    if (checkMethod(request, response, "GET")) return;
-    if (checkQueryLength(request, response)) return;
+    const { id } = request.query;
 
-    const tasks = [
-        () => {
-            const { id, name } = request.query;
-            if (id) {
-                return Project.aggregate()
-                    .match({ _id: new ObjectId(id) })
-                    .pipeline();
-            }
-            if (name) {
-                return Project.aggregate()
-                    .match({ name: { $regex: name, $options: "i" } })
-                    .pipeline();
-            }
-            return [];
-        },
-    ];
+    if (!id) {
+        response.status(200).json(buildRD.error("Project ID is required"));
+        return;
+    }
 
     try {
+        const tasks = [() => matchProjectById(id)];
         const executeResults = await serialExecution(tasks);
         const projects = await Project.aggregate(executeResults.flat());
+        // console.log(projects);
         response.status(200).json(buildRD.success(projects));
     } catch (error) {
         response.status(500).json(buildRD.error(error.message));
