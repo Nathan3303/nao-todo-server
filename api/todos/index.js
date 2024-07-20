@@ -4,6 +4,7 @@ const buildRD = require("../../utils/build-response-data");
 const { checkMethod, checkQueryLength } = require("../../utils");
 const ObjectId = require("mongoose").Types.ObjectId;
 const { verifyJWT } = require("../../utils/make-jwt");
+const { makeBoolean } = require("../../utils");
 
 module.exports = async (request, response) => {
     if (checkMethod(request, response, "GET")) return;
@@ -79,9 +80,8 @@ module.exports = async (request, response) => {
             () => {
                 const { isDeleted } = request.query;
                 if (!isDeleted) return [];
-                return Todo.aggregate()
-                    .match({ isDeleted: !!isDeleted })
-                    .pipeline();
+                const _bool = makeBoolean(isDeleted);
+                return Todo.aggregate().match({ isDeleted: _bool }).pipeline();
             },
         ]);
         let query = await serialExecution([

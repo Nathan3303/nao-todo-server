@@ -8,8 +8,16 @@ module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
     const { userToken, id } = request.query;
-    const { name, description, state, priority, dueDate, isPinned, isDeleted } =
-        request.body;
+    const {
+        name,
+        description,
+        state,
+        priority,
+        dueDate,
+        isPinned,
+        isDeleted,
+        projectId,
+    } = request.body;
 
     if (!id) {
         response.status(200).json(buildRD.error("Todo id is required"));
@@ -33,27 +41,39 @@ module.exports = async function createTodo(request, response) {
                     dueDate,
                     isPinned,
                     isDeleted,
+                    projectId: new ObjectId(projectId),
                     updatedAt: Date.now(),
                 },
             }
         );
         if (updateResult && updateResult.modifiedCount) {
-            const todo = await Todo.findById(id).select({
-                _id: 0,
-                id: { $toString: "$_id" },
-                description: 1,
-                projectId: 1,
-                project: 1,
-                name: 1,
-                state: 1,
-                priority: 1,
-                tags: 1,
-                isDone: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                dueDate: 1,
-                isPinned: 1,
-            });
+            const todo = await Todo.aggregate()
+                .match({ _id: new ObjectId(id) })
+                .lookup({
+                    from: "projects",
+                    localField: "projectId",
+                    foreignField: "_id",
+                    as: "project",
+                })
+                .project({
+                    _id: 0,
+                    id: { $toString: "$_id" },
+                    description: 1,
+                    projectId: 1,
+                    project: {
+                        $arrayElemAt: ["$project", 0],
+                    },
+                    name: 1,
+                    state: 1,
+                    priority: 1,
+                    tags: 1,
+                    isDone: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    dueDate: 1,
+                    isPinned: 1,
+                    isDeleted: 1,
+                });
             const events = await Event.find({ todoId: id }).select({
                 _id: 0,
                 id: { $toString: "$_id" },
@@ -63,8 +83,10 @@ module.exports = async function createTodo(request, response) {
             });
             // console.log(updateResult);
             if (todo) {
-                todo._doc.events = events || [];
-                response.status(200).json(buildRD.success(todo));
+                // console.log(todo);
+                todo.events = events || [];
+                const data = { ...todo[0], events };
+                response.status(200).json(buildRD.success(data));
             }
         } else {
             response.status(200).json(buildRD.error("Todo update failed"));
