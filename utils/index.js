@@ -19,4 +19,16 @@ function checkQueryLength(request, response) {
     return 0;
 }
 
-module.exports = { checkMethod, checkQueryLength };
+const makeBoolean = (value) => {
+    if (typeof value === "string") {
+        return value.toLowerCase() === "true";
+    } else if (typeof value === "boolean") {
+        return value;
+    } else if (typeof value === "number") {
+        return value === 1;
+    } else {
+        return false;
+    }
+};
+
+module.exports = { checkMethod, checkQueryLength, makeBoolean };

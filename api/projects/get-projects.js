@@ -18,8 +18,9 @@ module.exports = async (request, response, _p) => {
     const tasks = [
         () => _p.handleUserId(userId),
         () => _p.handleTitle(title),
-        () => _p.handleIsDeleted(isDeleted),
+        () => _p.handleIsDeleted(false),
         () => _p.handleIsFinished(isFinished),
+        () => _p.handleIsArchived(isArchived),
         () => _p.handlePage(page, limit),
         () => _p.handleSort(sort),
         () => _p.handleOutput(),
@@ -28,7 +29,7 @@ module.exports = async (request, response, _p) => {
     try {
         let executeResults = await serialExecution(tasks);
         executeResults = executeResults.flat();
-        // console.log("executeResults", executeResults);
+        console.log("executeResults", executeResults);
         const projects = await Project.aggregate(executeResults);
         response.status(200).json(buildResponseData.success(projects));
     } catch (error) {

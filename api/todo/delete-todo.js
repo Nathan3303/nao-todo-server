@@ -14,15 +14,20 @@ module.exports = async function createTodo(request, response) {
     }
 
     try {
-        const objectId = new ObjectId(id);
-        // console.log(objectId);
-        const deleteResult = await Todo.deleteOne({ _id: objectId });
-        if (deleteResult && deleteResult.deletedCount) {
-            // console.log(deleteResult);
-            response
-                .status(200)
-                .json(buildRD.success("Todo deleted successfully"));
+        const todoId = new ObjectId(id);
+        const updateResult = await Todo.updateOne(
+            { _id: todoId },
+            { $set: { isDeleted: true } }
+        );
+        if (updateResult && updateResult.modifiedCount) {
+            const todo = await Todo.findOne({ _id: todoId });
+            if (todo) {
+                response.status(200).json(buildRD.success(todo));
+                return;
+            }
+            throw new Error("Todo not found");
         }
+        throw new Error("Todo not found");
     } catch (error) {
         response.status(200).json(buildRD.error(error.message));
     }

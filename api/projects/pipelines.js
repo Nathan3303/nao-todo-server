@@ -1,5 +1,6 @@
 const Project = require("../../models/project");
 const ObjectId = require("mongoose").Types.ObjectId;
+const { makeBoolean } = require("../../utils");
 
 const handleUserId = (userId) => {
     return userId
@@ -21,16 +22,24 @@ const handleIsDeleted = (isDeleted) => {
     if (isDeleted === null || isDeleted === undefined) {
         return [];
     }
-    isDeleted = !!isDeleted;
-    return Project.aggregate().match({ isDeleted }).pipeline();
+    const _bool = makeBoolean(isDeleted);
+    return Project.aggregate().match({ isDeleted: _bool }).pipeline();
 };
 
 const handleIsFinished = (isFinished) => {
     if (isFinished === null || isFinished === undefined) {
         return [];
     }
-    const _bool = new Boolean(isFinished);
+    const _bool = makeBoolean(isFinished);
     return Project.aggregate().match({ isFinished: _bool }).pipeline();
+};
+
+const handleIsArchived = (isArchived) => {
+    if (isArchived === null || isArchived === undefined) {
+        return [];
+    }
+    const _bool = makeBoolean(isArchived);
+    return Project.aggregate().match({ isArchived: _bool }).pipeline();
 };
 
 const handlePage = (page, limit) => {
@@ -84,6 +93,7 @@ module.exports = {
     handleTitle,
     handleIsDeleted,
     handleIsFinished,
+    handleIsArchived,
     handlePage,
     handleSort,
     handleOutput,

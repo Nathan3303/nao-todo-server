@@ -8,7 +8,7 @@ module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
     const { userToken, id } = request.query;
-    const { name, description, state, priority, dueDate, isPinned } =
+    const { name, description, state, priority, dueDate, isPinned, isDeleted } =
         request.body;
 
     if (!id) {
@@ -16,10 +16,10 @@ module.exports = async function createTodo(request, response) {
         return;
     }
 
-    if (!name) {
-        response.status(200).json(buildRD.error("Todo name is required"));
-        return;
-    }
+    // if (!name) {
+    //     response.status(200).json(buildRD.error("Todo name is required"));
+    //     return;
+    // }
 
     try {
         const updateResult = await Todo.updateOne(
@@ -32,6 +32,7 @@ module.exports = async function createTodo(request, response) {
                     priority,
                     dueDate,
                     isPinned,
+                    isDeleted,
                     updatedAt: Date.now(),
                 },
             }

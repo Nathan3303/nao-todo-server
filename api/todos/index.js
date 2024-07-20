@@ -76,6 +76,13 @@ module.exports = async (request, response) => {
                     .match({ isPinned: !!isPinned })
                     .pipeline();
             },
+            () => {
+                const { isDeleted } = request.query;
+                if (!isDeleted) return [];
+                return Todo.aggregate()
+                    .match({ isDeleted: !!isDeleted })
+                    .pipeline();
+            },
         ]);
         let query = await serialExecution([
             () => {
@@ -115,6 +122,7 @@ module.exports = async (request, response) => {
                         description: 1,
                         isPinned: 1,
                         dueDate: 1,
+                        isDeleted: 1,
                     })
                     .pipeline();
             },
