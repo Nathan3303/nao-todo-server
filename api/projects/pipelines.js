@@ -85,6 +85,7 @@ const handleOutput = () => {
             finishedAt: 1,
             archivedAt: 1,
         })
+        .allowDiskUse(true)
         .pipeline();
 };
 

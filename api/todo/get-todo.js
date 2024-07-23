@@ -41,14 +41,17 @@ module.exports = async function createTodo(request, response) {
                 dueDate: 1,
                 isPinned: 1,
                 isDeleted: 1,
-            });
-        const events = await Event.find({ todoId: id }).select({
-            _id: 0,
-            id: { $toString: "$_id" },
-            title: 1,
-            isDone: 1,
-            isTopped: 1,
-        });
+            })
+            .allowDiskUse(true);
+        const events = await Event.find({ todoId: id })
+            .select({
+                _id: 0,
+                id: { $toString: "$_id" },
+                title: 1,
+                isDone: 1,
+                isTopped: 1,
+            })
+            .allowDiskUse(true);
         if (todo) {
             // console.log(todo);
             todo.events = events || [];
