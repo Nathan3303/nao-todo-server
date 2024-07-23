@@ -53,7 +53,7 @@ const handlePriority = (priority) => {
 const handleIsFavorited = (isFavorited) => {
     return isFavorited
         ? Todo.aggregate()
-              .match({ isPinned: makeBoolean(isPinned) })
+              .match({ isPinned: makeBoolean(isFavorited) })
               .pipeline()
         : [];
 };
