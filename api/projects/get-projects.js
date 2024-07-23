@@ -29,7 +29,7 @@ module.exports = async (request, response, _p) => {
     try {
         let executeResults = await serialExecution(tasks);
         executeResults = executeResults.flat();
-        console.log("executeResults", executeResults);
+        // console.log("executeResults", executeResults);
         const projects = await Project.aggregate(executeResults);
         response.status(200).json(buildResponseData.success(projects));
     } catch (error) {
