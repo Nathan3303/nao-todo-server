@@ -11,7 +11,7 @@ module.exports = async (request, response) => {
 
     switch (method) {
         case "GET":
-            console.log("GET /projects");
+            // console.log("GET /projects");
             await getProjects(request, response, pipelines);
             break;
         default:

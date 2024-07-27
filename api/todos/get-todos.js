@@ -12,6 +12,7 @@ const getTodos = async (request, response, _p) => {
         priority,
         isPinned,
         isDeleted,
+        relativeDate,
         page,
         limit,
     } = request.query;
@@ -26,6 +27,7 @@ const getTodos = async (request, response, _p) => {
             () => _p.handlePriority(priority),
             () => _p.handleIsFavorited(isPinned),
             () => _p.handleIsDeleted(isDeleted),
+            () => _p.handleRelativeDate(relativeDate),
             () => Todo.aggregate({ $allowDiskUse: true }).pipeline(),
         ];
         const basicTasks = [
@@ -76,7 +78,7 @@ const getTodos = async (request, response, _p) => {
         const countInfo = {
             length: todos.length,
             count,
-            total: totalCount[0].total,
+            total: totalCount[0]?.total || 0,
             byState: byState,
             byPriority: byPriority,
         };

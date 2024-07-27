@@ -69,7 +69,6 @@ const handleIsDeleted = (isDeleted) => {
 const handlePage = (page, limit) => {
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
-    console.log("page", page, "limit", limit)
     return Todo.aggregate()
         .skip((page - 1) * limit)
         .limit(limit)
@@ -94,7 +93,6 @@ const handleSelectFields = (fieldsOptions) => {
         id: { $toString: "$_id" },
         projectId: 1,
         project: {
-            // id: { $toString: "$_project._id" },
             title: "$_project.title",
         },
         name: 1,
@@ -136,6 +134,47 @@ const handleCountTotal = () => {
     return Todo.aggregate().count("total").pipeline();
 };
 
+const handleRelativeDate = (relativeDate) => {
+    if (!relativeDate) return [];
+    let agg = null;
+    switch (relativeDate) {
+        case "today":
+            agg = Todo.aggregate().match({
+                "dueDate.endAt": {
+                    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                    $lte: new Date(new Date().setHours(23, 59, 59, 999)),
+                },
+            });
+            break;
+        case "tomorrow":
+            agg = Todo.aggregate().match({
+                "dueDate.endAt": {
+                    $gte: new Date(
+                        new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000
+                    ),
+                    $lte: new Date(
+                        new Date().setHours(23, 59, 59, 999) +
+                            24 * 60 * 60 * 1000
+                    ),
+                },
+            });
+            break;
+        case "week":
+            agg = Todo.aggregate().match({
+                "dueDate.endAt": {
+                    $gte: new Date(
+                        new Date().setHours(0, 0, 0, 0) -
+                            7 * 24 * 60 * 60 * 1000
+                    ),
+                },
+            });
+            break;
+        default:
+            agg = null;
+    }
+    return agg ? agg.sort({ "dueDate.endAt": 1 }).pipeline() : [];
+};
+
 module.exports = {
     handleUserId,
     handleProjectId,
@@ -151,4 +190,5 @@ module.exports = {
     handleGroupByState,
     handleGroupByPriority,
     handleCountTotal,
+    handleRelativeDate,
 };

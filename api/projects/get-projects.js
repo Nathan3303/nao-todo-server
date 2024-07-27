@@ -18,7 +18,7 @@ module.exports = async (request, response, _p) => {
     const tasks = [
         () => _p.handleUserId(userId),
         () => _p.handleTitle(title),
-        () => _p.handleIsDeleted(false),
+        () => _p.handleIsDeleted(isDeleted),
         () => _p.handleIsFinished(isFinished),
         () => _p.handleIsArchived(isArchived),
         () => _p.handlePage(page, limit),

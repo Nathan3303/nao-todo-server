@@ -43,10 +43,12 @@ const handleIsArchived = (isArchived) => {
 };
 
 const handlePage = (page, limit) => {
-    page = page || 1;
-    limit = limit || 10;
-    const skip = (page - 1) * limit;
-    return Project.aggregate().skip(skip).limit(limit).pipeline();
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
+    return Project.aggregate()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .pipeline();
 };
 
 const handleSort = (sort) => {

@@ -21,15 +21,16 @@ module.exports = async function createTodo(request, response) {
                 from: "projects",
                 localField: "projectId",
                 foreignField: "_id",
-                as: "project",
+                as: "_project",
             })
+            .unwind({ path: "$_project", preserveNullAndEmptyArrays: true })
             .project({
                 _id: 0,
                 id: { $toString: "$_id" },
                 description: 1,
                 projectId: 1,
                 project: {
-                    $arrayElemAt: ["$project", 0],
+                    title: "$_project.title",
                 },
                 name: 1,
                 state: 1,

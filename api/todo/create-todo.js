@@ -5,7 +5,7 @@ const { checkMethod } = require("../../utils");
 module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "POST")) return;
 
-    const { userId, projectId, name } = request.body;
+    const { userId, projectId, name, dueDate } = request.body;
 
     if (!userId) {
         response.status(200).json(buildRD.error("userId is required"));
@@ -22,7 +22,12 @@ module.exports = async function createTodo(request, response) {
     }
 
     try {
-        const createResult = await Todo.create({ name, projectId, userId });
+        const createResult = await Todo.create({
+            name,
+            projectId,
+            userId,
+            dueDate,
+        });
         if (createResult) {
             console.log(createResult);
             response.status(200).json(buildRD.success(createResult));
