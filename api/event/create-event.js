@@ -25,7 +25,14 @@ module.exports = async function createEvent(request, response) {
         })
         if (createResult) {
             // console.log(createResult);
-            response.status(200).json(buildRD.success(createResult));
+            const event = {
+                id: createResult._id,
+                title: createResult.title,
+                isDone: createResult.isDone,
+                createdAt: createResult.createdAt,
+                updatedAt: createResult.updatedAt,
+            }
+            response.status(200).json(buildRD.success(event));
         }
     } catch (error) {
         response.status(200).json(buildRD.error(error.message));
