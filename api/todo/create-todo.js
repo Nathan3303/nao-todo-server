@@ -29,7 +29,7 @@ module.exports = async function createTodo(request, response) {
             dueDate,
         });
         if (createResult) {
-            console.log(createResult);
+            // console.log(createResult);
             response.status(200).json(buildRD.success(createResult));
         }
     } catch (error) {

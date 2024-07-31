@@ -1,6 +1,6 @@
-const Project = require("../../models/project");
+const Project = require("../models/project");
 const ObjectId = require("mongoose").Types.ObjectId;
-const { makeBoolean } = require("../../utils");
+const { makeBoolean } = require("../utils");
 
 const handleUserId = (userId) => {
     return userId

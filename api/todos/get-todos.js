@@ -6,6 +6,7 @@ const getTodos = async (request, response, _p) => {
     const {
         userId,
         projectId,
+        tagId,
         id,
         name,
         state,
@@ -21,6 +22,7 @@ const getTodos = async (request, response, _p) => {
         const filterTasks = [
             () => _p.handleUserId(userId),
             () => _p.handleProjectId(projectId),
+            () => _p.handleTagId(tagId),
             () => _p.handleId(id),
             () => _p.handleName(name),
             () => _p.handleState(state),
@@ -32,6 +34,7 @@ const getTodos = async (request, response, _p) => {
         ];
         const basicTasks = [
             () => _p.handleLookupProject(),
+            // () => _p.handleLookupTags(),
             () => _p.handleSelectFields(),
             () => _p.handlePage(page, limit),
         ];

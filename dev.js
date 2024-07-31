@@ -29,10 +29,12 @@ app.use(function (request, response, next) {
 app.get("/api/projects", require("./api/projects"));
 app.get("/api/todos", require("./api/todos"));
 app.get("/api/analysis", require("./api/analysis"));
+app.use("/api/tags", require("./api/tags"));
 
 app.use("/api/project", require("./api/project"));
 app.use("/api/todo", require("./api/todo"));
 app.use("/api/event", require("./api/event"));
+app.use("/api/tag", require("./api/tag"));
 
 app.use("/", (_, res) => res.end("Hello World!"));
 

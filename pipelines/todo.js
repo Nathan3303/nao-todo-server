@@ -1,6 +1,6 @@
-const Todo = require("../../models/todo");
+const Todo = require("../models/todo");
 const ObjectId = require("mongoose").Types.ObjectId;
-const { makeBoolean } = require("../../utils");
+const { makeBoolean } = require("../utils");
 
 const handleUserId = (userId) => {
     return userId
@@ -14,6 +14,14 @@ const handleProjectId = (projectId) => {
     return projectId
         ? Todo.aggregate()
               .match({ projectId: new ObjectId(projectId) })
+              .pipeline()
+        : [];
+};
+
+const handleTagId = (tagId) => {
+    return tagId
+        ? Todo.aggregate()
+              .match({ tags: { $in: [new ObjectId(tagId)] } })
               .pipeline()
         : [];
 };
@@ -87,6 +95,17 @@ const handleLookupProject = () => {
         .pipeline();
 };
 
+const handleLookupTags = () => {
+    return Todo.aggregate()
+        .lookup({
+            from: "tags",
+            localField: "tags",
+            foreignField: "_id",
+            as: "tagsInfo",
+        })
+        .pipeline();
+};
+
 const handleSelectFields = (fieldsOptions) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
@@ -99,6 +118,17 @@ const handleSelectFields = (fieldsOptions) => {
         state: 1,
         priority: 1,
         tags: 1,
+        tagsInfo: {
+            $map: {
+                input: "$tagsInfo",
+                as: "tag",
+                in: {
+                    id: { $toString: "$$tag._id" },
+                    name: "$$tag.name",
+                    color: "$$tag.color",
+                },
+            },
+        },
         isDone: 1,
         createdAt: 1,
         updatedAt: 1,
@@ -178,6 +208,7 @@ const handleRelativeDate = (relativeDate) => {
 module.exports = {
     handleUserId,
     handleProjectId,
+    handleTagId,
     handleId,
     handleName,
     handleState,
@@ -186,6 +217,7 @@ module.exports = {
     handleIsDeleted,
     handlePage,
     handleLookupProject,
+    handleLookupTags,
     handleSelectFields,
     handleGroupByState,
     handleGroupByPriority,

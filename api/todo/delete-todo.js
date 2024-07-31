@@ -6,7 +6,7 @@ const ObjectId = require("mongoose").Types.ObjectId;
 module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "DELETE")) return;
 
-    const { userToken, id } = request.query;
+    const { id } = request.query;
 
     if (!id) {
         response.status(200).json(buildRD.error("Todo id is required"));
