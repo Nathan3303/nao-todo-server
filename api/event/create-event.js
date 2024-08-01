@@ -7,8 +7,12 @@ const ObjectId = require("mongoose").Types.ObjectId;
 module.exports = async function createEvent(request, response) {
     if (checkMethod(request, response, "POST")) return;
 
-    const { todoId, title } = request.body;
+    const { userId, todoId, title } = request.body;
 
+    if (!userId) {
+        response.status(200).json(buildRD.error("User id is required"));
+        return;
+    }
     if (!todoId) {
         response.status(200).json(buildRD.error("Todo id is required"));
         return;
@@ -20,9 +24,10 @@ module.exports = async function createEvent(request, response) {
 
     try {
         const createResult = await Event.create({
+            userId,
             title,
             todoId: new ObjectId(todoId),
-        })
+        });
         if (createResult) {
             // console.log(createResult);
             const event = {
@@ -31,7 +36,7 @@ module.exports = async function createEvent(request, response) {
                 isDone: createResult.isDone,
                 createdAt: createResult.createdAt,
                 updatedAt: createResult.updatedAt,
-            }
+            };
             response.status(200).json(buildRD.success(event));
         }
     } catch (error) {

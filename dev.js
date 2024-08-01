@@ -26,9 +26,10 @@ app.use(function (request, response, next) {
     next();
 });
 
+app.get("/api/analysis", require("./api/analysis"));
 app.get("/api/projects", require("./api/projects"));
 app.get("/api/todos", require("./api/todos"));
-app.get("/api/analysis", require("./api/analysis"));
+app.use("/api/events", require("./api/events"));
 app.use("/api/tags", require("./api/tags"));
 
 app.use("/api/project", require("./api/project"));

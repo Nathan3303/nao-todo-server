@@ -6,7 +6,7 @@ const ObjectId = require("mongoose").Types.ObjectId;
 module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
-    const { id } = request.query;
+    const { userId, id } = request.query;
     const { title, isDone, isTopped } = request.body;
 
     if (!id) {
@@ -16,7 +16,7 @@ module.exports = async function createTodo(request, response) {
 
     try {
         const updateResult = await Event.updateOne(
-            { _id: new ObjectId(id) },
+            { userId, _id: new ObjectId(id) },
             { $set: { title, isDone, isTopped, updatedAt: Date.now() } }
         );
         if (updateResult && updateResult.modifiedCount) {

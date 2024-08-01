@@ -2,6 +2,7 @@ const pipelines = require("../../pipelines/project");
 const buildRD = require("../../utils/build-response-data");
 const createTag = require("./create-tag");
 const updateTag = require("./update-tag");
+const deleteTag = require("./delete-tag");
 
 module.exports = async (request, response) => {
     const { method } = request;
@@ -12,6 +13,9 @@ module.exports = async (request, response) => {
             break;
         case "PUT":
             await updateTag(request, response, pipelines);
+            break;
+        case "DELETE":
+            await deleteTag(request, response, pipelines);
             break;
         default:
             response.status(200).json(buildRD.error("Invalid method."));

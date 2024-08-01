@@ -2,7 +2,7 @@ const Tag = require("../../models/tag");
 const buildRD = require("../../utils/build-response-data");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-module.exports = async function createTodo(request, response) {
+module.exports = async function createTag(request, response) {
     const { userId, name, color } = request.body;
 
     if (!userId) {

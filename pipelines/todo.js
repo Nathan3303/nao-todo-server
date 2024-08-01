@@ -21,7 +21,7 @@ const handleProjectId = (projectId) => {
 const handleTagId = (tagId) => {
     return tagId
         ? Todo.aggregate()
-              .match({ tags: { $in: [new ObjectId(tagId)] } })
+              .match({ tags: { $in: [tagId] } })
               .pipeline()
         : [];
 };
@@ -192,8 +192,9 @@ const handleRelativeDate = (relativeDate) => {
         case "week":
             agg = Todo.aggregate().match({
                 "dueDate.endAt": {
-                    $gte: new Date(
-                        new Date().setHours(0, 0, 0, 0) -
+                    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                    $lte: new Date(
+                        new Date().setHours(23, 59, 59, 999) +
                             7 * 24 * 60 * 60 * 1000
                     ),
                 },
