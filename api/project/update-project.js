@@ -6,10 +6,10 @@ const ObjectId = require("mongoose").Types.ObjectId;
 module.exports = async function updateProject(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
-    const { projectId } = request.query;
+    const { id } = request.query;
     const { title, description, isArchived } = request.body;
 
-    if (!projectId) {
+    if (!id) {
         response.status(200).json(buildRD.error("Project ID is required."));
         return;
     }
@@ -20,7 +20,7 @@ module.exports = async function updateProject(request, response) {
 
     try {
         const updateRes = await Project.updateOne(
-            { _id: new ObjectId(projectId) },
+            { _id: new ObjectId(id) },
             {
                 $set: {
                     title,
