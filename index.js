@@ -29,6 +29,11 @@ app.use(function (request, response, next) {
     next();
 });
 
+app.post("/api/signin", require("./api/signin"));
+app.post("/api/signup", require("./api/signup"));
+app.get("/api/checkin", require("./api/checkin"));
+app.delete("/api/signout", require("./api/signout"));
+
 app.get("/api/analysis", require("./api/analysis"));
 app.get("/api/projects", require("./api/projects"));
 app.get("/api/todos", require("./api/todos"));

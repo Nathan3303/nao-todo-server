@@ -83,6 +83,18 @@ const handlePage = (page, limit) => {
         .pipeline();
 };
 
+const handleSort = (sort) => {
+    if (!sort) return [];
+    let [field, order] = sort.split(":");
+    if (!field) return [];
+    if (field === 'endAt') field = 'dueDate.endAt';
+    else if (field === 'startAt') field = 'dueDate.startAt';
+    order = order || "asc";
+    return Todo.aggregate()
+        .sort({ [field]: order })
+        .pipeline();
+};
+
 const handleLookupProject = () => {
     return Todo.aggregate()
         .lookup({
@@ -217,6 +229,7 @@ module.exports = {
     handleIsFavorited,
     handleIsDeleted,
     handlePage,
+    handleSort,
     handleLookupProject,
     handleLookupTags,
     handleSelectFields,

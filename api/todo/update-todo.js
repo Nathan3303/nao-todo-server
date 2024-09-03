@@ -4,46 +4,22 @@ const buildRD = require("../../utils/build-response-data");
 const ObjectId = require("mongoose").Types.ObjectId;
 const getTodo = require("./get-todo");
 
-module.exports = async function createTodo(request, response, _p) {
-    const { id } = request.query;
-    const {
-        name,
-        description,
-        state,
-        priority,
-        dueDate,
-        isDone,
-        isPinned,
-        isDeleted,
-        projectId,
-        tags,
-    } = request.body;
+module.exports = async function updateTodo(request, response, _p) {
+    const { todoId } = request.query;
+    const { projectId } = request.body;
 
-    if (!id) {
+    if (!todoId) {
         response.status(200).json(buildRD.error("Todo id is required"));
         return;
     }
 
-    const _tags = tags.map((tagIdString) => {
-        tagIdString = tagIdString.trim();
-        return new ObjectId(tagIdString);
-    });
-
     try {
         const updateResult = await Todo.updateOne(
-            { _id: new ObjectId(id) },
+            { _id: new ObjectId(todoId) },
             {
                 $set: {
-                    name,
-                    description,
-                    state,
-                    priority,
-                    dueDate,
-                    isDone,
-                    isPinned,
-                    isDeleted,
+                    ...request.body,
                     projectId: new ObjectId(projectId),
-                    tags: _tags,
                     updatedAt: Date.now(),
                 },
             }

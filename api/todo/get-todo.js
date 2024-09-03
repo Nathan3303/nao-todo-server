@@ -4,16 +4,16 @@ const buildRD = require("../../utils/build-response-data");
 const serialExecution = require("../../utils/serial-execution");
 
 module.exports = async function createTodo(request, response, _p) {
-    const { id } = request.query;
+    const { todoId } = request.query;
 
-    if (!id) {
+    if (!todoId) {
         response.status(200).json(buildRD.error("Todo id is required"));
         return;
     }
 
     try {
         const getTodoTasks = [
-            () => _p.handleId(id),
+            () => _p.handleId(todoId),
             () => _p.handleLookupProject(),
             () => _p.handleLookupTags(),
             () => _p.handleSelectFields(),
@@ -23,7 +23,7 @@ module.exports = async function createTodo(request, response, _p) {
         const getTodoPipelines = getTodoTasksExecution.flat();
         const todo = await Todo.aggregate(getTodoPipelines);
 
-        const events = await Event.find({ todoId: id })
+        const events = await Event.find({ todoId })
             .select({
                 _id: 0,
                 id: { $toString: "$_id" },

@@ -1,4 +1,6 @@
 const buildRD = require("./build-response-data");
+const { toSign, makeJWT } = require("./make-jwt");
+const serialExecution = require("./serial-execution");
 
 function checkMethod(request, response, method) {
     if (request.method !== method) {
@@ -31,4 +33,12 @@ const makeBoolean = (value) => {
     }
 };
 
-module.exports = { checkMethod, checkQueryLength, makeBoolean };
+module.exports = {
+    buildRD,
+    toSign,
+    makeJWT,
+    serialExecution,
+    checkMethod,
+    checkQueryLength,
+    makeBoolean,
+};

@@ -2,12 +2,19 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const { verifyJWT } = require("./utils/make-jwt");
+const buildRD = require("./utils/build-response-data");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.post("/api/signin", require("./api/signin"));
+app.post("/api/signup", require("./api/signup"));
+app.get("/api/checkin", require("./api/checkin"));
+app.delete("/api/signout", require("./api/signout"));
+
 app.use(function (request, response, next) {
     const { authorization } = request.headers;
     if (!authorization) {

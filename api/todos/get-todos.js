@@ -16,6 +16,7 @@ const getTodos = async (request, response, _p) => {
         relativeDate,
         page,
         limit,
+        sort,
     } = request.query;
 
     try {
@@ -37,6 +38,7 @@ const getTodos = async (request, response, _p) => {
             // () => _p.handleLookupTags(),
             () => _p.handleSelectFields(),
             () => _p.handlePage(page, limit),
+            () => _p.handleSort(sort),
         ];
         const stateCountTasks = [() => _p.handleGroupByState()];
         const priorityCountTasks = [() => _p.handleGroupByPriority()];
