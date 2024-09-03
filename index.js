@@ -11,6 +11,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.post("/api/signin", require("./api/signin"));
+app.post("/api/signup", require("./api/signup"));
+app.get("/api/checkin", require("./api/checkin"));
+app.delete("/api/signout", require("./api/signout"));
+
 app.use(function (request, response, next) {
     const { authorization } = request.headers;
     if (!authorization) {
@@ -28,11 +34,6 @@ app.use(function (request, response, next) {
     // console.log("Authorization success.");
     next();
 });
-
-app.post("/api/signin", require("./api/signin"));
-app.post("/api/signup", require("./api/signup"));
-app.get("/api/checkin", require("./api/checkin"));
-app.delete("/api/signout", require("./api/signout"));
 
 app.get("/api/analysis", require("./api/analysis"));
 app.get("/api/projects", require("./api/projects"));
