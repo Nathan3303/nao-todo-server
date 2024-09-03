@@ -1,54 +1,37 @@
 const Todo = require("../../models/todo");
 const Event = require("../../models/event");
 const buildRD = require("../../utils/build-response-data");
-const { checkMethod } = require("../../utils");
-const ObjectId = require("mongoose").Types.ObjectId;
+const serialExecution = require("../../utils/serial-execution");
 
-module.exports = async function createTodo(request, response) {
-    if (checkMethod(request, response, "GET")) return;
+module.exports = async function createTodo(request, response, _p) {
+    const { todoId } = request.query;
 
-    const { userToken, id } = request.query;
-
-    if (!id) {
+    if (!todoId) {
         response.status(200).json(buildRD.error("Todo id is required"));
         return;
     }
 
     try {
-        const todo = await Todo.aggregate()
-            .match({ _id: new ObjectId(id) })
-            .lookup({
-                from: "projects",
-                localField: "projectId",
-                foreignField: "_id",
-                as: "project",
-            })
-            .project({
+        const getTodoTasks = [
+            () => _p.handleId(todoId),
+            () => _p.handleLookupProject(),
+            () => _p.handleLookupTags(),
+            () => _p.handleSelectFields(),
+            () => Todo.aggregate().allowDiskUse(true).pipeline(),
+        ];
+        const getTodoTasksExecution = await serialExecution(getTodoTasks);
+        const getTodoPipelines = getTodoTasksExecution.flat();
+        const todo = await Todo.aggregate(getTodoPipelines);
+
+        const events = await Event.find({ todoId })
+            .select({
                 _id: 0,
                 id: { $toString: "$_id" },
-                description: 1,
-                projectId: 1,
-                project: {
-                    $arrayElemAt: ["$project", 0],
-                },
-                name: 1,
-                state: 1,
-                priority: 1,
-                tags: 1,
+                title: 1,
                 isDone: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                dueDate: 1,
-                isPinned: 1,
-                isDeleted: 1,
-            });
-        const events = await Event.find({ todoId: id }).select({
-            _id: 0,
-            id: { $toString: "$_id" },
-            title: 1,
-            isDone: 1,
-            isTopped: 1,
-        });
+                isTopped: 1,
+            })
+            .allowDiskUse(true);
         if (todo) {
             // console.log(todo);
             todo.events = events || [];

@@ -6,32 +6,39 @@ const getTodos = async (request, response, _p) => {
     const {
         userId,
         projectId,
+        tagId,
         id,
         name,
         state,
         priority,
         isPinned,
         isDeleted,
+        relativeDate,
         page,
         limit,
+        sort,
     } = request.query;
 
     try {
         const filterTasks = [
             () => _p.handleUserId(userId),
             () => _p.handleProjectId(projectId),
+            () => _p.handleTagId(tagId),
             () => _p.handleId(id),
             () => _p.handleName(name),
             () => _p.handleState(state),
             () => _p.handlePriority(priority),
             () => _p.handleIsFavorited(isPinned),
             () => _p.handleIsDeleted(isDeleted),
+            () => _p.handleRelativeDate(relativeDate),
             () => Todo.aggregate({ $allowDiskUse: true }).pipeline(),
         ];
         const basicTasks = [
             () => _p.handleLookupProject(),
+            // () => _p.handleLookupTags(),
             () => _p.handleSelectFields(),
             () => _p.handlePage(page, limit),
+            () => _p.handleSort(sort),
         ];
         const stateCountTasks = [() => _p.handleGroupByState()];
         const priorityCountTasks = [() => _p.handleGroupByPriority()];
@@ -76,7 +83,7 @@ const getTodos = async (request, response, _p) => {
         const countInfo = {
             length: todos.length,
             count,
-            total: totalCount[0].total,
+            total: totalCount[0]?.total || 0,
             byState: byState,
             byPriority: byPriority,
         };

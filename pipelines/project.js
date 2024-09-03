@@ -1,6 +1,6 @@
-const Project = require("../../models/project");
+const Project = require("../models/project");
 const ObjectId = require("mongoose").Types.ObjectId;
-const { makeBoolean } = require("../../utils");
+const { makeBoolean } = require("../utils");
 
 const handleUserId = (userId) => {
     return userId
@@ -43,10 +43,12 @@ const handleIsArchived = (isArchived) => {
 };
 
 const handlePage = (page, limit) => {
-    page = page || 1;
-    limit = limit || 10;
-    const skip = (page - 1) * limit;
-    return Project.aggregate().skip(skip).limit(limit).pipeline();
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
+    return Project.aggregate()
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .pipeline();
 };
 
 const handleSort = (sort) => {
@@ -85,6 +87,7 @@ const handleOutput = () => {
             finishedAt: 1,
             archivedAt: 1,
         })
+        .allowDiskUse(true)
         .pipeline();
 };
 

@@ -3,24 +3,24 @@ const buildRD = require("../../utils/build-response-data");
 const { checkMethod } = require("../../utils");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-module.exports = async function createTodo(request, response) {
+module.exports = async function deleteTodo(request, response) {
     if (checkMethod(request, response, "DELETE")) return;
 
-    const { userToken, id } = request.query;
+    const { todoId } = request.query;
 
-    if (!id) {
+    if (!todoId) {
         response.status(200).json(buildRD.error("Todo id is required"));
         return;
     }
 
     try {
-        const todoId = new ObjectId(id);
+        const _id = new ObjectId(todoId);
         const updateResult = await Todo.updateOne(
-            { _id: todoId },
+            { _id },
             { $set: { isDeleted: true } }
         );
         if (updateResult && updateResult.modifiedCount) {
-            const todo = await Todo.findOne({ _id: todoId });
+            const todo = await Todo.findOne({ _id });
             if (todo) {
                 response.status(200).json(buildRD.success(todo));
                 return;

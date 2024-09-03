@@ -7,19 +7,22 @@ const ObjectId = require("mongoose").Types.ObjectId;
 module.exports = async function createEvent(request, response) {
     if (checkMethod(request, response, "DELETE")) return;
 
-    const { id } = request.query;
+    const { userId, eventId } = request.query;
     // console.log(id)
 
-    if (!id) {
+    if (!eventId) {
         response.status(200).json(buildRD.error("Event id is required"));
         return;
     }
 
     try {
-        const deleteResult = await Event.findByIdAndDelete(id);
+        const deleteResult = await Event.findOneAndDelete({
+            userId,
+            _id: new ObjectId(eventId),
+        });
         if (deleteResult) {
             console.log(deleteResult);
-            response.status(200).json(buildRD.success(null));
+            response.status(200).json(buildRD.success(true));
         }
     } catch (error) {
         response.status(200).json(buildRD.error(error.message));

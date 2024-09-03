@@ -13,7 +13,10 @@ module.exports = async function getProject(request, response) {
     }
 
     try {
-        const tasks = [() => matchProjectById(id)];
+        const tasks = [
+            () => matchProjectById(id),
+            () => Project.aggregate().allowDiskUse(true).pipeline(),
+        ];
         const executeResults = await serialExecution(tasks);
         const projects = await Project.aggregate(executeResults.flat());
         // console.log(projects);

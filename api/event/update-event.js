@@ -6,22 +6,22 @@ const ObjectId = require("mongoose").Types.ObjectId;
 module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
-    const { id } = request.query;
+    const { userId, eventId } = request.query;
     const { title, isDone, isTopped } = request.body;
 
-    if (!id) {
+    if (!eventId) {
         response.status(200).json(buildRD.error("Event id is required"));
         return;
     }
 
     try {
         const updateResult = await Event.updateOne(
-            { _id: new ObjectId(id) },
+            { userId, _id: new ObjectId(eventId) },
             { $set: { title, isDone, isTopped, updatedAt: Date.now() } }
         );
         if (updateResult && updateResult.modifiedCount) {
             // console.log(updateResult);
-            const event = await Event.findById(id).select({
+            const event = await Event.findById(eventId).select({
                 _id: 0,
                 id: { $toString: "$_id" },
                 title: 1,

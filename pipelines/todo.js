@@ -1,6 +1,6 @@
-const Todo = require("../../models/todo");
+const Todo = require("../models/todo");
 const ObjectId = require("mongoose").Types.ObjectId;
-const { makeBoolean } = require("../../utils");
+const { makeBoolean } = require("../utils");
 
 const handleUserId = (userId) => {
     return userId
@@ -14,6 +14,14 @@ const handleProjectId = (projectId) => {
     return projectId
         ? Todo.aggregate()
               .match({ projectId: new ObjectId(projectId) })
+              .pipeline()
+        : [];
+};
+
+const handleTagId = (tagId) => {
+    return tagId
+        ? Todo.aggregate()
+              .match({ tags: { $in: [tagId] } })
               .pipeline()
         : [];
 };
@@ -53,7 +61,7 @@ const handlePriority = (priority) => {
 const handleIsFavorited = (isFavorited) => {
     return isFavorited
         ? Todo.aggregate()
-              .match({ isPinned: makeBoolean(isPinned) })
+              .match({ isPinned: makeBoolean(isFavorited) })
               .pipeline()
         : [];
 };
@@ -69,10 +77,21 @@ const handleIsDeleted = (isDeleted) => {
 const handlePage = (page, limit) => {
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
-    console.log("page", page, "limit", limit)
     return Todo.aggregate()
         .skip((page - 1) * limit)
         .limit(limit)
+        .pipeline();
+};
+
+const handleSort = (sort) => {
+    if (!sort) return [];
+    let [field, order] = sort.split(":");
+    if (!field) return [];
+    if (field === 'endAt') field = 'dueDate.endAt';
+    else if (field === 'startAt') field = 'dueDate.startAt';
+    order = order || "asc";
+    return Todo.aggregate()
+        .sort({ [field]: order })
         .pipeline();
 };
 
@@ -88,19 +107,40 @@ const handleLookupProject = () => {
         .pipeline();
 };
 
+const handleLookupTags = () => {
+    return Todo.aggregate()
+        .lookup({
+            from: "tags",
+            localField: "tags",
+            foreignField: "_id",
+            as: "tagsInfo",
+        })
+        .pipeline();
+};
+
 const handleSelectFields = (fieldsOptions) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
         id: { $toString: "$_id" },
         projectId: 1,
         project: {
-            // id: { $toString: "$_project._id" },
             title: "$_project.title",
         },
         name: 1,
         state: 1,
         priority: 1,
         tags: 1,
+        tagsInfo: {
+            $map: {
+                input: "$tagsInfo",
+                as: "tag",
+                in: {
+                    id: { $toString: "$$tag._id" },
+                    name: "$$tag.name",
+                    color: "$$tag.color",
+                },
+            },
+        },
         isDone: 1,
         createdAt: 1,
         updatedAt: 1,
@@ -136,9 +176,52 @@ const handleCountTotal = () => {
     return Todo.aggregate().count("total").pipeline();
 };
 
+const handleRelativeDate = (relativeDate) => {
+    if (!relativeDate) return [];
+    let agg = null;
+    switch (relativeDate) {
+        case "today":
+            agg = Todo.aggregate().match({
+                "dueDate.endAt": {
+                    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                    $lte: new Date(new Date().setHours(23, 59, 59, 999)),
+                },
+            });
+            break;
+        case "tomorrow":
+            agg = Todo.aggregate().match({
+                "dueDate.endAt": {
+                    $gte: new Date(
+                        new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000
+                    ),
+                    $lte: new Date(
+                        new Date().setHours(23, 59, 59, 999) +
+                            24 * 60 * 60 * 1000
+                    ),
+                },
+            });
+            break;
+        case "week":
+            agg = Todo.aggregate().match({
+                "dueDate.endAt": {
+                    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                    $lte: new Date(
+                        new Date().setHours(23, 59, 59, 999) +
+                            7 * 24 * 60 * 60 * 1000
+                    ),
+                },
+            });
+            break;
+        default:
+            agg = null;
+    }
+    return agg ? agg.sort({ "dueDate.endAt": 1 }).pipeline() : [];
+};
+
 module.exports = {
     handleUserId,
     handleProjectId,
+    handleTagId,
     handleId,
     handleName,
     handleState,
@@ -146,9 +229,12 @@ module.exports = {
     handleIsFavorited,
     handleIsDeleted,
     handlePage,
+    handleSort,
     handleLookupProject,
+    handleLookupTags,
     handleSelectFields,
     handleGroupByState,
     handleGroupByPriority,
     handleCountTotal,
+    handleRelativeDate,
 };
