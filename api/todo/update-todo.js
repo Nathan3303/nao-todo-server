@@ -6,7 +6,6 @@ const getTodo = require("./get-todo");
 
 module.exports = async function updateTodo(request, response, _p) {
     const { todoId } = request.query;
-    const { projectId } = request.body;
 
     if (!todoId) {
         response.status(200).json(buildRD.error("Todo id is required"));
@@ -14,15 +13,15 @@ module.exports = async function updateTodo(request, response, _p) {
     }
 
     try {
+        const projectId = request.body.projectId;
+        delete request.body.projectId;
+        const updateInfo = { ...request.body, updatedAt: Date.now() };
+        if (projectId) {
+            Object.assign(updateInfo, { projectId: new ObjectId(projectId) });
+        }
         const updateResult = await Todo.updateOne(
             { _id: new ObjectId(todoId) },
-            {
-                $set: {
-                    ...request.body,
-                    projectId: new ObjectId(projectId),
-                    updatedAt: Date.now(),
-                },
-            }
+            { $set: updateInfo }
         );
         if (updateResult && updateResult.modifiedCount) {
             await getTodo(request, response, _p);
