@@ -10,14 +10,6 @@ module.exports = async function updateTag(request, response, _p) {
         response.status(200).json(buildRD.error("User id is required"));
         return;
     }
-    if (!tagId) {
-        response.status(200).json(buildRD.error("Tag id is required"));
-        return;
-    }
-    if (!name) {
-        response.status(200).json(buildRD.error("Tag name is required"));
-        return;
-    }
 
     try {
         const updateResult = await Tag.updateOne(
@@ -26,15 +18,10 @@ module.exports = async function updateTag(request, response, _p) {
                 userId: new ObjectId(userId),
             },
             {
-                name,
-                color,
+                ...request.body,
                 updatedAt: new Date(),
             }
         );
-        // console.log(updateResult);
-        // if (updateResult && updateResult.modifiedCount) {
-
-        // }
         response.status(200).json(buildRD.success(updateResult));
     } catch (error) {
         response.status(200).json(buildRD.error(error.message));

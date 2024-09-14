@@ -16,19 +16,23 @@ module.exports = async (request, response) => {
     const { jwt } = request.query;
     const [jwtHeader, jwtPayload, jwtSignature] = jwt.split(".");
     if (jwtSignature !== toSign(jwtHeader, jwtPayload)) {
-        response.status(200).json(buildRD.error("Token is invalid."));
+        response.status(200).json(buildRD.error("用户凭证无效，请重新登录"));
         return;
     }
     try {
         const session = await Session.findOne({ token: jwt });
         if (!session) {
-            response.status(200).json(buildRD.error("Session not found."));
+            response
+                .status(200)
+                .json(buildRD.error("用户凭证无效，请重新登录"));
             return;
         }
         if (moment().isAfter(session.expiresAt)) {
             const result = await Session.deleteOne({ _id: session._id });
             console.log(result);
-            response.status(200).json(buildRD.error("Session expired."));
+            response
+                .status(200)
+                .json(buildRD.error("用户凭证已过期，请重新登录"));
             return;
         }
         const user = await User.findOne({
@@ -40,7 +44,7 @@ module.exports = async (request, response) => {
             nickName: 1,
         });
         if (!user) {
-            response.status(200).json(buildRD.error("User not found."));
+            response.status(200).json(buildRD.error("邮箱或密码错误"));
             return;
         }
         const newJWT = makeJWT(user);
@@ -50,6 +54,6 @@ module.exports = async (request, response) => {
         );
         response.status(200).json(buildRD.success(newJWT.token));
     } catch (error) {
-        response.status(200).json(buildRD.error(error.message));
+        response.status(200).json(buildRD.error("服务器错误"));
     }
 };

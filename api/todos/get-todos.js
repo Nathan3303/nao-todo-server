@@ -34,10 +34,9 @@ const getTodos = async (request, response, _p) => {
         ];
         const basicTasks = [
             () => _p.handleLookupProject(),
-            // () => _p.handleLookupTags(),
             () => _p.handleSelectFields(),
-            () => _p.handlePage(page, limit),
             () => _p.handleSort(sort),
+            () => _p.handlePage(page, limit),
         ];
         const stateCountTasks = [() => _p.handleGroupByState()];
         const priorityCountTasks = [() => _p.handleGroupByPriority()];

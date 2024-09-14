@@ -7,24 +7,24 @@ module.exports = async (request, response) => {
     if (checkMethod(request, response, "POST")) return;
 
     const { email, password } = request.body;
-    
+
     if (!email) {
-        response.status(200).json(buildRD.error("Email is required"));
+        response.status(200).json(buildRD.error("邮箱不能为空"));
         return;
     }
     if (!password) {
-        response.status(200).json(buildRD.error("Password is required"));
+        response.status(200).json(buildRD.error("密码不能为空"));
         return;
     }
 
     try {
         if (!validator.isEmail(email)) {
-            response.status(200).json(buildRD.error("Invalid email"));
+            response.status(200).json(buildRD.error("邮箱格式不正确"));
             return;
         }
         const userExists = await User.findOne({ email });
         if (userExists) {
-            response.status(200).json(buildRD.error("User already exists"));
+            response.status(200).json(buildRD.error("邮箱已被注册"));
             return;
         }
         const signUpResult = await User.create({
@@ -34,10 +34,8 @@ module.exports = async (request, response) => {
             nickName: `${email.split("@")[0]}`,
         });
         console.log(signUpResult);
-        response
-            .status(200)
-            .json(buildRD("20000", "User created successfully"));
+        response.status(200).json(buildRD("20000", "注册成功"));
     } catch (error) {
-        response.status(200).json(buildRD.error("Error creating user"));
+        response.status(200).json(buildRD.error("注册失败"));
     }
 };
