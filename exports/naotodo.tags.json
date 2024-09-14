@@ -1,0 +1,108 @@
+[{
+  "_id": {
+    "$oid": "66ac81c2be6d985b86d629d9"
+  },
+  "userId": {
+    "$oid": "66a4e928f8ccbf89e9c85316"
+  },
+  "name": "NaoTodo",
+  "color": "#4caf50",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-08-02T06:50:42.033Z"
+  },
+  "updatedAt": {
+    "$date": "2024-08-02T06:50:42.033Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6a9ba4ae76057cfaa3260"
+  },
+  "userId": {
+    "$oid": "66d6a95a4ae76057cfaa3235"
+  },
+  "name": "测试标签",
+  "color": "#673ab7",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-09-03T06:16:26.577Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-03T06:16:26.577Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6aa634ae76057cfaa334d"
+  },
+  "userId": {
+    "$oid": "66d6a95a4ae76057cfaa3235"
+  },
+  "name": "测试标签 2",
+  "color": "#ff9800",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-09-03T06:19:15.864Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-03T06:19:15.864Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6aa764ae76057cfaa3360"
+  },
+  "userId": {
+    "$oid": "66d6a95a4ae76057cfaa3235"
+  },
+  "name": "测试标签 3",
+  "color": "#4caf50",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-09-03T06:19:34.849Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-03T06:19:34.849Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6f7224ae76057cfaa35b7"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "NaoTodo",
+  "color": "#2196f3",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-09-03T11:46:42.600Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-03T11:46:42.600Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6f9d54ae76057cfaa362a"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "NueUI",
+  "color": "#ff9800",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-09-03T11:58:13.200Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-03T11:58:13.200Z"
+  },
+  "__v": 0
+}]
