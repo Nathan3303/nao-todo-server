@@ -31,7 +31,6 @@ const getTodos = async (request, response, _p) => {
             () => _p.handleIsFavorited(isPinned),
             () => _p.handleIsDeleted(isDeleted),
             () => _p.handleRelativeDate(relativeDate),
-            () => Todo.aggregate({ $allowDiskUse: true }).pipeline(),
         ];
         const basicTasks = [
             () => _p.handleLookupProject(),
