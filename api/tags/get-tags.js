@@ -11,7 +11,7 @@ module.exports = async (request, response, _p) => {
         () => _p.handleIsDeleted(isDeleted),
         () => _p.handlePage(page, limit),
         () => _p.handleSelectFields(),
-        () => Tag.aggregate().allowDiskUse(true).pipeline(),
+        () => Tag.aggregate().pipeline(),
     ];
 
     try {

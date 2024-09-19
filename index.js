@@ -5,12 +5,19 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const { verifyJWT } = require("./utils/make-jwt");
+const buildRD = require("./utils/build-response-data");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.post("/api/signin", require("./api/signin"));
+app.post("/api/signup", require("./api/signup"));
+app.get("/api/checkin", require("./api/checkin"));
+app.delete("/api/signout", require("./api/signout"));
+
 app.use(function (request, response, next) {
     const { authorization } = request.headers;
     if (!authorization) {
@@ -25,14 +32,8 @@ app.use(function (request, response, next) {
         response.status(200).json(buildRD.error("Invalid token."));
         return;
     }
-    // console.log("Authorization success.");
     next();
 });
-
-app.post("/api/signin", require("./api/signin"));
-app.post("/api/signup", require("./api/signup"));
-app.get("/api/checkin", require("./api/checkin"));
-app.delete("/api/signout", require("./api/signout"));
 
 app.get("/api/analysis", require("./api/analysis"));
 app.get("/api/projects", require("./api/projects"));
@@ -49,7 +50,7 @@ app.use("/", (_, res) => res.end("Hello World!"));
 
 mongoose
     .set("strictQuery", true)
-    .connect(`mongodb://127.0.0.1/naotodo`)
+    .connect(`mongodb://172.19.0.2/naotodo`)
     .then(() => {
         https
             .createServer(

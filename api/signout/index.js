@@ -5,7 +5,7 @@ module.exports = async (request, response) => {
     if (checkMethod(request, response, "DELETE")) return;
     const { jwt } = request.query;
     if (!jwt) {
-        response.status(200).json(buildRD.error("Invalid queries"));
+        response.status(200).json(buildRD.error("凭证不能为空"));
         return;
     }
     try {
@@ -16,10 +16,10 @@ module.exports = async (request, response) => {
             userId: user.id,
         });
         if (deleteRes.deletedCount) {
-            response.status(200).json(buildRD.success("Sign out succesfully"));
+            response.status(200).json(buildRD.success("退出成功"));
             return;
         }
     } catch (error) {
-        response.statuc(200).json(buildRD.error(error.message));
+        response.statuc(200).json(buildRD.error("退出失败，请稍后重试"));
     }
 };

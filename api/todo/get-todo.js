@@ -17,7 +17,7 @@ module.exports = async function createTodo(request, response, _p) {
             () => _p.handleLookupProject(),
             () => _p.handleLookupTags(),
             () => _p.handleSelectFields(),
-            () => Todo.aggregate().allowDiskUse(true).pipeline(),
+            () => Todo.aggregate().pipeline(),
         ];
         const getTodoTasksExecution = await serialExecution(getTodoTasks);
         const getTodoPipelines = getTodoTasksExecution.flat();
@@ -30,8 +30,7 @@ module.exports = async function createTodo(request, response, _p) {
                 title: 1,
                 isDone: 1,
                 isTopped: 1,
-            })
-            .allowDiskUse(true);
+            });
         if (todo) {
             // console.log(todo);
             todo.events = events || [];

@@ -5,7 +5,16 @@ const { checkMethod } = require("../../utils");
 module.exports = async function createTodo(request, response) {
     if (checkMethod(request, response, "POST")) return;
 
-    const { userId, projectId, name, dueDate, tags } = request.body;
+    const {
+        userId,
+        projectId,
+        name,
+        dueDate,
+        tags,
+        priority,
+        state,
+        description,
+    } = request.body;
 
     if (!userId) {
         response.status(200).json(buildRD.error("userId is required"));
@@ -28,6 +37,9 @@ module.exports = async function createTodo(request, response) {
             userId,
             dueDate,
             tags,
+            priority,
+            state,
+            description,
         });
         if (createResult) {
             // console.log(createResult);

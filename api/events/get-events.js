@@ -21,7 +21,7 @@ module.exports = async function createTodo(request, response, _p) {
             () => _p.handleIsTopped(isTopped),
             () => _p.handlePage(page, limit),
             () => _p.handleSelectFields(),
-            () => Event.aggregate().allowDiskUse(true).pipeline(),
+            () => Event.aggregate().pipeline(),
         ];
         const getEventTasksExecution = await serialExecution(getEventTasks);
         const getEventPipelines = getEventTasksExecution.flat();

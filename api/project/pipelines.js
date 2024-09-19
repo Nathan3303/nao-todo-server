@@ -13,8 +13,7 @@ const matchProjectById = (id, isGetRaw = true) => {
             owner: 1,
             created_at: 1,
             updated_at: 1,
-        })
-        .allowDiskUse(true);
+        });
     return isGetRaw ? aggregate.pipeline() : aggregate;
 };
 
@@ -34,8 +33,7 @@ const matchProjectByNameAndOwner = (name, owner, isGetRaw = true) => {
             owner: 1,
             created_at: 1,
             updated_at: 1,
-        })
-        .allowDiskUse(true);
+        });
     return isGetRaw ? aggregate.pipeline() : aggregate;
 };
 

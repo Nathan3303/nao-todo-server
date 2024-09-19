@@ -6,28 +6,22 @@ module.exports = async (request, response) => {
     if (checkMethod(request, response, "POST")) return;
     const { email, password } = request.body;
     if (!email || !password) {
-        response
-            .status(200)
-            .json(buildRD.error("Email and password are required."));
+        response.status(200).json(buildRD.error("邮箱或密码不能为空"));
         return;
     }
     try {
         const user = await checkUser(email, password);
         if (!user) {
-            response
-                .status(200)
-                .json(buildRD.error("Invalid email or password."));
+            response.status(200).json(buildRD.error("邮箱或密码错误"));
             return;
         }
         const token = await checkSession(request, user);
         if (!token) {
-            response
-                .status(200)
-                .json(buildRD.error("Failed to create session."));
+            response.status(200).json(buildRD.error("登录失败，请稍后重试"));
             return;
         }
         response.status(200).json(buildRD.success(token));
     } catch (error) {
-        response.status(200).json(buildRD.error(error.message));
+        response.status(200).json(buildRD.error("登录失败，请稍后重试"));
     }
 };
