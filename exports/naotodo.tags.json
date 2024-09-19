@@ -78,13 +78,13 @@
     "$oid": "66d6f5944ae76057cfaa3570"
   },
   "name": "NaoTodo",
-  "color": "#2196f3",
+  "color": "#ffc107",
   "isDeleted": false,
   "createdAt": {
     "$date": "2024-09-03T11:46:42.600Z"
   },
   "updatedAt": {
-    "$date": "2024-09-03T11:46:42.600Z"
+    "$date": "2024-09-14T08:32:52.820Z"
   },
   "__v": 0
 },
@@ -96,13 +96,31 @@
     "$oid": "66d6f5944ae76057cfaa3570"
   },
   "name": "NueUI",
-  "color": "#ff9800",
+  "color": "#673ab7",
   "isDeleted": false,
   "createdAt": {
     "$date": "2024-09-03T11:58:13.200Z"
   },
   "updatedAt": {
-    "$date": "2024-09-03T11:58:13.200Z"
+    "$date": "2024-09-14T08:26:02.207Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e54a9f3fb510b747851d34"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "NaoDesign",
+  "color": "#009688",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-09-14T08:34:39.778Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-14T08:34:39.778Z"
   },
   "__v": 0
 }]

@@ -729,14 +729,14 @@
     }
   },
   "isDone": false,
-  "isDeleted": false,
+  "isDeleted": true,
   "isArchived": false,
   "isPinned": false,
   "createdAt": {
     "$date": "2024-09-03T06:18:07.206Z"
   },
   "updatedAt": {
-    "$date": "2024-09-08T05:57:08.827Z"
+    "$date": "2024-09-14T05:56:01.192Z"
   },
   "__v": 0
 },
@@ -1704,7 +1704,7 @@
   ],
   "dueDate": {
     "endAt": {
-      "$date": "2024-09-09T05:27:00.000Z"
+      "$date": "2024-09-14T06:34:00.000Z"
     },
     "startAt": {
       "$date": "2024-09-04T08:33:20.326Z"
@@ -1713,12 +1713,12 @@
   "isDone": false,
   "isDeleted": false,
   "isArchived": false,
-  "isPinned": false,
+  "isPinned": true,
   "createdAt": {
     "$date": "2024-09-04T08:33:20.326Z"
   },
   "updatedAt": {
-    "$date": "2024-09-08T05:35:57.261Z"
+    "$date": "2024-09-14T06:33:18.359Z"
   },
   "__v": 0
 },
@@ -2700,7 +2700,7 @@
   },
   "name": "[BugFix] 修复在任务看板中拖拽任务变更其状态时 projectId 变化的问题",
   "description": "",
-  "state": "in-progress",
+  "state": "done",
   "priority": "medium",
   "tags": [
     "66d6f7224ae76057cfaa35b7"
@@ -2713,7 +2713,7 @@
       "$date": "2024-09-13T10:03:22.518Z"
     }
   },
-  "isDone": false,
+  "isDone": true,
   "isDeleted": false,
   "isArchived": false,
   "isPinned": false,
@@ -2721,7 +2721,7 @@
     "$date": "2024-09-13T10:03:22.518Z"
   },
   "updatedAt": {
-    "$date": "2024-09-13T12:23:17.974Z"
+    "$date": "2024-09-14T08:41:08.811Z"
   },
   "__v": 0
 },
@@ -2737,7 +2737,7 @@
   },
   "name": "[Feature] 设计并实现标签管理中的标签颜色修改器",
   "description": "设计并实现标签颜色修改器组件 TagColorSelector",
-  "state": "todo",
+  "state": "done",
   "priority": "low",
   "tags": [
     "66d6f7224ae76057cfaa35b7"
@@ -2750,7 +2750,7 @@
       "$date": "2024-09-13T12:19:14.513Z"
     }
   },
-  "isDone": false,
+  "isDone": true,
   "isDeleted": false,
   "isArchived": false,
   "isPinned": false,
@@ -2758,7 +2758,149 @@
     "$date": "2024-09-13T12:19:14.513Z"
   },
   "updatedAt": {
-    "$date": "2024-09-13T12:19:14.513Z"
+    "$date": "2024-09-14T06:44:22.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e5225a627571a4e6f3ca3c"
+  },
+  "userId": {
+    "$oid": "66d6a95a4ae76057cfaa3235"
+  },
+  "projectId": {
+    "$oid": "66d6a9744ae76057cfaa324a"
+  },
+  "name": "Ceshi",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-09-14T05:42:50.627Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-14T05:42:50.627Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-14T05:42:50.627Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e524e7104c36e56c86469e"
+  },
+  "userId": {
+    "$oid": "66d6a95a4ae76057cfaa3235"
+  },
+  "projectId": {
+    "$oid": "66d6a9744ae76057cfaa324a"
+  },
+  "name": "alkcjoiqwm.zxccm.qw",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "66d6a9ba4ae76057cfaa3260"
+  ],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-09-14T05:53:43.633Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-14T05:53:43.633Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-14T05:53:43.633Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e53051f597cf4c41c6e2bc"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 20240914 部分现存 Bug 修复记录",
+  "description": "",
+  "state": "in-progress",
+  "priority": "medium",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-14T06:42:25.804Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-14T06:42:25.806Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-14T06:48:02.510Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e5425cf597cf4c41c6e348"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现 TagManager 中的标签颜色修改功能",
+  "description": "预计通过 NueDialog 组件实现",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-14T07:59:24.510Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-14T07:59:24.510Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-14T08:40:55.465Z"
   },
   "__v": 0
 }]

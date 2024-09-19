@@ -199,8 +199,8 @@
   "state": [
     0
   ],
-  "isArchived": false,
-  "isDeleted": false,
+  "isArchived": true,
+  "isDeleted": true,
   "isFinished": false,
   "isFavorite": false,
   "deletedAt": null,
@@ -210,7 +210,7 @@
     "$date": "2024-09-07T17:16:32.849Z"
   },
   "updatedAt": {
-    "$date": "2024-09-07T17:16:32.849Z"
+    "$date": "2024-09-14T05:35:41.002Z"
   },
   "__v": 0
 },
