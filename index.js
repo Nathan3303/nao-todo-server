@@ -5,7 +5,7 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const { verifyJWT } = require("./utils/make-jwt");
-const buildRD = require("./utils/build-response-data")
+const buildRD = require("./utils/build-response-data");
 
 const app = express();
 
@@ -32,7 +32,6 @@ app.use(function (request, response, next) {
         response.status(200).json(buildRD.error("Invalid token."));
         return;
     }
-    // console.log("Authorization success.");
     next();
 });
 
@@ -51,7 +50,7 @@ app.use("/", (_, res) => res.end("Hello World!"));
 
 mongoose
     .set("strictQuery", true)
-    .connect(`mongodb://127.0.0.1/naotodo`)
+    .connect(`mongodb://172.19.0.2/naotodo`)
     .then(() => {
         https
             .createServer(
