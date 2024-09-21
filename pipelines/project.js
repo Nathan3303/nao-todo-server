@@ -86,6 +86,10 @@ const handleOutput = () => {
             deletedAt: 1,
             finishedAt: 1,
             archivedAt: 1,
+            viewType: 1,
+            defaultFilterInfo: 1,
+            defaultSortInfo: 1,
+            defaultColumns: 1,
         })
         .pipeline();
 };

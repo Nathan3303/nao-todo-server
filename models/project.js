@@ -58,6 +58,11 @@ const projectSchema = new mongoose.Schema({
      * The date when the project was favorited
      */
     archivedAt: { type: Date, default: null },
+
+    viewType: { type: String, default: "table" },
+    defaultFilterInfo: { type: Object, default: {} },
+    defaultSortInfo: { type: Object, default: {} },
+    defaultColumns: { type: Object, default: {} },
 });
 
 const Project = mongoose.model("Project", projectSchema);

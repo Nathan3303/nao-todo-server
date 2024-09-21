@@ -7,7 +7,7 @@ module.exports = async function updateProject(request, response) {
     if (checkMethod(request, response, "PUT")) return;
 
     const { projectId } = request.query;
-    const { title, description, isArchived, isDeleted } = request.body;
+    const { title } = request.body;
 
     if (!projectId) {
         response.status(200).json(buildRD.error("Project ID is required."));
@@ -23,10 +23,7 @@ module.exports = async function updateProject(request, response) {
             { _id: new ObjectId(projectId) },
             {
                 $set: {
-                    title,
-                    description,
-                    isArchived,
-                    isDeleted,
+                    ...request.body,
                     updatedAt: Date.now(),
                 },
             }
