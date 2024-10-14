@@ -37,7 +37,7 @@ app.use(function (request, response, next) {
 
 app.get("/api/analysis", require("./api/analysis"));
 app.get("/api/projects", require("./api/projects"));
-app.get("/api/todos", require("./api/todos"));
+app.use("/api/todos", require("./api/todos"));
 app.use("/api/events", require("./api/events"));
 app.use("/api/tags", require("./api/tags"));
 
