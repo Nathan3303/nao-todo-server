@@ -1,0 +1,178 @@
+[
+  {
+    "_id": {
+      "$oid": "66d6f7114ae76057cfaa35a9"
+    },
+    "userId": {
+      "$oid": "66d6f5944ae76057cfaa3570"
+    },
+    "title": "NaoTodo",
+    "description": "待办事项平台 NaoTodo 的开发任务清单",
+    "isArchived": false,
+    "isDeleted": false,
+    "isFinished": false,
+    "isFavorite": false,
+    "deletedAt": null,
+    "finishedAt": null,
+    "archivedAt": null,
+    "createdAt": {
+      "$date": "2024-09-03T11:46:25.631Z"
+    },
+    "updatedAt": {
+      "$date": "2024-10-15T10:05:00.633Z"
+    },
+    "__v": 0,
+    "preference": {
+      "viewType": "kanban",
+      "filterInfo": {
+        "isDeleted": false,
+        "projectId": "66d6f7114ae76057cfaa35a9",
+        "state": ""
+      },
+      "sortInfo": {
+        "field": "",
+        "order": "",
+        "_id": {
+          "$oid": "670e3e4c7f81ce2734033f0f"
+        }
+      },
+      "columns": {
+        "state": false,
+        "priority": true,
+        "project": false,
+        "description": true,
+        "endAt": true,
+        "createdAt": false,
+        "updatedAt": true
+      }
+    }
+  },
+  {
+    "_id": {
+      "$oid": "66d6f9cb4ae76057cfaa3628"
+    },
+    "userId": {
+      "$oid": "66d6f5944ae76057cfaa3570"
+    },
+    "title": "NueUI",
+    "description": "个人组件库 NueUI 的开发任务清单",
+    "state": [
+      0
+    ],
+    "isArchived": false,
+    "isDeleted": false,
+    "isFinished": false,
+    "isFavorite": false,
+    "deletedAt": null,
+    "finishedAt": null,
+    "archivedAt": null,
+    "createdAt": {
+      "$date": "2024-09-03T11:58:03.802Z"
+    },
+    "updatedAt": {
+      "$date": "2024-10-15T06:21:21.728Z"
+    },
+    "__v": 0,
+    "preference": {
+      "viewType": "table",
+      "filterInfo": {
+        "isDeleted": false,
+        "projectId": "66d6f9cb4ae76057cfaa3628",
+        "state": ""
+      },
+      "sortInfo": {
+        "field": "state",
+        "order": "desc",
+        "_id": {
+          "$oid": "670e09e17f81ce2734033b47"
+        }
+      },
+      "columns": {
+        "state": true,
+        "priority": true,
+        "project": false,
+        "description": true,
+        "endAt": true,
+        "createdAt": false,
+        "updatedAt": false
+      }
+    }
+  },
+  {
+    "_id": {
+      "$oid": "66d81f4c26206efbf16cffc0"
+    },
+    "userId": {
+      "$oid": "66d6f5944ae76057cfaa3570"
+    },
+    "title": "测试清单 🧾",
+    "description": "NaoTodo 测试清单",
+    "state": [
+      0
+    ],
+    "isArchived": false,
+    "isDeleted": false,
+    "isFinished": false,
+    "isFavorite": false,
+    "deletedAt": null,
+    "finishedAt": null,
+    "archivedAt": null,
+    "createdAt": {
+      "$date": "2024-09-04T08:50:20.006Z"
+    },
+    "updatedAt": {
+      "$date": "2024-10-16T05:16:09.474Z"
+    },
+    "__v": 0,
+    "preference": {
+      "viewType": "table",
+      "filterInfo": {
+        "isDeleted": false,
+        "projectId": "66d81f4c26206efbf16cffc0"
+      },
+      "sortInfo": {
+        "field": "",
+        "order": "",
+        "_id": {
+          "$oid": "670f4c19f98d36096a6b1825"
+        }
+      },
+      "columns": {
+        "state": true,
+        "priority": true,
+        "project": true,
+        "description": true,
+        "endAt": true,
+        "createdAt": false,
+        "updatedAt": true
+      }
+    }
+  },
+  {
+    "_id": {
+      "$oid": "66e14b8426206efbf16d0ca2"
+    },
+    "userId": {
+      "$oid": "66d6f5944ae76057cfaa3570"
+    },
+    "title": "NaoDesign",
+    "description": "创意性作品展示平台 NaoDesign 的开发任务清单",
+    "state": [
+      0
+    ],
+    "isArchived": true,
+    "isDeleted": false,
+    "isFinished": false,
+    "isFavorite": false,
+    "deletedAt": null,
+    "finishedAt": null,
+    "archivedAt": null,
+    "createdAt": {
+      "$date": "2024-09-11T07:49:24.642Z"
+    },
+    "updatedAt": {
+      "$date": "2024-09-19T03:38:02.307Z"
+    },
+    "__v": 0
+  }
+]
