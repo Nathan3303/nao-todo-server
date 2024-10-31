@@ -76,7 +76,18 @@ const projectSchema = new mongoose.Schema({
                 order: "desc",
             },
         },
-        columns: { type: Object, default: {} },
+        columns: {
+            type: Object,
+            default: {
+                state: false,
+                priority: true,
+                project: true,
+                description: true,
+                endAt: true,
+                createdAt: false,
+                updatedAt: false,
+            },
+        },
     },
 });
 

@@ -24,16 +24,20 @@ module.exports = async function deleteProject(request, response) {
         // response
         //     .status(200)
         //     .json(buildRD.success("Project deleted successfully."));
-        const updateResult = await Project.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: { isDeleted: true } }
-        );
-        if (updateResult && updateResult.modifiedCount) {
-            const project = await Project.findById(id);
-            response.status(200).json(buildRD.success(project));
-        } else {
-            throw new Error("Project not found.");
-        }
+        // const updateResult = await Project.updateOne(
+        //     { _id: new ObjectId(id) },
+        //     { $set: { isDeleted: true } }
+        // );
+        // if (updateResult && updateResult.modifiedCount) {
+        //     const project = await Project.findById(id);
+        //     response.status(200).json(buildRD.success(project));
+        // } else {
+        //     throw new Error("Project not found.");
+        // }
+        const _id = new ObjectId(id);
+        const project = await Project.findOneAndDelete({ _id });
+        if (!project) throw new Error("Project not found.");
+        response.status(200).json(buildRD.success({ id: project._id }));
     } catch (error) {
         response.status(500).json(buildRD.error(error.message));
     }
