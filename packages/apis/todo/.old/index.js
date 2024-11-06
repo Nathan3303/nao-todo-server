@@ -3,7 +3,7 @@ const buildRD = require("../../utils/build-response-data");
 const getTodo = require("./get-todo");
 const createTodo = require("./create-todo");
 const deleteTodo = require("./delete-todo");
-const updateTodo = require("./update-todo");
+const updateTodo = require("../update-todo");
 
 module.exports = async function (request, response) {
     switch (request.method) {

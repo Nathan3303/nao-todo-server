@@ -1,6 +1,6 @@
 const Todo = require("../../models/todo");
 const buildRD = require("../../utils/build-response-data");
-const { checkMethod } = require("../../utils");
+const { checkMethod } = require("../../../utils");
 const ObjectId = require("mongoose").Types.ObjectId;
 
 module.exports = async function deleteTodo(request, response) {

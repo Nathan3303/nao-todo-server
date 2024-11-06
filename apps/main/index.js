@@ -56,10 +56,10 @@ mongoose
             .createServer(
                 {
                     key: fs.readFileSync(
-                        path.join(__dirname, "ssl/nathan33.xyz.key")
+                        path.join(__dirname, "certs/nathan33.xyz.key")
                     ),
                     cert: fs.readFileSync(
-                        path.join(__dirname, "ssl/nathan33.xyz.pem")
+                        path.join(__dirname, "certs/nathan33.xyz.pem")
                     ),
                 },
                 app
