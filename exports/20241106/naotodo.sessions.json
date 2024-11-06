@@ -1,0 +1,15 @@
+[{
+  "_id": {
+    "$oid": "670f62e1d25fb2c23feb9826"
+  },
+  "userId": "66d6f5944ae76057cfaa3570",
+  "token": "W29iamVjdCBPYmplY3Rd.eyJlbWFpbCI6Im5hdGhhbkAzMzAzLmNvbSIsIm5pY2tOYW1lIjoibmF0aGFuIiwiaWQiOiI2NmQ2ZjU5NDRhZTc2MDU3Y2ZhYTM1NzAifQ==.f34211de731363838456c3689db436718db153ec23c87d651eaffdaac25faaed",
+  "createdAt": {
+    "$date": "2024-10-31T16:43:59.000Z"
+  },
+  "expiresAt": {
+    "$date": "2024-11-07T16:43:59.000Z"
+  },
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
+  "__v": 0
+}]

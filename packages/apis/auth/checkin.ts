@@ -47,7 +47,7 @@ const checkin = async (req: Request, res: Response) => {
         if (e instanceof Error) {
             return res.json(useErrorResponseData((e as Error).message));
         }
-        console.log('[api/auth/checkin] Unknown error:', e);
+        console.log('[api/auth/checkin] Error:', e);
     }
 };
 
