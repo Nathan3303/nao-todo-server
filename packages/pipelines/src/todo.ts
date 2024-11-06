@@ -1,7 +1,8 @@
 import { Todo } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
+import type { Oid } from '@nao-todo-server/utils';
 
-export const handleUserId = (userId: string) => {
+const handleUserId = (userId: Oid) => {
     return userId
         ? Todo.aggregate()
               .match({ userId: new ObjectId(userId) })
@@ -9,7 +10,7 @@ export const handleUserId = (userId: string) => {
         : [];
 };
 
-export const handleProjectId = (projectId: string) => {
+const handleProjectId = (projectId: Oid) => {
     return projectId
         ? Todo.aggregate()
               .match({ projectId: new ObjectId(projectId) })
@@ -17,7 +18,7 @@ export const handleProjectId = (projectId: string) => {
         : [];
 };
 
-export const handleTagId = (tagId: string) => {
+const handleTagId = (tagId: Oid) => {
     return tagId
         ? Todo.aggregate()
               .match({ tags: { $in: [tagId] } })
@@ -25,7 +26,7 @@ export const handleTagId = (tagId: string) => {
         : [];
 };
 
-export const handleId = (id: string) => {
+const handleId = (id: Oid) => {
     return id
         ? Todo.aggregate()
               .match({ _id: new ObjectId(id) })
@@ -33,7 +34,7 @@ export const handleId = (id: string) => {
         : [];
 };
 
-export const handleName = (name: string) => {
+const handleName = (name: string) => {
     return name
         ? Todo.aggregate()
               .match({ name: { $regex: name, $options: 'i' } })
@@ -41,7 +42,7 @@ export const handleName = (name: string) => {
         : [];
 };
 
-export const handleState = (state: string) => {
+const handleState = (state: string) => {
     if (!state) return [];
     const splitedState = state.split(',');
     return Todo.aggregate()
@@ -49,7 +50,7 @@ export const handleState = (state: string) => {
         .pipeline();
 };
 
-export const handlePriority = (priority: string) => {
+const handlePriority = (priority: string) => {
     if (!priority) return [];
     const splitedPriority = priority.split(',');
     return Todo.aggregate()
@@ -57,7 +58,7 @@ export const handlePriority = (priority: string) => {
         .pipeline();
 };
 
-export const handleIsFavorited = (isFavorited: string) => {
+const handleIsFavorited = (isFavorited: boolean) => {
     return isFavorited
         ? Todo.aggregate()
               .match({ isPinned: parseToBool(isFavorited) })
@@ -65,7 +66,7 @@ export const handleIsFavorited = (isFavorited: string) => {
         : [];
 };
 
-export const handleIsDeleted = (isDeleted: string) => {
+const handleIsDeleted = (isDeleted: boolean) => {
     return isDeleted
         ? Todo.aggregate()
               .match({ isDeleted: parseToBool(isDeleted) })
@@ -73,7 +74,7 @@ export const handleIsDeleted = (isDeleted: string) => {
         : [];
 };
 
-export const handlePage = (page: string, limit: string) => {
+const handlePage = (page: string, limit: string) => {
     const _page = parseInt(page) || 1;
     const _limit = parseInt(limit) || 10;
     return Todo.aggregate()
@@ -82,7 +83,7 @@ export const handlePage = (page: string, limit: string) => {
         .pipeline();
 };
 
-export const handleSort = (sort: string) => {
+const handleSort = (sort: string) => {
     if (!sort) {
         return Todo.aggregate().sort({ createdAt: 'desc' }).pipeline();
     }
@@ -96,7 +97,7 @@ export const handleSort = (sort: string) => {
     return Todo.aggregate().sort(_sortOption).pipeline();
 };
 
-export const handleLookupProject = () => {
+const handleLookupProject = () => {
     return Todo.aggregate()
         .lookup({
             from: 'projects',
@@ -108,7 +109,7 @@ export const handleLookupProject = () => {
         .pipeline();
 };
 
-export const handleLookupTags = () => {
+const handleLookupTags = () => {
     return Todo.aggregate()
         .lookup({
             from: 'tags',
@@ -119,7 +120,7 @@ export const handleLookupTags = () => {
         .pipeline();
 };
 
-export const handleSelectFields = (fieldsOptions: Record<string, any>) => {
+const handleSelectFields = (fieldsOptions?: Record<string, any>) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
         id: { $toString: '$_id' },
@@ -153,7 +154,7 @@ export const handleSelectFields = (fieldsOptions: Record<string, any>) => {
     return Todo.aggregate().project(fieldsOptions).pipeline();
 };
 
-export const handleGroupByState = () => {
+const handleGroupByState = () => {
     return Todo.aggregate()
         .group({
             _id: '$state',
@@ -163,7 +164,7 @@ export const handleGroupByState = () => {
         .pipeline();
 };
 
-export const handleGroupByPriority = () => {
+const handleGroupByPriority = () => {
     return Todo.aggregate()
         .group({
             _id: '$priority',
@@ -173,11 +174,11 @@ export const handleGroupByPriority = () => {
         .pipeline();
 };
 
-export const handleCountTotal = () => {
+const handleCountTotal = () => {
     return Todo.aggregate().count('total').pipeline();
 };
 
-export const handleRelativeDate = (relativeDate: string) => {
+const handleRelativeDate = (relativeDate: string) => {
     if (!relativeDate) return [];
     let agg = null;
     switch (relativeDate) {
@@ -217,4 +218,25 @@ export const handleRelativeDate = (relativeDate: string) => {
             agg = null;
     }
     return agg ? agg.sort({ 'dueDate.endAt': 1 }).pipeline() : [];
+};
+
+export default {
+    handleUserId,
+    handleProjectId,
+    handleName,
+    handlePriority,
+    handleRelativeDate,
+    handleState,
+    handleTagId,
+    handleId,
+    handleIsFavorited,
+    handleIsDeleted,
+    handlePage,
+    handleGroupByPriority,
+    handleCountTotal,
+    handleLookupProject,
+    handleLookupTags,
+    handleSelectFields,
+    handleGroupByState,
+    handleSort
 };

@@ -1,5 +1,9 @@
 import { Todo } from '@nao-todo-server/models';
-import { useErrorResponseData, useResponseData } from '@nao-todo-server/hooks';
+import {
+    useErrorResponseData,
+    useResponseData,
+    useSuccessfulResponseData
+} from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
@@ -30,6 +34,27 @@ const updateTodo = async (req: Request, res: Response) => {
     }
 };
 
-const updateTodos = async (req: Request, res: Response) => {};
+const updateTodos = async (req: Request, res: Response) => {
+    try {
+        const { todoIds, updateInfo } = req.body;
+
+        const updateRes = await Todo.updateMany(
+            { _id: { $in: todoIds } },
+            { $set: { ...updateInfo, updatedAt: new Date() } }
+        ).exec();
+        if (!updateRes) throw new Error('Update failed');
+
+        const { modifiedCount, matchedCount } = updateRes;
+        if (modifiedCount !== matchedCount) throw new Error('Update failed');
+
+        res.json(useSuccessfulResponseData('Update successful'));
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            return res.json(useErrorResponseData(e.message));
+        }
+        console.log('[api/todo/updateTodos] Error:', e);
+        return res.json(useErrorResponseData('服务器错误'));
+    }
+};
 
 export { updateTodo, updateTodos };
