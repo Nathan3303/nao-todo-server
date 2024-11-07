@@ -1,7 +1,8 @@
 import { Event } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
+import type { Oid } from '@nao-todo-server/utils';
 
-export const handleUserId = (userId: string) => {
+const handleUserId = (userId: Oid) => {
     return userId
         ? Event.aggregate()
               .match({ userId: new ObjectId(userId) })
@@ -9,7 +10,7 @@ export const handleUserId = (userId: string) => {
         : [];
 };
 
-export const handleTodoId = (todoId: string) => {
+const handleTodoId = (todoId: Oid) => {
     return todoId
         ? Event.aggregate()
               .match({ todoId: new ObjectId(todoId) })
@@ -17,7 +18,7 @@ export const handleTodoId = (todoId: string) => {
         : [];
 };
 
-export const handleId = (id: string) => {
+const handleId = (id: Oid) => {
     return id
         ? Event.aggregate()
               .match({ _id: new ObjectId(id) })
@@ -25,7 +26,7 @@ export const handleId = (id: string) => {
         : [];
 };
 
-export const handleTitle = (title: string) => {
+const handleTitle = (title?: string) => {
     return title
         ? Event.aggregate()
               .match({ title: { $regex: title, $options: 'i' } })
@@ -33,7 +34,7 @@ export const handleTitle = (title: string) => {
         : [];
 };
 
-export const handleIsDone = (isDone: string) => {
+const handleIsDone = (isDone?: boolean) => {
     return isDone
         ? Event.aggregate()
               .match({ isDone: parseToBool(isDone) })
@@ -41,7 +42,7 @@ export const handleIsDone = (isDone: string) => {
         : [];
 };
 
-export const handleIsTopped = (isTopped: string) => {
+const handleIsTopped = (isTopped?: boolean) => {
     return isTopped
         ? Event.aggregate()
               .match({ isTopped: parseToBool(isTopped) })
@@ -49,16 +50,16 @@ export const handleIsTopped = (isTopped: string) => {
         : [];
 };
 
-export const handlePage = (page: string, limit: string) => {
-    const _page = parseInt(page) || 1;
-    const _limit = parseInt(limit) || 10;
+const handlePage = (page: number, limit: number) => {
+    const _page = page || 1;
+    const _limit = limit || 10;
     return Event.aggregate()
         .skip((_page - 1) * _limit)
         .limit(_limit)
         .pipeline();
 };
 
-export const handleSelectFields = (fieldsOptions: Record<string, any> | undefined) => {
+const handleSelectFields = (fieldsOptions?: Record<string, any> | undefined) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
         id: { $toString: '$_id' },
@@ -67,4 +68,15 @@ export const handleSelectFields = (fieldsOptions: Record<string, any> | undefine
         isTopped: 1
     };
     return Event.aggregate().project(fieldsOptions).pipeline();
+};
+
+export default {
+    handleUserId,
+    handleTodoId,
+    handleId,
+    handleTitle,
+    handleIsDone,
+    handleIsTopped,
+    handlePage,
+    handleSelectFields
 };

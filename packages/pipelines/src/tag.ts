@@ -1,7 +1,8 @@
 import { Tag } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
+import type { Oid } from '@nao-todo-server/utils';
 
-export const handleUserId = (userId: string) => {
+const handleUserId = (userId: Oid) => {
     return userId
         ? Tag.aggregate()
               .match({ userId: new ObjectId(userId) })
@@ -9,7 +10,7 @@ export const handleUserId = (userId: string) => {
         : [];
 };
 
-export const handleName = (name: string) => {
+const handleName = (name: string) => {
     return name
         ? Tag.aggregate()
               .match({ name: { $regex: `.*${name}.*`, $options: 'i' } })
@@ -17,7 +18,7 @@ export const handleName = (name: string) => {
         : [];
 };
 
-export const handleIsDeleted = (isDeleted: string) => {
+const handleIsDeleted = (isDeleted: boolean) => {
     return isDeleted
         ? Tag.aggregate()
               .match({ isDeleted: parseToBool(isDeleted) })
@@ -25,7 +26,7 @@ export const handleIsDeleted = (isDeleted: string) => {
         : [];
 };
 
-export const handlePage = (page: string, limit: string) => {
+const handlePage = (page: string, limit: string) => {
     const _page = parseInt(page) || 1;
     const _limit = parseInt(limit) || 10;
     return Tag.aggregate()
@@ -34,7 +35,7 @@ export const handlePage = (page: string, limit: string) => {
         .pipeline();
 };
 
-export const handleSelectFields = (fieldsOptions: Record<string, any>) => {
+const handleSelectFields = (fieldsOptions?: Record<string, any>) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
         id: { $toString: '$_id' },
@@ -44,4 +45,12 @@ export const handleSelectFields = (fieldsOptions: Record<string, any>) => {
         updatedAt: 1
     };
     return Tag.aggregate().project(fieldsOptions).pipeline();
+};
+
+export default {
+    handleUserId,
+    handleName,
+    handleIsDeleted,
+    handlePage,
+    handleSelectFields
 };

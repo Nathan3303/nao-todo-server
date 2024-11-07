@@ -1,7 +1,8 @@
 import { Project } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
+import type { Oid } from '@nao-todo-server/utils';
 
-export const handleUserId = (userId: string) => {
+const handleUserId = (userId: Oid) => {
     return userId
         ? Project.aggregate()
               .match({ userId: new ObjectId(userId) })
@@ -9,7 +10,7 @@ export const handleUserId = (userId: string) => {
         : [];
 };
 
-export const handleTitle = (title: string) => {
+const handleTitle = (title: string) => {
     return title
         ? Project.aggregate()
               .match({ title: { $regex: title, $options: 'i' } })
@@ -17,7 +18,7 @@ export const handleTitle = (title: string) => {
         : [];
 };
 
-export const handleIsDeleted = (isDeleted: string) => {
+const handleIsDeleted = (isDeleted: boolean) => {
     if (isDeleted === null || isDeleted === undefined) {
         return [];
     }
@@ -25,7 +26,7 @@ export const handleIsDeleted = (isDeleted: string) => {
     return Project.aggregate().match({ isDeleted: _bool }).pipeline();
 };
 
-export const handleIsFinished = (isFinished: string) => {
+const handleIsFinished = (isFinished: boolean) => {
     if (isFinished === null || isFinished === undefined) {
         return [];
     }
@@ -33,7 +34,7 @@ export const handleIsFinished = (isFinished: string) => {
     return Project.aggregate().match({ isFinished: _bool }).pipeline();
 };
 
-export const handleIsArchived = (isArchived: string) => {
+const handleIsArchived = (isArchived: boolean) => {
     if (isArchived === null || isArchived === undefined) {
         return [];
     }
@@ -41,7 +42,7 @@ export const handleIsArchived = (isArchived: string) => {
     return Project.aggregate().match({ isArchived: _bool }).pipeline();
 };
 
-export const handlePage = (page: string, limit: string) => {
+const handlePage = (page: string, limit: string) => {
     const _page = parseInt(page) || 1;
     const _limit = parseInt(limit) || 10;
     return Project.aggregate()
@@ -50,7 +51,7 @@ export const handlePage = (page: string, limit: string) => {
         .pipeline();
 };
 
-export const handleSort = (sort: string) => {
+const handleSort = (sort: string) => {
     if (sort === null || sort === undefined) {
         return [];
     }
@@ -67,7 +68,7 @@ export const handleSort = (sort: string) => {
     return Project.aggregate().sort(sortObject).pipeline();
 };
 
-export const handleOutput = () => {
+const handleOutput = () => {
     return Project.aggregate()
         .project({
             _id: 0,
@@ -88,4 +89,15 @@ export const handleOutput = () => {
             preference: 1
         })
         .pipeline();
+};
+
+export default {
+    handleUserId,
+    handleTitle,
+    handleIsDeleted,
+    handleIsFinished,
+    handleIsArchived,
+    handlePage,
+    handleSort,
+    handleOutput
 };
