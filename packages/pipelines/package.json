@@ -4,6 +4,6 @@
     "description": "Pipelines for Nao Todo Server",
     "author": "Nathan Lee",
     "license": "MIT",
-    "main": "./dist/index.js",
+    "main": "index.ts",
     "type": "module"
 }

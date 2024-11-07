@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import { Schema, model } from 'mongoose';
 
-const SessionSchema = new mongoose.Schema({
+const SessionSchema = new Schema({
     userId: { type: String, required: true },
     token: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
@@ -8,7 +8,7 @@ const SessionSchema = new mongoose.Schema({
     browser: { type: String, required: true },
     ip: { type: String },
     device: { type: String },
-    os: { type: String },
+    os: { type: String }
 });
 
-export default mongoose.model("Session", SessionSchema);
+export default model('Session', SessionSchema);

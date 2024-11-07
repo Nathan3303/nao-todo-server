@@ -1,12 +1,12 @@
-import mongoose from "mongoose";
+import { Schema, model } from 'mongoose';
 
-const ObjectId = mongoose.Schema.Types.ObjectId;
+const ObjectId = Schema.Types.ObjectId;
 
-const projectSchema = new mongoose.Schema({
+const projectSchema = new Schema({
     /**
      * The user who created the project
      */
-    userId: { type: ObjectId, ref: "User" },
+    userId: { type: ObjectId, ref: 'User' },
     /**
      * The title of the project
      */
@@ -62,19 +62,19 @@ const projectSchema = new mongoose.Schema({
      * The user's preference for the project
      */
     preference: {
-        viewType: { type: String, default: "table" },
+        viewType: { type: String, default: 'table' },
         filterInfo: {
             type: Object,
             default: {
-                isDeleted: false,
-            },
+                isDeleted: false
+            }
         },
         sortInfo: {
             type: { field: String, order: String },
             default: {
-                field: "createdAt",
-                order: "desc",
-            },
+                field: 'createdAt',
+                order: 'desc'
+            }
         },
         columns: {
             type: Object,
@@ -85,10 +85,10 @@ const projectSchema = new mongoose.Schema({
                 description: true,
                 endAt: true,
                 createdAt: false,
-                updatedAt: false,
-            },
-        },
-    },
+                updatedAt: false
+            }
+        }
+    }
 });
 
-export default mongoose.model("Project", projectSchema);
+export default model('Project', projectSchema);

@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import { Schema, model } from 'mongoose';
 
-const ObjectId = mongoose.Schema.Types.ObjectId;
+const ObjectId = Schema.Types.ObjectId;
 
-const todoSchema = new mongoose.Schema({
+const todoSchema = new Schema({
     userId: { type: ObjectId, ref: "User" },
     projectId: { type: ObjectId, ref: "Project" },
     name: { type: String, required: true },
@@ -22,4 +22,4 @@ const todoSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("Todo", todoSchema);
+export default model("Todo", todoSchema);
