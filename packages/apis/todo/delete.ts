@@ -5,8 +5,6 @@ import type { Request, Response } from 'express';
 
 const deleteTodo = async (req: Request, res: Response) => {
     try {
-        if (req.method !== 'DELETE') throw new Error('请求无效');
-
         if (!req.query.todoId) throw new Error('缺少参数，请求无效');
 
         const todoId = req.query.todoId as string;

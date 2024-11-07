@@ -11,8 +11,6 @@ import type { Request, Response } from 'express';
 
 const checkin = async (req: Request, res: Response) => {
     try {
-        if (req.method !== 'GET') throw new Error('请求无效');
-
         if (!req.query.jwt) throw new Error('用户凭证无效，请重新登录');
         const { jwt } = req.query;
         const isJWTValid = verifyJWT(jwt as string);

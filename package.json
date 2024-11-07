@@ -17,6 +17,7 @@
     "@nao-todo-server/models": "workspace:*",
     "@nao-todo-server/pipelines": "workspace:*",
     "@nao-todo-server/utils": "workspace:*",
+    "@nao-todo-server/apis": "workspace:*",
     "md5": "^2.3.0",
     "moment": "^2.30.1",
     "mongoose": "^8.4.3",

@@ -8,8 +8,6 @@ import type { Request, Response } from 'express';
 
 const signout = async (req: Request, res: Response) => {
     try {
-        if (req.method !== 'DELETE') throw new Error('请求无效');
-
         if (!req.query.jwt) throw new Error('用户凭证不能为空');
 
         const { jwt } = req.query;
@@ -36,3 +34,5 @@ const signout = async (req: Request, res: Response) => {
         res.json(useErrorResponseData('退出失败，请稍后重试'));
     }
 };
+
+export default signout;

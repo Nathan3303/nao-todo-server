@@ -4,8 +4,6 @@ import type { Request, Response } from 'express';
 
 const createTodo = async (req: Request, res: Response) => {
     try {
-        if (req.method !== 'POST') throw new Error('请求无效');
-
         if (!req.body.userId) throw new Error('用户ID不能为空');
         if (!req.body.projectId) throw new Error('项目ID不能为空');
         if (!req.body.name) throw new Error('标题不能为空');
@@ -36,6 +34,5 @@ const createTodo = async (req: Request, res: Response) => {
 };
 
 const createTodos = async (req: Request, res: Response) => {};
-
 
 export { createTodo, createTodos };

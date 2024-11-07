@@ -25,8 +25,6 @@ const _createUser = async (email: string, password: string) => {
 
 const signup = async (req: Request, res: Response) => {
     try {
-        if (req.method !== 'POST') throw new Error('请求无效');
-
         if (!req.body.email || !req.body.password)
             throw new Error('邮箱或密码不能为空');
 
