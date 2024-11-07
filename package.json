@@ -10,7 +10,8 @@
     "lint": "npx eslint -c eslint.config.mjs",
     "lint-on-debug": "npx eslint -c eslint.config.mjs --debug",
     "lint:lint-staged": "lint-staged",
-    "format": "prettier --write --config .prettierrc ."
+    "format": "prettier --write --config .prettierrc .",
+    "compile": "pnpm --filter @nao-todo-server/main-app compile"
   },
   "dependencies": {
     "@nao-todo-server/hooks": "workspace:*",

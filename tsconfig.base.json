@@ -15,5 +15,6 @@
 
         "strict": true,
         "forceConsistentCasingInFileNames": true
-    }
+    },
+    
 }

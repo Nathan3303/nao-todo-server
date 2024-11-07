@@ -29,7 +29,7 @@ const updateTodo = async (req: Request, res: Response) => {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));
         }
-        console.log('[api/todo/update] Error', e);
+        console.log('[api/todo/updateTodo] Error', e);
         return res.json(useErrorResponseData('服务器错误'));
     }
 };

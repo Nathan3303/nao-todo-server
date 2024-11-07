@@ -4,6 +4,6 @@
     "description": "Utils for Nao Todo Server",
     "author": "Nathan Lee",
     "license": "MIT",
-    "main": "index.ts",
+    "main": "./dist/index.js",
     "type": "module"
 }

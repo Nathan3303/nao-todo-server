@@ -28,7 +28,7 @@ const createTodo = async (req: Request, res: Response) => {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));
         }
-        console.log('[api/todo/create] Error:', e);
+        console.log('[api/todo/createTodo] Error:', e);
         return;
     }
 };
