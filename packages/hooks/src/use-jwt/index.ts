@@ -1,31 +1,31 @@
 import crypto from 'crypto';
 import { jwtCryptoSecret } from './constants';
+import type { UseJWTOptions } from './types';
 
 const sign = (info: string, key: string) => {
     return crypto.createHmac('sha256', key).update(info).digest('hex');
 };
 
-const toSign = (header: string, payload: string) => {
-    return sign(header + '.' + payload, jwtCryptoSecret);
+const defaultOptions: UseJWTOptions = {
+    secret: jwtCryptoSecret,
+    header: {
+        alg: 'HS256',
+        typ: 'JWT'
+    }
 };
 
-const verify = (jwt: string) => {
-    const [header, payload, signature] = jwt.split('.');
-    const expected_signature = toSign(header, payload);
-    return signature === expected_signature;
+const useJWT = (payload: any, options: UseJWTOptions = defaultOptions) => {
+    const { secret, header } = options;
+
+    const headerString = JSON.stringify(header);
+    const payloadString = JSON.stringify(payload);
+    // console.log(headerString, payloadString);
+
+    const jwtHeader = Buffer.from(headerString).toString('base64');
+    const jwtPayload = Buffer.from(payloadString).toString('base64');
+    const jwtSignature = sign(`${jwtHeader}.${jwtPayload}`, secret);
+
+    return `${jwtHeader}.${jwtPayload}.${jwtSignature}`;
 };
 
-const useJWT = (payload: object) => {
-    const jwtHeader = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const jwtPayload = btoa(JSON.stringify(payload));
-    const jwtSignature = toSign(jwtHeader, jwtPayload);
-    const jwt = jwtHeader + '.' + jwtPayload + '.' + jwtSignature;
-    return {
-        jwt,
-        header: jwtHeader,
-        payload: jwtPayload,
-        signature: jwtSignature
-    };
-};
-
-export { useJWT, verify as verifyJWT };
+export { useJWT };

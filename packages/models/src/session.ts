@@ -1,14 +1,22 @@
-import { Schema, model } from 'mongoose';
+import {
+    getModelForClass,
+    prop,
+    modelOptions,
+    index
+} from '@typegoose/typegoose';
 
-const SessionSchema = new Schema({
-    userId: { type: String, required: true },
-    token: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-    expiresAt: { type: Date, required: true },
-    browser: { type: String, required: true },
-    ip: { type: String },
-    device: { type: String },
-    os: { type: String }
-});
+@index({ userId: 1 }, { unique: true })
+@modelOptions({ schemaOptions: { timestamps: true, collection: 'sessions' } })
+class Session {
+    @prop({ required: true })
+    userId: string;
 
-export default model('Session', SessionSchema);
+    @prop({ required: true })
+    token: string;
+
+    @prop({ required: true })
+    expiresAt: Date;
+}
+
+export default getModelForClass(Session);
+export { Session };

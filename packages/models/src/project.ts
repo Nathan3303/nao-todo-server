@@ -1,8 +1,8 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
 
-const ObjectId = Schema.Types.ObjectId;
+const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const projectSchema = new Schema({
+const projectSchema = new mongoose.Schema({
     /**
      * The user who created the project
      */
@@ -91,4 +91,4 @@ const projectSchema = new Schema({
     }
 });
 
-export default model('Project', projectSchema);
+export default mongoose.model('Project', projectSchema);

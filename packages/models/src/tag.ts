@@ -1,8 +1,8 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
 
-const ObjectId = Schema.Types.ObjectId;
+const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const tagSchema = new Schema({
+const tagSchema = new mongoose.Schema({
     userId: { type: ObjectId, ref: 'User' },
     name: { type: String, required: true },
     color: { type: String, required: true },
@@ -12,4 +12,4 @@ const tagSchema = new Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-export default model('Tag', tagSchema);
+export default mongoose.model('Tag', tagSchema);

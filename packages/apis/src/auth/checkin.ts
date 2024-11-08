@@ -1,8 +1,9 @@
 import moment from 'moment';
+import jwt from 'jsonwebtoken';
+import { jwtCryptoSecret } from '@nao-todo-server/hooks/src/use-jwt/constants';
 import { User, Session } from '@nao-todo-server/models';
 import {
     useJWT,
-    verifyJWT,
     useErrorResponseData,
     useSuccessfulResponseData
 } from '@nao-todo-server/hooks';
@@ -12,9 +13,16 @@ import type { Request, Response } from 'express';
 const checkin = async (req: Request, res: Response) => {
     try {
         if (!req.query.jwt) throw new Error('用户凭证无效，请重新登录');
-        const { jwt } = req.query;
-        const isJWTValid = verifyJWT(jwt as string);
-        if (!isJWTValid) throw new Error('用户凭证无效，请重新登录');
+
+        const { jwt: token } = req.query;
+
+        jwt.verify(token as string, jwtCryptoSecret, (err, decoded) => {
+            if (err) {
+                console.log(err, decoded);
+                throw new Error('用户凭证无效，请重新登录');
+            }
+        });
+        // if (!isJWTValid) throw new Error('用户凭证无效，请重新登录');
 
         const session = await Session.findOne({ token: jwt });
         if (!session) throw new Error('用户凭证无效，请重新登录');
@@ -38,9 +46,9 @@ const checkin = async (req: Request, res: Response) => {
         if (!user) throw new Error('用户凭证无效，请重新登录');
 
         const newJWT = useJWT(user);
-        await Session.updateOne({ _id: session._id }, { token: newJWT.jwt });
+        await Session.updateOne({ _id: session._id }, { token: newJWT });
 
-        res.json(useSuccessfulResponseData(newJWT.jwt));
+        res.json(useSuccessfulResponseData(newJWT));
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData((e as Error).message));

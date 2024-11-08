@@ -1,8 +1,8 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
 
-const ObjectId = Schema.Types.ObjectId;
+const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const eventSchema = new Schema({
+const eventSchema = new mongoose.Schema({
     userId: { type: ObjectId, ref: 'User' },
     todoId: { type: ObjectId, ref: 'Todo' },
     title: { type: String, required: true },
@@ -12,4 +12,4 @@ const eventSchema = new Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-export default model('Event', eventSchema);
+export default mongoose.model('Event', eventSchema);

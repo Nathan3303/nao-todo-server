@@ -1,18 +1,31 @@
-import { Schema, model } from 'mongoose';
+import {
+    getModelForClass,
+    prop,
+    modelOptions,
+    index
+} from '@typegoose/typegoose';
 
-const UserSchema = new Schema({
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    nickName: { type: String },
-    firstName: { type: String },
-    lastName: { type: String },
-    role: { type: String, required: true, default: 'user' },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-    isDeleted: { type: Boolean, default: false },
-    lastSignIn: { type: Date },
-    lastSignOut: { type: Date }
-});
+@index({ email: 1, password: 1 })
+@modelOptions({ schemaOptions: { timestamps: true, collection: 'users' } })
+class User {
+    @prop({ required: true, unique: true })
+    username: string;
 
-export default model('User', UserSchema);
+    @prop({ required: true })
+    password: string;
+
+    @prop({ required: true, unique: true })
+    email: string;
+
+    @prop()
+    nickName: string;
+
+    @prop()
+    avatar: string;
+
+    @prop({ required: true, default: 'user' })
+    role: string;
+}
+
+export default getModelForClass(User);
+export { User };
