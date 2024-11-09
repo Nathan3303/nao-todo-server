@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const connectAndRun = async (fn: () => Promise<void>) => {
     try {
         await mongoose.connect(
-            'mongodb://localhost:27017/test'
+            'mongodb://localhost:27017/naotodo'
         );
         await fn();
     } catch (error) {
