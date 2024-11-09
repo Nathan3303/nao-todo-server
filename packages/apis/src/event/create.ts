@@ -1,36 +1,27 @@
 import { Event } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId, type Oid } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 const createEvent = async (req: Request, res: Response) => {
     try {
-        if (!req.body.userId || !req.body.todoId || !req.body.title) {
-            throw new Error('缺少参数，请求无效');
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.body.todoId || !req.body.title) {
+            throw new Error('参数错误，请求无效');
         }
 
-        const { userId, todoId, title } = req.body;
+        const { todoId, title } = req.body;
 
-        const createdEvent = await Event.create({
-            userId,
-            todoId: new ObjectId(todoId),
-            title
-        });
+        const createdEvent = await Event.create({ userId, todoId, title });
 
         if (!createdEvent) throw new Error('创建失败');
 
-        return res.json(
-            useSuccessfulResponseData({
-                id: createdEvent._id,
-                title: createdEvent.title,
-                isDone: createdEvent.isDone,
-                createdAt: createdEvent.createdAt,
-                updatedAt: createdEvent.updatedAt
-            })
-        );
+        return res.json(useSuccessfulResponseData(createdEvent));
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));

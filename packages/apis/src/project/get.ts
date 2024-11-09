@@ -1,24 +1,28 @@
 import { Project } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId, Oid, serialExecute } from '@nao-todo-server/utils';
+import { ObjectId, serialExecute } from '@nao-todo-server/utils';
 import { projectPipelines } from '@nao-todo-server/pipelines';
 import type { Request, Response } from 'express';
 
 const getProject = async (req: Request, res: Response) => {
     try {
-        if (!req.query.id || !req.query.userId) {
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.query.projectId) {
             throw new Error('参数错误，请求无效');
         }
 
-        const { userId, id } = req.query;
+        const projectId = req.query.projectId as string;
 
         const project = await Project.findOne({
-            userId: new ObjectId(userId as string),
-            _id: new ObjectId(id as string)
-        });
+            userId,
+            _id: new ObjectId(projectId)
+        }).exec();
 
         if (!project) throw new Error('项目不存在');
 
@@ -34,25 +38,23 @@ const getProject = async (req: Request, res: Response) => {
 
 const getProjects = async (req: Request, res: Response) => {
     try {
-        const {
-            userId,
-            title,
-            isArchived,
-            isDeleted,
-            isFinished,
-            page,
-            limit,
-            sort
-        } = req.query as unknown as {
-            userId: Oid;
-            title: string;
-            isArchived: boolean;
-            isDeleted: boolean;
-            isFinished: boolean;
-            page: string;
-            limit: string;
-            sort: string;
-        };
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId) {
+            throw new Error('参数错误，请求无效');
+        }
+
+        const { title, isArchived, isDeleted, isFinished, page, limit, sort } =
+            req.query as unknown as {
+                title: string;
+                isArchived: boolean;
+                isDeleted: boolean;
+                isFinished: boolean;
+                page: string;
+                limit: string;
+                sort: string;
+            };
 
         let executeResults = await serialExecute([
             () => projectPipelines.handleUserId(userId),
@@ -66,7 +68,8 @@ const getProjects = async (req: Request, res: Response) => {
         ]);
 
         executeResults = executeResults.flat();
-        const projects = await Project.aggregate(executeResults);
+        // console.log(executeResults);
+        const projects = await Project.aggregate(executeResults).exec();
 
         res.status(200).json(useSuccessfulResponseData(projects));
     } catch (e: unknown) {

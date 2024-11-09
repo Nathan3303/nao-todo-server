@@ -1,24 +1,15 @@
 import { Event } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
-import type { Oid } from '@nao-todo-server/utils';
 
-const handleUserId = (userId: Oid) => {
-    return userId
-        ? Event.aggregate()
-              .match({ userId: new ObjectId(userId) })
-              .pipeline()
-        : [];
+const handleUserId = (userId: string) => {
+    return userId ? Event.aggregate().match({ userId }).pipeline() : [];
 };
 
-const handleTodoId = (todoId: Oid) => {
-    return todoId
-        ? Event.aggregate()
-              .match({ todoId: new ObjectId(todoId) })
-              .pipeline()
-        : [];
+const handleTodoId = (todoId?: string) => {
+    return todoId ? Event.aggregate().match({ todoId }).pipeline() : [];
 };
 
-const handleId = (id: Oid) => {
+const handleId = (id?: string) => {
     return id
         ? Event.aggregate()
               .match({ _id: new ObjectId(id) })
@@ -59,7 +50,9 @@ const handlePage = (page: number, limit: number) => {
         .pipeline();
 };
 
-const handleSelectFields = (fieldsOptions?: Record<string, any> | undefined) => {
+const handleSelectFields = (
+    fieldsOptions?: Record<string, any> | undefined
+) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
         id: { $toString: '$_id' },

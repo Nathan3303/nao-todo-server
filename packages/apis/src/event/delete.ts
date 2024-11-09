@@ -1,35 +1,34 @@
 import { Event } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId, type Oid } from '@nao-todo-server/utils';
+import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 const deleteEvent = async (req: Request, res: Response) => {
     try {
-        if (!req.body.userId || !req.body.todoId || !req.body.title) {
-            throw new Error('缺少参数，请求无效');
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.query.eventId) {
+            throw new Error('参数错误，请求无效');
         }
 
-        const { userId, todoId, title } = req.body;
+        const eventId = req.query.eventId as string;
 
-        const createdEvent = await Event.create({
-            userId,
-            todoId: new ObjectId(todoId),
-            title
-        });
+        const deletedEvent = await Event.findOneAndDelete({
+            _id: new ObjectId(eventId),
+            userId
+        }).exec();
 
-        if (!createdEvent) throw new Error('创建失败');
+        if (!deletedEvent) {
+            throw new Error('删除失败');
+        }
 
         return res.json(
-            useSuccessfulResponseData({
-                id: createdEvent._id,
-                title: createdEvent.title,
-                isDone: createdEvent.isDone,
-                createdAt: createdEvent.createdAt,
-                updatedAt: createdEvent.updatedAt
-            })
+            useSuccessfulResponseData({ eventId: deletedEvent._id.toString() })
         );
     } catch (e: unknown) {
         if (e instanceof Error) {

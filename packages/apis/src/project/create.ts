@@ -1,24 +1,27 @@
 import { Project } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 const createProject = async (req: Request, res: Response) => {
     try {
-        if (!req.body.userId || !req.body.name) {
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.body.title) {
             throw new Error('参数错误，请求无效');
         }
 
-        const { userId, title, description } = req.body;
+        const { title, description } = req.body;
 
-        const isProjectExist = await Project.findOne({ title, userId });
+        const isProjectExist = await Project.findOne({ title, userId }).exec();
         if (isProjectExist) throw new Error('项目已存在');
 
         const createdProject = await Project.create({
-            userId: new ObjectId(userId),
+            userId,
             title,
             description
         });

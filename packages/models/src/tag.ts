@@ -1,15 +1,30 @@
-import mongoose from 'mongoose';
+import {
+    getModelForClass,
+    prop,
+    modelOptions,
+    index
+} from '@typegoose/typegoose';
 
-const ObjectId = mongoose.Schema.Types.ObjectId;
+@modelOptions({ schemaOptions: { timestamps: true, collection: 'tags' } })
+class Tag {
+    @prop({ required: true })
+    userId: string;
 
-const tagSchema = new mongoose.Schema({
-    userId: { type: ObjectId, ref: 'User' },
-    name: { type: String, required: true },
-    color: { type: String, required: true },
-    isDeleted: { type: Boolean, default: false },
-    deletedAt: { type: Date },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-});
+    @prop({ required: true })
+    name: string;
 
-export default mongoose.model('Tag', tagSchema);
+    @prop({ required: true })
+    color: string;
+
+    @prop({ default: '' })
+    description: string;
+
+    @prop({ default: false })
+    isDeleted: boolean;
+
+    @prop({ default: null })
+    deletedAt: Date;
+}
+
+export default getModelForClass(Tag);
+export { Tag };

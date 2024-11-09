@@ -1,18 +1,23 @@
-import { Todo, Event } from '@nao-todo-server/models';
+import { Todo } from '@nao-todo-server/models';
 import {
+    getJWTPayload,
     useErrorResponseData,
     useSuccessfulResponseData
 } from '@nao-todo-server/hooks';
 import { serialExecute } from '@nao-todo-server/utils';
 import { todoPipelines } from '@nao-todo-server/pipelines';
 import type { Request, Response } from 'express';
-import type { Oid } from '@nao-todo-server/utils';
 
 const getTodo = async (req: Request, res: Response) => {
     try {
-        if (!req.query.todoId) throw new Error('参数错误，请求无效');
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
 
-        const todoId = req.query.todoId as unknown as Oid;
+        if (!userId || !req.query.todoId) {
+            throw new Error('参数错误，请求无效');
+        }
+
+        const todoId = req.query.todoId as string;
 
         const getTodoTasks = [
             () => todoPipelines.handleId(todoId),
@@ -24,23 +29,10 @@ const getTodo = async (req: Request, res: Response) => {
 
         const getTodoTasksExecution = await serialExecute(getTodoTasks);
         const getTodoPipelines = getTodoTasksExecution.flat();
-        const todo = (await Todo.aggregate(getTodoPipelines)) as Record<
-            string,
-            any
-        >;
 
-        const events = await Event.find({ todoId }).select({
-            _id: 0,
-            id: { $toString: '$_id' },
-            title: 1,
-            isDone: 1,
-            isTopped: 1
-        });
-        if (todo) {
-            todo.events = events || [];
-            const data = { ...todo[0], events };
-            res.json(useSuccessfulResponseData(data));
-        }
+        const todo = (await Todo.aggregate(getTodoPipelines).exec()) || {};
+
+        res.json(useSuccessfulResponseData(todo));
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));
@@ -52,37 +44,44 @@ const getTodo = async (req: Request, res: Response) => {
 
 const getTodos = async (req: Request, res: Response) => {
     try {
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId) throw new Error('参数错误，请求无效');
+
         const {
-            userId,
             projectId,
-            tagId,
-            id,
             name,
             state,
             priority,
-            isPinned,
+            isFavorited,
             isDeleted,
             relativeDate,
             page,
             limit,
             sort
-        } = req.query as unknown as InstanceType<typeof Todo> & {
-            tagId: Oid;
-            relativeDate: string;
-            page: string;
-            limit: string;
-            sort: string;
+        } = req.query as unknown as {
+            projectId?: string;
+            name?: string;
+            state?: string;
+            priority?: string;
+            isFavorited?: boolean;
+            isDeleted?: boolean;
+            relativeDate?: string;
+            sort?: string;
+            page: number;
+            limit: number;
         };
 
         const filterTasks = [
             () => todoPipelines.handleUserId(userId),
             () => todoPipelines.handleProjectId(projectId),
-            () => todoPipelines.handleTagId(tagId),
-            () => todoPipelines.handleId(id),
+            // () => todoPipelines.handleTagId(tagId),
+            // () => todoPipelines.handleId(id),
             () => todoPipelines.handleName(name),
             () => todoPipelines.handleState(state),
             () => todoPipelines.handlePriority(priority),
-            () => todoPipelines.handleIsFavorited(isPinned),
+            () => todoPipelines.handleIsFavorited(isFavorited),
             () => todoPipelines.handleIsDeleted(isDeleted),
             () => todoPipelines.handleRelativeDate(relativeDate)
         ];
@@ -139,11 +138,10 @@ const getTodos = async (req: Request, res: Response) => {
             byState: byState,
             byPriority: byPriority
         };
-        const _limit = parseInt(limit) || 10;
         const pageInfo = {
-            page: parseInt(page) || 1,
-            limit: _limit,
-            totalPages: Math.ceil(count / _limit) || 1
+            page: page || 1,
+            limit: limit,
+            totalPages: Math.ceil(count / limit) || 1
         };
 
         const reponseData = { todos, payload: { countInfo, pageInfo } };

@@ -1,27 +1,39 @@
 import { Project } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId, Oid } from '@nao-todo-server/utils';
+import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 const updateProject = async (req: Request, res: Response) => {
     try {
-        if (!req.query.projectId || req.body.title === '') {
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.query.projectId) {
             throw new Error('参数错误，请求无效');
         }
 
-        const updateRes = await Project.updateOne(
-            { _id: new ObjectId(req.query.projectId as string) },
-            { $set: { ...req.body, updatedAt: Date.now() } }
-        );
+        if (req.body.title === '') {
+            throw new Error('清单标题不能为空');
+        }
 
-        if (!updateRes || updateRes.modifiedCount < 0)
-            throw new Error('更新失败');
+        const projectId = req.query.projectId as string;
+
+        const updatedProject = await Project.findOneAndUpdate(
+            { _id: new ObjectId(projectId), userId },
+            { $set: { ...req.body } },
+            { new: true }
+        ).exec();
+
+        if (!updatedProject) throw new Error('更新失败');
 
         return res.json(
-            useSuccessfulResponseData({ projectId: req.query.projectId })
+            useSuccessfulResponseData({
+                projectId: updatedProject._id.toString()
+            })
         );
     } catch (e: unknown) {
         if (e instanceof Error) {

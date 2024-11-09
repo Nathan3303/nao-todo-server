@@ -7,31 +7,50 @@ import {
     getTodo,
     getTodos
 } from '@nao-todo-server/apis';
+import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
 
 const exRouter: express.Router = express.Router();
 
-exRouter.get('/todo', async (req, res) => {
-    await getTodo(req, res);
-});
-
-exRouter.get('/todos', async (req, res) => {
-    await getTodos(req, res);
-});
-
 exRouter.post('/todo', async (req, res) => {
-    await createTodo(req, res);
-});
-
-exRouter.put('/todo', async (req, res) => {
-    await updateTodo(req, res);
-});
-
-exRouter.put('/todos', async (req, res) => {
-    await updateTodos(req, res);
+    console.log('[/api/todo] Route matched!', `(${req.method})`);
+    await connectAndRun(async () => {
+        await createTodo(req, res);
+    });
 });
 
 exRouter.delete('/todo', async (req, res) => {
-    await deleteTodo(req, res);
+    console.log('[/api/todo] Route matched!', `(${req.method})`);
+    await connectAndRun(async () => {
+        await deleteTodo(req, res);
+    });
+});
+
+exRouter.put('/todo', async (req, res) => {
+    console.log('[/api/todo] Route matched!', `(${req.method})`);
+    await connectAndRun(async () => {
+        await updateTodo(req, res);
+    });
+});
+
+exRouter.get('/todo', async (req, res) => {
+    console.log('[/api/todo] Route matched!', `(${req.method})`);
+    await connectAndRun(async () => {
+        await getTodo(req, res);
+    });
+});
+
+exRouter.put('/todos', async (req, res) => {
+    console.log('[/api/todos] Route matched!', `(${req.method})`);
+    await connectAndRun(async () => {
+        await updateTodos(req, res);
+    });
+});
+
+exRouter.get('/todos', async (req, res) => {
+    console.log('[/api/todos] Route matched!', `(${req.method})`);
+    await connectAndRun(async () => {
+        await getTodos(req, res);
+    });
 });
 
 export default exRouter;

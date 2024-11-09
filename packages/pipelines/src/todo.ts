@@ -1,24 +1,15 @@
 import { Todo } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
-import type { Oid } from '@nao-todo-server/utils';
 
-const handleUserId = (userId: Oid) => {
-    return userId
-        ? Todo.aggregate()
-              .match({ userId: new ObjectId(userId) })
-              .pipeline()
-        : [];
+const handleUserId = (userId?: string) => {
+    return userId ? Todo.aggregate().match({ userId }).pipeline() : [];
 };
 
-const handleProjectId = (projectId: Oid) => {
-    return projectId
-        ? Todo.aggregate()
-              .match({ projectId: new ObjectId(projectId) })
-              .pipeline()
-        : [];
+const handleProjectId = (projectId?: string) => {
+    return projectId ? Todo.aggregate().match({ projectId }).pipeline() : [];
 };
 
-const handleTagId = (tagId: Oid) => {
+const handleTagId = (tagId: string) => {
     return tagId
         ? Todo.aggregate()
               .match({ tags: { $in: [tagId] } })
@@ -26,7 +17,7 @@ const handleTagId = (tagId: Oid) => {
         : [];
 };
 
-const handleId = (id: Oid) => {
+const handleId = (id: string) => {
     return id
         ? Todo.aggregate()
               .match({ _id: new ObjectId(id) })
@@ -34,7 +25,7 @@ const handleId = (id: Oid) => {
         : [];
 };
 
-const handleName = (name: string) => {
+const handleName = (name?: string) => {
     return name
         ? Todo.aggregate()
               .match({ name: { $regex: name, $options: 'i' } })
@@ -42,15 +33,22 @@ const handleName = (name: string) => {
         : [];
 };
 
-const handleState = (state: string) => {
+const handleState = (state?: string) => {
     if (!state) return [];
+    const stateStr = ['todo', 'doing', 'done'];
+    let stateNums: number[] = [];
     const splitedState = state.split(',');
+    for (const s of splitedState) {
+        const stateNumber = stateStr.indexOf(s);
+        if (stateNumber === -1) continue;
+        stateNums.push(stateNumber);
+    }
     return Todo.aggregate()
-        .match({ state: { $in: splitedState } })
+        .match({ state: { $in: stateNums } })
         .pipeline();
 };
 
-const handlePriority = (priority: string) => {
+const handlePriority = (priority?: string) => {
     if (!priority) return [];
     const splitedPriority = priority.split(',');
     return Todo.aggregate()
@@ -58,7 +56,7 @@ const handlePriority = (priority: string) => {
         .pipeline();
 };
 
-const handleIsFavorited = (isFavorited: boolean) => {
+const handleIsFavorited = (isFavorited?: boolean) => {
     return isFavorited
         ? Todo.aggregate()
               .match({ isPinned: parseToBool(isFavorited) })
@@ -66,7 +64,7 @@ const handleIsFavorited = (isFavorited: boolean) => {
         : [];
 };
 
-const handleIsDeleted = (isDeleted: boolean) => {
+const handleIsDeleted = (isDeleted?: boolean) => {
     return isDeleted
         ? Todo.aggregate()
               .match({ isDeleted: parseToBool(isDeleted) })
@@ -74,16 +72,16 @@ const handleIsDeleted = (isDeleted: boolean) => {
         : [];
 };
 
-const handlePage = (page: string, limit: string) => {
-    const _page = parseInt(page) || 1;
-    const _limit = parseInt(limit) || 10;
+const handlePage = (page: number, limit: number) => {
+    const _page = page || 1;
+    const _limit = limit || 10;
     return Todo.aggregate()
         .skip((_page - 1) * _limit)
         .limit(_limit)
         .pipeline();
 };
 
-const handleSort = (sort: string) => {
+const handleSort = (sort?: string) => {
     if (!sort) {
         return Todo.aggregate().sort({ createdAt: 'desc' }).pipeline();
     }
@@ -178,7 +176,7 @@ const handleCountTotal = () => {
     return Todo.aggregate().count('total').pipeline();
 };
 
-const handleRelativeDate = (relativeDate: string) => {
+const handleRelativeDate = (relativeDate?: string) => {
     if (!relativeDate) return [];
     let agg = null;
     switch (relativeDate) {

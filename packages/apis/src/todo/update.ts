@@ -1,5 +1,6 @@
 import { Todo } from '@nao-todo-server/models';
 import {
+    getJWTPayload,
     useErrorResponseData,
     useResponseData,
     useSuccessfulResponseData
@@ -9,21 +10,29 @@ import type { Request, Response } from 'express';
 
 const updateTodo = async (req: Request, res: Response) => {
     try {
-        if (!req.query.todoId) throw new Error('参数不匹配，请求无效');
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.query.todoId) {
+            throw new Error('参数错误，请求无效');
+        }
 
         const todoId = req.query.todoId as string;
-        const projectId = req.body.projectId as string;
-        const updateOptions = { ...req.body, updatedAt: new Date() };
-        updateOptions.projectId = new ObjectId(projectId);
 
         const updatedTodo = await Todo.findOneAndUpdate(
-            { _id: new ObjectId(todoId) },
-            { $set: updateOptions }
-        );
-        if (!updatedTodo) throw new Error('更新失败');
+            { _id: new ObjectId(todoId), userId },
+            { $set: { ...req.body } },
+            { new: true }
+        ).exec();
+
+        if (!updatedTodo) {
+            throw new Error('更新失败');
+        }
 
         return res.json(
-            useResponseData(20000, '更新成功', { todoId: updatedTodo._id })
+            useResponseData(20000, '更新成功', {
+                todoId: updatedTodo._id.toString()
+            })
         );
     } catch (e: unknown) {
         if (e instanceof Error) {
@@ -36,18 +45,29 @@ const updateTodo = async (req: Request, res: Response) => {
 
 const updateTodos = async (req: Request, res: Response) => {
     try {
-        const { todoIds, updateInfo } = req.body;
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.body.todoIds || !req.body.updateInfo) {
+            throw new Error('参数错误，请求无效');
+        }
+
+        const { todoIds, updateInfo } = req.body as unknown as {
+            todoIds: string[];
+            updateInfo: Record<string, unknown>;
+        };
 
         const updateRes = await Todo.updateMany(
             { _id: { $in: todoIds } },
-            { $set: { ...updateInfo, updatedAt: new Date() } }
+            { $set: { ...updateInfo } },
+            { multi: true }
         ).exec();
-        if (!updateRes) throw new Error('Update failed');
 
-        const { modifiedCount, matchedCount } = updateRes;
-        if (modifiedCount !== matchedCount) throw new Error('Update failed');
+        if (!updateRes || updateRes.modifiedCount !== updateRes.matchedCount) {
+            throw new Error('更新失败');
+        }
 
-        res.json(useSuccessfulResponseData('Update successful'));
+        res.json(useSuccessfulResponseData('更新成功'));
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));

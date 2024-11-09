@@ -1,24 +1,32 @@
 import { Tag } from '@nao-todo-server/models';
-import { ObjectId, Oid, serialExecute } from '@nao-todo-server/utils';
+import { serialExecute } from '@nao-todo-server/utils';
 import {
+    getJWTPayload,
     useErrorResponseData,
     useSuccessfulResponseData
 } from '@nao-todo-server/hooks';
 import { tagPipelines } from '@nao-todo-server/pipelines';
 import type { Request, Response } from 'express';
 
-const getTag = async (req: Request, res: Response) => {};
+const getTag = async (req: Request, res: Response) => {
+    res.json(useSuccessfulResponseData('Hello, world'));
+};
 
 const getTags = async (req: Request, res: Response) => {
     try {
-        const { userId, name, isDeleted, page, limit } =
-            req.query as unknown as {
-                userId: Oid;
-                name: string;
-                isDeleted: boolean;
-                page: string;
-                limit: string;
-            };
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId) {
+            throw new Error('参数错误，请求无效');
+        }
+
+        const { name, isDeleted, page, limit } = req.query as unknown as {
+            name: string;
+            isDeleted: boolean;
+            page: number;
+            limit: number;
+        };
 
         const tasks = [
             () => tagPipelines.handleUserId(userId),
@@ -31,7 +39,8 @@ const getTags = async (req: Request, res: Response) => {
 
         let executeResults = await serialExecute(tasks);
         executeResults = executeResults.flat();
-        const tags = await Tag.aggregate(executeResults);
+
+        const tags = await Tag.aggregate(executeResults).exec();
 
         res.json(useSuccessfulResponseData(tags));
     } catch (e: unknown) {

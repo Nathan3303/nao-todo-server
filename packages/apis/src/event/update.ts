@@ -1,33 +1,35 @@
 import { Event } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId, type Oid } from '@nao-todo-server/utils';
+import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 const updateEvent = async (req: Request, res: Response) => {
     try {
-        if (!req.body.userId || !req.body.eventId) {
-            throw new Error('缺少参数，请求无效');
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId || !req.query.eventId) {
+            throw new Error('参数错误，请求无效');
         }
 
-        const { userId, eventId } = req.query;
+        const eventId = req.query.eventId as string;
 
         const updatedEvent = await Event.findOneAndUpdate(
-            { userId, _id: new ObjectId(eventId as string) },
-            { $set: { ...req.body, updatedAt: new Date() } }
-        );
+            { _id: new ObjectId(eventId), userId },
+            { $set: { ...req.body } },
+            { new: true }
+        ).exec();
 
-        if (!updatedEvent) throw new Error('修改失败');
+        if (!updatedEvent) {
+            throw new Error('修改失败');
+        }
 
         return res.json(
-            useSuccessfulResponseData({
-                id: updatedEvent._id,
-                title: updatedEvent.title,
-                isDone: updatedEvent.isDone,
-                isTopped: updatedEvent.isTopped
-            })
+            useSuccessfulResponseData({ eventId: updatedEvent._id.toString() })
         );
     } catch (e: unknown) {
         if (e instanceof Error) {

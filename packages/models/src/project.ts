@@ -1,94 +1,65 @@
-import mongoose from 'mongoose';
+import {
+    getModelForClass,
+    prop,
+    modelOptions,
+    index
+} from '@typegoose/typegoose';
 
-const ObjectId = mongoose.Schema.Types.ObjectId;
+@modelOptions({ schemaOptions: { _id: false }, options: { allowMixed: 0 } })
+class ProjectPreference {
+    @prop({ default: 'table' })
+    viewType: string;
 
-const projectSchema = new mongoose.Schema({
-    /**
-     * The user who created the project
-     */
-    userId: { type: ObjectId, ref: 'User' },
-    /**
-     * The title of the project
-     */
-    title: { type: String, required: true },
-    /**
-     * The description of the project
-     */
-    description: { type: String, default: null },
-    /**
-     * The date when the project was created
-     * 0 - Not started
-     * 1 - In progress
-     * 2 - Done
-     */
-    state: { type: [0, 1, 2], default: 0 },
-    /**
-     * The date when the project was archived
-     */
-    isArchived: { type: Boolean, default: false },
-    /**
-     * The date when the project was deleted
-     */
-    isDeleted: { type: Boolean, default: false },
-    /**
-     * The date when the project was finished
-     */
-    isFinished: { type: Boolean, default: false },
-    /**
-     * The date when the project was favorited
-     */
-    isFavorite: { type: Boolean, default: false },
-    /**
-     * The date when the project was created
-     */
-    createdAt: { type: Date, default: Date.now },
-    /**
-     * The date when the project was updated
-     */
-    updatedAt: { type: Date, default: Date.now },
-    /**
-     * The date when the project was deleted
-     */
-    deletedAt: { type: Date, default: null },
-    /**
-     * The date when the project was finished
-     */
-    finishedAt: { type: Date, default: null },
-    /**
-     * The date when the project was favorited
-     */
-    archivedAt: { type: Date, default: null },
-    /**
-     * The user's preference for the project
-     */
-    preference: {
-        viewType: { type: String, default: 'table' },
-        filterInfo: {
-            type: Object,
-            default: {
-                isDeleted: false
-            }
-        },
-        sortInfo: {
-            type: { field: String, order: String },
-            default: {
-                field: 'createdAt',
-                order: 'desc'
-            }
-        },
-        columns: {
-            type: Object,
-            default: {
-                state: false,
-                priority: true,
-                project: true,
-                description: true,
-                endAt: true,
-                createdAt: false,
-                updatedAt: false
-            }
+    @prop({ default: { isDeleted: false } })
+    filterInfo: object;
+
+    @prop({ default: { field: 'createdAt', order: 'desc' } })
+    sortInfo: object;
+
+    @prop({
+        default: {
+            state: false,
+            priority: true,
+            project: true,
+            description: true,
+            endAt: true,
+            createdAt: false,
+            updatedAt: false
         }
-    }
-});
+    })
+    columns: object;
+}
 
-export default mongoose.model('Project', projectSchema);
+@index({ userId: 1, title: 1 }, { unique: true })
+@modelOptions({ schemaOptions: { timestamps: true, collection: 'projects' } })
+class Project {
+    @prop({ required: true })
+    userId: string;
+
+    @prop({ required: true })
+    title: string;
+
+    @prop({ default: null })
+    description: string;
+
+    @prop({ default: 0 })
+    state: number;
+
+    @prop({ default: false })
+    isArchived: boolean;
+
+    @prop({ default: false })
+    isDeleted: boolean;
+
+    @prop({ default: null })
+    deletedAt: Date;
+
+    @prop({ default: null })
+    archivedAt: Date;
+
+    @prop({ default: null })
+    preference: ProjectPreference;
+}
+
+export default getModelForClass(Project);
+export { Project };

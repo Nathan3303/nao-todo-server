@@ -1,6 +1,12 @@
 import express from 'express';
 import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
-import { signin, signup, checkin, signout } from '@nao-todo-server/apis';
+import {
+    signin,
+    signup,
+    checkin,
+    signout,
+    validate
+} from '@nao-todo-server/apis';
 // import type { Request, Response } from 'express';
 
 const exRouter: express.Router = express.Router();
@@ -30,6 +36,14 @@ exRouter.delete('/signout', async (req, res) => {
     console.log('[/api/signout] Route matched!');
     await connectAndRun(async () => {
         await signout(req, res);
+    });
+});
+
+exRouter.use(async (req, res, next) => {
+    console.log('[/api/auth/validate] Route matched!');
+    await connectAndRun(async () => {
+        const isValid = await validate(req, res);
+        if (isValid) next();
     });
 });
 

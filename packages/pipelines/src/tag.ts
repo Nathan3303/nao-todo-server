@@ -1,16 +1,11 @@
 import { Tag } from '@nao-todo-server/models';
-import { ObjectId, parseToBool } from '@nao-todo-server/utils';
-import type { Oid } from '@nao-todo-server/utils';
+import { parseToBool } from '@nao-todo-server/utils';
 
-const handleUserId = (userId: Oid) => {
-    return userId
-        ? Tag.aggregate()
-              .match({ userId: new ObjectId(userId) })
-              .pipeline()
-        : [];
+const handleUserId = (userId: string) => {
+    return userId ? Tag.aggregate().match({ userId }).pipeline() : [];
 };
 
-const handleName = (name: string) => {
+const handleName = (name?: string) => {
     return name
         ? Tag.aggregate()
               .match({ name: { $regex: `.*${name}.*`, $options: 'i' } })
@@ -18,7 +13,7 @@ const handleName = (name: string) => {
         : [];
 };
 
-const handleIsDeleted = (isDeleted: boolean) => {
+const handleIsDeleted = (isDeleted?: boolean) => {
     return isDeleted
         ? Tag.aggregate()
               .match({ isDeleted: parseToBool(isDeleted) })
@@ -26,9 +21,9 @@ const handleIsDeleted = (isDeleted: boolean) => {
         : [];
 };
 
-const handlePage = (page: string, limit: string) => {
-    const _page = parseInt(page) || 1;
-    const _limit = parseInt(limit) || 10;
+const handlePage = (page: number, limit: number) => {
+    const _page = page || 1;
+    const _limit = limit || 10;
     return Tag.aggregate()
         .skip((_page - 1) * _limit)
         .limit(_limit)

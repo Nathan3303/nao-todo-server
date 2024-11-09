@@ -1,25 +1,59 @@
-import mongoose from 'mongoose';
+import {
+    getModelForClass,
+    prop,
+    modelOptions,
+    index
+} from '@typegoose/typegoose';
 
-const ObjectId = mongoose.Schema.Types.ObjectId;
+@modelOptions({ schemaOptions: { _id: false } })
+class TodoDueDate {
+    startAt: Date;
+    endAt: Date;
+}
 
-const todoSchema = new mongoose.Schema({
-    userId: { type: ObjectId, ref: 'User' },
-    projectId: { type: ObjectId, ref: 'Project' },
-    name: { type: String, required: true },
-    description: { type: String, default: '' },
-    state: { type: String, default: 'todo' },
-    priority: { type: String, default: 'low' },
-    tags: [{ type: String }],
-    dueDate: {
-        startAt: { type: Date, default: Date.now },
-        endAt: { type: Date, default: null }
-    },
-    isDone: { type: Boolean, default: false },
-    isDeleted: { type: Boolean, default: false },
-    isArchived: { type: Boolean, default: false },
-    isPinned: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-});
+@index({ userId: 1, projectId: 1 })
+@index({ userId: 1, projectId: 1, name: 1, state: 1, priority: 1 })
+@modelOptions({
+    schemaOptions: { timestamps: true, collection: 'todos' },
+    options: { allowMixed: 0 }
+})
+class Todo {
+    @prop({ required: true })
+    userId: string;
 
-export default mongoose.model('Todo', todoSchema);
+    @prop({ required: true })
+    projectId: string;
+
+    @prop({ required: true })
+    name: string;
+
+    @prop({ default: '' })
+    description: string;
+
+    @prop({ default: 0, enum: [0, 1, 2] })
+    state: number;
+
+    @prop({ default: 0, enum: [0, 1, 2, 3] })
+    priority: number;
+
+    @prop({ default: [] })
+    tags: string[];
+
+    // @prop({ default: false })
+    // isDone: boolean;
+
+    @prop({ default: null })
+    dueDate: TodoDueDate;
+
+    @prop({ default: false })
+    isDeleted: boolean;
+
+    @prop({ default: false })
+    isArchived: boolean;
+
+    @prop({ default: false })
+    isFavorited: boolean;
+}
+
+export default getModelForClass(Todo);
+export { Todo };

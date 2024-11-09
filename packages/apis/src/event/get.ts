@@ -1,25 +1,29 @@
 import { Event } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
-    useErrorResponseData
+    useErrorResponseData,
+    getJWTPayload
 } from '@nao-todo-server/hooks';
-import { ObjectId, type Oid, serialExecute } from '@nao-todo-server/utils';
+import { serialExecute } from '@nao-todo-server/utils';
 import { eventPipelines } from '@nao-todo-server/pipelines';
 import type { Request, Response } from 'express';
 
-const getEvent = async (req: Request, res: Response) => {};
+const getEvent = async (req: Request, res: Response) => {
+    res.json(useSuccessfulResponseData('Hello World'));
+};
 
 const getEvents = async (req: Request, res: Response) => {
     try {
-        if (!req.body.userId) {
-            throw new Error('缺少参数，请求无效');
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!userId) {
+            throw new Error('参数错误，请求无效');
         }
 
-        const { userId, todoId, id, title, isDone, isTopped, page, limit } =
+        const { todoId, title, isDone, isTopped, page, limit } =
             req.query as unknown as {
-                userId: Oid;
-                todoId?: Oid;
-                id?: Oid;
+                todoId?: string;
                 title?: string;
                 isDone?: boolean;
                 isTopped?: boolean;
@@ -30,7 +34,6 @@ const getEvents = async (req: Request, res: Response) => {
         const getEventTasks = [
             () => eventPipelines.handleUserId(userId),
             () => eventPipelines.handleTodoId(todoId),
-            () => eventPipelines.handleId(id),
             () => eventPipelines.handleTitle(title),
             () => eventPipelines.handleIsDone(isDone),
             () => eventPipelines.handleIsTopped(isTopped),
@@ -41,7 +44,8 @@ const getEvents = async (req: Request, res: Response) => {
 
         const getEventTasksExecution = await serialExecute(getEventTasks);
         const getEventPipelines = getEventTasksExecution.flat();
-        const events = await Event.aggregate(getEventPipelines);
+
+        const events = await Event.aggregate(getEventPipelines).exec();
 
         res.json(useSuccessfulResponseData(events));
     } catch (e: unknown) {
