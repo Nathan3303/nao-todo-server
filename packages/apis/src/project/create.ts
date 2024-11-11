@@ -27,7 +27,23 @@ const createProject = async (req: Request, res: Response) => {
         });
         if (!createdProject) throw new Error('创建项目失败');
 
-        return res.json(useSuccessfulResponseData(createdProject));
+        return res.json(
+            useSuccessfulResponseData({
+                _id: createdProject._id,
+                id: createdProject._id,
+                userId: createdProject.userId,
+                title: createdProject.title,
+                description: createdProject.description,
+                state: createdProject.state,
+                isArchived: createdProject.isArchived,
+                archivedAt: createdProject.archivedAt,
+                isDeleted: createdProject.isDeleted,
+                deletedAt: createdProject.deletedAt,
+                preference: createdProject.preference,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            })
+        );
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));
