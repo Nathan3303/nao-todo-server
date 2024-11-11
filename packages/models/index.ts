@@ -1,9 +1,9 @@
-import UserModel from './src/User';
-import SessionModel from './src/Session';
-import ProjectModel from './src/Project';
-import TodoModel from './src/Todo';
-import EventModel from './src/Event';
-import TagModel from './src/Tag';
+import UserModel from './src/user';
+import SessionModel from './src/session';
+import ProjectModel from './src/project';
+import TodoModel from './src/todo';
+import EventModel from './src/event';
+import TagModel from './src/tag';
 
 export const User = UserModel;
 export const Session = SessionModel;
