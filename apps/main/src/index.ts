@@ -8,7 +8,6 @@ import projectRoutes from './routes/project';
 import tagRoutes from './routes/tag';
 import eventRoutes from './routes/event';
 import { useErrorResponseData } from '@nao-todo-server/hooks';
-import jwt from 'jsonwebtoken';
 import { jwtCryptoSecret } from '@nao-todo-server/hooks/src/use-jwt/constants';
 
 const app = express();
@@ -24,12 +23,6 @@ app.use(function (request, response, next) {
         return;
     }
     const token = authorization.replace('Bearer ', '');
-    jwt.verify(token, jwtCryptoSecret, (err, _) => {
-        if (err) {
-            response.json(useErrorResponseData('Invalid token.'));
-            return;
-        }
-    });
     next();
 });
 app.use('/api', todoRoutes);

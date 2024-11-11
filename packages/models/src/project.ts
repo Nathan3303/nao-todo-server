@@ -10,11 +10,19 @@ class ProjectPreference {
     @prop({ default: 'table' })
     viewType: string;
 
-    @prop({ default: { isDeleted: false } })
-    filterInfo: object;
+    // @prop({ default: { isDeleted: false } })
+    // filterInfo: object;
 
-    @prop({ default: { field: 'createdAt', order: 'desc' } })
-    sortInfo: object;
+    // @prop({ default: { field: 'createdAt', order: 'desc' } })
+    // sortInfo: object;
+
+    @prop({
+        default: {
+            isDeleted: false,
+            sort: { field: 'createdAt', order: 'desc' }
+        }
+    })
+    getTodosOptions: object;
 
     @prop({
         default: {

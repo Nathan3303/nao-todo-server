@@ -2,7 +2,6 @@
     "name": "@nao-todo-server/main-app",
     "version": "0.0.0",
     "description": "Main app in Nao Todo Server",
-    "main": "index.ts",
     "packageManager": "pnpm@9.12.1",
     "type": "module",
     "scripts": {
@@ -15,5 +14,13 @@
         "cors": "^2.8.5",
         "express": "^4.19.2",
         "https": "^1.0.0"
+    },
+    "devDependencies": {
+        "rollup": "^4.24.4",
+        "rollup-plugin-typescript2": "^0.36.0",
+        "@rollup/plugin-commonjs": "^28.0.1",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^15.3.0",
+        "@rollup/plugin-typescript": "^12.1.1"
     }
 }
