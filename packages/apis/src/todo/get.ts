@@ -7,6 +7,7 @@ import {
 import { serialExecute } from '@nao-todo-server/utils';
 import { todoPipelines } from '@nao-todo-server/pipelines';
 import type { Request, Response } from 'express';
+import { GetTodosQuery } from './types';
 
 const getTodo = async (req: Request, res: Response) => {
     try {
@@ -60,18 +61,7 @@ const getTodos = async (req: Request, res: Response) => {
             page,
             limit,
             sort
-        } = req.query as unknown as {
-            projectId?: string;
-            name?: string;
-            state?: string;
-            priority?: string;
-            isFavorited?: boolean;
-            isDeleted?: boolean;
-            relativeDate?: string;
-            sort?: string;
-            page: number;
-            limit: number;
-        };
+        } = req.query as unknown as GetTodosQuery;
 
         const filterTasks = [
             () => todoPipelines.handleUserId(userId),
@@ -141,7 +131,7 @@ const getTodos = async (req: Request, res: Response) => {
         const pageInfo = {
             page: page || 1,
             limit: limit,
-            totalPages: Math.ceil(count / limit) || 1
+            totalPages: Math.ceil(count / parseInt(limit)) || 1
         };
 
         const reponseData = { todos, payload: { countInfo, pageInfo } };

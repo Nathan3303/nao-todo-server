@@ -72,9 +72,9 @@ const handleIsDeleted = (isDeleted?: boolean) => {
         : [];
 };
 
-const handlePage = (page: number, limit: number) => {
-    const _page = page || 1;
-    const _limit = limit || 10;
+const handlePage = (page: string, limit: string) => {
+    const _page = parseInt(page) || 1;
+    const _limit = parseInt(limit) || 10;
     return Todo.aggregate()
         .skip((_page - 1) * _limit)
         .limit(_limit)

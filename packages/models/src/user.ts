@@ -9,7 +9,7 @@ import {
 @modelOptions({ schemaOptions: { timestamps: true, collection: 'users' } })
 class User {
     @prop({ required: true, unique: true })
-    username: string;
+    account: string;
 
     @prop({ required: true })
     password: string;
@@ -18,7 +18,7 @@ class User {
     email: string;
 
     @prop()
-    nickName: string;
+    nickname: string;
 
     @prop()
     avatar: string;

@@ -39,9 +39,10 @@ const signin = async (req: Request, res: Response) => {
 
         // 生成JWT
         const token = useJWT({
+            id: userId,
             userId,
             email: user.email,
-            nickName: user.nickName,
+            nickname: user.nickname,
             avatar: user.avatar,
             role: user.role,
             expiresAt

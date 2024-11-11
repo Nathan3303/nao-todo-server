@@ -37,11 +37,14 @@ const checkin = async (req: Request, res: Response) => {
         }).exec();
         if (!user) throw new Error('用户凭证无效，请重新登录');
 
+        const userId = user._id.toString(); // 获取用户ID
+
         // 生成新的jwt
         const newJWT = useJWT({
-            userId: user._id,
+            id: userId,
+            userId: userId,
             email: user.email,
-            nickName: user.nickName,
+            nickname: user.nickname,
             avatar: user.avatar,
             role: user.role,
             expiresAt: moment().add(7, 'days').utcOffset(8).utc().format()

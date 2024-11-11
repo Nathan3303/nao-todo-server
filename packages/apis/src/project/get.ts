@@ -62,8 +62,8 @@ const getProjects = async (req: Request, res: Response) => {
             () => projectPipelines.handleIsDeleted(isDeleted),
             () => projectPipelines.handleIsFinished(isFinished),
             () => projectPipelines.handleIsArchived(isArchived),
-            () => projectPipelines.handlePage(page, limit),
             () => projectPipelines.handleSort(sort),
+            () => projectPipelines.handlePage(page, limit),
             () => projectPipelines.handleOutput()
         ]);
 

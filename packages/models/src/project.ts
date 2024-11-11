@@ -48,14 +48,14 @@ class Project {
     @prop({ default: false })
     isArchived: boolean;
 
+    @prop({ default: null })
+    archivedAt: Date;
+
     @prop({ default: false })
     isDeleted: boolean;
 
     @prop({ default: null })
     deletedAt: Date;
-
-    @prop({ default: null })
-    archivedAt: Date;
 
     @prop({ default: null })
     preference: ProjectPreference;

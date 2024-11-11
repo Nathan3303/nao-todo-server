@@ -30,19 +30,16 @@ class Todo {
     @prop({ default: '' })
     description: string;
 
-    @prop({ default: 0, enum: [0, 1, 2] })
-    state: number;
+    @prop({ default: 'todo', enum: ['todo', 'doing', 'done'] })
+    state: string;
 
-    @prop({ default: 0, enum: [0, 1, 2, 3] })
-    priority: number;
+    @prop({ default: 'low', enum: ['low', 'medium', 'high', 'urgent'] })
+    priority: string;
 
     @prop({ default: [] })
     tags: string[];
 
-    // @prop({ default: false })
-    // isDone: boolean;
-
-    @prop({ default: null })
+    @prop({ default: { startAt: null, endAt: null } })
     dueDate: TodoDueDate;
 
     @prop({ default: false })
