@@ -145,7 +145,7 @@ const handleSelectFields = (fieldsOptions?: Record<string, any>) => {
         createdAt: 1,
         updatedAt: 1,
         description: 1,
-        isPinned: 1,
+        isFavorited: 1,
         dueDate: 1,
         isDeleted: 1
     };

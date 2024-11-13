@@ -7,7 +7,10 @@ import {
 
 @modelOptions({ schemaOptions: { _id: false } })
 class TodoDueDate {
+    @prop({ default: new Date() })
     startAt: Date;
+
+    @prop({ default: null })
     endAt: Date;
 }
 
