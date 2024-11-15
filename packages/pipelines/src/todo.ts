@@ -1,18 +1,27 @@
 import { Todo } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
+import moment from 'moment';
 
 const handleUserId = (userId?: string) => {
-    return userId ? Todo.aggregate().match({ userId }).pipeline() : [];
+    return userId
+        ? Todo.aggregate()
+              .match({ userId: new ObjectId(userId) })
+              .pipeline()
+        : [];
 };
 
 const handleProjectId = (projectId?: string) => {
-    return projectId ? Todo.aggregate().match({ projectId }).pipeline() : [];
+    return projectId
+        ? Todo.aggregate()
+              .match({ projectId: new ObjectId(projectId) })
+              .pipeline()
+        : [];
 };
 
-const handleTagId = (tagId: string) => {
+const handleTagId = (tagId?: string) => {
     return tagId
         ? Todo.aggregate()
-              .match({ tags: { $in: [tagId] } })
+              .match({ tags: { $in: [new ObjectId(tagId)] } })
               .pipeline()
         : [];
 };
@@ -35,16 +44,9 @@ const handleName = (name?: string) => {
 
 const handleState = (state?: string) => {
     if (!state) return [];
-    const stateStr = ['todo', 'doing', 'done'];
-    let stateNums: number[] = [];
     const splitedState = state.split(',');
-    for (const s of splitedState) {
-        const stateNumber = stateStr.indexOf(s);
-        if (stateNumber === -1) continue;
-        stateNums.push(stateNumber);
-    }
     return Todo.aggregate()
-        .match({ state: { $in: stateNums } })
+        .match({ state: { $in: splitedState } })
         .pipeline();
 };
 
@@ -56,7 +58,7 @@ const handlePriority = (priority?: string) => {
         .pipeline();
 };
 
-const handleIsFavorited = (isFavorited?: boolean) => {
+const handleIsFavorited = (isFavorited?: string) => {
     return isFavorited
         ? Todo.aggregate()
               .match({ isPinned: parseToBool(isFavorited) })
@@ -64,7 +66,7 @@ const handleIsFavorited = (isFavorited?: boolean) => {
         : [];
 };
 
-const handleIsDeleted = (isDeleted?: boolean) => {
+const handleIsDeleted = (isDeleted?: string) => {
     return isDeleted
         ? Todo.aggregate()
               .match({ isDeleted: parseToBool(isDeleted) })
@@ -123,31 +125,18 @@ const handleSelectFields = (fieldsOptions?: Record<string, any>) => {
         _id: 0,
         id: { $toString: '$_id' },
         projectId: 1,
-        project: {
-            title: '$_project.title'
-        },
+        project: { title: '$_project.title' },
         name: 1,
+        description: 1,
         state: 1,
         priority: 1,
-        tags: 1,
-        tagsInfo: {
-            $map: {
-                input: '$tagsInfo',
-                as: 'tag',
-                in: {
-                    id: { $toString: '$$tag._id' },
-                    name: '$$tag.name',
-                    color: '$$tag.color'
-                }
-            }
-        },
-        isDone: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        description: 1,
-        isFavorited: 1,
         dueDate: 1,
-        isDeleted: 1
+        isDone: 1,
+        isFavorited: 1,
+        isDeleted: 1,
+        tags: 1,
+        updatedAt: 1,
+        createdAt: 1
     };
     return Todo.aggregate().project(fieldsOptions).pipeline();
 };
@@ -179,36 +168,29 @@ const handleCountTotal = () => {
 const handleRelativeDate = (relativeDate?: string) => {
     if (!relativeDate) return [];
     let agg = null;
+    const now = moment();
     switch (relativeDate) {
         case 'today':
             agg = Todo.aggregate().match({
                 'dueDate.endAt': {
-                    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-                    $lte: new Date(new Date().setHours(23, 59, 59, 999))
+                    $gte: now.startOf('day').toDate(),
+                    $lte: now.endOf('day').toDate()
                 }
             });
             break;
         case 'tomorrow':
             agg = Todo.aggregate().match({
                 'dueDate.endAt': {
-                    $gte: new Date(
-                        new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000
-                    ),
-                    $lte: new Date(
-                        new Date().setHours(23, 59, 59, 999) +
-                            24 * 60 * 60 * 1000
-                    )
+                    $gte: now.add(1, 'days').startOf('day').toDate(),
+                    $lte: now.add(1, 'days').endOf('day').toDate()
                 }
             });
             break;
         case 'week':
             agg = Todo.aggregate().match({
                 'dueDate.endAt': {
-                    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-                    $lte: new Date(
-                        new Date().setHours(23, 59, 59, 999) +
-                            7 * 24 * 60 * 60 * 1000
-                    )
+                    $gte: now.startOf('isoWeek').toDate(),
+                    $lte: now.endOf('isoWeek').toDate()
                 }
             });
             break;

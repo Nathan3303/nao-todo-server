@@ -2,13 +2,13 @@ import {
     getModelForClass,
     prop,
     modelOptions,
-    index
+    mongoose
 } from '@typegoose/typegoose';
 
 @modelOptions({ schemaOptions: { timestamps: true, collection: 'tags' } })
 class Tag {
-    @prop({ required: true })
-    userId: string;
+    @prop({ required: true, ref: 'User' })
+    userId: mongoose.Types.ObjectId;
 
     @prop({ required: true })
     name: string;

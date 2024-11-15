@@ -58,6 +58,7 @@ const getTodos = async (req: Request, res: Response) => {
             isFavorited,
             isDeleted,
             relativeDate,
+            tagId,
             page,
             limit,
             sort
@@ -66,7 +67,7 @@ const getTodos = async (req: Request, res: Response) => {
         const filterTasks = [
             () => todoPipelines.handleUserId(userId),
             () => todoPipelines.handleProjectId(projectId),
-            // () => todoPipelines.handleTagId(tagId),
+            () => todoPipelines.handleTagId(tagId),
             // () => todoPipelines.handleId(id),
             () => todoPipelines.handleName(name),
             () => todoPipelines.handleState(state),

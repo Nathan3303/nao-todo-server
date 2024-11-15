@@ -17,15 +17,16 @@ const createTag = async (req: Request, res: Response) => {
 
         const { name, color } = req.body;
 
-        const createdTag = await Tag.create({
-            userId,
-            name,
-            color
-        });
+        const createdTag = await Tag.create({ userId, name, color });
 
         if (!createdTag) throw new Error('创建失败');
 
-        return res.json(useSuccessfulResponseData({ createdTag }));
+        return res.json(
+            useSuccessfulResponseData({
+                ...createdTag.toJSON(),
+                id: createdTag._id.toString()
+            })
+        );
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));

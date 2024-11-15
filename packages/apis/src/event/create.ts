@@ -21,7 +21,12 @@ const createEvent = async (req: Request, res: Response) => {
 
         if (!createdEvent) throw new Error('创建失败');
 
-        return res.json(useSuccessfulResponseData(createdEvent));
+        return res.json(
+            useSuccessfulResponseData({
+                ...createdEvent.toJSON(),
+                id: createdEvent._id.toString()
+            })
+        );
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));

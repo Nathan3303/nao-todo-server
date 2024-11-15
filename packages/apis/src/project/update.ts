@@ -23,7 +23,7 @@ const updateProject = async (req: Request, res: Response) => {
         const projectId = req.query.projectId as string;
 
         const updatedProject = await Project.findOneAndUpdate(
-            { _id: new ObjectId(projectId), userId },
+            { _id: new ObjectId(projectId), userId: new ObjectId(userId) },
             { $set: { ...req.body } },
             { new: true }
         ).exec();

@@ -3,9 +3,10 @@ export type GetTodosQuery = {
     name?: string;
     state?: string;
     priority?: string;
-    isFavorited?: boolean;
-    isDeleted?: boolean;
+    isFavorited?: string;
+    isDeleted?: string;
     relativeDate?: string;
+    tagId?: string;
     sort?: string;
     page: string;
     limit: string;

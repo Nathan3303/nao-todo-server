@@ -67,7 +67,13 @@ const updateTodos = async (req: Request, res: Response) => {
             throw new Error('更新失败');
         }
 
-        res.json(useSuccessfulResponseData('更新成功'));
+        res.json(
+            useSuccessfulResponseData({
+                todoIds,
+                total: todoIds.length,
+                modifiedCount: updateRes.modifiedCount
+            })
+        );
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));

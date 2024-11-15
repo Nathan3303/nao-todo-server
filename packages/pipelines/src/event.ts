@@ -2,11 +2,19 @@ import { Event } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
 
 const handleUserId = (userId: string) => {
-    return userId ? Event.aggregate().match({ userId }).pipeline() : [];
+    return userId
+        ? Event.aggregate()
+              .match({ userId: new ObjectId(userId) })
+              .pipeline()
+        : [];
 };
 
 const handleTodoId = (todoId?: string) => {
-    return todoId ? Event.aggregate().match({ todoId }).pipeline() : [];
+    return todoId
+        ? Event.aggregate()
+              .match({ todoId: new ObjectId(todoId) })
+              .pipeline()
+        : [];
 };
 
 const handleId = (id?: string) => {

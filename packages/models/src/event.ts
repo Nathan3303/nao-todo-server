@@ -2,18 +2,19 @@ import {
     getModelForClass,
     prop,
     modelOptions,
-    index
+    index,
+    mongoose
 } from '@typegoose/typegoose';
 
 @index({ userId: 1, todoId: 1 })
 @index({ userId: 1, todoId: 1, title: 1 })
 @modelOptions({ schemaOptions: { timestamps: true, collection: 'events' } })
 class Event {
-    @prop({ required: true })
-    userId: string;
+    @prop({ required: true, ref: 'User' })
+    userId: mongoose.Types.ObjectId;
 
-    @prop({ required: true })
-    todoId: string;
+    @prop({ required: true, ref: 'Todo' })
+    todoId: mongoose.Types.ObjectId;
 
     @prop({ required: true })
     title: string;

@@ -2,14 +2,15 @@ import {
     getModelForClass,
     prop,
     modelOptions,
-    index
+    index,
+    mongoose
 } from '@typegoose/typegoose';
 
 @index({ userId: 1 }, { unique: true })
 @modelOptions({ schemaOptions: { timestamps: true, collection: 'sessions' } })
 class Session {
-    @prop({ required: true })
-    userId: string;
+    @prop({ required: true, ref: 'User' })
+    userId: mongoose.Types.ObjectId;
 
     @prop({ required: true })
     token: string;

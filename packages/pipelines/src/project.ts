@@ -1,8 +1,8 @@
 import { Project } from '@nao-todo-server/models';
-import { parseToBool } from '@nao-todo-server/utils';
+import { ObjectId, parseToBool } from '@nao-todo-server/utils';
 
 const handleUserId = (userId: string) => {
-    return userId ? Project.aggregate().match({ userId }).pipeline() : [];
+    return userId ? Project.aggregate().match({ userId: new ObjectId(userId) }).pipeline() : [];
 };
 
 const handleTitle = (title: string) => {

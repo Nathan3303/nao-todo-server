@@ -29,19 +29,8 @@ const createProject = async (req: Request, res: Response) => {
 
         return res.json(
             useSuccessfulResponseData({
-                _id: createdProject._id,
-                id: createdProject._id,
-                userId: createdProject.userId,
-                title: createdProject.title,
-                description: createdProject.description,
-                state: createdProject.state,
-                isArchived: createdProject.isArchived,
-                archivedAt: createdProject.archivedAt,
-                isDeleted: createdProject.isDeleted,
-                deletedAt: createdProject.deletedAt,
-                preference: createdProject.preference,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
+                ...createdProject.toJSON(),
+                id: createdProject._id.toString()
             })
         );
     } catch (e: unknown) {

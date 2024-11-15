@@ -24,8 +24,8 @@ const getTags = async (req: Request, res: Response) => {
         const { name, isDeleted, page, limit } = req.query as unknown as {
             name: string;
             isDeleted: boolean;
-            page: number;
-            limit: number;
+            page: string;
+            limit: string;
         };
 
         const tasks = [

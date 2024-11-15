@@ -2,7 +2,8 @@ import {
     getModelForClass,
     prop,
     modelOptions,
-    index
+    index,
+    mongoose
 } from '@typegoose/typegoose';
 
 @modelOptions({ schemaOptions: { _id: false }, options: { allowMixed: 0 } })
@@ -10,18 +11,7 @@ class ProjectPreference {
     @prop({ default: 'table' })
     viewType: string;
 
-    // @prop({ default: { isDeleted: false } })
-    // filterInfo: object;
-
-    // @prop({ default: { field: 'createdAt', order: 'desc' } })
-    // sortInfo: object;
-
-    @prop({
-        default: {
-            isDeleted: false,
-            sort: { field: 'createdAt', order: 'desc' }
-        }
-    })
+    @prop({ default: null })
     getTodosOptions: object;
 
     @prop({
@@ -41,8 +31,8 @@ class ProjectPreference {
 @index({ userId: 1, title: 1 }, { unique: true })
 @modelOptions({ schemaOptions: { timestamps: true, collection: 'projects' } })
 class Project {
-    @prop({ required: true })
-    userId: string;
+    @prop({ required: true, ref: 'User'})
+    userId: mongoose.Types.ObjectId;
 
     @prop({ required: true })
     title: string;
