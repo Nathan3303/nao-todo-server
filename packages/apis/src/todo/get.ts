@@ -14,26 +14,27 @@ const getTodo = async (req: Request, res: Response) => {
         const userId = getJWTPayload(req.headers.authorization as string)
             .userId as string;
 
-        if (!userId || !req.query.todoId) {
+        if (!userId || !req.query.id) {
             throw new Error('参数错误，请求无效');
         }
 
-        const todoId = req.query.todoId as string;
+        const id = req.query.id as string;
 
         const getTodoTasks = [
-            () => todoPipelines.handleId(todoId),
+            () => todoPipelines.handleId(id),
+            () => todoPipelines.handleUserId(userId),
             () => todoPipelines.handleLookupProject(),
-            () => todoPipelines.handleLookupTags(),
-            () => todoPipelines.handleSelectFields(),
-            () => Todo.aggregate().pipeline()
+            () => todoPipelines.handleSelectFields()
         ];
 
         const getTodoTasksExecution = await serialExecute(getTodoTasks);
         const getTodoPipelines = getTodoTasksExecution.flat();
 
-        const todo = (await Todo.aggregate(getTodoPipelines).exec()) || {};
+        const todo = await Todo.aggregate(getTodoPipelines).exec();
 
-        res.json(useSuccessfulResponseData(todo));
+        if (!todo) throw new Error('未找到该任务');
+
+        res.json(useSuccessfulResponseData(todo[0]));
     } catch (e: unknown) {
         if (e instanceof Error) {
             return res.json(useErrorResponseData(e.message));
