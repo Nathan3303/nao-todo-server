@@ -13,7 +13,7 @@ const createUser = async (email: string, password: string) => {
     try {
         // 创建用户，密码使用md5加密
         const user = await User.create({
-            username: email,
+            account: email,
             password: md5(password),
             email,
             nickName: `${email.split('@')[0]}` // 用户昵称为邮箱前缀
