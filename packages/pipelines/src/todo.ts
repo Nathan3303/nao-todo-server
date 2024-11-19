@@ -61,7 +61,7 @@ const handlePriority = (priority?: string) => {
 const handleIsFavorited = (isFavorited?: string) => {
     return isFavorited
         ? Todo.aggregate()
-              .match({ isPinned: parseToBool(isFavorited) })
+              .match({ isFavorited: parseToBool(isFavorited) })
               .pipeline()
         : [];
 };
