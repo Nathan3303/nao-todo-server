@@ -39,6 +39,8 @@ const checkin = async (req: Request, res: Response) => {
 
         const userId = user._id.toString(); // 获取用户ID
 
+        console.log(user);
+
         // 生成新的jwt
         const newJWT = useJWT({
             id: userId,
@@ -47,6 +49,8 @@ const checkin = async (req: Request, res: Response) => {
             nickname: user.nickname,
             avatar: user.avatar,
             role: user.role,
+            // @ts-ignore
+            createdAt: user.toJSON().createdAt,
             expiresAt: moment().add(7, 'days').utcOffset(8).utc().format()
         });
 

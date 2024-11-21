@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import https from 'https';
+import fs from 'fs';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/project';
 import todoRoutes from './routes/todo';
@@ -22,6 +24,22 @@ app.use('/', (_, res) => {
     res.end('Hello World!');
 });
 
-app.listen(3002, () => {
-    console.log('NaoTodoServer(dev) is running on port 3002');
-});
+if (PROD) {
+    https
+        .createServer(
+            {
+                key: fs.readFileSync('certs/nathan33.xyz.key'),
+                cert: fs.readFileSync('certs/nathan33.xyz.pem')
+            },
+            app
+        )
+        .listen(3002, () => {
+            console.log('NaoTodoServer(production) is running on port 3002');
+        });
+} else if (DEV) {
+    app.listen(3002, () => {
+        console.log('NaoTodoServer(development) is running on port 3002');
+    });
+} else {
+    console.log('NaoTodoServer is not running');
+}

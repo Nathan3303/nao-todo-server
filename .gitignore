@@ -3,3 +3,4 @@
 
 **/.rollup.cache
 **/.old
+/apps/main/prod-dist/certs/
