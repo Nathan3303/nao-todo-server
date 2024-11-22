@@ -1,0 +1,9 @@
+{
+    "name": "@nao-todo-server/pipelines",
+    "version": "0.1.0",
+    "description": "Pipelines for Nao Todo Server",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "main": "index.ts",
+    "type": "module"
+}

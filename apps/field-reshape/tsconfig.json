@@ -1,0 +1,38 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        // 编译时使用的库
+        "lib": [
+            "ES2015",
+            "ES2020",
+            "DOM"
+        ],
+        // 启用所有严格类型检查选项
+        "strict": true,
+        // 跳过库文件的类型检查
+        "skipLibCheck": true,
+        // 文件名区分大小写
+        "forceConsistentCasingInFileNames": true,
+        // 指定模块解析策略
+        "moduleResolution": "node",
+        // 允许导入 JSON 文件
+        "resolveJsonModule": true,
+        // 将每个文件作为单独的模块（有助于分析工具）
+        "isolatedModules": true,
+        // 指定输出目录
+        "outDir": "./dist",
+        // 指定根目录
+        "rootDir": "../../",
+        // 启用实验性的装饰器
+        "experimentalDecorators": true,
+        // 为装饰器提供元数据支持
+        "emitDecoratorMetadata": true,
+        // 不强制类属性初始化
+        "strictPropertyInitialization": false
+    },
+    // 指定要包含的文件
+    "include": [
+        "src/**/*",
+        "../../packages/**/*"
+    ]
+}

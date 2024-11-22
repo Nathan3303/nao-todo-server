@@ -1,0 +1,9 @@
+{
+    "name": "@nao-todo-server/models",
+    "version": "0.1.0",
+    "description": "Models for Nao Todo Server",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "main": "index.ts",
+    "type": "module"
+}

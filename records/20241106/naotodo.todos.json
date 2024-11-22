@@ -1,0 +1,2477 @@
+[{
+  "_id": {
+    "$oid": "66e13c4426206efbf16d0ba9"
+  },
+  "userId": {
+    "$oid": "66e13bf626206efbf16d0b6d"
+  },
+  "projectId": {
+    "$oid": "66e13c5726206efbf16d0baf"
+  },
+  "name": "123",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-11T06:44:31.110Z"
+    },
+    "startAt": {
+      "$date": "2024-09-11T06:44:20.116Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": true,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-11T06:44:20.116Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-11T06:44:39.980Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e13ca926206efbf16d0c2c"
+  },
+  "userId": {
+    "$oid": "66e13bf626206efbf16d0b6d"
+  },
+  "projectId": {
+    "$oid": "66e13bf626206efbf16d0b6d"
+  },
+  "name": "测试",
+  "description": "",
+  "state": "todo",
+  "priority": "high",
+  "tags": [],
+  "dueDate": {
+    "startAt": {
+      "$date": "2024-09-11T06:45:57.547Z"
+    },
+    "endAt": {
+      "$date": "2024-09-11T15:59:59.999Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-11T06:46:01.022Z"
+  },
+  "updatedAt": {
+    "$date": "2024-09-11T06:46:30.741Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6f6a24ae76057cfaa358d"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复在 TodoDetailsV2 中点击删除任务按钮时的显示异常",
+  "description": "",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-04T11:48:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-03T11:44:34.082Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-03T11:44:34.082Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:14.089Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6f7544ae76057cfaa35bc"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 完成新的 TodoCreator 以及 TodoCreateDialog 组件",
+  "description": "",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-04T11:55:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-03T11:47:32.908Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-03T11:47:32.908Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:11.145Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d6f8334ae76057cfaa35d8"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复创建标签时的用户反馈问题",
+  "description": "使用确认按钮的回调函数而非 Dialog 的回调函数。并且需要对 UI 组件库上的使用方式作出修改。",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-05T12:02:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-03T11:51:15.230Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-03T11:51:15.230Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:07.169Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d714154ae76057cfaa36ee"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 检查在使用 NueDropdown 组件时是否对其中的选项的点击时间使用了 stop 修饰符",
+  "description": "可能是 Dropdown 选项被点击后无法重新计算 Dropdown 列表位置的原因",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-04T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-03T13:50:13.620Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-03T13:50:13.620Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:04.058Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d7f41e4ae76057cfaa374b"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 在垃圾桶页面中取消新增待办的功能按钮",
+  "description": "",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-04T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-04T05:46:06.509Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-04T05:46:06.509Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:00.770Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d818c94ae76057cfaa3811"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[版本上线] 20240904 开发分支合并上线",
+  "description": "版本号 v0.1.0",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7eccbb0b97962b85193b"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-04T08:22:59.586Z"
+    },
+    "startAt": {
+      "$date": "2024-09-04T08:22:33.656Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": true,
+  "createdAt": {
+    "$date": "2024-09-04T08:22:33.656Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:57.124Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d81a6d4ae76057cfaa3866"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 在清单试图中新增待办时，优先级和状态等属性无法正常被记录",
+  "description": "原因：后端没有同步最新代码 🤣🤣",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-05T08:30:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-04T08:29:33.521Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-04T08:29:33.521Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T01:26:50.980Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d96cff26206efbf16d0083"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 设计与实现清单管理器",
+  "description": "- UI 设计参考 Dribbble 上的 Project manager 设计稿\n- 确定如何处理侧栏的 智能清单 与 清单管理器 的数据之间的交互\n- 确定如何操作 Project 信息\n- 实现具体功能",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-05T08:34:07.687Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-05T08:34:07.687Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:46.239Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d96d9c26206efbf16d008c"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[UI/UX] 优化 TodoEventDetails 中加载、新增以及修改时的用户反馈",
+  "description": "增加 loading 状态",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-08T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-05T08:36:44.343Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-05T08:36:44.343Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:39.395Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66dc7c3526206efbf16d0111"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复连续请求时的数据覆盖问题",
+  "description": "在连续点击不同的按钮发送不同的请求时会出现请求结果覆盖的问题，应当在多个请求发送后仅响应最后一个请求。",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7"
+  ],
+  "dueDate": {
+    "startAt": {
+      "$date": "2024-09-07T16:13:37.287Z"
+    },
+    "endAt": {
+      "$date": "2024-09-22T15:59:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": true,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-07T16:15:49.705Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T03:35:15.751Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66dc7cf826206efbf16d0113"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[UI/UX] 当创建对话框发送创建请求后处理失败时不关闭对话框",
+  "description": "请求处理失败时不应该自动关闭对话框，以便保留用户输入且能够继续发起处理请求已达到用户想要的结果。",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "startAt": {
+      "$date": "2024-09-07T16:16:04.473Z"
+    },
+    "endAt": {
+      "$date": "2024-09-08T15:59:59.999Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-07T16:19:04.630Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:51:49.154Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66dd2a4626206efbf16d0301"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[UI/UX] 优化所有的日期时间显示",
+  "description": "将具体的时间日期信息更改为更加人性化的显示，如 “2024-09-08 16:30” 显示为 “今天 16:30”。",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-08T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-08T04:38:30.353Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-08T04:38:30.353Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:34.588Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66dd42e126206efbf16d081c"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现 Todo 时间过期时，表格内容随之更新 ",
+  "description": "通过创建 useMinuteTask Hook 实现。",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "startAt": {
+      "$date": "2024-09-08T06:22:06.111Z"
+    },
+    "endAt": {
+      "$date": "2024-09-08T15:59:59.999Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-08T06:23:29.465Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:51:43.715Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66dd4afb26206efbf16d08e6"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[UI/UX] 优化列表视图中已完成 Todo 的样式",
+  "description": "为表格中已完成 Todo 的内容增加删除线的样式，提升用户体验。",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "startAt": {
+      "$date": "2024-09-08T06:56:59.124Z"
+    },
+    "endAt": {
+      "$date": "2024-09-08T15:59:59.999Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-08T06:58:03.776Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:51:30.123Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e14ead26206efbf16d0cdd"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Patch] 修复各创建对话框在处理创建请求时的对话框可关闭问题",
+  "description": "使用 NueDialog 组件的新属性 closable 解决",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-11T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-11T08:02:53.899Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-11T08:02:53.899Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:51:58.087Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e2d35ad826c17a2f65295e"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 依照清单管理器，实现标签管理器",
+  "description": "",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-12T11:41:14.962Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-12T11:41:14.962Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:02.123Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e2d8e9d826c17a2f6529f6"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 新增 ProjectSelector 组件",
+  "description": "抽离 TodoDetailsV2 组件中的项目选择器，并适配新的 ProjectStore 逻辑",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-12T12:04:57.718Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-12T12:04:57.718Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:05.184Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e2d943d826c17a2f6529fd"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复添加 Event 时的若干问题",
+  "description": "- 回车创建 Event 时无法自动聚焦到文本框\n- 创建输入框与现有项的文本非垂直对齐",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-12T12:06:27.897Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-12T12:06:27.897Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T01:26:50.980Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e327add826c17a2f652b84"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[版本上线] 20240915 开发分支合并上线",
+  "description": "版本号 v0.2.0",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7eccbb0b97962b85193b"
+  ],
+  "dueDate": {
+    "startAt": {
+      "$date": "2024-09-12T17:39:41.444Z"
+    },
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-12T17:41:01.076Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:51:18.141Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e40dea0832975f215992ec"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复在任务看板中拖拽任务变更其状态时 projectId 变化的问题",
+  "description": "",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-13T10:03:22.518Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-13T10:03:22.518Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T07:14:41.632Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e42dc20832975f21599324"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 设计并实现标签管理中的标签颜色修改器",
+  "description": "设计并实现标签颜色修改器组件 TagColorSelector",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-13T12:19:14.513Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-13T12:19:14.513Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:14.303Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e53051f597cf4c41c6e2bc"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 20240914 部分现存 Bug 修复记录",
+  "description": "",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-14T06:33:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-14T06:42:25.804Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-14T06:42:25.806Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T01:26:50.980Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e5425cf597cf4c41c6e348"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现 TagManager 中的标签颜色修改功能",
+  "description": "预计通过 NueDialog 组件实现",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-14T07:59:24.510Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-14T07:59:24.510Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:52:23.165Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66eb8e595387db2a7419ccdf"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Backend] 接入 Docker",
+  "description": "接入 Docker，以便日后服务器过期时的迁移",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-23T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-19T02:37:13.448Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": true,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-19T02:37:13.448Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:55:14.056Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66eb92a85387db2a7419ccec"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[UI/UX] 优化所有 Confirm 和 Prompt 的用户反馈 ",
+  "description": "适配 NueConfirm 和 NuePrompt 组件的新特性",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-22T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-19T02:55:36.206Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-19T02:55:36.207Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:55:04.653Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ebb0b75387db2a7419cd1f"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现视图中筛选信息、列设置以及其他信息的持久化",
+  "description": "实现在每个视图中保存预设筛选项，当从在视图间切换时能够自动执行预设筛选，显示预设内容",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-23T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-19T05:03:51.497Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-19T05:03:51.497Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:55:01.371Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ebb1fb5387db2a7419cd26"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现更新日志的展示",
+  "description": "增加 “更新日志” 对话框用于查看应用的更新日志，通过 “NaoTodo” 的 Logo 引出",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-22T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-19T05:09:15.004Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-19T05:09:15.004Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:54:50.285Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ebb2e55387db2a7419cd2c"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[UI/UX] 修复在待办列表按创建时间降序排列时新增待办无法显示的问题",
+  "description": "方案一：判断当前筛选是否为按创建时间降序排列，若成立则将新的待办添加在第一项，并移除列表最后一项\n方案二：直接重新请求一次当前页面和满足当前筛选条件的数据",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-23T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-19T05:13:09.692Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-19T05:13:09.692Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:54:57.428Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ee91ff249dd3ca49459de8"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Refactor] 优化 TasksView 的子路由分支",
+  "description": "尝试使用归一化理念合并所有子路由分支",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670f632dd25fb2c23feb9845"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-22T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-21T09:29:35.994Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T09:29:35.994Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:54:46.525Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a2962938c5636715178ed"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现列表的多项选择以及对应操作",
+  "description": "该 Feature 属于任务列表视图。任务看板视图的多项选择将在后续的 Feature 中提出。",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-14T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-12T07:46:42.025Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-12T07:46:42.026Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T05:29:33.708Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a2b10938c563671517939"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复在创建待办事项对话框中选择清单时能够选择已删除的清单",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-13T07:53:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-12T07:53:52.958Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": true,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-12T07:53:52.958Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T03:48:14.444Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a2b55938c563671517940"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 设计并实现待办事项的评论功能",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-27T07:54:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-12T07:55:01.778Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-12T07:55:01.778Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T07:08:32.352Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a2bf7938c56367151796f"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix&Patch] 20241012 至下版本期间已处理问题的记录",
+  "description": "",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e55bb0b97962b85190a",
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-20T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-12T07:57:43.705Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-12T07:57:43.705Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T05:23:57.421Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670beaa19ae3c267370f07e4"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现 TodoTagBar 的 “溢出隐藏” 功能",
+  "description": "该功能用于实现任务列表和任务看板中的标签展示功能。在待办事项的标签多于指定数量时隐藏并显示溢出的标签个数。",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e55bb0b97962b85190a",
+    null
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-20T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-13T15:43:29.116Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-13T15:43:29.117Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-14T09:36:20.011Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670dee277f81ce2734033776"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Patch] 修复多项选择功能的问题",
+  "description": "",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-15T04:23:03.888Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-15T04:23:03.888Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T06:05:43.210Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670e086e7f81ce2734033a8a"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 完善看板视图功能",
+  "description": "修复看板视图在待办总数超过单次加载数时无法显示等问题",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-31T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-15T06:15:10.772Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-15T06:15:10.772Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T07:37:33.619Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670e08e27f81ce2734033a95"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 设计并引入 IndexedDB",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-31T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-15T06:17:06.985Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-15T06:17:06.985Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T07:08:32.352Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670e3efc7f81ce2734033f12"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix] 修复清单偏好无法保存的问题",
+  "description": "",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7e55bb0b97962b85190a"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-15T10:07:56.554Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-15T10:07:56.554Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T05:19:04.032Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670f51dcf98d36096a6b188b"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[版本上线] 20241016 开发分支合并上线",
+  "description": "版本号 v0.3.2",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7eccbb0b97962b85193b"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-16T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-16T05:40:44.071Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-16T05:40:44.071Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T07:24:13.322Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66efee44249dd3ca49459e21"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 完善 TasksView 中任务看板的基本功能",
+  "description": "",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-22T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-22T10:15:32.745Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-22T10:15:32.746Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:54:07.690Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66f00321249dd3ca49459e2f"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Patch] 修复 TasksView 的任务看板与 TodoDetailsV2 的联动问题",
+  "description": "处理在 TasksView 的任务看板视图中修改 Todo 属性后，TodoDetailsV2 中的值不同步更新的问题",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "66d6f7224ae76057cfaa35b7",
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-22T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-22T11:44:33.311Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-22T11:44:33.311Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:54:02.698Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d70bdf4ae76057cfaa36a3"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "修复 Dropdown 列表展开且宽高发生变化时的显示问题",
+  "description": "点击列表项后个数发生变化，导致 Dropdown 列表宽高发生变化，故产生 “显示错乱” 问题。既定的解决方法时当列表项被点击后出发一次位置计算函数。",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-09-03T13:15:11.561Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-03T13:15:11.561Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T03:04:10.714Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66d70cff4ae76057cfaa36b5"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "[Patch] 修复 Dialog 主题属性无法使用的问题",
+  "description": "",
+  "state": "done",
+  "priority": "medium",
+  "tags": [
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-09-03T13:19:59.272Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-03T13:19:59.272Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:54:16.738Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66dc894d26206efbf16d0201"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "[Feature] 为 Dialog 组件增加 closable 属性",
+  "description": "允许控制 Dialog 组件是否可关闭，一般用于适配组件内部的加载状态",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-07T17:11:41.843Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-07T17:11:41.843Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:44.870Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66e2802526206efbf16d0e0a"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "[Feature] 为 NueConfirm 和 NuePrompt 组件增加 onConfirm 属性",
+  "description": "实现两个组件在关闭前等待异步函数的执行，执行时处于加载态。",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-09-15T15:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-09-12T05:46:13.588Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-12T05:46:13.588Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:53:41.915Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a2ac1938c56367151792f"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "[Feature] 设计并实现 NueTable 组件",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670a7e71bb0b97962b85190e",
+    null
+  ],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-10-12T07:52:33.545Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-12T07:52:33.545Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T06:10:53.879Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ebb3c15387db2a7419cd37"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "[UI/UX] 修复 NueTextarea 的 autosize 模式在 pure 主题下的显示问题",
+  "description": "在 pure 预设主题下没有改变隐藏文本框的 padding，导致主文本框的高度无法适应文字",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670a7e7ebb0b97962b851910"
+  ],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-09-19T05:16:49.856Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-19T05:16:49.856Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-19T05:13:40.775Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66eed00f6c97283c72584eb1"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "整理个人工作文档",
+  "description": "",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "670dcf467f81ce27340330c5"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-15T05:36:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T13:54:23.719Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T05:54:43.982Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66eed0196c97283c72584ebb"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "准备健康的工作餐",
+  "description": "",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-15T05:43:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T13:54:33.827Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T05:54:43.982Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66eed1136c97283c72584f02"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "制定阅读计划",
+  "description": "",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-15T05:43:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T13:58:43.153Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T05:54:43.982Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef205c232358def29efaf6"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "学习新菜谱，提升烹饪技巧",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": null
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:37:00.548Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:16:08.589Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef20a1232358def29efb15"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "安排短期旅行计划",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": null
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:38:09.985Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:16:08.589Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef20ae232358def29efb1b"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "准备下周的会议",
+  "description": "",
+  "state": "in-progress",
+  "priority": "medium",
+  "tags": [
+    "670dcf467f81ce27340330c5"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-27T07:20:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:38:22.233Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T05:18:33.957Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef2335232358def29efbcb"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "学习Photoshop新技能",
+  "description": "",
+  "state": "in-progress",
+  "priority": "medium",
+  "tags": [
+    "670dcf467f81ce27340330c5"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-27T07:20:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:49:09.980Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T05:18:33.957Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef2345232358def29efbd9"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "完成周报 📜",
+  "description": "",
+  "state": "in-progress",
+  "priority": "medium",
+  "tags": [
+    "670dcf467f81ce27340330c5"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-27T07:20:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:49:25.268Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T05:18:33.957Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef23fb232358def29efc1e"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "去健身房锻炼 🎽",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-10-20T15:40:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:52:27.452Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T07:32:16.822Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef2414232358def29efc29"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "周末大扫除",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": null
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:52:52.869Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:16:08.589Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef243d232358def29efc45"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "改善睡眠习惯",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": null
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:53:33.831Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:16:08.589Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef2442232358def29efc47"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "c在现场我去额",
+  "description": "",
+  "state": "done",
+  "priority": "high",
+  "tags": [
+    "670a7eccbb0b97962b85193b"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": {
+      "$date": "2024-09-14T01:40:00.000Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": true,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:53:38.021Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:03:09.469Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66ef2472232358def29efc4d"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d81f4c26206efbf16cffc0"
+  },
+  "name": "整理家庭财务",
+  "description": "",
+  "state": "todo",
+  "priority": "low",
+  "tags": [
+    "670dcf4c7f81ce27340330c7"
+  ],
+  "dueDate": {
+    "startAt": null,
+    "endAt": null
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-09-21T19:54:26.597Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:16:08.589Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670f6c9cd25fb2c23feb998f"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Patch] 解决在待办事项更新任务执行时切换任务查看导致的更新失败问题",
+  "description": "",
+  "state": "done",
+  "priority": "low",
+  "tags": [
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-20T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-16T07:34:52.955Z"
+    }
+  },
+  "isDone": true,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-16T07:34:52.955Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-17T05:55:16.374Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6710ad78d25fb2c23feb9a2f"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[BugFix&Patch] 至下版本期间已解决的小问题记录",
+  "description": "",
+  "state": "in-progress",
+  "priority": "medium",
+  "tags": [
+    "670a7e55bb0b97962b85190a",
+    "670a7e5dbb0b97962b85190c"
+  ],
+  "dueDate": {
+    "endAt": null,
+    "startAt": {
+      "$date": "2024-10-17T06:23:52.475Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-17T06:23:52.475Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-17T06:23:52.475Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "671117ddd25fb2c23feb9a45"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现检查事项能够通过文本批量编辑",
+  "description": "",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-17T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-17T13:57:49.269Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-17T13:57:49.269Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-17T14:36:55.477Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67133f17d25fb2c23feb9b3a"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 设计并实现过滤器",
+  "description": "",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-20T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-19T05:09:43.984Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-19T05:09:43.984Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-19T05:29:13.617Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6713405fd25fb2c23feb9b68"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f9cb4ae76057cfaa3628"
+  },
+  "name": "[Feature] 优化 monorepo 架构",
+  "description": "",
+  "state": "todo",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-27T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-19T05:15:11.993Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-19T05:15:11.994Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-19T05:15:11.994Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67134372d25fb2c23feb9bd5"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "projectId": {
+    "$oid": "66d6f7114ae76057cfaa35a9"
+  },
+  "name": "[Feature] 实现永久删除功能",
+  "description": "",
+  "state": "in-progress",
+  "priority": "medium",
+  "tags": [
+    "670a7e71bb0b97962b85190e"
+  ],
+  "dueDate": {
+    "endAt": {
+      "$date": "2024-10-20T23:59:00.000Z"
+    },
+    "startAt": {
+      "$date": "2024-10-19T05:28:18.977Z"
+    }
+  },
+  "isDone": false,
+  "isDeleted": false,
+  "isArchived": false,
+  "isPinned": false,
+  "createdAt": {
+    "$date": "2024-10-19T05:28:18.977Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-19T05:28:21.535Z"
+  },
+  "__v": 0
+}]

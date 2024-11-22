@@ -1,0 +1,9 @@
+{
+    "name": "@nao-todo-server/hooks",
+    "version": "0.1.0",
+    "description": "Hooks for Nao Todo Server",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "main": "index.ts",
+    "type": "module"
+}

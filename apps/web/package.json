@@ -1,0 +1,31 @@
+{
+  "name": "@nao-todo-server/websrv",
+  "version": "0.1.0",
+  "description": "Main app in Nao Todo Server",
+  "packageManager": "pnpm@9.12.1",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "build": "cross-env NODE_ENV=production pnpm rollup --config rollup.config.js",
+    "build:dev": "cross-env NODE_ENV=development rollup --config rollup.config.js",
+    "serve": "node dist/index.js"
+  },
+  "author": "Nathan Lee",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "https": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "rollup": "^4.24.4",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "cross-env": "^7.0.3"
+  }
+}

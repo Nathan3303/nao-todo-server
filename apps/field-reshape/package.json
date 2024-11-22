@@ -1,0 +1,22 @@
+{
+  "name": "@nao-todo-server/reshape",
+  "version": "0.1.0",
+  "description": "Field Reshape",
+  "author": "Nathan Lee",
+  "license": "MIT",
+  "packageManager": "pnpm@9.12.1",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "rollup --config rollup.config.js",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "rollup": "^4.24.4",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-typescript": "^12.1.1"
+  }
+}

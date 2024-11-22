@@ -1,0 +1,38 @@
+[
+  {
+    "_id": {
+      "$oid": "66d6f5944ae76057cfaa3570"
+    },
+    "username": "nathan@3303.com",
+    "password": "25de6efcd2806cda57d8c813683c6f51",
+    "email": "nathan@3303.com",
+    "nickName": "nathan",
+    "role": "user",
+    "isDeleted": false,
+    "createdAt": {
+      "$date": "2024-09-03T11:40:04.515Z"
+    },
+    "updatedAt": {
+      "$date": "2024-09-03T11:40:04.515Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "66e13bf626206efbf16d0b6d"
+    },
+    "username": "751809797@qq.com",
+    "password": "ef45830bd278fa18cbf28aa6994cf1a4",
+    "email": "751809797@qq.com",
+    "nickName": "751809797",
+    "role": "user",
+    "isDeleted": false,
+    "createdAt": {
+      "$date": "2024-09-11T06:43:02.528Z"
+    },
+    "updatedAt": {
+      "$date": "2024-09-11T06:43:02.528Z"
+    },
+    "__v": 0
+  }
+]

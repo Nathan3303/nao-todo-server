@@ -1,0 +1,162 @@
+[{
+  "_id": {
+    "$oid": "66ac81c2be6d985b86d629d9"
+  },
+  "userId": {
+    "$oid": "66a4e928f8ccbf89e9c85316"
+  },
+  "name": "NaoTodo",
+  "color": "#4caf50",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-08-02T06:50:42.033Z"
+  },
+  "updatedAt": {
+    "$date": "2024-08-02T06:50:42.033Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a7e55bb0b97962b85190a"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "BugFix",
+  "color": "#ff6161",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-12T13:49:09.198Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:49:09.198Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a7e5dbb0b97962b85190c"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "Patch",
+  "color": "#ffc107",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-12T13:49:17.469Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:49:17.469Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a7e71bb0b97962b85190e"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "Feature",
+  "color": "#2196f3",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-12T13:49:37.502Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:49:37.502Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a7e7ebb0b97962b851910"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "UI/UX",
+  "color": "#8bc34a",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-12T13:49:50.329Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:49:50.329Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670a7eccbb0b97962b85193b"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "PullRequest",
+  "color": "#9c27b0",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-12T13:51:08.789Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-12T13:55:29.796Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670dcf467f81ce27340330c5"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "工作",
+  "color": "#3f51b5",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-15T02:11:18.732Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:11:18.732Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670dcf4c7f81ce27340330c7"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "生活",
+  "color": "#00bcd4",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-15T02:11:24.985Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-15T02:11:24.985Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "670f632dd25fb2c23feb9845"
+  },
+  "userId": {
+    "$oid": "66d6f5944ae76057cfaa3570"
+  },
+  "name": "Refactor",
+  "color": "#607d8b",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2024-10-16T06:54:37.120Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-16T06:54:37.120Z"
+  },
+  "__v": 0
+}]
