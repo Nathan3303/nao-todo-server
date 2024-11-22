@@ -2,9 +2,9 @@ import express from 'express';
 import {
     createTag,
     deleteTag,
-    updateTag,
     getTag,
-    getTags
+    getTags,
+    updateTag
 } from '@nao-todo-server/apis';
 import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
 

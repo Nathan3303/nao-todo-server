@@ -2,9 +2,9 @@ import express from 'express';
 import {
     createProject,
     deleteProject,
-    updateProject,
     getProject,
-    getProjects
+    getProjects,
+    updateProject
 } from '@nao-todo-server/apis';
 import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
 

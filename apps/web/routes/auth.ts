@@ -1,10 +1,10 @@
 import express from 'express';
 import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
 import {
-    signin,
-    signup,
     checkin,
+    signin,
     signout,
+    signup,
     validate
 } from '@nao-todo-server/apis';
 // import type { Request, Response } from 'express';

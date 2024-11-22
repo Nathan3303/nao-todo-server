@@ -2,9 +2,9 @@ import express from 'express';
 import {
     createEvent,
     deleteEvent,
-    updateEvent,
     getEvent,
-    getEvents
+    getEvents,
+    updateEvent
 } from '@nao-todo-server/apis';
 import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
 

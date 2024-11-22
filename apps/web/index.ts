@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import https from 'https';
+import path from 'path';
 import fs from 'fs';
+import https from 'https';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/project';
 import todoRoutes from './routes/todo';
@@ -24,12 +25,15 @@ app.use('/', (_, res) => {
     res.end('Hello World!');
 });
 
+const keyPath = path.join(process.cwd(), 'certs/nathan33.xyz.key');
+const certPath = path.join(process.cwd(), 'certs/nathan33.xyz.pem');
+
 if (PROD) {
     https
         .createServer(
             {
-                key: fs.readFileSync('certs/nathan33.xyz.key'),
-                cert: fs.readFileSync('certs/nathan33.xyz.pem')
+                key: fs.readFileSync(keyPath),
+                cert: fs.readFileSync(certPath)
             },
             app
         )

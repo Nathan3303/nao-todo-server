@@ -11,12 +11,8 @@
     "lint-on-debug": "npx eslint -c eslint.config.mjs --debug",
     "lint:lint-staged": "lint-staged",
     "format": "prettier --write --config .prettierrc .",
-    "main:build": "pnpm --filter @nao-todo-server/main-app build",
-    "main:dev": "pnpm --filter @nao-todo-server/main-app dev",
-    "main:serve": "pnpm --filter @nao-todo-server/main-app serve",
-    "reshape:build": "pnpm --filter @nao-todo-server/field-reshape build",
-    "reshape:start": "pnpm --filter @nao-todo-server/field-reshape start",
-    "buildall": "run-p dev:build reshape:build"
+    "websrv": "pnpm --filter @nao-todo-server/websrv",
+    "reshape": "pnpm --filter @nao-todo-server/reshape"
   },
   "dependencies": {
     "@nao-todo-server/apis": "workspace:*",

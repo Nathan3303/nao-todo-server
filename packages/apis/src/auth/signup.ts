@@ -1,60 +1,62 @@
-import md5 from 'md5'; // 导入md5加密库
-import validator from 'validator'; // 导入validator库，用于验证邮箱格式
-import { User } from '@nao-todo-server/models'; // 导入User模型
+import validator from 'validator';
 import {
-    useSuccessfulResponseData,
-    useErrorResponseData
-} from '@nao-todo-server/hooks'; // 导入自定义的响应数据钩子
-import { findUserByEmailAndPassword } from './signin'; // 导入根据邮箱和密码查找用户的函数
-import type { Request, Response } from 'express'; // 导入express的Request和Response类型
-
-// 创建用户函数
-const createUser = async (email: string, password: string) => {
-    try {
-        // 创建用户，密码使用md5加密
-        const user = await User.create({
-            account: email,
-            password: md5(password),
-            email,
-            nickName: `${email.split('@')[0]}` // 用户昵称为邮箱前缀
-        });
-        return user;
-    } catch (e) {
-        console.log('[api/auth/signup] _createUser Error:', e); // 打印错误日志
-        return null;
-    }
-};
+    useErrorResponseData,
+    useResponseData,
+    useSuccessfulResponseData
+} from '@nao-todo-server/hooks';
+import type { Request, Response } from 'express';
+import { User } from '@nao-todo-server/models';
+import md5 from 'md5';
 
 // 注册函数
 const signup = async (req: Request, res: Response) => {
     try {
         // 验证邮箱和密码是否为空
-        if (!req.body.email || !req.body.password)
-            throw new Error('邮箱或密码不能为空');
-
-        const { email, password } = req.body;
-        // 验证邮箱格式
-        if (!validator.isEmail(email)) throw new Error('邮箱格式不正确');
-        // 根据邮箱和密码查找用户
-        const existUser = await findUserByEmailAndPassword(email, password);
-        // 如果用户已存在，抛出错误
-        if (existUser) throw new Error('邮箱已被注册');
-
-        // 创建用户
-        const createResult = await createUser(email, password);
-        // 如果创建失败，抛出错误
-        if (!createResult) throw new Error('注册失败');
-
-        // 返回注册成功的响应数据
-        res.json(useSuccessfulResponseData('注册成功'));
-    } catch (e: unknown) {
-        // 如果抛出错误，返回错误响应数据
-        if (e instanceof Error) {
-            res.json(useErrorResponseData(e.message));
+        if (!req.body.email || !req.body.password) {
+            res.json(useErrorResponseData('邮箱或密码不能为空'));
+            return;
         }
-        console.log('[api/auth/signup] Error:', e); // 打印错误日志
+
+        // 验证邮箱格式
+        if (!validator.isEmail(req.body.email)) {
+            res.json(useErrorResponseData('邮箱格式不正确'));
+            return;
+        }
+
+        // 根据邮箱和密码查找用户
+        const targetUser = await User.findOne({
+            email: req.body.email,
+            password: md5(req.body.password)
+        });
+
+        // 判断对应用户是否存在
+        if (targetUser) {
+            res.json(useErrorResponseData('邮箱已被注册'));
+            return;
+        }
+
+        // 不存在，则创建用户
+        const newUser = await User.create({
+            account: req.body.email,
+            password: md5(req.body.password),
+            email: req.body.email,
+            nickname: req.body.nickname,
+            role: 'user'
+        });
+
+        // 判断是否创建成功
+        if (newUser) {
+            res.json(useSuccessfulResponseData('注册成功'));
+        } else {
+            res.json(useErrorResponseData('注册失败，请稍后重试'));
+        }
+    } catch (error) {
+        console.log(
+            '[api/auth/signup]',
+            error instanceof Error ? error.message : error
+        );
+        res.json(useResponseData(50001, '注册失败', null));
     }
 };
 
 export default signup; // 导出注册函数
-export const createUserByEmailAndPassword = createUser; // 导出创建用户函数

@@ -1,5 +1,5 @@
 {
-  "name": "@nao-todo-server/main-app",
+  "name": "@nao-todo-server/websrv",
   "version": "0.1.0",
   "description": "Main app in Nao Todo Server",
   "packageManager": "pnpm@9.12.1",
@@ -7,7 +7,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "cross-env NODE_ENV=production pnpm rollup --config rollup.config.js",
-    "dev": "cross-env NODE_ENV=development rollup --config rollup.config.js",
+    "build:dev": "cross-env NODE_ENV=development rollup --config rollup.config.js",
     "serve": "node dist/index.js"
   },
   "author": "Nathan Lee",

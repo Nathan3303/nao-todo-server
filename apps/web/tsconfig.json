@@ -1,6 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "lib": [
+      "ES2015",
+      "ES2020",
+      "ESNext"
+    ],
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,8 +19,9 @@
     "strictPropertyInitialization": false
   },
   "include": [
-    "rollup.config.js",
-    "./**/*",
+    "index.ts",
+    "env.d.ts",
+    "routes/**/*",
     "../../packages/**/*"
   ]
 }

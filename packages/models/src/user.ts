@@ -1,14 +1,14 @@
 import {
     getModelForClass,
-    prop,
+    index,
     modelOptions,
-    index
+    prop
 } from '@typegoose/typegoose';
 
 @index({ email: 1, password: 1 })
 @modelOptions({ schemaOptions: { timestamps: true, collection: 'users' } })
 class User {
-    @prop({ required: true, unique: true })
+    @prop({ unique: true })
     account: string;
 
     @prop({ required: true })

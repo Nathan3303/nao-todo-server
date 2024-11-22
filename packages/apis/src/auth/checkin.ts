@@ -1,69 +1,88 @@
 import moment from 'moment';
-import { User, Session } from '@nao-todo-server/models';
+import { Session, User } from '@nao-todo-server/models';
 import {
-    useJWT,
     useErrorResponseData,
+    useJWT,
+    useResponseData,
     useSuccessfulResponseData,
     verifyJWT
 } from '@nao-todo-server/hooks';
-import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 // 检查用户是否登录
 const checkin = async (req: Request, res: Response) => {
     try {
-        // 检查请求中是否包含jwt
-        if (!req.query.jwt) throw new Error('用户凭证无效，请重新登录');
-
-        const jwt = req.query.jwt as string;
-
-        // 验证jwt是否有效
-        const isJWTValid = verifyJWT(jwt);
-        if (!isJWTValid) throw new Error('用户凭证无效，请重新登录');
-
-        // 根据jwt查找session
-        const session = await Session.findOne({ token: jwt });
-        if (!session) throw new Error('用户凭证无效，请重新登录');
-
-        // 检查session是否过期
-        if (moment().isAfter(session.expiresAt)) {
-            await Session.deleteOne({ _id: session._id }).exec();
-            throw new Error('用户凭证已过期，请重新登录');
+        // 检查请求中是否包含 jwt
+        if (!req.query.jwt) {
+            res.json(useErrorResponseData('用户凭证无效，请重新登录'));
+            return;
         }
 
-        // 根据session中的userId查找用户
+        // 验证 jwt 是否有效
+        const jwt = req.query.jwt as string;
+        const isJWTValid = verifyJWT(jwt);
+        if (!isJWTValid) {
+            res.json(useErrorResponseData('用户凭证无效，请重新登录'));
+            return;
+        }
+
+        // 根据 jwt 查找 session
+        const session = await Session.findOne({ token: jwt });
+        if (!session) {
+            res.json(useErrorResponseData('用户凭证无效，请重新登录'));
+            return;
+        }
+
+        // 检查 session 是否过期
+        const isExpired = moment().isAfter(session.expiresAt);
+        if (isExpired) {
+            await Session.deleteOne({ _id: session._id }).exec();
+            res.json(useErrorResponseData('用户凭证已过期，请重新登录'));
+            return;
+        }
+
+        // 根据 session 中的 userId 查找用户
         const user = await User.findOne({
-            _id: new ObjectId(session.userId)
+            _id: session.userId
         }).exec();
-        if (!user) throw new Error('用户凭证无效，请重新登录');
 
-        const userId = user._id.toString(); // 获取用户ID
+        // 判断用户是否存在
+        if (!user) {
+            await Session.deleteOne({ _id: session._id }).exec();
+            res.json(useErrorResponseData('用户凭证无效，请重新登录'));
+            return;
+        }
 
-        console.log(user);
-
-        // 生成新的jwt
-        const newJWT = useJWT({
-            id: userId,
-            userId: userId,
+        // 生成新的 jwt
+        const stringifyUserId = user._id.toString(); // 获取用户ID
+        const jsonWebToken = useJWT({
+            id: stringifyUserId,
+            userId: stringifyUserId,
             email: user.email,
             nickname: user.nickname,
             avatar: user.avatar,
             role: user.role,
-            // @ts-ignore
-            createdAt: user.toJSON().createdAt,
-            expiresAt: moment().add(7, 'days').utcOffset(8).utc().format()
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            createdAt: user.toJSON().createdAt
         });
 
-        // 更新session中的token
-        await Session.updateOne({ _id: session._id }, { token: newJWT }).exec();
+        // 更新 session 中的 Token
+        const updateResult = await Session.updateOne(
+            { _id: session._id },
+            { token: jsonWebToken },
+            { new: true }
+        ).exec();
 
-        // 返回新的jwt
-        res.json(useSuccessfulResponseData({ token: newJWT }));
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            return res.json(useErrorResponseData((e as Error).message));
+        // 判断更新结果
+        if (updateResult) {
+            res.json(useSuccessfulResponseData({ token: jsonWebToken }));
+        } else {
+            res.json(useErrorResponseData('用户凭证无效，请重新登录'));
         }
-        console.log('[api/auth/checkin] Error:', e);
+    } catch (error) {
+        console.log('[api/auth/checkin] \n -->', error);
+        res.json(useResponseData(50001, '用户凭证无效，请重新登录', null));
     }
 };
 
