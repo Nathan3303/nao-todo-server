@@ -8,7 +8,6 @@ import {
 } from '@nao-todo-server/hooks';
 import { Session, User } from '@nao-todo-server/models';
 import type { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
 
 const signin = async (req: Request, res: Response) => {
     try {
@@ -41,7 +40,7 @@ const signin = async (req: Request, res: Response) => {
 
         // 查找并更新现存 Session
         const currentSession = await Session.findOneAndUpdate(
-            { userId: new ObjectId(stringifyUserId) },
+            { userId: targetUser._id },
             {
                 $set: {
                     token: jsonWebToken,
@@ -59,7 +58,7 @@ const signin = async (req: Request, res: Response) => {
 
         // 若不存在对应 Session，则创建新的 Session
         const newSession = await Session.create({
-            userId: new ObjectId(stringifyUserId),
+            userId: targetUser._id,
             token: jsonWebToken,
             expiresAt: expiresAt
         });

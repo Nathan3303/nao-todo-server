@@ -9,7 +9,6 @@ import {
 } from '@nao-todo-server/hooks';
 // 导入express的Request和Response类型
 import type { Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
 
 // 定义退出登录的异步函数
 const signout = async (req: Request, res: Response) => {
@@ -26,7 +25,7 @@ const signout = async (req: Request, res: Response) => {
 
         // 在Session模型中查找并删除对应的session
         const session = await Session.findOneAndDelete({
-            userId: new ObjectId(jwtPayload.userId as string),
+            userId: jwtPayload.userId,
             token: jwt
         }).exec();
 

@@ -19,9 +19,9 @@
     "strictPropertyInitialization": false
   },
   "include": [
-    "index.ts",
-    "env.d.ts",
-    "routes/**/*",
+    "src/index.ts",
+    "src/env.d.ts",
+    "src/routes/**/*",
     "../../packages/**/*"
   ]
 }
