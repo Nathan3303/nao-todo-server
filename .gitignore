@@ -4,3 +4,13 @@
 **/.rollup.cache
 **/.old
 /apps/web/prod-dist/certs/
+/.idea/.gitignore
+/.idea/codeStyles/codeStyleConfig.xml
+/.idea/modules.xml
+/.idea/nao-todo-server.iml
+/.idea/prettier.xml
+/.idea/codeStyles/Project.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/vcs.xml
+
+package-lock.json
