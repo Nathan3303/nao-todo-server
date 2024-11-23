@@ -35,7 +35,13 @@ const signin = async (req: Request, res: Response) => {
         const jsonWebToken = useJWT({
             id: stringifyUserId,
             userId: stringifyUserId,
-            expiresAt
+            email: targetUser.email,
+            nickname: targetUser.nickname,
+            avatar: targetUser.avatar,
+            role: targetUser.role,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            createdAt: targetUser.toJSON().createdAt
         });
 
         // 查找并更新现存 Session
