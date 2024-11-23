@@ -168,29 +168,28 @@ const handleCountTotal = () => {
 const handleRelativeDate = (relativeDate?: string) => {
     if (!relativeDate) return [];
     let agg = null;
-    const now = moment();
     switch (relativeDate) {
         case 'today':
             agg = Todo.aggregate().match({
                 'dueDate.endAt': {
-                    $gte: now.startOf('day').toDate(),
-                    $lte: now.endOf('day').toDate()
+                    $gte: moment().startOf('d').toDate(),
+                    $lte: moment().endOf('d').toDate()
                 }
             });
             break;
         case 'tomorrow':
             agg = Todo.aggregate().match({
                 'dueDate.endAt': {
-                    $gte: now.add(1, 'days').startOf('day').toDate(),
-                    $lte: now.add(1, 'days').endOf('day').toDate()
+                    $gte: moment().add(1, 'd').startOf('d').toDate(),
+                    $lte: moment().add(1, 'd').endOf('d').toDate()
                 }
             });
             break;
         case 'week':
             agg = Todo.aggregate().match({
                 'dueDate.endAt': {
-                    $gte: now.startOf('isoWeek').toDate(),
-                    $lte: now.endOf('isoWeek').toDate()
+                    $gte: moment().startOf('isoWeek').toDate(),
+                    $lte: moment().endOf('isoWeek').toDate()
                 }
             });
             break;
