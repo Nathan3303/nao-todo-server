@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "description": "Main app in Nao Todo Server",
   "packageManager": "pnpm@9.12.1",
-  "type": "module",
   "main": "src/index.ts",
+  "type": "module",
   "scripts": {
     "build": "cross-env NODE_ENV=production pnpm rollup --config rollup.config.js",
-    "build:dev": "cross-env NODE_ENV=development rollup --config rollup.config.js",
-    "serve": "node dist/index.js"
+    "dev:build": "cross-env NODE_ENV=development pnpm rollup --config rollup.config.js",
+    "dev:serve": "node dist/index.js",
+    "dev": "pnpm run dev:build && pnpm run dev:serve"
   },
   "author": "Nathan Lee",
   "license": "MIT",

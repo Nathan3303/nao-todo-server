@@ -8,78 +8,117 @@ import {
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
+const buildUpdateOptions = (req: Request) => {
+    // 定义更新选项
+    const updateOptions = {
+        projectId: req.body.projectId
+            ? new ObjectId(req.body.projectId as string)
+            : void 0,
+        name: req.body.name || void 0,
+        description: req.body.description || void 0,
+        state: req.body.state || void 0,
+        priority: req.body.priority || void 0,
+        dueDate: req.body.dueDate || void 0,
+        isFavorited: req.body.isFavorited || void 0,
+        isArchived: req.body.isArchived || void 0,
+        isDeleted: req.body.isDeleted || void 0,
+        tags: req.body.tags || void 0
+    };
+    // 移除未定义的值
+    Object.keys(updateOptions).forEach(key => {
+        if (updateOptions[key as keyof typeof updateOptions] === void 0) {
+            delete updateOptions[key as keyof typeof updateOptions];
+        }
+    });
+    // 返回
+    return updateOptions;
+};
+
 const updateTodo = async (req: Request, res: Response) => {
     try {
+        // 获取请求头中的用户 ID
         const userId = getJWTPayload(req.headers.authorization as string)
             .userId as string;
 
+        // 判断请求参数是否合法
         if (!userId || !req.query.todoId) {
-            throw new Error('参数错误，请求无效');
+            res.json(useErrorResponseData('参数错误，请求无效'));
+            return;
         }
 
-        const todoId = req.query.todoId as string;
+        // 构建更新选项
+        const updateOptions = buildUpdateOptions(req);
 
+        // 更新数据
         const updatedTodo = await Todo.findOneAndUpdate(
-            { _id: new ObjectId(todoId), userId },
-            { $set: { ...req.body } },
+            {
+                _id: new ObjectId(req.query.todoId as string),
+                userId: new ObjectId(userId)
+            },
+            { $set: updateOptions },
             { new: true }
         ).exec();
 
-        if (!updatedTodo) {
-            throw new Error('更新失败');
+        // 判断更新结果，返回对应的 JSON 数据
+        if (updatedTodo) {
+            res.json(
+                useSuccessfulResponseData({
+                    todoId: updatedTodo._id.toString()
+                })
+            );
+        } else {
+            res.json(useErrorResponseData('更新失败'));
+            return;
         }
-
-        return res.json(
-            useResponseData(20000, '更新成功', {
-                todoId: updatedTodo._id.toString()
-            })
-        );
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            return res.json(useErrorResponseData(e.message));
-        }
-        console.log('[api/todo/updateTodo] Error', e);
-        return res.json(useErrorResponseData('服务器错误'));
+    } catch (error) {
+        console.log('[api/todo/updateTodo]', error);
+        res.json(useResponseData(50001, '更新失败，请稍后再试', null));
     }
 };
 
 const updateTodos = async (req: Request, res: Response) => {
     try {
+        // 获取请求头中的用户 ID
         const userId = getJWTPayload(req.headers.authorization as string)
             .userId as string;
 
+        // 判断请求参数是否合法
         if (!userId || !req.body.todoIds || !req.body.updateInfo) {
-            throw new Error('参数错误，请求无效');
+            res.json(useErrorResponseData('参数错误，请求无效'));
+            return;
         }
 
-        const { todoIds, updateInfo } = req.body as unknown as {
-            todoIds: string[];
-            updateInfo: Record<string, unknown>;
-        };
+        // 构建更新选项
+        const updateTodoIds = req.body.todoIds.map(
+            (todoId: string) => new ObjectId(todoId)
+        );
+        const updateOptions = buildUpdateOptions(req);
 
-        const updateRes = await Todo.updateMany(
-            { _id: { $in: todoIds } },
-            { $set: { ...updateInfo } },
+        // 更新数据
+        const updateResult = await Todo.updateMany(
+            { _id: { $in: updateTodoIds } },
+            { $set: updateOptions },
             { multi: true }
         ).exec();
 
-        if (!updateRes || updateRes.modifiedCount !== updateRes.matchedCount) {
-            throw new Error('更新失败');
+        // 判断更新结果，返回对应的 JSON 数据
+        if (
+            updateResult &&
+            updateResult.modifiedCount == updateResult.matchedCount
+        ) {
+            res.json(
+                useSuccessfulResponseData({
+                    todoIds: req.body.todoIds,
+                    total: req.body.todoIds.length,
+                    modifiedCount: updateResult.modifiedCount
+                })
+            );
+        } else {
+            res.json(useErrorResponseData('更新失败'));
         }
-
-        res.json(
-            useSuccessfulResponseData({
-                todoIds,
-                total: todoIds.length,
-                modifiedCount: updateRes.modifiedCount
-            })
-        );
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            return res.json(useErrorResponseData(e.message));
-        }
-        console.log('[api/todo/updateTodos] Error:', e);
-        return res.json(useErrorResponseData('服务器错误'));
+    } catch (error) {
+        console.log('[api/todo/updateTodos] Error:', error);
+        res.json(useResponseData(50001, '更新失败，请稍候重试', null));
     }
 };
 
