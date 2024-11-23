@@ -15,7 +15,7 @@ export default defineConfig({
     external: ['mongoose', 'mongodb', '@typegoose/typegoose'],
     output: {
         dir: 'dist',
-        format: 'cjs',
+        format: isDev ? 'esm' : 'cjs',
         sourcemap: false
     },
     plugins: [
