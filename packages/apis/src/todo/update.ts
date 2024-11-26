@@ -21,13 +21,18 @@ const buildUpdateOptions = (req: Request) => {
         description: req.body.description || void 0,
         state: req.body.state || void 0,
         priority: req.body.priority || void 0,
-        dueDate: {
-            startAt: startAt ? moment(startAt).utc(true) : void 0,
-            endAt: endAt ? moment(endAt).utc(true) : void 0
-        },
+        dueDate: req.body.dueDate
+            ? {
+                  startAt: startAt ? moment(startAt).utc(true) : void 0,
+                  endAt: endAt ? moment(endAt).utc(true) : void 0
+              }
+            : void 0,
         isFavorited: req.body.isFavorited || void 0,
         isArchived: req.body.isArchived || void 0,
         isDeleted: req.body.isDeleted || void 0,
+        deletedAt: req.body.deletedAt
+            ? moment(req.body.deletedAt).utc(true)
+            : void 0,
         tags: req.body.tags || void 0
     };
     // 移除未定义的值
