@@ -7,6 +7,7 @@ import {
 } from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
+import moment from 'moment';
 
 const createTodo = async (req: Request, res: Response) => {
     try {
@@ -21,6 +22,8 @@ const createTodo = async (req: Request, res: Response) => {
         }
 
         // 构建新增选项
+        const startAt = req.body.dueDate.startAt as string;
+        const endAt = req.body.dueDate.endAt as string;
         const createOptions = {
             userId: new ObjectId(userId),
             projectId: req.body.projectId || void 0,
@@ -29,8 +32,8 @@ const createTodo = async (req: Request, res: Response) => {
             state: req.body.state || void 0,
             priority: req.body.priority || void 0,
             dueDate: {
-                startAt: req.body.dueDate.startAt || void 0,
-                endAt: req.body.dueDate.endAt || void 0
+                startAt: startAt ? moment(startAt).utc(true) : void 0,
+                endAt: endAt ? moment(endAt).utc(true) : void 0
             },
             tags: req.body.tags || []
         };

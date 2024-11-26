@@ -7,9 +7,12 @@ import {
 } from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
+import moment from 'moment/moment';
 
 const buildUpdateOptions = (req: Request) => {
     // 定义更新选项
+    const startAt = req.body.dueDate.startAt as string;
+    const endAt = req.body.dueDate.endAt as string;
     const updateOptions = {
         projectId: req.body.projectId
             ? new ObjectId(req.body.projectId as string)
@@ -18,7 +21,10 @@ const buildUpdateOptions = (req: Request) => {
         description: req.body.description || void 0,
         state: req.body.state || void 0,
         priority: req.body.priority || void 0,
-        dueDate: req.body.dueDate || void 0,
+        dueDate: {
+            startAt: startAt ? moment(startAt).utc(true) : void 0,
+            endAt: endAt ? moment(endAt).utc(true) : void 0
+        },
         isFavorited: req.body.isFavorited || void 0,
         isArchived: req.body.isArchived || void 0,
         isDeleted: req.body.isDeleted || void 0,
