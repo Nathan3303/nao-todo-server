@@ -1,8 +1,8 @@
 import { Event } from '@nao-todo-server/models';
 import {
-    useSuccessfulResponseData,
+    getJWTPayload,
     useErrorResponseData,
-    getJWTPayload
+    useSuccessfulResponseData
 } from '@nao-todo-server/hooks';
 import { serialExecute } from '@nao-todo-server/utils';
 import { eventPipelines } from '@nao-todo-server/pipelines';
@@ -37,9 +37,9 @@ const getEvents = async (req: Request, res: Response) => {
             () => eventPipelines.handleTitle(title),
             () => eventPipelines.handleIsDone(isDone),
             () => eventPipelines.handleIsTopped(isTopped),
+            () => Event.aggregate().sort({ createdAt: 'asc' }).pipeline(),
             () => eventPipelines.handlePage(page, limit),
-            () => eventPipelines.handleSelectFields(),
-            () => Event.aggregate().pipeline()
+            () => eventPipelines.handleSelectFields()
         ];
 
         const getEventTasksExecution = await serialExecute(getEventTasks);
