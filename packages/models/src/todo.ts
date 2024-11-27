@@ -1,15 +1,14 @@
 import {
     getModelForClass,
-    prop,
-    modelOptions,
     index,
-    mongoose
+    modelOptions,
+    mongoose,
+    prop
 } from '@typegoose/typegoose';
-import moment from 'moment';
 
 @modelOptions({ schemaOptions: { _id: false } })
 class TodoDueDate {
-    @prop({ default: moment().startOf('day').toDate() })
+    @prop({ default: null })
     startAt: Date;
 
     @prop({ default: null })
@@ -49,6 +48,9 @@ class Todo {
 
     @prop({ default: false })
     isDeleted: boolean;
+
+    @prop({ default: null })
+    deletedAt: Date;
 
     @prop({ default: false })
     isArchived: boolean;

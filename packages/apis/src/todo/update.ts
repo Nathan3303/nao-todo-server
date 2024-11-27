@@ -7,39 +7,35 @@ import {
 } from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
-import moment from 'moment/moment';
 
-const buildUpdateOptions = (req: Request) => {
-    // 定义更新选项
-    const startAt = req.body.dueDate.startAt as string;
-    const endAt = req.body.dueDate.endAt as string;
+const buildUpdateOptions = (updateInfo: Record<string, unknown>) => {
     const updateOptions = {
-        projectId: req.body.projectId
-            ? new ObjectId(req.body.projectId as string)
+        projectId: updateInfo.projectId
+            ? new ObjectId(updateInfo.projectId as string)
             : void 0,
-        name: req.body.name || void 0,
-        description: req.body.description || void 0,
-        state: req.body.state || void 0,
-        priority: req.body.priority || void 0,
-        dueDate: {
-            startAt: startAt ? moment(startAt).utc(true) : void 0,
-            endAt: endAt ? moment(endAt).utc(true) : void 0
-        },
-        isFavorited: req.body.isFavorited || void 0,
-        isArchived: req.body.isArchived || void 0,
-        isDeleted: req.body.isDeleted || void 0,
-        tags: req.body.tags || void 0
+        name: updateInfo.name || void 0,
+        description: updateInfo.description,
+        state: updateInfo.state || void 0,
+        priority: updateInfo.priority || void 0,
+        dueDate: updateInfo.dueDate || void 0,
+        isFavorited:
+            typeof updateInfo.isFavorited === 'boolean'
+                ? updateInfo.isFavorited
+                : void 0,
+        isArchived:
+            typeof updateInfo.isArchived === 'boolean'
+                ? updateInfo.isArchived
+                : void 0,
+        isDeleted:
+            typeof updateInfo.isDeleted === 'boolean'
+                ? updateInfo.isDeleted
+                : void 0,
+        deletedAt: updateInfo.deletedAt,
+        tags: updateInfo.tags
     };
-    // 移除未定义的值
-    Object.keys(updateOptions).forEach(key => {
-        if (updateOptions[key as keyof typeof updateOptions] === void 0) {
-            delete updateOptions[key as keyof typeof updateOptions];
-        }
-    });
-    // 返回
+    console.log('updateOptions', updateOptions);
     return updateOptions;
 };
-
 const updateTodo = async (req: Request, res: Response) => {
     try {
         // 获取请求头中的用户 ID
@@ -53,7 +49,7 @@ const updateTodo = async (req: Request, res: Response) => {
         }
 
         // 构建更新选项
-        const updateOptions = buildUpdateOptions(req);
+        const updateOptions = buildUpdateOptions(req.body);
 
         // 更新数据
         const updatedTodo = await Todo.findOneAndUpdate(
@@ -98,7 +94,7 @@ const updateTodos = async (req: Request, res: Response) => {
         const updateTodoIds = req.body.todoIds.map(
             (todoId: string) => new ObjectId(todoId)
         );
-        const updateOptions = buildUpdateOptions(req);
+        const updateOptions = buildUpdateOptions(req.body.updateInfo);
 
         // 更新数据
         const updateResult = await Todo.updateMany(
