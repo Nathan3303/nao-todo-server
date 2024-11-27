@@ -21,21 +21,25 @@ const defaultOptions: UseJWTOptions = {
 };
 
 // 定义useJWT函数，用于生成JWT
-const useJWT = (payload: any, options: UseJWTOptions = defaultOptions) => {
+const useJWT = (payload: unknown, options: UseJWTOptions = defaultOptions) => {
     const { secret, header } = options;
+    try {
+        // 将header和payload转换为字符串
+        const headerString = JSON.stringify(header);
+        const payloadString = JSON.stringify(payload);
 
-    // 将header和payload转换为字符串
-    const headerString = JSON.stringify(header);
-    const payloadString = JSON.stringify(payload);
+        // 将header和payload转换为base64编码
+        const jwtHeader = btoa(headerString);
+        const jwtPayload = btoa(encodeURIComponent(payloadString));
 
-    // 将header和payload转换为base64编码
-    const jwtHeader = Buffer.from(headerString).toString('base64');
-    const jwtPayload = Buffer.from(payloadString).toString('base64');
-    // 生成签名
-    const jwtSignature = sign(`${jwtHeader}.${jwtPayload}`, secret);
+        // 生成签名
+        const jwtSignature = sign(`${jwtHeader}.${jwtPayload}`, secret);
 
-    // 返回JWT
-    return `${jwtHeader}.${jwtPayload}.${jwtSignature}`;
+        // 返回JWT
+        return `${jwtHeader}.${jwtPayload}.${jwtSignature}`;
+    } catch (error) {
+        console.log('[useJWT] Error:', error);
+    }
 };
 
 // 定义verifyJWT函数，用于验证JWT
@@ -48,15 +52,15 @@ const verifyJWT = (jwt: string, secret: string = jwtCryptoSecret) => {
     return signature === jwtSignature;
 };
 
+// 定义getJWTPayload函数，用于获取JWT的payload
 const getJWTPayload = (jwt: string) => {
     // 移除 Bearer 前缀
     jwt = jwt.replace('Bearer ', '');
     // 截取JWT的payload部分
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, jwtPayload] = jwt.split('.');
-    // 将payload转换为对象
-    const payload = JSON.parse(Buffer.from(jwtPayload, 'base64').toString());
     // 返回payload
-    return payload;
+    return JSON.parse(decodeURIComponent(atob(jwtPayload)));
 };
 
 // 导出useJWT和verifyJWT函数
