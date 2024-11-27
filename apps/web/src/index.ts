@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
+import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/project';
 import todoRoutes from './routes/todo';
@@ -29,22 +30,29 @@ app.use('/', (_, res) => {
 
 const keyPath = path.join(process.cwd(), 'certs/nathan33.xyz.key');
 const certPath = path.join(process.cwd(), 'certs/nathan33.xyz.pem');
+const mongodbUrl = `mongodb://${PROD ? '172.18.0.3' : 'localhost'}:27017/naotodo`;
 
 if (PROD) {
-    https
-        .createServer(
-            {
-                key: fs.readFileSync(keyPath),
-                cert: fs.readFileSync(certPath)
-            },
-            app
-        )
-        .listen(3002, () => {
-            console.log('NaoTodoServer(production) is running on port 3002');
-        });
+    mongoose.connect(mongodbUrl).then(() => {
+        https
+            .createServer(
+                {
+                    key: fs.readFileSync(keyPath),
+                    cert: fs.readFileSync(certPath)
+                },
+                app
+            )
+            .listen(3002, () => {
+                console.log(
+                    'NaoTodoServer(production) is running on port 3002'
+                );
+            });
+    });
 } else if (DEV) {
-    app.listen(3002, () => {
-        console.log('NaoTodoServer(development) is running on port 3002');
+    mongoose.connect(mongodbUrl).then(() => {
+        app.listen(3002, () => {
+            console.log('NaoTodoServer(development) is running on port 3002');
+        });
     });
 } else {
     console.log('NaoTodoServer is not running');
