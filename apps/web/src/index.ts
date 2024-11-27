@@ -10,6 +10,7 @@ import todoRoutes from './routes/todo';
 import eventRoutes from './routes/event';
 import tagRoutes from './routes/tag';
 import userRoutes from './routes/user';
+import commentRoutes from './routes/comment';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api', todoRoutes);
 app.use('/api', eventRoutes);
 app.use('/api', tagRoutes);
 app.use('/api', userRoutes);
+app.use('/api', commentRoutes);
 
 app.use('/', (_, res) => {
     res.end('Hello World!');
