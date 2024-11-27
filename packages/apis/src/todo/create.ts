@@ -7,7 +7,6 @@ import {
 } from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
-import moment from 'moment';
 
 const createTodo = async (req: Request, res: Response) => {
     try {
@@ -21,25 +20,17 @@ const createTodo = async (req: Request, res: Response) => {
             return;
         }
 
-        // 构建新增选项
-        const startAt = req.body.dueDate.startAt as string;
-        const endAt = req.body.dueDate.endAt as string;
-        const createOptions = {
+        // 创建数据
+        const newTodo = await Todo.create({
             userId: new ObjectId(userId),
             projectId: req.body.projectId || void 0,
             name: req.body.name || void 0,
             description: req.body.description || void 0,
             state: req.body.state || void 0,
             priority: req.body.priority || void 0,
-            dueDate: {
-                startAt: startAt ? moment(startAt).utc(true) : void 0,
-                endAt: endAt ? moment(endAt).utc(true) : void 0
-            },
+            dueDate: req.body.dueDate || void 0,
             tags: req.body.tags || []
-        };
-
-        // 创建数据
-        const newTodo = await Todo.create(createOptions);
+        });
 
         // 判断创建结果，并返回对应的 JSON 数据
         if (newTodo) {
