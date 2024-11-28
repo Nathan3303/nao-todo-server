@@ -3,12 +3,14 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
+import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/project';
 import todoRoutes from './routes/todo';
 import eventRoutes from './routes/event';
 import tagRoutes from './routes/tag';
 import userRoutes from './routes/user';
+import commentRoutes from './routes/comment';
 
 const app = express();
 
@@ -22,6 +24,7 @@ app.use('/api', todoRoutes);
 app.use('/api', eventRoutes);
 app.use('/api', tagRoutes);
 app.use('/api', userRoutes);
+app.use('/api', commentRoutes);
 
 app.use('/', (_, res) => {
     res.end('Hello World!');
@@ -29,22 +32,29 @@ app.use('/', (_, res) => {
 
 const keyPath = path.join(process.cwd(), 'certs/nathan33.xyz.key');
 const certPath = path.join(process.cwd(), 'certs/nathan33.xyz.pem');
+const mongodbUrl = `mongodb://${PROD ? '172.18.0.3' : 'localhost'}:27017/naotodo`;
 
 if (PROD) {
-    https
-        .createServer(
-            {
-                key: fs.readFileSync(keyPath),
-                cert: fs.readFileSync(certPath)
-            },
-            app
-        )
-        .listen(3002, () => {
-            console.log('NaoTodoServer(production) is running on port 3002');
-        });
+    mongoose.connect(mongodbUrl).then(() => {
+        https
+            .createServer(
+                {
+                    key: fs.readFileSync(keyPath),
+                    cert: fs.readFileSync(certPath)
+                },
+                app
+            )
+            .listen(3002, () => {
+                console.log(
+                    'NaoTodoServer(production) is running on port 3002'
+                );
+            });
+    });
 } else if (DEV) {
-    app.listen(3002, () => {
-        console.log('NaoTodoServer(development) is running on port 3002');
+    mongoose.connect(mongodbUrl).then(() => {
+        app.listen(3002, () => {
+            console.log('NaoTodoServer(development) is running on port 3002');
+        });
     });
 } else {
     console.log('NaoTodoServer is not running');

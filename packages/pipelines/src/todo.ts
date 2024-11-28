@@ -1,6 +1,7 @@
 import { Todo } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
 import moment from 'moment';
+import { SortOrder } from 'mongoose';
 
 const handleUserId = (userId?: string) => {
     return userId
@@ -92,8 +93,8 @@ const handleSort = (sort?: string) => {
     if (field === 'endAt') field = 'dueDate.endAt';
     else if (field === 'startAt') field = 'dueDate.startAt';
     order = order || 'asc';
-    let _sortOption: Record<string, any> = {};
-    _sortOption[field] = order;
+    const _sortOption: Record<string, SortOrder> = {};
+    _sortOption[field] = order as SortOrder;
     return Todo.aggregate().sort(_sortOption).pipeline();
 };
 
@@ -120,7 +121,7 @@ const handleLookupTags = () => {
         .pipeline();
 };
 
-const handleSelectFields = (fieldsOptions?: Record<string, any>) => {
+const handleSelectFields = (fieldsOptions?: Record<string, unknown>) => {
     fieldsOptions = fieldsOptions || {
         _id: 0,
         id: { $toString: '$_id' },
