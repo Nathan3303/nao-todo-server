@@ -2,6 +2,7 @@ import express from 'express';
 import {
     createTodo,
     deleteTodo,
+    duplicateTodo,
     getTodo,
     getTodos,
     updateTodo,
@@ -51,6 +52,11 @@ exRouter.get('/todos', async (req, res) => {
     // await connectAndRun(async () => {
     await getTodos(req, res);
     // });
+});
+
+exRouter.get('/todo/duplicate', async (req, res) => {
+    console.log('[/api/todo/duplicate] Route matched!', `(${req.method})`);
+    await duplicateTodo(req, res);
 });
 
 export default exRouter;
