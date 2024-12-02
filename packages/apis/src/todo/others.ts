@@ -40,7 +40,7 @@ const duplicateTodo = async (req: Request, res: Response) => {
         const newTodo = await Todo.create({
             userId: new ObjectId(userId),
             projectId: targetTodo.projectId,
-            name: targetTodo.name,
+            name: targetTodo.name + " 的复制",
             description: targetTodo.description,
             dueDate: targetTodo.dueDate,
             priority: targetTodo.priority,
