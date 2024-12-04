@@ -31,7 +31,11 @@ const buildUpdateOptions = (updateInfo: Record<string, unknown>) => {
                 ? updateInfo.isDeleted
                 : void 0,
         deletedAt: updateInfo.deletedAt,
-        tags: updateInfo.tags
+        tags: Array.isArray(updateInfo.tags)
+            ? updateInfo.tags.length > 0
+                ? updateInfo.tags
+                : []
+            : void 0
     };
     console.log('updateOptions', updateOptions);
     return updateOptions;
