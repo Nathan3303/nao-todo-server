@@ -1,44 +1,54 @@
-import { Project } from '@nao-todo-server/models';
+import { Project, Todo } from '@nao-todo-server/models';
 import {
     useSuccessfulResponseData,
     useErrorResponseData,
-    getJWTPayload
+    getJWTPayload,
+    useResponseData
 } from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 
 const deleteProject = async (req: Request, res: Response) => {
     try {
+        // 获取请求头中的用户 ID
         const userId = getJWTPayload(req.headers.authorization as string)
             .userId as string;
 
-        if (!req.query.projectId) {
-            throw new Error('参数错误，请求无效');
+        // 判断请求参数是否正确
+        if (!userId || !req.query.projectId) {
+            res.json(useErrorResponseData('参数错误，请求无效'));
         }
 
-        const projectId = req.query.projectId as string;
-
-        const deletedProject = await Project.findByIdAndDelete({
-            _id: new ObjectId(projectId),
-            userId
+        // 删除清单
+        const deleteResult = await Project.deleteOne({
+            _id: new ObjectId(req.query.projectId as string),
+            userId: new ObjectId(userId)
         }).exec();
 
-        if (!deletedProject) throw new Error('项目不存在');
+        // 判断删除结果
+        if (!deleteResult.deletedCount) {
+            res.json(useErrorResponseData('删除失败'));
+        }
 
-        return res.json(
+        // 删除清单下的所有待办
+        const deleteTodosResult = await Todo.deleteMany({
+            projectId: new ObjectId(req.query.projectId as string),
+            userId: new ObjectId(userId)
+        });
+
+        // 响应
+        res.json(
             useSuccessfulResponseData({
-                projectId: deletedProject._id.toString()
+                projectId: req.query.projectId as string,
+                deletedTodosCount: deleteTodosResult.deletedCount
             })
         );
     } catch (e: unknown) {
-        if (e instanceof Error) {
-            return res.json(useErrorResponseData(e.message));
-        }
         console.log('[api/project/deleteProject] Error:', e);
-        return res.json(useErrorResponseData('服务器错误'));
+        res.json(useResponseData(50001, '删除失败，请稍后再试', null));
     }
 };
 
-const deleteProjects = async (req: Request, res: Response) => {};
+const deleteProjects = async () => {};
 
 export { deleteProject, deleteProjects };
