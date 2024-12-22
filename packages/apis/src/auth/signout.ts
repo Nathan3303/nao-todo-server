@@ -30,15 +30,15 @@ const signout = async (req: Request, res: Response) => {
         }).exec();
 
         // 如果找不到对应的session，抛出错误
-        if (!session) {
-            res.json(useErrorResponseData('用户凭证无效'));
-            return;
-        }
+        // if (!session) {
+        //     res.json(useErrorResponseData('用户凭证无效'));
+        //     return;
+        // }
 
         // 返回成功响应数据
         res.json(
             useSuccessfulResponseData({
-                userId: session.userId.toString()
+                userId: session?.userId.toString() ?? null
             })
         );
     } catch (error) {
