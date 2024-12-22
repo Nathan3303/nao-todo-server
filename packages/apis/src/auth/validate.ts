@@ -1,23 +1,27 @@
 import { Session } from '@nao-todo-server/models';
-import { useErrorResponseData, verifyJWT } from '@nao-todo-server/hooks';
+import {
+    useErrorResponseData,
+    useResponseData,
+    verifyJWT
+} from '@nao-todo-server/hooks';
 import type { Request, Response } from 'express';
 
 const validate = async (req: Request, res: Response) => {
     try {
         const { authorization } = req.headers;
         if (!authorization) {
-            res.json(useErrorResponseData('用户凭证无效'));
+            res.json(useResponseData(40300, '用户凭证无效', null));
             return false;
         }
         const token = authorization.replace('Bearer ', '');
         const isJWTValid = verifyJWT(token);
         if (!isJWTValid) {
-            res.json(useErrorResponseData('用户凭证无效'));
+            res.json(useResponseData(40300, '用户凭证无效', null));
             return false;
         }
         const session = await Session.findOne({ token }).exec();
         if (!session) {
-            res.json(useErrorResponseData('用户凭证无效'));
+            res.json(useResponseData(40300, '用户凭证无效', null));
             return false;
         }
         return true;
