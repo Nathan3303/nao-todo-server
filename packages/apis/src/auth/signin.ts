@@ -31,7 +31,6 @@ const signin = async (req: Request, res: Response) => {
 
         // 用户存在则生成新的 Token
         const stringifyUserId = targetUser._id.toString();
-        const expiresAt = moment().add(7, 'd').toDate();
         const jsonWebToken = useJWT({
             id: stringifyUserId,
             userId: stringifyUserId,
@@ -41,10 +40,12 @@ const signin = async (req: Request, res: Response) => {
             role: targetUser.role,
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
-            createdAt: targetUser.toJSON().createdAt
+            createdAt: targetUser.toJSON().createdAt,
+            timeStamp: Date.now()
         });
 
         // 查找并更新现存 Session
+        const expiresAt = moment().add(7, 'd').toDate();
         const currentSession = await Session.findOneAndUpdate(
             { userId: targetUser._id },
             {

@@ -6,7 +6,8 @@ import {
     getTodo,
     getTodos,
     updateTodo,
-    updateTodos
+    updateTodos,
+    deleteTodos
 } from '@nao-todo-server/apis';
 // import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
 
@@ -57,6 +58,11 @@ exRouter.get('/todos', async (req, res) => {
 exRouter.get('/todo/duplicate', async (req, res) => {
     console.log('[/api/todo/duplicate] Route matched!', `(${req.method})`);
     await duplicateTodo(req, res);
+});
+
+exRouter.delete('/todos', async (req, res) => {
+    console.log('[/api/todos] Route matched!', `(${req.method})`);
+    await deleteTodos(req, res);
 });
 
 export default exRouter;
