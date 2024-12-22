@@ -27,7 +27,7 @@ const checkin = async (req: Request, res: Response) => {
         }
 
         // 根据 jwt 查找 session
-        const session = await Session.findOne({ token: jwt });
+        const session = await Session.findOne({ token: jwt }).exec();
         if (!session) {
             res.json(useErrorResponseData('用户凭证无效，请重新登录'));
             return;
@@ -64,7 +64,8 @@ const checkin = async (req: Request, res: Response) => {
             role: user.role,
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
-            createdAt: user.toJSON().createdAt
+            createdAt: user.toJSON().createdAt,
+            timeStamp: Date.now()
         });
 
         // 更新 session 中的 Token
