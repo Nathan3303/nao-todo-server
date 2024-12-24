@@ -1,7 +1,7 @@
 import { Todo } from '@nao-todo-server/models';
 import { ObjectId, parseToBool } from '@nao-todo-server/utils';
 import moment from 'moment';
-import { SortOrder } from 'mongoose';
+import { Aggregate, SortOrder } from 'mongoose';
 
 const handleUserId = (userId?: string) => {
     return userId
@@ -168,7 +168,7 @@ const handleCountTotal = () => {
 
 const handleRelativeDate = (relativeDate?: string) => {
     if (!relativeDate) return [];
-    let agg = null;
+    let agg: null | Aggregate<unknown[]>;
     switch (relativeDate) {
         case 'today':
             agg = Todo.aggregate().match({
@@ -176,6 +176,11 @@ const handleRelativeDate = (relativeDate?: string) => {
                     $gte: moment().startOf('d').toDate(),
                     $lte: moment().endOf('d').toDate()
                 }
+            });
+            break;
+        case '-today':
+            agg = Todo.aggregate().match({
+                'dueDate.endAt': { $lte: moment().startOf('d').toDate() }
             });
             break;
         case 'tomorrow':
