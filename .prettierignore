@@ -29,6 +29,4 @@ coverage
 *.dylib
 *.lib
 *.jar
-.vitepress/dist
-.vitepress/cache
 pnpm-lock.yaml

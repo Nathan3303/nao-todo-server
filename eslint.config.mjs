@@ -1,31 +1,35 @@
+// @ts-check
+import eslint from '@eslint/js';
+// import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
-import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import pluginVue from 'eslint-plugin-vue';
 
-export default [
+export default tseslint.config(
     {
-        files: ['{packages,apps}/*.{js,mjs,cjs,ts,vue}']
+        ignores: ['eslint.config.mjs']
     },
-    { languageOptions: { globals: globals.browser } },
-    pluginJs.configs.recommended,
-    ...tseslint.configs.recommended,
-    ...pluginVue.configs['flat/essential'],
+    eslint.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
+    // eslintPluginPrettierRecommended,
     {
-        languageOptions: { parserOptions: { parser: tseslint.parser } },
-        rules: {
-            'vue/multi-word-component-names': 'off'
+        languageOptions: {
+            globals: {
+                ...globals.node,
+                ...globals.jest
+            },
+            ecmaVersion: 5,
+            sourceType: 'module',
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname
+            }
         }
     },
     {
-        ignores: [
-            'node_modules/',
-            'dist/',
-            'packages/core/dist/*',
-            'apps/document/.vitepress/cache/*',
-            'apps/**/dist/*',
-            '*.test.js',
-            'src/legacy/**/*.js'
-        ]
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-floating-promises': 'warn',
+            '@typescript-eslint/no-unsafe-argument': 'warn'
+        }
     }
-];
+);
