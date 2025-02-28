@@ -1,10 +1,17 @@
 {
-  "name": "@nao-todo-server/websrv-dist",
-  "version": "0.1.0",
-  "description": "NaoTodoServer for WEB client",
-  "main": "../dist/index.js",
-  "dependencies": {
-    "@typegoose/typegoose": "^12.9.0",
-    "mongoose": "^8.8.0"
-  }
+    "name": "@nao-todo-server/websrv-bundle",
+    "version": "0.0.0",
+    "description": "Nao todo server bundle",
+    "private": true,
+    "type": "commonjs",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "scripts": {
+        "start": "pm2 start ./index.js"
+    },
+    "dependencies": {
+        "openai": "^4.83.0",
+        "mongoose": "^8.8.0",
+        "@typegoose/typegoose": "^12.9.0"
+    }
 }
