@@ -1,0 +1,64 @@
+[{
+  "_id": {
+    "$oid": "6747e1f07a2cf199d2492ea0"
+  },
+  "userId": {
+    "$oid": "6747df917a2cf199d2492da9"
+  },
+  "title": "刚刚",
+  "description": "",
+  "state": 0,
+  "isArchived": false,
+  "archivedAt": null,
+  "isDeleted": false,
+  "deletedAt": null,
+  "preference": null,
+  "createdAt": {
+    "$date": "2024-11-28T03:22:24.945Z"
+  },
+  "updatedAt": {
+    "$date": "2024-11-28T03:22:24.945Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6768f40367c032b470aebe45"
+  },
+  "userId": {
+    "$oid": "6740a87f3e0dabef154bc193"
+  },
+  "title": "NaoTodo 开发清单",
+  "description": "NaoTodo 在线待办任务平台的开发清单，包含新功能开发任务、功能测试、问题修复以及界面优化等任务。",
+  "state": 0,
+  "isArchived": false,
+  "archivedAt": null,
+  "isDeleted": false,
+  "deletedAt": null,
+  "preference": {
+    "viewType": "kanban",
+    "getTodosOptions": {
+      "page": 1,
+      "limit": 20,
+      "isDeleted": false,
+      "projectId": "6768f40367c032b470aebe45",
+      "state": "todo,in-progress"
+    },
+    "columns": {
+      "endAt": true,
+      "state": false,
+      "priority": true,
+      "project": false,
+      "description": true,
+      "createdAt": false,
+      "updatedAt": true
+    }
+  },
+  "createdAt": {
+    "$date": "2024-12-23T05:24:19.332Z"
+  },
+  "updatedAt": {
+    "$date": "2024-12-25T10:59:06.411Z"
+  },
+  "__v": 0
+}]

@@ -1,0 +1,80 @@
+[{
+  "_id": {
+    "$oid": "6768f4ae67c032b470aebe5d"
+  },
+  "userId": {
+    "$oid": "6740a87f3e0dabef154bc193"
+  },
+  "name": "✨ 新功能",
+  "color": "#3498DB",
+  "description": "",
+  "isDeleted": false,
+  "deletedAt": null,
+  "createdAt": {
+    "$date": "2024-12-23T05:27:10.885Z"
+  },
+  "updatedAt": {
+    "$date": "2024-12-23T05:38:08.353Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6768f4ca67c032b470aebe65"
+  },
+  "userId": {
+    "$oid": "6740a87f3e0dabef154bc193"
+  },
+  "name": "🔨 问题修复",
+  "color": "#E74C3C",
+  "description": "",
+  "isDeleted": false,
+  "deletedAt": null,
+  "createdAt": {
+    "$date": "2024-12-23T05:27:38.427Z"
+  },
+  "updatedAt": {
+    "$date": "2024-12-23T05:38:27.357Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6768f4f267c032b470aebe6d"
+  },
+  "userId": {
+    "$oid": "6740a87f3e0dabef154bc193"
+  },
+  "name": "🎯 功能测试",
+  "color": "#483D8B",
+  "description": "",
+  "isDeleted": false,
+  "deletedAt": null,
+  "createdAt": {
+    "$date": "2024-12-23T05:28:18.730Z"
+  },
+  "updatedAt": {
+    "$date": "2024-12-23T05:38:33.419Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6768f6b567c032b470aebed1"
+  },
+  "userId": {
+    "$oid": "6740a87f3e0dabef154bc193"
+  },
+  "name": "🎨 UI/UX 优化",
+  "color": "#1ABC9C",
+  "description": "",
+  "isDeleted": false,
+  "deletedAt": null,
+  "createdAt": {
+    "$date": "2024-12-23T05:35:49.475Z"
+  },
+  "updatedAt": {
+    "$date": "2024-12-23T05:35:49.475Z"
+  },
+  "__v": 0
+}]

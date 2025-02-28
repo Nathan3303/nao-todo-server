@@ -12,11 +12,11 @@ const isDev = process.env.NODE_ENV === 'development';
 
 export default defineConfig({
     input: 'src/index.ts',
-    external: ['mongoose', 'mongodb', '@typegoose/typegoose'],
+    external: ['mongoose', 'mongodb', '@typegoose/typegoose', 'openai'],
     output: {
         dir: 'dist',
         format: isDev ? 'esm' : 'cjs',
-        sourcemap: false
+        sourcemap: isDev
     },
     plugins: [
         commonjs(),
