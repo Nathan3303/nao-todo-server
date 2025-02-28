@@ -31,7 +31,7 @@ app.use('/', (_, res) => res.end('Hello World!') && void 0);
 
 if (PROD) {
     mongoose
-        .connect(`mongodb://naotodo:naotodoinmongo@172.18.0.3:27017/naotodo`)
+        .connect(`mongodb://172.18.0.3:27017/naotodo`)
         .then(() => {
             https
                 .createServer(
