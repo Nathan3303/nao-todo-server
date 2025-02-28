@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "Nao todo server bundle",
     "private": true,
-    "type": "commonjs",
+    "main": "./index.js",
     "author": "Nathan Lee",
     "license": "MIT",
     "scripts": {
