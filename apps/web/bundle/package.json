@@ -4,6 +4,7 @@
     "description": "Nao todo server bundle",
     "private": true,
     "main": "./index.js",
+    "type": "module",
     "author": "Nathan Lee",
     "license": "MIT",
     "scripts": {
