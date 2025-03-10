@@ -37,10 +37,10 @@ if (PROD) {
                 .createServer(
                     {
                         key: fs.readFileSync(
-                            path.join(process.cwd(), 'certs/nathan33.xyz.key')
+                            path.join(process.cwd(), 'certs/privkey.pem')
                         ),
                         cert: fs.readFileSync(
-                            path.join(process.cwd(), 'certs/nathan33.xyz.pem')
+                            path.join(process.cwd(), 'certs/fullchain.pem')
                         )
                     },
                     app
