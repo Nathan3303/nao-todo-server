@@ -14,7 +14,8 @@ rm -rf /opt/shares/naotodoserver
 cp -r apps/web/bundle /opt/shares/naotodoserver
 
 # copy ssl files to naotodoserver
-cp -r /opt/shares/ssl /opt/shares/naotodoserver/certs
+cp -r /opt/shares/ssl/todo.nathan33.site_bundle.crt /opt/shares/naotodoserver/certs/fullchain.pem
+cp -r /opt/shares/ssl/todo.nathan33.site.key /opt/shares/naotodoserver/certs/privkey.pem
 
 # start docker container mynginx, mynode and mymongo
 docker start mynginx mynode mymongo
