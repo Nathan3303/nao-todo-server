@@ -5,7 +5,7 @@ import {
     updateUserPassword
 } from '@nao-todo-server/apis';
 import {
-    handleMulterError,
+    // handleMulterError,
     upload
 } from '@nao-todo-server/apis/src/user/upload-avatar';
 
@@ -30,6 +30,6 @@ exRouter.post('/user/avatar', upload.single('avatar'), async (req, res) => {
     await updateUserAvatar(req, res);
 });
 
-exRouter.use(handleMulterError);
+// exRouter.use(handleMulterError);
 
 export default exRouter;
