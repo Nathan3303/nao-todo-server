@@ -1,6 +1,13 @@
 import express from 'express';
-// import connectAndRun from '@nao-todo-server/utils/src/connect-and-run';
-import { updateUserNickname, updateUserPassword } from '@nao-todo-server/apis';
+import {
+    updateUserAvatar,
+    updateUserNickname,
+    updateUserPassword
+} from '@nao-todo-server/apis';
+import {
+    handleMulterError,
+    upload
+} from '@nao-todo-server/apis/src/user/upload-avatar';
 
 const exRouter: express.Router = express.Router();
 
@@ -17,5 +24,12 @@ exRouter.post('/user/password', async (req, res) => {
     await updateUserPassword(req, res);
     // });
 });
+
+exRouter.post('/user/avatar', upload.single('avatar'), async (req, res) => {
+    console.log('[/api/user/avatar] Route matched!');
+    await updateUserAvatar(req, res);
+});
+
+exRouter.use(handleMulterError);
 
 export default exRouter;

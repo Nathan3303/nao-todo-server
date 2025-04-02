@@ -6,7 +6,11 @@ import {
     useResponseData,
     useSuccessfulResponseData
 } from '@nao-todo-server/hooks';
+import { calculateFileHashSync } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 // 更新用户昵称
 const updateUserNickname = async (req: Request, res: Response) => {
@@ -79,4 +83,51 @@ const updateUserPassword = async (req: Request, res: Response) => {
     }
 };
 
-export { updateUserNickname, updateUserPassword };
+// 更新用户头像
+const updateUserAvatar = async (req: Request, res: Response) => {
+    try {
+        const userId = getJWTPayload(req.headers.authorization as string)
+            .userId as string;
+
+        if (!req.file) {
+            return res.json(useErrorResponseData('未检测到文件'));
+        }
+
+        // 计算文件哈希
+        const hash = calculateFileHashSync(req.file.buffer);
+
+        // 生成最终文件名
+        const ext = path.extname(req.file.originalname);
+        const filename = `${hash.slice(0, 16)}${ext}`;
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
+        const uploadDir = path.join(__dirname, 'avatars');
+        const uploadPath = path.join(uploadDir, filename);
+
+        // 保存文件
+        await fs.promises.appendFile(uploadPath, req.file.buffer);
+
+        // 定义访问 URL
+        const url = PROD
+            ? `https://todo.nathan33.site:3002/statics/avatars/${filename}`
+            : `http://localhost:3002/statics/avatars/${filename}`;
+
+        // 更新 user.avatar
+        const updateRes = await User.findOneAndUpdate(
+            { _id: userId },
+            { $set: { avatar: url } },
+            { new: true }
+        );
+
+        // 返回 URL
+        if (updateRes) {
+            res.json(useSuccessfulResponseData({ url }));
+        } else {
+            res.json(useErrorResponseData('更新用户信息失败'));
+        }
+    } catch (error) {
+        console.log('[api/user/updateUserAvatar] Error:', error);
+        res.json(useResponseData(50001, '头像更新失败，请稍后再试', null));
+    }
+};
+
+export { updateUserNickname, updateUserPassword, updateUserAvatar };
