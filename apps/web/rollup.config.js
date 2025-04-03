@@ -22,7 +22,7 @@ export default defineConfig({
         commonjs(),
         json(),
         typescript({ tsconfig: 'tsconfig.json' }),
-        nodeResolve({ extensions: ['.ts', '.tsx', '.js', '.json'] }),
+        nodeResolve({ extensions: ['.ts', '.js', '.json'], preferBuiltins: true }),
         terser({
             compress: {
                 drop_console: isProd && ['log'],
