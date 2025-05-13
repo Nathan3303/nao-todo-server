@@ -7,6 +7,27 @@ import {
 } from '@nao-todo-server/hooks';
 import { ObjectId } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
+import type { TodoDueDate } from './types';
+import moment from 'moment';
+
+const parseTodoDueDate = (dueDate: TodoDueDate | undefined): TodoDueDate | undefined => {
+    const result: TodoDueDate = { startAt: null, endAt: null };
+    let _moment;
+    if (!dueDate) return void 0;
+    if (Object.prototype.hasOwnProperty.call(dueDate, 'startAt')) {
+        _moment = moment(dueDate.startAt);
+        if (_moment.isValid()) {
+            result.startAt = _moment.toDate();
+        }
+    }
+    if (Object.prototype.hasOwnProperty.call(dueDate, 'endAt')) {
+        _moment = moment(dueDate.endAt);
+        if (_moment.isValid()) {
+            result.endAt = _moment.toDate();
+        }
+    }
+    return result;
+};
 
 const buildUpdateOptions = (updateInfo: Record<string, unknown>) => {
     const updateOptions = {
@@ -17,7 +38,7 @@ const buildUpdateOptions = (updateInfo: Record<string, unknown>) => {
         description: updateInfo.description,
         state: updateInfo.state || void 0,
         priority: updateInfo.priority || void 0,
-        dueDate: updateInfo.dueDate || void 0,
+        dueDate: parseTodoDueDate(updateInfo.dueDate as TodoDueDate),
         isFavorited:
             typeof updateInfo.isFavorited === 'boolean'
                 ? updateInfo.isFavorited
