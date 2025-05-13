@@ -39,24 +39,12 @@ const buildUpdateOptions = (updateInfo: Record<string, unknown>) => {
         state: updateInfo.state || void 0,
         priority: updateInfo.priority || void 0,
         dueDate: parseTodoDueDate(updateInfo.dueDate as TodoDueDate),
-        isFavorited:
-            typeof updateInfo.isFavorited === 'boolean'
-                ? updateInfo.isFavorited
-                : void 0,
-        isArchived:
-            typeof updateInfo.isArchived === 'boolean'
-                ? updateInfo.isArchived
-                : void 0,
-        isDeleted:
-            typeof updateInfo.isDeleted === 'boolean'
-                ? updateInfo.isDeleted
-                : void 0,
+        isFavorited: typeof updateInfo.isFavorited === 'boolean' ? updateInfo.isFavorited : void 0,
+        isArchived: typeof updateInfo.isArchived === 'boolean' ? updateInfo.isArchived : void 0,
+        isDeleted: typeof updateInfo.isDeleted === 'boolean' ? updateInfo.isDeleted : void 0,
+        isGivenUp: typeof updateInfo.isGivenUp === 'boolean' ? updateInfo.isGivenUp : void 0,
         deletedAt: updateInfo.deletedAt,
-        tags: Array.isArray(updateInfo.tags)
-            ? updateInfo.tags.length > 0
-                ? updateInfo.tags
-                : []
-            : void 0
+        tags: Array.isArray(updateInfo.tags) ? updateInfo.tags.length > 0 ? updateInfo.tags : [] : void 0
     };
     console.log('updateOptions', updateOptions);
     return updateOptions;
@@ -64,8 +52,7 @@ const buildUpdateOptions = (updateInfo: Record<string, unknown>) => {
 const updateTodo = async (req: Request, res: Response) => {
     try {
         // 获取请求头中的用户 ID
-        const userId = getJWTPayload(req.headers.authorization as string)
-            .userId as string;
+        const userId = getJWTPayload(req.headers.authorization as string).userId as string;
 
         // 判断请求参数是否合法
         if (!userId || !req.query.todoId) {

@@ -4,7 +4,8 @@ export type GetTodosQuery = {
     state?: string;
     priority?: string;
     isFavorited?: string;
-    isDeleted?: string;
+    isDeleted?: string
+    isGivenUp?: string;
     relativeDate?: string;
     tagId?: string;
     sort?: string;

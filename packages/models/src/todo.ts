@@ -57,6 +57,9 @@ class Todo {
 
     @prop({ default: false })
     isFavorited: boolean;
+
+    @prop({ default: false })
+    isGivenUp: boolean;
 }
 
 export default getModelForClass(Todo);

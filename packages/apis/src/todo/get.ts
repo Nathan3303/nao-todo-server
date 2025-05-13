@@ -58,6 +58,7 @@ const getTodos = async (req: Request, res: Response) => {
             priority,
             isFavorited,
             isDeleted,
+            isGivenUp,
             relativeDate,
             tagId,
             page,
@@ -75,6 +76,7 @@ const getTodos = async (req: Request, res: Response) => {
             () => todoPipelines.handlePriority(priority),
             () => todoPipelines.handleIsFavorited(isFavorited),
             () => todoPipelines.handleIsDeleted(isDeleted),
+            () => todoPipelines.handleIsGivenUp(isGivenUp),
             () => todoPipelines.handleRelativeDate(relativeDate)
         ];
         const basicTasks = [
