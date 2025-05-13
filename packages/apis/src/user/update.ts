@@ -99,8 +99,6 @@ const updateUserAvatar = async (req: Request, res: Response) => {
         // 生成最终文件名
         const ext = path.extname(req.file.originalname);
         const filename = `avatar.${userId}${ext}`;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
         const uploadDir = path.join(__dirname, 'avatars');
         const uploadPath = path.join(uploadDir, filename);
