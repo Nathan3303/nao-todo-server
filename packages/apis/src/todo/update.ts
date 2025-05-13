@@ -10,9 +10,10 @@ import type { Request, Response } from 'express';
 import type { TodoDueDate } from './types';
 import moment from 'moment';
 
-const parseTodoDueDate = (dueDate: TodoDueDate): TodoDueDate => {
+const parseTodoDueDate = (dueDate: TodoDueDate | undefined): TodoDueDate | undefined => {
     const result: TodoDueDate = { startAt: null, endAt: null };
     let _moment;
+    if (!dueDate) return void 0;
     if (Object.prototype.hasOwnProperty.call(dueDate, 'startAt')) {
         _moment = moment(dueDate.startAt);
         if (_moment.isValid()) {
