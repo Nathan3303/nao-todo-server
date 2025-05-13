@@ -75,6 +75,14 @@ const handleIsDeleted = (isDeleted?: string) => {
         : []
 }
 
+const handleIsGivenUp = (isGivenUp?: string) => {
+    return isGivenUp
+        ? Todo.aggregate()
+            .match({ isGivenUp: parseToBool(isGivenUp) })
+            .pipeline()
+        : [];
+};
+
 const handlePage = (page: string, limit: string) => {
     const _page = parseInt(page) || 1
     const _limit = parseInt(limit) || 10
@@ -135,6 +143,7 @@ const handleSelectFields = (fieldsOptions?: Record<string, unknown>) => {
         isDone: 1,
         isFavorited: 1,
         isDeleted: 1,
+        isGivenUp: 1,
         tags: 1,
         updatedAt: 1,
         createdAt: 1
@@ -207,6 +216,7 @@ export default {
     handleId,
     handleIsFavorited,
     handleIsDeleted,
+    handleIsGivenUp,
     handlePage,
     handleGroupByPriority,
     handleCountTotal,
