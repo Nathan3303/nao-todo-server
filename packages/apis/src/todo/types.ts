@@ -11,3 +11,8 @@ export type GetTodosQuery = {
     page: string;
     limit: string;
 };
+
+export type TodoDueDate = {
+    startAt: null | string | Date,
+    endAt: null | string | Date
+}
