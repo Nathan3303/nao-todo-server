@@ -6,7 +6,7 @@ import {
     useResponseData,
     useSuccessfulResponseData
 } from '@nao-todo-server/hooks';
-import { calculateFileHashSync } from '@nao-todo-server/utils';
+// import { calculateFileHashSync } from '@nao-todo-server/utils';
 import type { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -94,11 +94,13 @@ const updateUserAvatar = async (req: Request, res: Response) => {
         }
 
         // 计算文件哈希
-        const hash = calculateFileHashSync(req.file.buffer);
+        // const hash = calculateFileHashSync(req.file.buffer);
 
         // 生成最终文件名
         const ext = path.extname(req.file.originalname);
-        const filename = `${hash.slice(0, 16)}${ext}`;
+        const filename = `avatar.${userId}${ext}`;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
         const uploadDir = path.join(__dirname, 'avatars');
         const uploadPath = path.join(uploadDir, filename);
