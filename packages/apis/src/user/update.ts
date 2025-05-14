@@ -50,13 +50,22 @@ const updateUserNickname = async (req: Request, res: Response) => {
 // 更新密码
 const updateUserPassword = async (req: Request, res: Response) => {
     try {
-        const userId = getJWTPayload(req.headers.authorization as string)
-            .userId as string;
+        const userId = getJWTPayload(req.headers.authorization as string).userId as string
 
         // 判断请求参数是否合法
-        if (!userId || !req.body.password) {
-            res.json(useErrorResponseData('参数错误，请求无效'));
-            return;
+        if (!userId || !req.body.oldPassword || !req.body.password) {
+            res.json(useErrorResponseData('参数错误，请求无效'))
+            return
+        }
+
+        // 检查用户旧密码
+        const user = await User.findOne({
+            _id: userId,
+            password: md5(req.body.oldPassword)
+        })
+        if (!user) {
+            res.json(useErrorResponseData('旧密码错误'))
+            return
         }
 
         // 更新用户密码
@@ -64,7 +73,7 @@ const updateUserPassword = async (req: Request, res: Response) => {
             { _id: userId },
             { $set: { password: md5(req.body.password) } },
             { new: true }
-        );
+        )
 
         // 判断更新结果，返回对应的 JSON 数据
         if (updateResult) {
@@ -72,15 +81,15 @@ const updateUserPassword = async (req: Request, res: Response) => {
                 useSuccessfulResponseData({
                     userId: updateResult._id.toString()
                 })
-            );
+            )
         } else {
-            res.json(useErrorResponseData('密码更新失败'));
+            res.json(useErrorResponseData('密码更新失败'))
         }
     } catch (error) {
-        console.log('[api/user/updatePassword] Error:', error);
-        res.json(useResponseData(50001, '密码更新失败，请稍后再试', null));
+        console.log('[api/user/updatePassword] Error:', error)
+        res.json(useResponseData(50001, '密码更新失败，请稍后再试', null))
     }
-};
+}
 
 // 更新用户头像
 const updateUserAvatar = async (req: Request, res: Response) => {
