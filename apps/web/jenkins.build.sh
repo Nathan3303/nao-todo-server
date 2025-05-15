@@ -9,13 +9,20 @@ pnpm install --registry=https://registry.npmjs.org
 pnpm websrv build
 cp -r apps/web/dist/* apps/web/bundle/
 
+# move old avatar directory
+mv /opt/shares/naotodoserver/avatars /opt/shares/avatars
+
 # remove original dist files, and copy dist files to folder /opt/shares(jenkins_share)
 rm -rf /opt/shares/naotodoserver
 cp -r apps/web/bundle /opt/shares/naotodoserver
 
+# make avatar directory
+mv /opt/shares/avatars /opt/shares/naotodoserver/avatars
+
 # copy ssl files to naotodoserver
-cp -r /opt/shares/ssl/todo.nathan33.site_bundle.crt /opt/shares/naotodoserver/certs/fullchain.pem
-cp -r /opt/shares/ssl/todo.nathan33.site.key /opt/shares/naotodoserver/certs/privkey.pem
+mkdir /opt/shares/naotodoserver/certs
+cp /opt/shares/ssl/todo.nathan33.site_bundle.crt /opt/shares/naotodoserver/certs/fullchain.pem
+cp /opt/shares/ssl/todo.nathan33.site.key /opt/shares/naotodoserver/certs/privkey.pem
 
 # start docker container mynginx, mynode and mymongo
 docker start mynginx mynode mymongo
