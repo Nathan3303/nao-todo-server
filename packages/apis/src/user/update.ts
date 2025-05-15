@@ -7,9 +7,10 @@ import {
     useSuccessfulResponseData
 } from '@nao-todo-server/hooks'
 import { saveAvatarFile } from '@nao-todo-server/utils'
-import type { Request, Response } from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import type { Request, Response } from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import sharp from 'sharp'
 
 // 更新用户昵称
 const updateUserNickname = async (req: Request, res: Response) => {
@@ -100,14 +101,24 @@ const updateUserAvatar = async (req: Request, res: Response) => {
             return res.json(useErrorResponseData('未检测到文件'))
         }
 
-        // 生成最终文件名
+        // 转换文件格式
+        let fileBuffer = req.file.buffer
+        let isWebP = false
         const ext = path.extname(req.file.originalname)
-        const filename = `${userId}${ext}`
+        if (ext !== '.webp' && ext !== '.gif') {
+            fileBuffer = await sharp(req.file.buffer)
+                .webp({ quality: 80 })
+                .toBuffer()
+            isWebP = true
+        }
+
+        // 生成最终文件名
+        const filename = isWebP ? `${userId}.webp` : `${userId}${ext}`
         const __dirname = path.dirname(fileURLToPath(import.meta.url))
         const uploadPath = path.join(__dirname, 'avatars', filename)
 
         // 保存文件
-        const saveResult = await saveAvatarFile(uploadPath, req.file.buffer)
+        const saveResult = await saveAvatarFile(uploadPath, fileBuffer)
         if (!saveResult) {
             return res.json(useErrorResponseData('保存文件失败'))
         }
