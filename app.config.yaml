@@ -1,0 +1,18 @@
+system: 
+  ip: 
+  port: 8080
+  env: dev
+log:
+  dir: logs
+  app: project-template
+db:
+  user: root
+  password: Liang6606
+  host: 119.29.87.176
+  port: 3306
+  using: test_db
+  debug: false
+gin:
+  ip: 
+  port: 3303
+  env: dev
