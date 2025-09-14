@@ -10,7 +10,7 @@ db:
   password: Liang6606
   host: 119.29.87.176
   port: 3306
-  using: test_db
+  using: naotodo
   debug: false
 gin:
   ip: 

@@ -3,7 +3,8 @@ package core
 import (
 	"os"
 
-	"03.project-template/flags"
+	"naotodoserver/flags"
+
 	"gopkg.in/yaml.v2"
 )
 

@@ -1,0 +1,89 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# 顶级配置，必须在第一行
+root = true
+
+# 所有文件的默认设置
+[*]
+# 使用 Unix 风格的换行符（LF）
+end_of_line = lf
+# 文件末尾插入一个换行符
+insert_final_newline = true
+# 删除行尾的空格
+trim_trailing_whitespace = true
+
+# Go 源码文件
+[*.go]
+# 字符编码为 UTF-8
+charset = utf-8
+# 缩进使用空格
+indent_style = space
+# Go 官方规范要求缩进为 1 个制表符（但在 EditorConfig 中我们通常用空格模拟，或直接使用 tab）
+# 注意：gofmt 默认使用制表符（tab）进行缩进。
+# 如果你的编辑器支持，建议使用 tab；否则，使用 4 个空格是常见替代方案。
+# 以下为使用 **制表符 (tab)** 的配置（推荐，与 gofmt 保持一致）：
+indent_style = tab
+# 如果你偏好空格，取消注释下一行并注释掉 indent_style = tab
+# indent_style = space
+# indent_size = 4
+
+# Go 文件使用 LF 换行符
+end_of_line = lf
+# 确保文件以换行符结尾
+insert_final_newline = true
+# 去除行尾空格
+trim_trailing_whitespace = true
+
+# 其他常见文件类型
+[*.md]
+# Markdown 文件通常不需要去除行尾空格，因为两个空格代表换行
+trim_trailing_whitespace = false
+insert_final_newline = true
+end_of_line = lf
+
+[*.yaml]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.yml]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.json]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.mod]
+# Go module 文件
+charset = utf-8
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.sum]
+# Go checksum 文件
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# 脚本文件
+[*.{sh,bash}]
+shell = unix
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
