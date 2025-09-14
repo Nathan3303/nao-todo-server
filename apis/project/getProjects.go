@@ -36,14 +36,18 @@ func GetProjectsHandlerV1(ctx *gin.Context) {
 	// dto.CreatedAt = ctx.Query("created_at")
 	// dto.ArchivedAt = ctx.Query("archived_at")
 
+	// 构建查询
+	var tx = core.DB.Preload("Preference").Where("user_id = ?", userId)
+	if dto.Name != "" {
+		tx = tx.Where("name like ?", "%"+dto.Name+"%")
+	}
+	if dto.Desscription != "" {
+		tx = tx.Where("description like ?", "%"+dto.Desscription+"%")
+	}
+
 	// 执行查询
 	var projects []modules.Project
-	core.DB.Preload("Preference").Where("user_id = ?", userId).Find(
-		&projects,
-		"name like ? and description like ?",
-		"%"+dto.Name+"%",
-		"%"+dto.Desscription+"%",
-	)
+	tx.Find(&projects)
 
 	// 返回结果
 	apis.Success(ctx, apis.ResponseData{
