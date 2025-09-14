@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +42,7 @@ func RestoreProjectHandlerV1(ctx *gin.Context) {
 	dto.ProjectId, _ = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
 
 	// 恢复记录
-	var project modules.Project
+	var project models.Project
 	core.DB.Unscoped().Where("id = ? and user_id = ?", dto.ProjectId, userId).First(&project)
 	if project.DeletedAt.Valid { // 确认已被软删除
 		project.DeletedAt = gorm.DeletedAt{} // 手动清空 DeletedAt

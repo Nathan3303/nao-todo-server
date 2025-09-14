@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +42,7 @@ func RestoreTagHandlerV1(ctx *gin.Context) {
 	dto.TagId, _ = strconv.ParseInt(dto.TagIdRaw, 10, 64)
 
 	// 恢复记录
-	var tag modules.Tag
+	var tag models.Tag
 	core.DB.Unscoped().Where("id = ? and user_id = ?", dto.TagId, userId).First(&tag)
 	if tag.DeletedAt.Valid { // 确认已被软删除
 		tag.DeletedAt = gorm.DeletedAt{} // 手动清空 DeletedAt

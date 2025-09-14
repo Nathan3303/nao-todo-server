@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,7 +29,7 @@ func SignUpHandlerV1(ctx *gin.Context) {
 	}
 
 	// 检查数据库是否已有该用户
-	var user modules.User
+	var user models.User
 	core.DB.Where("email = ? And password = ?", dto.Email, dto.Password).First(&user)
 	if user.ID != 0 {
 		apis.Failure(ctx, apis.ResponseData{
@@ -41,7 +41,7 @@ func SignUpHandlerV1(ctx *gin.Context) {
 	}
 
 	// 创建用户
-	user = modules.User{
+	user = models.User{
 		Account:    dto.Email,
 		Email:      dto.Email,
 		Nickname:   dto.Nickname,

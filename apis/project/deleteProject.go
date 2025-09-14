@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -50,9 +50,9 @@ func DeleteProjectHandlerV1(ctx *gin.Context) {
 	// 执行删除
 	var result *gorm.DB
 	if dto.isHardDelete {
-		result = core.DB.Unscoped().Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&modules.Project{})
+		result = core.DB.Unscoped().Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&models.Project{})
 	} else {
-		result = core.DB.Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&modules.Project{})
+		result = core.DB.Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&models.Project{})
 	}
 
 	// 判断删除结果

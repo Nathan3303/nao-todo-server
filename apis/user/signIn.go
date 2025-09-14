@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"naotodoserver/utils"
 	"time"
 
@@ -30,8 +30,8 @@ func SignInHandlerV1(ctx *gin.Context) {
 	}
 
 	// 验证参数
-	var user = &modules.User{}
-	core.DB.Where(&modules.User{Email: dto.Email, Password: dto.Password}).Find(&user)
+	var user = &models.User{}
+	core.DB.Where(&models.User{Email: dto.Email, Password: dto.Password}).Find(&user)
 	if user.ID == 0 {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10012,
@@ -60,17 +60,17 @@ func SignInHandlerV1(ctx *gin.Context) {
 	}
 
 	// 查找并更新现有的 Session 记录
-	var session modules.Session
+	var session models.Session
 	var jwtExpiresAt = time.Now().Add(time.Hour * 24)
-	core.DB.Where(&modules.Session{UserId: user.ID}).Find(&session)
+	core.DB.Where(&models.Session{UserId: user.ID}).Find(&session)
 	if session.UserId == 0 {
 		// 如果不存在则直接创建
-		core.DB.Create(&modules.Session{
+		core.DB.Create(&models.Session{
 			UserId:    user.ID,
 			JWT:       jwt,
 			ExpiresAt: jwtExpiresAt,
 		})
-		core.DB.Where(&modules.Session{UserId: user.ID}).First(&session)
+		core.DB.Where(&models.Session{UserId: user.ID}).First(&session)
 		if session.UserId == 0 {
 			apis.Failure(ctx, apis.ResponseData{
 				Code:    10014,
@@ -81,7 +81,7 @@ func SignInHandlerV1(ctx *gin.Context) {
 		}
 	} else {
 		// 存在则更新记录
-		core.DB.Where(&session).UpdateColumns(&modules.Session{
+		core.DB.Where(&session).UpdateColumns(&models.Session{
 			JWT:       jwt,
 			ExpiresAt: jwtExpiresAt,
 		})

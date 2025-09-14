@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +41,7 @@ func GetTagHandlerV1(ctx *gin.Context) {
 	dto.TagId, _ = strconv.ParseInt(dto.TagIdRaw, 10, 64)
 
 	// 获取标签
-	var tag modules.Tag
+	var tag models.Tag
 	core.DB.Preload("Preference").Where("id = ? and user_id = ?", dto.TagId, userId).First(&tag)
 	if tag.ID == 0 {
 		apis.Failure(ctx, apis.ResponseData{

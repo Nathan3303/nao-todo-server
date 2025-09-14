@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"naotodoserver/utils"
 	"strings"
 
@@ -50,8 +50,8 @@ func ValidateHandlerV1(ctx *gin.Context) {
 	}
 
 	// 查找是否有对应的 session 记录
-	var session modules.Session
-	core.DB.Where(&modules.Session{JWT: dto.JWT, UserId: iUserJWTClaims.Profile.Id}).First(&session)
+	var session models.Session
+	core.DB.Where(&models.Session{JWT: dto.JWT, UserId: iUserJWTClaims.Profile.Id}).First(&session)
 	if session.UserId == 0 {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10044,

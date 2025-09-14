@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,12 +49,12 @@ func CreateProjectHandlerV1(ctx *gin.Context) {
 	}
 
 	// 创建记录
-	var projectPreference = &modules.ProjectPreference{
+	var projectPreference = &models.ProjectPreference{
 		ViewType:   "table",
 		GetOptions: "{}",
 		Columns:    "priority,project,description,endAt",
 	}
-	var project = &modules.Project{
+	var project = &models.Project{
 		Name:        dto.Name,
 		Description: dto.Description,
 		UserId:      userId.(int64),

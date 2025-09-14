@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +41,7 @@ func GetProjectHandlerV1(ctx *gin.Context) {
 	dto.ProjectId, _ = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
 
 	// 获取项目
-	var project modules.Project
+	var project models.Project
 	core.DB.Preload("Preference").Where("id = ? and user_id = ?", dto.ProjectId, userId).First(&project)
 	if project.ID == 0 {
 		apis.Failure(ctx, apis.ResponseData{
