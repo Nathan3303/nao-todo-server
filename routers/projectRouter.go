@@ -1,20 +1,11 @@
 package routers
 
 import (
-	"naotodoserver/apis"
 	projectapis "naotodoserver/apis/project"
 	userapis "naotodoserver/apis/user"
 
 	"github.com/gin-gonic/gin"
 )
-
-func defaultHandler(ctx *gin.Context) {
-	apis.Success(ctx, apis.ResponseData{
-		Code:    200,
-		Message: "success",
-		Data:    nil,
-	})
-}
 
 func ProjectRouterInit(router *gin.RouterGroup) {
 	projectRouter := router.Group("/project", userapis.ValidateHandlerV1)
@@ -22,10 +13,11 @@ func ProjectRouterInit(router *gin.RouterGroup) {
 		projectRouter.GET("/", projectapis.GetProjectHandlerV1)
 		projectRouter.POST("/", projectapis.CreateProjectHandlerV1)
 		projectRouter.PUT("/:projectId", projectapis.UpdateProjectHandlerV1)
+		projectRouter.DELETE("/:projectId", projectapis.DeleteProjectHandlerV1)
+		projectRouter.PUT("/restore/:projectId", projectapis.RestoreProjectHandlerV1)
 	}
-	projectsRouter := router.Group("/projects")
+	projectsRouter := router.Group("/projects", userapis.ValidateHandlerV1)
 	{
-		projectsRouter.GET("/", defaultHandler)
-
+		projectsRouter.GET("/", projectapis.GetProjectsHandlerV1)
 	}
 }
