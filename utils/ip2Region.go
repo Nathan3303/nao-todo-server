@@ -1,4 +1,4 @@
-package ip
+package utils
 
 import (
 	"errors"
@@ -21,9 +21,10 @@ type SearchRes struct {
 var IpSearcher *xdb.Searcher
 
 const (
-	UnknownIpAddress  = "未知 IP"
-	UnknownIpSearcher = "IpSearcher 未初始化"
-	PrivateIpAddress  = "不是一个有效的公网 IP"
+	Ip2RegionDBFilePath = "ip2Region.xdb"
+	UnknownIpAddress    = "未知 IP"
+	UnknownIpSearcher   = "IpSearcher 未初始化"
+	PrivateIpAddress    = "不是一个有效的公网 IP"
 )
 
 func isPrivateIP(ipStr string) bool {
@@ -92,9 +93,7 @@ func makeShortRegion(searchRes SearchRes) string {
 }
 
 func InitIpSearcher() {
-	var ipDBFilePath = "ip/ip2region.xdb"
-
-	searcher, err := xdb.NewWithFileOnly(ipDBFilePath)
+	searcher, err := xdb.NewWithFileOnly(Ip2RegionDBFilePath)
 	if err != nil {
 		logrus.Fatal(err)
 	}
