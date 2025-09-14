@@ -33,3 +33,11 @@ func Success(ctx *gin.Context, resData ResponseData) {
 func Failure(ctx *gin.Context, resData ResponseData) {
 	EndWithStatus(ctx, http.StatusOK, resData)
 }
+
+func defaultHandler(ctx *gin.Context) {
+	Success(ctx, ResponseData{
+		Code:    200,
+		Message: "success",
+		Data:    nil,
+	})
+}
