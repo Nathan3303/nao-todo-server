@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 	"time"
 
@@ -64,7 +64,7 @@ func UpdateProjectHandlerV1(ctx *gin.Context) {
 	}
 
 	// 更新记录
-	var project modules.Project
+	var project models.Project
 	project.UpdatedAt = time.Time(time.Now())
 	project.Name = dto.Name
 	project.Description = dto.Description

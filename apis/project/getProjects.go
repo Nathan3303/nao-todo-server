@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +46,7 @@ func GetProjectsHandlerV1(ctx *gin.Context) {
 	}
 
 	// 执行查询
-	var projects []modules.Project
+	var projects []models.Project
 	tx.Find(&projects)
 
 	// 返回结果

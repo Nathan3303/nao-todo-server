@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"naotodoserver/utils"
 	"time"
 
@@ -48,8 +48,8 @@ func CheckInHandlerV1(ctx *gin.Context) {
 	}
 
 	// 若用户 JWT 未过期,检查数据库是否有对应的 session 记录
-	var session modules.Session
-	result := core.DB.Where(&modules.Session{JWT: dto.JWT}).First(&session)
+	var session models.Session
+	result := core.DB.Where(&models.Session{JWT: dto.JWT}).First(&session)
 	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10024,
@@ -86,7 +86,7 @@ func CheckInHandlerV1(ctx *gin.Context) {
 		})
 		return
 	}
-	result = core.DB.Where(&modules.Session{JWT: dto.JWT}).UpdateColumns(&modules.Session{JWT: newJWT})
+	result = core.DB.Where(&models.Session{JWT: dto.JWT}).UpdateColumns(&models.Session{JWT: newJWT})
 	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10027,

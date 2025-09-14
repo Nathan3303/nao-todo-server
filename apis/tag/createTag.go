@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,12 +50,12 @@ func CreateTagHandlerV1(ctx *gin.Context) {
 	}
 
 	// 创建记录
-	var tagPreference = &modules.TagPreference{
+	var tagPreference = &models.TagPreference{
 		ViewType:   "table",
 		GetOptions: "{}",
 		Columns:    "priority,project,description,endAt",
 	}
-	var tag = &modules.Tag{
+	var tag = &models.Tag{
 		UserId:      userId.(int64),
 		Name:        dto.Name,
 		Description: dto.Description,

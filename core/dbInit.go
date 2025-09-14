@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"naotodoserver/flags"
 	"naotodoserver/globals"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"os"
 	"time"
 
@@ -63,13 +63,13 @@ func CheckAndExecuteAutoMigration() {
 	}
 
 	err := DB.AutoMigrate(
-		&modules.User{},
-		&modules.Session{},
-		&modules.UserConfig{},
-		&modules.Project{},
-		&modules.ProjectPreference{},
-		&modules.Tag{},
-		&modules.TagPreference{},
+		&models.User{},
+		&models.Session{},
+		&models.UserConfig{},
+		&models.Project{},
+		&models.ProjectPreference{},
+		&models.Tag{},
+		&models.TagPreference{},
 	)
 	if err != nil {
 		logrus.Fatal("数据库自动迁移失败")

@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"strconv"
 	"time"
 
@@ -65,7 +65,7 @@ func UpdateTagHandlerV1(ctx *gin.Context) {
 	}
 
 	// 更新记录
-	var tag modules.Tag
+	var tag models.Tag
 	tag.UpdatedAt = time.Time(time.Now())
 	tag.Name = dto.Name
 	tag.Description = dto.Description

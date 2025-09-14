@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -51,7 +51,7 @@ func GetTagsHandlerV1(ctx *gin.Context) {
 	}
 
 	// 执行查询
-	var tags []modules.Tag
+	var tags []models.Tag
 	tx.Find(&tags)
 
 	// 返回结果

@@ -3,7 +3,7 @@ package apis
 import (
 	"naotodoserver/apis"
 	"naotodoserver/core"
-	"naotodoserver/modules"
+	"naotodoserver/models"
 	"naotodoserver/utils"
 
 	"github.com/gin-gonic/gin"
@@ -47,7 +47,7 @@ func SignOutHandlerV1(ctx *gin.Context) {
 	}
 
 	// 查找并删除数据库对应的 session 记录
-	result := core.DB.Where(&modules.Session{JWT: dto.JWT}).Delete(&modules.Session{})
+	result := core.DB.Where(&models.Session{JWT: dto.JWT}).Delete(&models.Session{})
 	if result.Error != nil {
 		apis.Success(ctx, apis.ResponseData{
 			Code:    10034,
