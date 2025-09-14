@@ -7,5 +7,6 @@ func RoutersInit(router *gin.Engine) {
 	{
 		UserRouterInit(apiRouter)
 		ProjectRouterInit(apiRouter)
+		TagRouterInit(apiRouter)
 	}
 }

@@ -68,6 +68,8 @@ func CheckAndExecuteAutoMigration() {
 		&modules.UserConfig{},
 		&modules.Project{},
 		&modules.ProjectPreference{},
+		&modules.Tag{},
+		&modules.TagPreference{},
 	)
 	if err != nil {
 		logrus.Fatal("数据库自动迁移失败")
