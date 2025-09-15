@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"naotodoserver/apis"
 	todoapis "naotodoserver/apis/todo"
 	userapis "naotodoserver/apis/user"
 
@@ -15,11 +14,10 @@ func TodoRouterInit(router *gin.RouterGroup) {
 		todoRouter.POST("/", todoapis.CreateTodoHandlerV1)
 		todoRouter.PUT("/:todoId", todoapis.UpdateTodoHandlerV1)
 		todoRouter.DELETE("/:todoId", todoapis.DeleteTodoHandlerV1)
-		todoRouter.PUT("/restore/:todoId", apis.DefaultHandler)
+		todoRouter.PUT("/restore/:todoId", todoapis.RestoreTodoHandlerV1)
 	}
 	todosRouter := router.Group("/todos", userapis.ValidateHandlerV1)
 	{
 		todosRouter.GET("/", todoapis.GetTodosHandlerV1)
-		todosRouter.PUT("/", apis.DefaultHandler)
 	}
 }
