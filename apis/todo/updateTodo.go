@@ -94,6 +94,7 @@ func UpdateTodoHandlerV1(ctx *gin.Context) {
 
 	// 构建更新结构体
 	var todoCond models.Todo
+	todoCond.UpdatedAt = time.Time(time.Now())
 	// var vErr error
 	// if dto.ProjectIdRaw != "" {
 	// 	dto.ProjectId, vErr = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
