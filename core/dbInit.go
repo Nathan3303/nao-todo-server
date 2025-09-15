@@ -72,6 +72,7 @@ func CheckAndExecuteAutoMigration() {
 		&models.TagPreference{},
 		&models.Todo{},
 		&models.Event{},
+		&models.Comment{},
 	)
 	if err != nil {
 		logrus.Fatal("数据库自动迁移失败")
