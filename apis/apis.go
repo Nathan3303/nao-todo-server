@@ -34,7 +34,7 @@ func Failure(ctx *gin.Context, resData ResponseData) {
 	EndWithStatus(ctx, http.StatusOK, resData)
 }
 
-func defaultHandler(ctx *gin.Context) {
+func DefaultHandler(ctx *gin.Context) {
 	Success(ctx, ResponseData{
 		Code:    200,
 		Message: "success",
