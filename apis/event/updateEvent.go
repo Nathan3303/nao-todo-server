@@ -90,6 +90,6 @@ func UpdateEventHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    50020,
 		Message: "检查事项更新成功",
-		Data:    eventCond,
+		Data:    dto.EventIdRaw,
 	})
 }
