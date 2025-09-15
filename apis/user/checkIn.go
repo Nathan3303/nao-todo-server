@@ -86,7 +86,10 @@ func CheckInHandlerV1(ctx *gin.Context) {
 		})
 		return
 	}
-	result = core.DB.Where(&models.Session{JWT: dto.JWT}).UpdateColumns(&models.Session{JWT: newJWT})
+	var sessionCond models.Session
+	sessionCond.JWT = dto.JWT
+	sessionCond.UpdatedAt = time.Time(time.Now())
+	result = core.DB.Where(&models.Session{JWT: dto.JWT}).UpdateColumns(&sessionCond)
 	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10027,
