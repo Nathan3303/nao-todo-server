@@ -82,6 +82,6 @@ func UpdateProjectHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    20020,
 		Message: "清单更新成功",
-		Data:    project,
+		Data:    project.ID,
 	})
 }
