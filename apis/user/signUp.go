@@ -30,8 +30,8 @@ func SignUpHandlerV1(ctx *gin.Context) {
 
 	// 检查数据库是否已有该用户
 	var user models.User
-	core.DB.Where("email = ? And password = ?", dto.Email, dto.Password).First(&user)
-	if user.ID != 0 {
+	var result = core.DB.Where("email = ? And password = ?", dto.Email, dto.Password).First(&user)
+	if user.ID != 0 || result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10002,
 			Message: "用户已存在",
@@ -50,8 +50,8 @@ func SignUpHandlerV1(ctx *gin.Context) {
 		CreateForm: "WebClient",
 		Avatar:     "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80",
 	}
-	core.DB.Create(&user)
-	if user.ID == 0 {
+	result = core.DB.Create(&user)
+	if user.ID == 0 || result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10003,
 			Message: "创建用户失败",

@@ -8,7 +8,7 @@ import (
 )
 
 type UserJWTClaimsProfile struct {
-	Id        int64     `json:"id"`
+	Id        string    `json:"id"`
 	Email     string    `json:"email"`
 	Nickname  string    `json:"nickname"`
 	Avatar    string    `json:"avatar"`

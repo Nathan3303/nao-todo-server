@@ -21,3 +21,13 @@ type UserConfig struct {
 	State      string `gorm:"size:16" json:"state"`
 	Appearance string `gorm:"size:16" json:"appearance"`
 }
+
+type UserResponse struct {
+	ModelResponse
+
+	Account  string `json:"account"`
+	Email    string `json:"email"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	Role     string `json:"role"`
+}

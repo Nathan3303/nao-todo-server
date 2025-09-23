@@ -69,6 +69,6 @@ func DeleteProjectHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    20030,
 		Message: "项目删除成功",
-		Data:    dto,
+		Data:    dto.ProjectId,
 	})
 }

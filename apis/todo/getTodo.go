@@ -36,24 +36,26 @@ func GetTodoHandlerV1(ctx *gin.Context) {
 			Message: "待办 ID 不能为空",
 			Data:    nil,
 		})
+		return
 	}
 	dto.TodoId, _ = strconv.ParseInt(dto.TodoIdRaw, 10, 64)
 
 	// 获取待办
-	var todo models.Todo
-	result := core.DB.Where("id = ? and user_id = ?", dto.TodoId, userId).First(&todo)
-	if todo.ID == 0 || result.Error != nil {
+	var todoRaw models.Todo
+	result := core.DB.Where("id = ? and user_id = ?", dto.TodoId, userId).First(&todoRaw)
+	if todoRaw.ID == 0 || result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    40003,
 			Message: "获取待办失败",
 			Data:    result.Error.Error(),
 		})
+		return
 	}
 
-	// 返回结果
+	// 转换为响应数据并返回结果
 	apis.Success(ctx, apis.ResponseData{
 		Code:    40000,
 		Message: "获取待办成功",
-		Data:    todo,
+		Data:    ToTodoResponse(&todoRaw),
 	})
 }

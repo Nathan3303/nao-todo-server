@@ -13,7 +13,7 @@ import (
 type UpdateTagHandlerV1DTO struct {
 	TagIdRaw    string
 	TagId       int64
-	Name        string `json:"name" binding:"required"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 	Color       string `json:"color"`
 }
@@ -54,24 +54,22 @@ func UpdateTagHandlerV1(ctx *gin.Context) {
 		return
 	}
 
-	// 检查属性值
-	if dto.Name == "" {
-		apis.Failure(ctx, apis.ResponseData{
-			Code:    30024,
-			Message: "标签名称不能为空",
-			Data:    nil,
-		})
-		return
+	// 构建更新结构体
+	var tagCond models.Tag
+	tagCond.UpdatedAt = time.Time(time.Now())
+	if dto.Name != "" {
+		tagCond.Name = dto.Name
+	}
+	if dto.Description != "" {
+		tagCond.Description = dto.Description
+	}
+	if dto.Color != "" {
+		tagCond.Color = dto.Color
 	}
 
 	// 更新记录
-	var tag models.Tag
-	tag.UpdatedAt = time.Time(time.Now())
-	tag.Name = dto.Name
-	tag.Description = dto.Description
-	tag.Color = dto.Color
-	result := core.DB.Where("id = ? and user_id = ?", dto.TagId, userId).UpdateColumns(&tag).Preload("Preference").First(&tag)
-	if result.RowsAffected == 0 {
+	result := core.DB.Where("id = ? and user_id = ?", dto.TagId, userId).UpdateColumns(&tagCond)
+	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    30025,
 			Message: "标签更新失败",
@@ -84,6 +82,6 @@ func UpdateTagHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    30020,
 		Message: "标签更新成功",
-		Data:    tag.ID,
+		Data:    dto.TagIdRaw,
 	})
 }

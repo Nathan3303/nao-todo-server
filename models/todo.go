@@ -18,5 +18,30 @@ type Todo struct {
 	ArchivedAt  *time.Time `gorm:"null" json:"archivedAt"`
 	FavoritedAt *time.Time `json:"favoritedAt"`
 	GivenUpAt   *time.Time `json:"givenUpAt"`
-	Tags        []int64    `gorm:"serializer:json;type:json" json:"tags"`
+	Tags        []string   `gorm:"serializer:json;type:json" json:"tags"`
+}
+
+type TodoResponse struct {
+	ModelResponse
+
+	UserId       string  `json:"userId"`
+	ProjectId    string  `json:"projectId"`
+	ParentTodoId *string `json:"parentTodoId"`
+
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	State       string     `json:"state"`
+	Priority    string     `json:"priority"`
+	StartAt     *time.Time `json:"startAt"`
+	EndAt       *time.Time `json:"endAt"`
+	ArchivedAt  *time.Time `json:"archivedAt"`
+	FavoritedAt *time.Time `json:"favoritedAt"`
+	GivenUpAt   *time.Time `json:"givenUpAt"`
+	Tags        []string   `json:"tags"`
+
+	// extras fill
+	IsArchived  bool `json:"isArchived"`
+	IsDeleted   bool `json:"isDeleted"`
+	IsFavorited bool `json:"isFavorited"`
+	IsGivenUp   bool `json:"isGivenUp"`
 }
