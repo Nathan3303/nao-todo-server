@@ -13,7 +13,7 @@ import (
 type UpdateProjectHandlerV1DTO struct {
 	ProjectIdRaw string
 	ProjectId    int64
-	Name         string `json:"name" binding:"required"`
+	Name         string `json:"name"`
 	Description  string `json:"description"`
 }
 
@@ -53,23 +53,19 @@ func UpdateProjectHandlerV1(ctx *gin.Context) {
 		return
 	}
 
-	// 检查属性值
-	if dto.Name == "" {
-		apis.Failure(ctx, apis.ResponseData{
-			Code:    20024,
-			Message: "清单名称不能为空",
-			Data:    nil,
-		})
-		return
+	// 构建更新结构体
+	var projectCond models.Project
+	projectCond.UpdatedAt = time.Time(time.Now())
+	if dto.Name != "" {
+		projectCond.Name = dto.Name
+	}
+	if dto.Description != "" {
+		projectCond.Description = dto.Description
 	}
 
 	// 更新记录
-	var project models.Project
-	project.UpdatedAt = time.Time(time.Now())
-	project.Name = dto.Name
-	project.Description = dto.Description
-	result := core.DB.Where("id = ? and user_id = ?", dto.ProjectId, userId).UpdateColumns(&project).Preload("Preference").First(&project)
-	if result.RowsAffected == 0 {
+	result := core.DB.Where("id = ? and user_id = ?", dto.ProjectId, userId).UpdateColumns(&projectCond)
+	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    20025,
 			Message: "清单更新失败",
@@ -82,6 +78,6 @@ func UpdateProjectHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    20020,
 		Message: "清单更新成功",
-		Data:    project.ID,
+		Data:    dto.ProjectIdRaw,
 	})
 }

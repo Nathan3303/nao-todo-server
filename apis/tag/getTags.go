@@ -51,8 +51,14 @@ func GetTagsHandlerV1(ctx *gin.Context) {
 	}
 
 	// 执行查询
-	var tags []models.Tag
-	tx.Find(&tags)
+	var tagsRaw []models.Tag
+	tx.Find(&tagsRaw)
+
+	// 转换雪花 ID
+	tags := make([]TagResponseDTO, len(tagsRaw))
+	for i, tag := range tagsRaw {
+		tags[i] = ToTagResponse(tag)
+	}
 
 	// 返回结果
 	apis.Success(ctx, apis.ResponseData{

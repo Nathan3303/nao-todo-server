@@ -13,6 +13,8 @@ func UserRouterInit(router *gin.RouterGroup) {
 		userRouter.POST("/signin", userapis.SignInHandlerV1)
 		userRouter.PUT("/checkin", userapis.CheckInHandlerV1)
 		userRouter.DELETE("/signout", userapis.SignOutHandlerV1)
-		userRouter.Any("/validate", userapis.ValidateHandlerV1)
+		// userRouter.Any("/validate", userapis.ValidateHandlerV1)
+		userRouter.PUT("/profile", userapis.ValidateHandlerV1, userapis.UpdateProfileHandlerV1)
+		userRouter.PUT("/password", userapis.ValidateHandlerV1, userapis.UpdatePasswordHandlerV1)
 	}
 }

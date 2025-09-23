@@ -50,7 +50,7 @@ func CheckInHandlerV1(ctx *gin.Context) {
 	// 若用户 JWT 未过期,检查数据库是否有对应的 session 记录
 	var session models.Session
 	result := core.DB.Where(&models.Session{JWT: dto.JWT}).First(&session)
-	if result.Error != nil {
+	if session.ID == 0 || result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10024,
 			Message: "用户凭证已过期,请重新登录",
@@ -70,31 +70,42 @@ func CheckInHandlerV1(ctx *gin.Context) {
 	}
 
 	// 重新签发用户 JWT,并更新数据库对应的 session 记录
+	var userRaw models.User
+	result = core.DB.Where("id = ?", iUserJWTClaims.Profile.Id).First(&userRaw)
+	if userRaw.ID == 0 || result.Error != nil {
+		apis.Failure(ctx, apis.ResponseData{
+			Code:    10026,
+			Message: "用户不存在",
+			Data:    nil,
+		})
+		return
+	}
+	var user = ToUserResponse(&userRaw)
 	newJWT, err := utils.GenerateUserJWT(utils.UserJWTClaimsProfile{
-		Id:        iUserJWTClaims.Profile.Id,
-		Avatar:    iUserJWTClaims.Profile.Avatar,
-		Email:     iUserJWTClaims.Profile.Email,
-		Nickname:  iUserJWTClaims.Profile.Nickname,
-		Role:      iUserJWTClaims.Profile.Role,
-		CreatedAt: iUserJWTClaims.Profile.CreatedAt,
+		Id:        user.ID,
+		Avatar:    user.Avatar,
+		Email:     user.Email,
+		Nickname:  user.Nickname,
+		Role:      user.Role,
+		CreatedAt: user.CreatedAt,
 	})
 	if err != nil {
 		apis.Failure(ctx, apis.ResponseData{
-			Code:    10026,
+			Code:    10027,
 			Message: "签发用户 JWT 失败",
 			Data:    err.Error(),
 		})
 		return
 	}
 	var sessionCond models.Session
-	sessionCond.JWT = dto.JWT
+	sessionCond.JWT = newJWT
 	sessionCond.UpdatedAt = time.Time(time.Now())
-	result = core.DB.Where(&models.Session{JWT: dto.JWT}).UpdateColumns(&sessionCond)
-	if result.Error != nil {
+	result = core.DB.Where("id = ? and user_id = ?", session.ID, iUserJWTClaims.Profile.Id).UpdateColumns(&sessionCond)
+	if result.Error != nil || result.RowsAffected == 0 {
 		apis.Failure(ctx, apis.ResponseData{
-			Code:    10027,
+			Code:    10028,
 			Message: "更新用户 JWT 失败",
-			Data:    result.Error.Error(),
+			Data:    nil,
 		})
 		return
 	}

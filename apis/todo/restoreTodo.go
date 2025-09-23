@@ -53,6 +53,6 @@ func RestoreTodoHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    40040,
 		Message: "待办恢复成功",
-		Data:    todo.ID,
+		Data:    dto.TodoIdRaw,
 	})
 }

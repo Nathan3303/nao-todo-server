@@ -25,8 +25,7 @@ type UpdateTodoHandlerV1DTO struct {
 	StartAt     *time.Time
 	EndAtRaw    string `json:"endAt"`
 	EndAt       *time.Time
-	TagsRaw     []string `json:"tags"`
-	Tags        []int64
+	Tags        []string `json:"tags"`
 }
 
 func UpdateTodoHandlerV1(ctx *gin.Context) {
@@ -67,10 +66,10 @@ func UpdateTodoHandlerV1(ctx *gin.Context) {
 
 	// 校验时间信息
 	if dto.EndAtRaw != "" {
-		dto.EndAt, _ = ParseDateString("2006-01-02 15:04:05", dto.EndAtRaw)
+		dto.EndAt, _ = ParseDateString(time.RFC3339, dto.EndAtRaw)
 	}
 	if dto.StartAtRaw != "" {
-		dto.StartAt, _ = ParseDateString("2006-01-02 15:04:05", dto.StartAtRaw)
+		dto.StartAt, _ = ParseDateString(time.RFC3339, dto.StartAtRaw)
 	}
 	if dto.EndAt != nil && dto.StartAt != nil && dto.StartAt.After(*dto.EndAt) {
 		apis.Failure(ctx, apis.ResponseData{
@@ -79,17 +78,6 @@ func UpdateTodoHandlerV1(ctx *gin.Context) {
 			Data:    nil,
 		})
 		return
-	}
-
-	// 转换标签列表
-	if dto.TagsRaw != nil {
-		dto.Tags = []int64{}
-		for _, tagIdRaw := range dto.TagsRaw {
-			tagId, err := strconv.ParseInt(tagIdRaw, 10, 64)
-			if err == nil {
-				dto.Tags = append(dto.Tags, tagId)
-			}
-		}
 	}
 
 	// 构建更新结构体

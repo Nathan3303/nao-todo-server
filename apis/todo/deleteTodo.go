@@ -69,6 +69,6 @@ func DeleteTodoHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    40030,
 		Message: "待办删除成功",
-		Data:    dto.TodoId,
+		Data:    dto.TodoIdRaw,
 	})
 }
