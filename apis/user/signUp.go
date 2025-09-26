@@ -30,8 +30,8 @@ func SignUpHandlerV1(ctx *gin.Context) {
 
 	// 检查数据库是否已有该用户
 	var user models.User
-	var result = core.DB.Where("email = ? And password = ?", dto.Email, dto.Password).First(&user)
-	if user.ID != 0 || result.Error != nil {
+	var result = core.DB.Where("email = ? and password = ?", dto.Email, dto.Password).First(&user)
+	if result.Error != nil && user.ID != 0 {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    10002,
 			Message: "用户已存在",

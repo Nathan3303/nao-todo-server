@@ -11,21 +11,21 @@ import (
 )
 
 type UpdateTodoHandlerV1DTO struct {
-	TodoIdRaw string
-	TodoId    int64
-	// ProjectIdRaw string `json:"projectId"`
-	// ProjectId    int64
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	StateRaw    string `json:"state"`
-	State       int8
-	PriorityRaw string `json:"priority"`
-	Priority    int8
-	StartAtRaw  string `json:"startAt"`
-	StartAt     *time.Time
-	EndAtRaw    string `json:"endAt"`
-	EndAt       *time.Time
-	Tags        []string `json:"tags"`
+	TodoIdRaw    string
+	TodoId       int64
+	ProjectIdRaw string `json:"projectId"`
+	ProjectId    int64
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	StateRaw     string `json:"state"`
+	State        int8
+	PriorityRaw  string `json:"priority"`
+	Priority     int8
+	StartAtRaw   string `json:"startAt"`
+	StartAt      *time.Time
+	EndAtRaw     string `json:"endAt"`
+	EndAt        *time.Time
+	Tags         []string `json:"tags"`
 }
 
 func UpdateTodoHandlerV1(ctx *gin.Context) {
@@ -81,35 +81,39 @@ func UpdateTodoHandlerV1(ctx *gin.Context) {
 	}
 
 	// 构建更新结构体
-	var todoCond models.Todo
+	var (
+		todoCond models.Todo
+		vErr     error
+	)
 	todoCond.UpdatedAt = time.Time(time.Now())
-	// var vErr error
-	// if dto.ProjectIdRaw != "" {
-	// 	dto.ProjectId, vErr = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
-	// 	if vErr == nil {
-	// 		todoCond.ProjectId = dto.ProjectId
-	// 	}
-	// }
-	if dto.Name != "" {
-		todoCond.Name = dto.Name
-	}
-	if dto.Description != "" {
-		todoCond.Description = dto.Description
-	}
-	if dto.StateRaw != "" {
-		todoCond.State = TodoStateMap[dto.StateRaw]
-	}
-	if dto.PriorityRaw != "" {
-		todoCond.Priority = TodoPriorityMap[dto.PriorityRaw]
-	}
-	if dto.StartAt != nil {
-		todoCond.StartAt = dto.StartAt
-	}
-	if dto.EndAt != nil {
-		todoCond.EndAt = dto.EndAt
-	}
-	if dto.Tags != nil {
-		todoCond.Tags = dto.Tags
+	{
+		if dto.ProjectIdRaw != "" {
+			dto.ProjectId, vErr = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
+			if vErr == nil {
+				todoCond.ProjectId = dto.ProjectId
+			}
+		}
+		if dto.Name != "" {
+			todoCond.Name = dto.Name
+		}
+		if dto.Description != "" {
+			todoCond.Description = dto.Description
+		}
+		if dto.StateRaw != "" {
+			todoCond.State = TodoStateMap[dto.StateRaw]
+		}
+		if dto.PriorityRaw != "" {
+			todoCond.Priority = TodoPriorityMap[dto.PriorityRaw]
+		}
+		if dto.StartAt != nil {
+			todoCond.StartAt = dto.StartAt
+		}
+		if dto.EndAt != nil {
+			todoCond.EndAt = dto.EndAt
+		}
+		if dto.Tags != nil {
+			todoCond.Tags = dto.Tags
+		}
 	}
 
 	// 执行更新

@@ -42,7 +42,7 @@ func GetCommentsHandlerV1(ctx *gin.Context) {
 
 	// 获取评论列表
 	var comments []models.Comment
-	result := core.DB.Where("todo_id = ? and user_id = ?", dto.TodoId, userId).Find(&comments)
+	result := core.DB.Preload("CommentUser").Where("todo_id = ? and user_id = ?", dto.TodoId, userId).Find(&comments)
 	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    60003,
@@ -56,6 +56,6 @@ func GetCommentsHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    60000,
 		Message: "获取评论列表成功",
-		Data:    comments,
+		Data:    ToCommentResponseList(comments),
 	})
 }

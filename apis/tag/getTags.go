@@ -57,7 +57,7 @@ func GetTagsHandlerV1(ctx *gin.Context) {
 	// 转换雪花 ID
 	tags := make([]TagResponseDTO, len(tagsRaw))
 	for i, tag := range tagsRaw {
-		tags[i] = ToTagResponse(tag)
+		tags[i] = ToTagResponse(&tag)
 	}
 
 	// 返回结果

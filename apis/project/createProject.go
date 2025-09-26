@@ -50,18 +50,19 @@ func CreateProjectHandlerV1(ctx *gin.Context) {
 
 	// 创建记录
 	var projectPreference = &models.ProjectPreference{
+		UserId:     userId.(int64),
 		ViewType:   "table",
 		GetOptions: "{}",
 		Columns:    "priority,project,description,endAt",
 	}
-	var project = &models.Project{
+	var projectRaw = &models.Project{
 		Name:        dto.Name,
 		Description: dto.Description,
 		UserId:      userId.(int64),
 		Preference:  projectPreference,
 	}
-	core.DB.Create(&project)
-	if project.ID == 0 {
+	result := core.DB.Create(&projectRaw)
+	if result.Error != nil || projectRaw.ID == 0 {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    20014,
 			Message: "创建清单失败",
@@ -70,21 +71,10 @@ func CreateProjectHandlerV1(ctx *gin.Context) {
 		return
 	}
 
-	// 创建默认清单配置
-	// core.DB.Create(&projectPreference)
-	// if projectPreference.ID == 0 {
-	// 	apis.Failure(ctx, apis.ResponseData{
-	// 		Code:    20015,
-	// 		Message: "创建清单配置失败",
-	// 		Data:    nil,
-	// 	})
-	// 	return
-	// }
-
 	// 返回成功结果
 	apis.Success(ctx, apis.ResponseData{
 		Code:    20010,
 		Message: "创建清单成功",
-		Data:    project,
+		Data:    ToProjectResponse(projectRaw),
 	})
 }

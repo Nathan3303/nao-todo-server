@@ -15,6 +15,7 @@ func ProjectRouterInit(router *gin.RouterGroup) {
 		projectRouter.PUT("/:projectId", projectapis.UpdateProjectHandlerV1)
 		projectRouter.DELETE("/:projectId", projectapis.DeleteProjectHandlerV1)
 		projectRouter.PUT("/restore/:projectId", projectapis.RestoreProjectHandlerV1)
+		projectRouter.PUT("/preference/:projectId", projectapis.UpdateProjectPreferenceHandlerV1)
 	}
 	projectsRouter := router.Group("/projects", userapis.ValidateHandlerV1)
 	{
