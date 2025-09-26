@@ -77,6 +77,6 @@ func CreateEventHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    50010,
 		Message: "检查事项创建成功",
-		Data:    event,
+		Data:    ToEventResponse(event),
 	})
 }

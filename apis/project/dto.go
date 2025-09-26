@@ -28,7 +28,7 @@ type ProjectResponseDTO struct {
 	Preference  *ProjectPreferenceResponseDTO `json:"preference"`
 }
 
-func ToProjectResponse(project models.Project) ProjectResponseDTO {
+func ToProjectResponse(project *models.Project) ProjectResponseDTO {
 	return ProjectResponseDTO{
 		ID:          strconv.FormatInt(project.ID, 10),
 		UserId:      strconv.FormatInt(project.UserId, 10),

@@ -55,15 +55,15 @@ func CreateTagHandlerV1(ctx *gin.Context) {
 		GetOptions: "{}",
 		Columns:    "priority,project,description,endAt",
 	}
-	var tag = &models.Tag{
+	var tagRaw = &models.Tag{
 		UserId:      userId.(int64),
 		Name:        dto.Name,
 		Description: dto.Description,
 		Color:       dto.Color,
 		Preference:  tagPreference,
 	}
-	core.DB.Create(&tag)
-	if tag.ID == 0 {
+	result := core.DB.Create(&tagRaw)
+	if tagRaw.ID == 0 || result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    30014,
 			Message: "创建标签失败",
@@ -76,6 +76,6 @@ func CreateTagHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    30010,
 		Message: "创建标签成功",
-		Data:    tag,
+		Data:    ToTagResponse(tagRaw),
 	})
 }

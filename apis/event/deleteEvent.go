@@ -41,7 +41,7 @@ func DeleteEventHandlerV1(ctx *gin.Context) {
 	dto.EventId, _ = strconv.ParseInt(dto.EventIdRaw, 10, 64)
 
 	// 执行删除
-	result := core.DB.Unscoped().Where("id = ? and user_id = ?", dto.EventId, userId).Delete(&models.Event{})
+	result := core.DB.Where("id = ? and user_id = ?", dto.EventId, userId).Delete(&models.Event{})
 	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    50033,
@@ -55,6 +55,6 @@ func DeleteEventHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    50030,
 		Message: "检查事项删除成功",
-		Data:    dto.EventId,
+		Data:    dto.EventIdRaw,
 	})
 }

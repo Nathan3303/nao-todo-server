@@ -63,16 +63,24 @@ func CheckAndExecuteAutoMigration() {
 	}
 
 	err := DB.AutoMigrate(
+		// User
 		&models.User{},
-		&models.Session{},
 		&models.UserConfig{},
+		// Session
+		&models.Session{},
+		// Project
 		&models.Project{},
 		&models.ProjectPreference{},
+		// Tag
 		&models.Tag{},
 		&models.TagPreference{},
+		// Todo
 		&models.Todo{},
+		// Event
 		&models.Event{},
+		// Comment
 		&models.Comment{},
+		&models.CommentUser{},
 	)
 	if err != nil {
 		logrus.Fatal("数据库自动迁移失败")

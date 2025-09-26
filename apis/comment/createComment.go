@@ -10,11 +10,10 @@ import (
 )
 
 type CreateCommentHandlerV1DTO struct {
-	TodoIdRaw   string `json:"todoId" binding:"required"`
-	TodoId      int64
-	Content     string   `json:"content" binding:"required"`
-	Attachments []string `json:"attachments"`
-	IsTopUp     bool     `json:"isTopUp"`
+	TodoIdRaw string `json:"todoId" binding:"required"`
+	TodoId    int64
+	Content   string `json:"content" binding:"required"`
+	IsTopUp   bool   `json:"isTopUp"`
 }
 
 func CreateCommentHandlerV1(ctx *gin.Context) {
@@ -54,14 +53,31 @@ func CreateCommentHandlerV1(ctx *gin.Context) {
 		return
 	}
 
-	// 创建记录
-	var comment = &models.Comment{
-		UserId:  userId.(int64),
-		TodoId:  dto.TodoId,
-		Content: dto.Content,
+	// 获取用户信息
+	var user models.User
+	result := core.DB.Where("id = ?", userId).First(&user)
+	if result.Error != nil || user.ID == 0 {
+		apis.Failure(ctx, apis.ResponseData{
+			Code:    60014,
+			Message: "评论用户失效",
+			Data:    nil,
+		})
+		return
 	}
-	result := core.DB.Create(&comment)
-	if comment.ID == 0 || result.Error != nil {
+
+	// 创建记录
+	var commentUser = &models.CommentUser{
+		Avatar:   user.Avatar,
+		Nickname: user.Nickname,
+	}
+	var commentRaw = &models.Comment{
+		UserId:      userId.(int64),
+		TodoId:      dto.TodoId,
+		Content:     dto.Content,
+		CommentUser: commentUser,
+	}
+	result = core.DB.Create(&commentRaw)
+	if commentRaw.ID == 0 || result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    60014,
 			Message: "评论创建失败",
@@ -74,6 +90,6 @@ func CreateCommentHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    60010,
 		Message: "评论创建成功",
-		Data:    comment,
+		Data:    ToCommentResponse(commentRaw),
 	})
 }

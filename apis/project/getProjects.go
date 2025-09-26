@@ -70,7 +70,7 @@ func GetProjectsHandlerV1(ctx *gin.Context) {
 	// 转换雪花 ID
 	projects := make([]ProjectResponseDTO, len(projectsRaw))
 	for i, project := range projectsRaw {
-		projects[i] = ToProjectResponse(project)
+		projects[i] = ToProjectResponse(&project)
 	}
 
 	// 返回结果

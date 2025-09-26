@@ -22,5 +22,5 @@ type TagPreference struct {
 
 	ViewType   string `gorm:"size:16" json:"viewType"`
 	GetOptions string `gorm:"size:256" json:"getTodosOptions"`
-	Columns    string `gorm:"size:256" json:"columns" default:"priority,project,description,endAt"`
+	Columns    string `gorm:"size:256" json:"columns"`
 }

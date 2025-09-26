@@ -41,8 +41,8 @@ func GetEventsHandlerV1(ctx *gin.Context) {
 	dto.TodoId, _ = strconv.ParseInt(dto.TodoIdRaw, 10, 64)
 
 	// 获取待办事项列表
-	var events []models.Event
-	result := core.DB.Where("todo_id = ? and user_id = ?", dto.TodoId, userId).Order("sort_id ASC").Find(&events)
+	var eventsRaw []models.Event
+	result := core.DB.Where("todo_id = ? and user_id = ?", dto.TodoId, userId).Order("sort_id ASC").Find(&eventsRaw)
 	if result.Error != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    50003,
@@ -56,6 +56,6 @@ func GetEventsHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    50000,
 		Message: "获取待办事项列表成功",
-		Data:    events,
+		Data:    ToEventResponseList(eventsRaw),
 	})
 }

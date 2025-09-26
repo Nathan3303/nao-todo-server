@@ -28,7 +28,7 @@ type TagResponseDTO struct {
 	Preference  *TagPreferenceResponseDTO `json:"preference"`
 }
 
-func ToTagResponse(tag models.Tag) TagResponseDTO {
+func ToTagResponse(tag *models.Tag) TagResponseDTO {
 	return TagResponseDTO{
 		ID:          strconv.FormatInt(tag.ID, 10),
 		UserId:      strconv.FormatInt(tag.UserId, 10),

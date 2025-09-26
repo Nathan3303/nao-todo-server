@@ -55,6 +55,6 @@ func DeleteCommentHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    60030,
 		Message: "评论删除成功",
-		Data:    dto.CommentId,
+		Data:    dto.CommentIdRaw,
 	})
 }
