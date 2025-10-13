@@ -23,6 +23,6 @@ type ProjectPreference struct {
 	ProjectId int64 `gorm:"not null;index" json:"projectId"`
 
 	ViewType   string `gorm:"size:16" json:"viewType"`
-	GetOptions string `gorm:"size:256" json:"getTodosOptions"`
-	Columns    string `gorm:"size:256" json:"columns"`
+	GetOptions string `gorm:"size:256" json:"getTodosOptions" default:""`
+	Columns    string `gorm:"size:256" json:"columns" default:""`
 }

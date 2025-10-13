@@ -52,8 +52,8 @@ func CreateProjectHandlerV1(ctx *gin.Context) {
 	var projectPreference = &models.ProjectPreference{
 		UserId:     userId.(int64),
 		ViewType:   "table",
-		GetOptions: "{}",
-		Columns:    "priority,project,description,endAt",
+		GetOptions: "{\"limit\": 20}",
+		Columns:    "{\"createdAt\":false,\"updatedAt\":false,\"description\":true,\"state\":true,\"priority\":true,\"tags\":true,\"startAt\":false,\"endAt\":true}",
 	}
 	var projectRaw = &models.Project{
 		Name:        dto.Name,

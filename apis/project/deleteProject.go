@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type DeleteProjectHandlerV1DTO struct {
@@ -48,21 +47,42 @@ func DeleteProjectHandlerV1(ctx *gin.Context) {
 	dto.isHardDelete = dto.isHardDeleteRaw == "true"
 
 	// 执行删除
-	var result *gorm.DB
 	if dto.isHardDelete {
-		result = core.DB.Unscoped().Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&models.Project{})
-	} else {
-		result = core.DB.Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&models.Project{})
-	}
+		result := core.DB.Unscoped().Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&models.Project{})
 
-	// 判断删除结果
-	if result.Error != nil {
-		apis.Failure(ctx, apis.ResponseData{
-			Code:    20033,
-			Message: "项目删除失败",
-			Data:    nil,
-		})
-		return
+		// 判断删除结果
+		if result.Error != nil {
+			apis.Failure(ctx, apis.ResponseData{
+				Code:    20033,
+				Message: "项目删除失败",
+				Data:    nil,
+			})
+			return
+		}
+
+		// 删除所有数据此项目的待办任务
+		result = core.DB.Model(&models.Todo{}).Unscoped().Where("user_id = ? and project_id = ?", userId, dto.ProjectId).Delete(&models.Todo{})
+		if result.Error != nil {
+			apis.Failure(ctx, apis.ResponseData{
+				Code:    20034,
+				Message: "项目删除失败",
+				Data:    nil,
+			})
+			return
+		}
+
+	} else {
+		result := core.DB.Where("id = ? and user_id = ?", dto.ProjectId, userId).Delete(&models.Project{})
+
+		// 判断删除结果
+		if result.Error != nil {
+			apis.Failure(ctx, apis.ResponseData{
+				Code:    20035,
+				Message: "项目删除失败",
+				Data:    nil,
+			})
+			return
+		}
 	}
 
 	// 返回结果

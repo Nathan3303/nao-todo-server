@@ -4,8 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"naotodoserver/models"
+	"naotodoserver/utils"
 	"strconv"
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 var TodoStateMap = map[string]int8{
@@ -77,4 +81,31 @@ func ToTodoResponse(todo *models.Todo) models.TodoResponse {
 	todoResponse.IsGivenUp = todo.GivenUpAt != nil
 
 	return todoResponse
+}
+
+func ParseRelativeDateToUpdateCond(tx *gorm.DB, relativeDate string) {
+	fmt.Println("relativeDate: ", relativeDate)
+	switch relativeDate {
+	case "today":
+		tx.Where("end_at >= ?", time.Now().Format("2006-01-02"))
+	case "tomorrow":
+		tx.Where("end_at >= ?", time.Now().AddDate(0, 0, 1).Format("2006-01-02"))
+	case "week":
+		{
+			start, end := utils.GetWeekRange(time.Now())
+			tx.Where("end_at >= ? and end_at <= ?", start, end)
+		}
+	case "month":
+		tx.Where("end_at >= ?", time.Now().AddDate(0, 0, 7).Format("2006-01-02"))
+	case "-today":
+		tx.Where("end_at < ?", time.Now().Format("2006-01-02"))
+	}
+}
+
+func ParseSortStringToQueryCond(tx *gorm.DB, sort string) {
+	var splited = strings.Split(sort, ":")
+	if len(splited) != 2 {
+		return
+	}
+	tx.Order(utils.ToSnakeCase(splited[0]) + " " + splited[1])
 }

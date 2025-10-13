@@ -26,6 +26,7 @@ type UpdateTodoHandlerV1DTO struct {
 	EndAtRaw     string `json:"endAt"`
 	EndAt        *time.Time
 	Tags         []string `json:"tags"`
+	FavoritedRaw *bool    `json:"isFavorited"`
 }
 
 func UpdateTodoHandlerV1(ctx *gin.Context) {
@@ -113,6 +114,10 @@ func UpdateTodoHandlerV1(ctx *gin.Context) {
 		}
 		if dto.Tags != nil {
 			todoCond.Tags = dto.Tags
+		}
+		if dto.FavoritedRaw != nil && *dto.FavoritedRaw {
+			var time = time.Now()
+			todoCond.FavoritedAt = &time
 		}
 	}
 

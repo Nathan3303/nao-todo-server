@@ -52,8 +52,8 @@ func CreateTagHandlerV1(ctx *gin.Context) {
 	// 创建记录
 	var tagPreference = &models.TagPreference{
 		ViewType:   "table",
-		GetOptions: "{}",
-		Columns:    "priority,project,description,endAt",
+		GetOptions: "{\"limit\": 20}",
+		Columns:    "{\"createdAt\":false,\"updatedAt\":false,\"description\":true,\"state\":true,\"priority\":true,\"tags\":true,\"startAt\":false,\"endAt\":true}",
 	}
 	var tagRaw = &models.Tag{
 		UserId:      userId.(int64),
