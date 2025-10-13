@@ -6,6 +6,7 @@ import (
 	"naotodoserver/core"
 	"naotodoserver/models"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,13 +25,16 @@ type GetTodosHandlerV1DTO struct {
 	StartAt      *time.Time
 	EndAtRaw     string `form:"endAt"`
 	EndAt        *time.Time
-	ArchivedRaw  string `form:"archived"`
-	FavoritedRaw string `form:"favorited"`
-	GivenUpRaw   string `form:"givenUp"`
+	DeletedRaw   string `form:"isDeleted"`
+	ArchivedRaw  string `form:"isArchived"`
+	FavoritedRaw string `form:"isFavorited"`
+	GivenUpRaw   string `form:"isGivenUp"`
 	PageRaw      *int   `form:"page"`
 	Page         int
 	LimitRaw     *int `form:"limit"`
 	Limit        int
+	RelativeDate *string `form:"relativeDate"`
+	Sort         string  `form:"sort"`
 }
 
 func GetTodosHandlerV1(ctx *gin.Context) {
@@ -87,14 +91,17 @@ func GetTodosHandlerV1(ctx *gin.Context) {
 	}
 
 	// 构建查询
-	var tx = core.DB.Where("user_id = ?", userId)
+	var tx = core.DB.Model(&models.Todo{}).Where("user_id = ?", userId)
 	{
 		if dto.ProjectIdRaw != "" {
-			dto.ProjectId, _ = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
+			if dto.ProjectIdRaw == "inbox" {
+				dto.ProjectId = userId.(int64)
+			} else {
+				dto.ProjectId, _ = strconv.ParseInt(dto.ProjectIdRaw, 10, 64)
+			}
 			tx = tx.Where("project_id = ?", dto.ProjectId)
 		}
 		if dto.TagIdRaw != "" {
-			// dto.TagId, _ = strconv.ParseInt(dto.TagIdRaw, 10, 64)
 			tx = tx.Where("tags LIKE ?", "%"+dto.TagIdRaw+"%")
 		}
 		if dto.Name != "" {
@@ -104,16 +111,27 @@ func GetTodosHandlerV1(ctx *gin.Context) {
 			tx = tx.Where("description LIKE ?", "%"+dto.Description+"%")
 		}
 		if dto.StateRaw != "" {
-			tx = tx.Where("state = ?", TodoStateMap[dto.StateRaw])
+			var statesArray []int8
+			for state := range strings.SplitSeq(dto.StateRaw, ",") {
+				statesArray = append(statesArray, TodoStateMap[state])
+			}
+			tx.Where("state in ?", statesArray)
 		}
 		if dto.PriorityRaw != "" {
-			tx = tx.Where("priority = ?", TodoPriorityMap[dto.PriorityRaw])
+			var statesArray []int8
+			for state := range strings.SplitSeq(dto.PriorityRaw, ",") {
+				statesArray = append(statesArray, TodoPriorityMap[state])
+			}
+			tx.Where("priority in ?", statesArray)
 		}
 		if dto.StartAt != nil {
 			tx = tx.Where("start_at >= ?", dto.StartAt)
 		}
 		if dto.EndAt != nil {
 			tx = tx.Where("end_at <= ?", dto.EndAt)
+		}
+		if dto.DeletedRaw == "true" {
+			tx = tx.Where("deleted_at IS NOT NULL")
 		}
 		if dto.ArchivedRaw == "true" {
 			tx = tx.Where("archived_at IS NOT NULL")
@@ -124,12 +142,17 @@ func GetTodosHandlerV1(ctx *gin.Context) {
 		if dto.GivenUpRaw == "true" {
 			tx = tx.Where("given_up_at IS NOT NULL")
 		}
+		if dto.RelativeDate != nil {
+			ParseRelativeDateToUpdateCond(tx, *dto.RelativeDate)
+		}
+		if dto.Sort != "" {
+			ParseSortStringToQueryCond(tx, dto.Sort)
+		}
 	}
 
-	// 执行查询
-	var todosRaw []models.Todo
-	result := tx.Offset(dto.Page - 1).Limit(dto.Limit).Find(&todosRaw)
-	if result.Error != nil {
+	// 查询总数
+	var total int64
+	if countErr := tx.Count(&total).Error; countErr != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    40054,
 			Message: "查询失败",
@@ -138,10 +161,9 @@ func GetTodosHandlerV1(ctx *gin.Context) {
 		return
 	}
 
-	// 查询总数
-	var total int64
-	result = tx.Count(&total)
-	if result.Error != nil {
+	// 执行查询
+	var todosRaw []models.Todo
+	if findErr := tx.Offset((dto.Page - 1) * dto.Limit).Limit(dto.Limit).Find(&todosRaw).Error; findErr != nil {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    40055,
 			Message: "查询失败",
