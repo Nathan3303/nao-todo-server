@@ -10,7 +10,7 @@ import (
 )
 
 type GetTodoHandlerV1DTO struct {
-	TodoIdRaw string `json:"todoId" binding:"required"`
+	TodoIdRaw string
 	TodoId    int64
 }
 
