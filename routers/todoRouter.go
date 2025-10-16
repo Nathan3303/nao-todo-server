@@ -15,6 +15,7 @@ func TodoRouterInit(router *gin.RouterGroup) {
 		todoRouter.PUT("/:todoId", todoapis.UpdateTodoHandlerV1)
 		todoRouter.DELETE("/:todoId", todoapis.DeleteTodoHandlerV1)
 		todoRouter.PUT("/restore/:todoId", todoapis.RestoreTodoHandlerV1)
+		todoRouter.GET("/duplicate/:todoId", todoapis.DuplicateTodoHandlerV1)
 	}
 	todosRouter := router.Group("/todos", userapis.ValidateHandlerV1)
 	{
