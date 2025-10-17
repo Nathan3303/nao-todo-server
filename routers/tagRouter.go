@@ -15,6 +15,7 @@ func TagRouterInit(router *gin.RouterGroup) {
 		tagRouter.PUT("/:tagId", tagapis.UpdateTagHandlerV1)
 		tagRouter.DELETE("/:tagId", tagapis.DeleteTagHandlerV1)
 		tagRouter.PUT("/restore/:tagId", tagapis.RestoreTagHandlerV1)
+		tagRouter.PUT("/preference/:tagId", tagapis.UpdateTagPreferenceHandlerV1)
 	}
 	tagsRouter := router.Group("/tags", userapis.ValidateHandlerV1)
 	{
