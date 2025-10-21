@@ -10,7 +10,7 @@ import (
 func ProjectRouterInit(router *gin.RouterGroup) {
 	projectRouter := router.Group("/project", userapis.ValidateHandlerV1)
 	{
-		projectRouter.GET("/", projectapis.GetProjectHandlerV1)
+		projectRouter.GET("/:projectId", projectapis.GetProjectHandlerV1)
 		projectRouter.POST("/", projectapis.CreateProjectHandlerV1)
 		projectRouter.PUT("/:projectId", projectapis.UpdateProjectHandlerV1)
 		projectRouter.DELETE("/:projectId", projectapis.DeleteProjectHandlerV1)
