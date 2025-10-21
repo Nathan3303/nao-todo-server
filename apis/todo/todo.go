@@ -13,30 +13,30 @@ import (
 )
 
 var TodoStateMap = map[string]int8{
-	"todo":        0,
-	"doing":       1,
-	"in-progress": 1,
-	"done":        2,
+	// "doing":       2,
+	"todo":        1,
+	"in-progress": 2,
+	"done":        3,
 }
 
 var TodoStateMapReverse = map[int8]string{
-	0: "todo",
-	1: "in-progress",
-	2: "done",
+	1: "todo",
+	2: "in-progress",
+	3: "done",
 }
 
 var TodoPriorityMap = map[string]int8{
-	"low":    0,
-	"medium": 1,
-	"high":   2,
-	"urgent": 3,
+	"low":    1,
+	"medium": 2,
+	"high":   3,
+	"urgent": 4,
 }
 
 var TodoPriorityMapReverse = map[int8]string{
-	0: "low",
-	1: "medium",
-	2: "high",
-	3: "urgent",
+	1: "low",
+	2: "medium",
+	3: "high",
+	4: "urgent",
 }
 
 func ParseDateString(formatString, dateString string) (*time.Time, error) {
@@ -84,7 +84,7 @@ func ToTodoResponse(todo *models.Todo) models.TodoResponse {
 }
 
 func ParseRelativeDateToUpdateCond(tx *gorm.DB, relativeDate string) {
-	fmt.Println("relativeDate: ", relativeDate)
+	// fmt.Println("relativeDate: ", relativeDate)
 	switch relativeDate {
 	case "today":
 		tx.Where("end_at >= ?", time.Now().Format("2006-01-02"))
