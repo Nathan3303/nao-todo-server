@@ -30,7 +30,7 @@ func GetProjectHandlerV1(ctx *gin.Context) {
 	}
 
 	// 获取属性
-	if dto.ProjectIdRaw = ctx.Query("projectId"); dto.ProjectIdRaw == "" {
+	if dto.ProjectIdRaw = ctx.Param("projectId"); dto.ProjectIdRaw == "" {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    20002,
 			Message: "参数错误",
@@ -42,8 +42,8 @@ func GetProjectHandlerV1(ctx *gin.Context) {
 
 	// 获取项目
 	var project models.Project
-	core.DB.Preload("Preference").Where("id = ? and user_id = ?", dto.ProjectId, userId).First(&project)
-	if project.ID == 0 {
+	var result = core.DB.Model(&models.Project{}).Preload("Preference").Where("id = ? and user_id = ?", dto.ProjectId, userId).First(&project)
+	if result.Error != nil || project.ID == 0 {
 		apis.Failure(ctx, apis.ResponseData{
 			Code:    20003,
 			Message: "项目不存在",
@@ -56,6 +56,6 @@ func GetProjectHandlerV1(ctx *gin.Context) {
 	apis.Success(ctx, apis.ResponseData{
 		Code:    200,
 		Message: "获取项目成功",
-		Data:    project,
+		Data:    ToProjectResponse(&project),
 	})
 }
