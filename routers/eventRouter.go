@@ -17,5 +17,6 @@ func EventRouterInit(router *gin.RouterGroup) {
 	eventsRouter := router.Group("/events", userapis.ValidateHandlerV1)
 	{
 		eventsRouter.GET("/", eventapis.GetEventsHandlerV1)
+		eventsRouter.PUT("/", eventapis.UpdateEventsHandlerV1)
 	}
 }
