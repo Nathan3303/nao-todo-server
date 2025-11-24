@@ -22,7 +22,7 @@ func ConnectDB(user string, password string, host string, port int, dbname strin
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
 	if err != nil {
-		logrus.Error("数据库连接失败")
+		logrus.Error("数据库连接失败", err.Error())
 	} else {
 		logrus.Info("数据库连接成功")
 	}
