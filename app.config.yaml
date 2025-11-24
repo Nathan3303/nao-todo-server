@@ -7,8 +7,8 @@ log:
   app: project-template
 db:
   user: root
-  password: Liang6606
-  host: 119.29.87.176
+  password: lianGjh3303..
+  host: localhost
   port: 3306
   using: naotodo
   debug: false
