@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"naotodoserver/application/auth"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +13,8 @@ import (
  */
 func UserSignInHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
-	signInReq := types.UserSignInReq{}
-	err := ctx.ShouldBind(&signInReq)
+	req := types.SignInReq{}
+	err := ctx.ShouldBind(&req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10011,
@@ -23,7 +24,7 @@ func UserSignInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登录
-	signInRes, err := auth..SignIn(ctx, signInReq)
+	signInRes, err := auth.App.SignIn(ctx, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10012,
@@ -40,10 +41,14 @@ func UserSignInHandler(ctx *gin.Context) {
 	})
 }
 
+/*
+ * UserSignUpHandler
+ * 用户注册控制器
+ */
 func UserSignUpHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
-	var signUpReq = types.UserSignUpReq{}
-	err := ctx.ShouldBind(&signUpReq)
+	var req = types.SignUpReq{}
+	err := ctx.ShouldBind(&req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10001,
@@ -52,9 +57,8 @@ func UserSignUpHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// @step 2. 调用用户服务 - 注册
-	signUpRes, err := user.UserService.SignUp(ctx, signUpReq)
+	signUpRes, err := auth.App.SignUp(ctx, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10002,
@@ -63,7 +67,6 @@ func UserSignUpHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// @step 3. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    10000,
@@ -72,10 +75,14 @@ func UserSignUpHandler(ctx *gin.Context) {
 	})
 }
 
+/*
+ * UserCheckInHandler
+ * 用户签到控制器
+ */
 func UserCheckInHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
-	var checkInReq = types.UserCheckInReq{}
-	err := ctx.ShouldBind(&checkInReq)
+	var req = types.CheckInReq{}
+	err := ctx.ShouldBind(&req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10021,
@@ -84,9 +91,8 @@ func UserCheckInHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// @step 2. 调用用户服务 - 签到
-	checkInRes, err := user.UserService.CheckIn(ctx, checkInReq)
+	checkInRes, err := auth.App.CheckIn(ctx, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10022,
@@ -95,7 +101,6 @@ func UserCheckInHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// @step 3. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    10020,
@@ -105,10 +110,14 @@ func UserCheckInHandler(ctx *gin.Context) {
 
 }
 
+/*
+ * UserSignOutHandler
+ * 用户登出控制器
+ */
 func UserSignOutHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
-	var signOutReq = types.UserSignOutReq{}
-	err := ctx.ShouldBind(&signOutReq)
+	var req = types.SignOutReq{}
+	err := ctx.ShouldBind(&req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10031,
@@ -117,9 +126,8 @@ func UserSignOutHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// @step 2. 调用用户服务 - 登出
-	signOutRes, err := user.UserService.SignOut(ctx, signOutReq)
+	signOutRes, err := auth.App.SignOut(ctx, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10032,
@@ -128,43 +136,10 @@ func UserSignOutHandler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	// @step 3. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    10030,
 		Message: "登出成功",
 		Data:    signOutRes,
-	})
-}
-
-func UpdateProfileHandler(ctx *gin.Context) {
-	// 1. 绑定请求参数
-	var req = types.UpdateProfileReq{}
-	err := ctx.ShouldBind(&req)
-	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10051,
-			Message: "参数错误",
-			Data:    err.Error(),
-		})
-		return
-	}
-
-	// 2. 调用用户服务 - 更新昵称
-	updateProfileRes, err := user.UserService.UpdateProfile(ctx, req)
-	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10052,
-			Message: "更新个人信息失败",
-			Data:    err.Error(),
-		})
-		return
-	}
-
-	// 3. 返回结果
-	Success(ctx, types.ResponseData{
-		Code:    10050,
-		Message: "更新个人信息成功",
-		Data:    updateProfileRes,
 	})
 }

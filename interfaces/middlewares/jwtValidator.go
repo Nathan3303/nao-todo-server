@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"naotodoserver/application/user"
+	"naotodoserver/application/auth"
 	"naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
@@ -18,38 +18,30 @@ func getJwtString(ctx *gin.Context) string {
 }
 
 func JWTValidator(ctx *gin.Context) {
-	// @step 1. 获取 JWT
+	// 1. 验证 JWT
 	jwtString := getJwtString(ctx)
-
-	// @step 2. 验证 JWT 并处理失败结果
-	err, jwtPayload := user.UserService.UserDomain.ValidateJWT(ctx, jwtString)
+	userId, err := auth.App.Validate(ctx, jwtString)
 	if err != nil {
 		controllers.Failure(ctx, types.ResponseData{
-			Code:    10042,
-			Message: "用户凭证无效",
-			Data:    nil,
+			Code:    10041,
+			Message: "用户凭证验证失败",
+			Data:    err.Error(),
 		})
 		ctx.Abort()
 		return
 	}
-
-	// @step 3. 验证 Session 会话记录,并处理需要重新登录的结果
-	isSessionValid, _ := user.UserService.UserDomain.ValidateSession(ctx, jwtString)
-	if !isSessionValid {
+	if userId <= 0 {
 		controllers.Failure(ctx, types.ResponseData{
-			Code:    10043,
-			Message: "用户凭证已过期,请重新登录",
-			Data:    nil,
+			Code:    10042,
+			Message: "用户凭证验证失败",
 		})
 		ctx.Abort()
 		return
 	}
-
-	// @step 4. 写入用户信息到上下文
+	// 2. 写入用户信息到上下文
 	ctx.Request = ctx.Request.WithContext(
-		context.SetUserId(ctx.Request.Context(), jwtPayload.Id),
+		context.SetUserId(ctx.Request.Context(), userId),
 	)
-
-	// @step 5. 检测通过，继续处理请求
+	// 3. 检测通过，继续处理请求
 	ctx.Next()
 }

@@ -54,6 +54,24 @@ func (ur *userRepoImpl) FindByEmail(ctx context.Context, email string) (*entitie
 }
 
 /**
+ * Find User By Id
+ */
+func (ur *userRepoImpl) FindById(ctx context.Context, id int64) (*entities.User, error) {
+	// 1. 创建结果模型
+	user := &models.User{}
+	// 2. 创建查找模型
+	userModel := &models.User{}
+	userModel.ID = id
+	// 3. 执行查找
+	tx := ur.db.WithContext(ctx).Model(&models.User{}).Where(userModel).First(&user)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	// 4. 模型转换并返回
+	return UserModel2Entity(user), nil
+}
+
+/**
  * Compare Password
  */
 func (u *userRepoImpl) PasswordCompare(password []byte, encryptedPassword []byte) bool {

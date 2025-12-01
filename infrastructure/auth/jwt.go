@@ -16,7 +16,7 @@ type Claims struct {
 }
 
 type JWTService interface {
-	Generate(payload any) (string, error)
+	Generate(id int64, payload string, expOffset time.Duration) (string, error)
 	Parse(jwtString string) (Claims, error)
 	IsTokenExpired(jwtString string) bool
 	IsExpired(claims *Claims) bool
@@ -40,14 +40,22 @@ func GetJWTService() *JWTServiceImpl {
 	return jwtService
 }
 
-func (jwtService *JWTServiceImpl) Generate(id int64, payload string) (string, error) {
+func (jwtService *JWTServiceImpl) Generate(
+	id int64,
+	payload string,
+	expOffset time.Duration,
+) (string, error) {
+	if expOffset == 0 {
+		expOffset = time.Hour * 48
+	}
 	iClaims := Claims{
 		Id:      id,
 		Payload: payload,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "Token",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 48)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expOffset)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "NaoTodoServer",
 		},
 	}
 
