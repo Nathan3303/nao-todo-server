@@ -10,7 +10,6 @@ import (
 
 // 注册 Domain
 func RegistDomainImpl(authDomain service.AuthDomain) AuthApp {
-	// panic("未注册 AuthApplication")
 	once.Do(func() {
 		App = &authAppImpl{authDomain: authDomain}
 	})

@@ -45,10 +45,10 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.2 用户路由组
-		// userGroup := v1.Group("/user", middlewares.JWTValidator)
-		// {
-		// 	userGroup.PUT("/")
-		// }
+		userGroup := v1.Group("/user", middlewares.JWTValidator)
+		{
+			userGroup.PUT("/nickname", controllers.UpdateUserNicknameHandler)
+		}
 
 		// @step 3.2 项目路由组
 		// projectGroup := v1.Group("/project", middlewares.JWTValidator)

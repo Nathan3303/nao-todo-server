@@ -88,25 +88,22 @@
 
 仓库层接口函数必须收敛参数。
 
-### 用户仓库 userRepository
+1. 用户仓库 userRepository
+    1. 创建用户
+    2. 通过 Email 查找用户记录
+    3. 通过用户 ID 查找用户记录
+    4. 用户密码对比
 
-1. 创建用户
-2. 通过 Email 查找用户记录
-3. 通过用户 ID 查找用户记录
-4. 用户密码对比
+2. 会话仓库 sessionRepository
+    1. 创建会话
+    2. 通过 JWT 令牌和用户 ID 查找会话
+    3. 依据用户 ID 更新会话 Token 字段
+    4. 通过 JWT 令牌和用户 ID 删除会话
 
-### 会话仓库 sessionRepository
-
-1. 创建会话
-2. 通过 JWT 令牌和用户 ID 查找会话
-3. 依据用户 ID 更新会话 Token 字段
-4. 通过 JWT 令牌和用户 ID 删除会话
-
-### JWT 仓库 jwtRepository
-
-1. 创建 JWT
-2. 验证 JWT
-3. 解析 JWT
+3. JWT 仓库 jwtRepository
+    1. 创建 JWT
+    2. 验证 JWT
+    3. 解析 JWT
 
 ## 下游 - 认证 Infrastructure
 
