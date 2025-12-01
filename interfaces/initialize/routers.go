@@ -33,19 +33,22 @@ func InitRouters() *gin.Engine {
 		v1.GET("/ping", func(c *gin.Context) {
 			c.String(200, "Ping OK!")
 		})
-		// @step 3.1 用户路由组
-		userGroup := v1.Group("/user")
+
+		// @step 3.1 验证路由组
+		authGroup := v1.Group("/auth")
 		{
-			userGroup.POST("/signin", controllers.UserSignInHandler)
-			userGroup.POST("/signup", controllers.UserSignUpHandler)
-			userGroup.PUT("/checkin", controllers.UserCheckInHandler)
-			userGroup.DELETE("/signout", controllers.UserSignOutHandler)
-			userGroup.GET("/validate", middlewares.JWTValidator)
-			userGroup.PUT(
-				"/profile",
-				middlewares.JWTValidator, controllers.UpdateProfileHandler,
-			)
+			authGroup.POST("/signin", controllers.UserSignInHandler)
+			authGroup.POST("/signup", controllers.UserSignUpHandler)
+			authGroup.PUT("/checkin", controllers.UserCheckInHandler)
+			authGroup.DELETE("/signout", controllers.UserSignOutHandler)
+			authGroup.GET("/validate", middlewares.JWTValidator)
 		}
+
+		// @step 3.2 用户路由组
+		// userGroup := v1.Group("/user", middlewares.JWTValidator)
+		// {
+		// 	userGroup.PUT("/")
+		// }
 
 		// @step 3.2 项目路由组
 		// projectGroup := v1.Group("/project", middlewares.JWTValidator)

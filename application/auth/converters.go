@@ -5,10 +5,9 @@ import (
 	"naotodoserver/interfaces/types"
 )
 
-func SignUpReqToUserEntity(signUpReq *types.UserSignUpReq) *entities.User {
+func SignUpReqToUserEntity(signUpReq *types.SignUpReq) *entities.User {
 	return &entities.User{
 		Email:    signUpReq.Email,
 		Password: signUpReq.Password,
-		Nickname: signUpReq.Nickname,
 	}
 }

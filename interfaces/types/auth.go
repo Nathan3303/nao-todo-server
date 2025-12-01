@@ -1,40 +1,34 @@
 package types
 
-type UserSignInReq struct {
+type SignInReq struct {
 	Email    string `json:"email" form:"email" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
-type UserSignInRes struct {
+type SignInRes struct {
 	Token string `json:"jwt"`
 }
 
-type UserSignUpReq struct {
+type SignUpReq struct {
 	Email    string `json:"email" form:"email" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
 	Nickname string `json:"nickname" form:"nickname"`
 }
 
-type UserSignUpRes struct{}
+type SignUpRes struct{}
 
-type UserSignOutReq struct {
+type SignOutReq struct {
 	Token      string `json:"jwt" form:"jwt" binding:"required"`
 	DeviceType string `json:"deviceType" form:"deviceType"`
 }
 
-type UserSignOutRes struct{}
+type SignOutRes struct{}
 
-type UserCheckInReq struct {
+type CheckInReq struct {
 	Token      string `json:"jwt" form:"jwt" binding:"required"`
 	DeviceType string `json:"deviceType" form:"deviceType"`
 }
 
-type UserCheckInRes struct {
+type CheckInRes struct {
 	Token string `json:"jwt"`
 }
-
-type UpdateProfileReq struct {
-	Nickname string `json:"nickname" form:"nickname"`
-}
-
-type UpdateProfileRes struct{}
