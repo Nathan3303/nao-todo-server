@@ -1,0 +1,20 @@
+server:
+    ip:
+    port: 3302
+    version: 1.0
+    jwtSecret: NaoTodoServerJwtSecret
+
+mysql:
+    host: localhost
+    port: 3306
+    database: naotodo_test
+    username: root
+    password: lianGjh3303..
+    charset: utf8mb4
+
+# redis:
+#     redisDbName: 4
+#     redisHost: 127.0.0.1
+#     redisPort: 6379
+#     redisPassword: 123456
+#     redisNetwork: "tcp"

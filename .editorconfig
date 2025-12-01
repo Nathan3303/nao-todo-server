@@ -17,7 +17,6 @@ trim_trailing_whitespace = true
 # 字符编码为 UTF-8
 charset = utf-8
 # 缩进使用空格
-indent_style = space
 # Go 官方规范要求缩进为 1 个制表符（但在 EditorConfig 中我们通常用空格模拟，或直接使用 tab）
 # 注意：gofmt 默认使用制表符（tab）进行缩进。
 # 如果你的编辑器支持，建议使用 tab；否则，使用 4 个空格是常见替代方案。
@@ -25,7 +24,7 @@ indent_style = space
 indent_style = tab
 # 如果你偏好空格，取消注释下一行并注释掉 indent_style = tab
 # indent_style = space
-# indent_size = 4
+indent_size = 4
 
 # Go 文件使用 LF 换行符
 end_of_line = lf
@@ -40,6 +39,7 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 insert_final_newline = true
 end_of_line = lf
+indent_size = 2
 
 [*.yaml]
 charset = utf-8
