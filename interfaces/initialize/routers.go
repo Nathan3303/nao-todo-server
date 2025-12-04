@@ -41,13 +41,22 @@ func InitRouters() *gin.Engine {
 			authGroup.POST("/signup", controllers.UserSignUpHandler)
 			authGroup.PUT("/checkin", controllers.UserCheckInHandler)
 			authGroup.DELETE("/signout", controllers.UserSignOutHandler)
-			authGroup.GET("/validate", middlewares.JWTValidator)
+			authGroup.GET(
+				"/validate",
+				middlewares.JWTValidator,
+				func(ctx *gin.Context) {
+					ctx.JSON(200, gin.H{"code": "10040", "message": "JWT 验证通过"})
+				},
+			)
 		}
 
 		// @step 3.2 用户路由组
 		userGroup := v1.Group("/user", middlewares.JWTValidator)
 		{
+			userGroup.GET("/profile", controllers.GetUserProfileHandler)
 			userGroup.PUT("/nickname", controllers.UpdateUserNicknameHandler)
+			userGroup.PUT("/password", controllers.UpdateUserPasswordHandler)
+			userGroup.PUT("/avatar", controllers.UpdateUserAvatarHandler)
 		}
 
 		// @step 3.2 项目路由组

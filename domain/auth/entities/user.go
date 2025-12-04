@@ -32,7 +32,7 @@ func (u *User) EncryptPassword() error {
 		return errors.New("密码不能为空")
 	}
 	// 密码加密
-	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), 12)
+	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return errors.New("密码加密失败")
 	}

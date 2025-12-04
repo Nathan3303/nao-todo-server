@@ -15,7 +15,7 @@ func InitSnowflake(machineID int64) *snowflake.Node {
 	snowflake.Epoch = time.Date(2023, 3, 1, 0, 0, 0, 0, time.UTC).Unix() * 1000
 
 	var err error
-	SnowNode, err := snowflake.NewNode(machineID)
+	SnowNode, err = snowflake.NewNode(machineID)
 	if err != nil {
 		logrus.Fatal(err)
 		os.Exit(1)

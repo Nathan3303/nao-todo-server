@@ -85,14 +85,12 @@ func (userRepo *UserRepoImpl) UpdateNickname(
 	userId int64,
 	nickname string,
 ) error {
-	// panic("unimplemented")
-	// 1. 创建更新模型
-	updateModel := &models.User{Nickname: nickname}
-	// 2. 创建查找模型
+	// 1. 创建模型
+	updateCond := &models.User{Nickname: nickname}
 	findCond := &models.User{}
 	findCond.ID = userId
-	// 3. 执行更新
-	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).Where(findCond).Updates(updateModel)
+	// 2. 执行更新
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).Where(findCond).Updates(updateCond)
 	return tx.Error
 }
 
@@ -106,7 +104,7 @@ func (userRepo *UserRepoImpl) UpdatePassword(
 	newPassword string,
 ) error {
 	// 1. 创建更新模型
-	updateModel := &models.User{Password: newPassword}
+	updateCond := &models.User{Password: newPassword}
 	// 2. 创建查找模型
 	findCond := &models.User{}
 	findCond.ID = userId
@@ -120,8 +118,14 @@ func (userRepo *UserRepoImpl) UpdatePassword(
 	if !isMatch {
 		return errors.New("旧密码错误")
 	}
-	// 4. 执行更新
-	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).Where(findCond).Updates(updateModel)
+	// 4. 加密新密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	updateCond.Password = string(hashedPassword)
+	// 5. 执行更新
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).Where(findCond).Updates(updateCond)
 	return tx.Error
 }
 

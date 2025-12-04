@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"naotodoserver/domain/auth/entities"
 	"naotodoserver/domain/auth/service"
 	"naotodoserver/interfaces/types"
@@ -25,26 +26,26 @@ func (as *authAppImpl) SignIn(
 	signInReq *types.SignInReq,
 ) (*types.SignInRes, error) {
 	// 1. 通过 Email 查找用户记录
-	user, err := as.authDomain.FindUserByEmail(ctx, signInReq.Email)
-	if err != nil || !user.IsValid() {
+	userEntity, _ := as.authDomain.FindUserByEmail(ctx, signInReq.Email)
+	if !userEntity.IsIdValid() {
 		return nil, errors.New("用户名或密码错误")
 	}
 	// 2. 比对密码
 	isMatched := as.authDomain.PasswordCompare(
 		ctx,
 		[]byte(signInReq.Password),
-		[]byte(user.Password),
+		[]byte(userEntity.Password),
 	)
 	if !isMatched {
 		return nil, errors.New("用户名或密码错误")
 	}
 	// 2. 创建 JWT 令牌
-	jwtString, err := as.authDomain.GenerateJWT(ctx, user)
+	jwtString, err := as.authDomain.GenerateJWT(ctx, userEntity)
 	if err != nil {
 		return nil, errors.New("用户凭证签发失败")
 	}
 	// 3. 创建 Session
-	err = as.authDomain.CreateSession(ctx, user.Id, jwtString)
+	err = as.authDomain.CreateSession(ctx, userEntity.Id, jwtString)
 	if err != nil {
 		return nil, errors.New("用户 Session 创建失败 - " + err.Error())
 	}
@@ -75,6 +76,7 @@ func (as *authAppImpl) SignUp(
 		return nil, errors.New("密码加密失败")
 	}
 	// 4. 创建用户
+	fmt.Println(userEntity)
 	_, err = as.authDomain.CreateUser(ctx, userEntity)
 	if err != nil {
 		return nil, errors.New("注册用户失败")
@@ -108,11 +110,8 @@ func (as *authAppImpl) CheckIn(
 	}
 	// 会话存在：
 	// 3. 查找最新的用户信息
-	userEntity, err := as.authDomain.FindUserById(ctx, userId)
-	if err != nil {
-		return nil, errors.New("用户信息转换失败")
-	}
-	if userEntity.IsIdValid() {
+	userEntity, _ := as.authDomain.FindUserById(ctx, userId)
+	if !userEntity.IsIdValid() {
 		return nil, errors.New("用户信息转换失败")
 	}
 	// 4. 构建新的 JWT 令牌

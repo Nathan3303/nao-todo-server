@@ -12,7 +12,10 @@ func NewUserDomain(repo repositories.User) UserDomain {
 	}
 }
 
-// CreateUser implements UserDomain.
+/**
+ * Create user
+ * User 领域中的创建用户方法
+ */
 func (userDomain *UserDomainImpl) CreateUser(
 	ctx context.Context,
 	userEntity *entities.User,
@@ -20,22 +23,34 @@ func (userDomain *UserDomainImpl) CreateUser(
 	return userDomain.repo.Create(ctx, userEntity)
 }
 
-// FindById implements UserDomain.
+/**
+ * Find user by id
+ * User 领域中的根据 id 查询用户方法
+ */
 func (userDomain *UserDomainImpl) FindById(ctx context.Context, id int64) (*entities.User, error) {
-	panic("unimplemented")
+	return userDomain.repo.FindById(ctx, id)
 }
 
-// UpdateAvatar implements UserDomain.
+/**
+ * Update user avatar
+ * 更新用户头像方法
+ */
 func (userDomain *UserDomainImpl) UpdateAvatar(ctx context.Context, userId int64, avatar string) error {
 	panic("unimplemented")
 }
 
-// UpdateNickname implements UserDomain.
+/**
+ * Update user nickname
+ * 更新用户昵称方法
+ */
 func (userDomain *UserDomainImpl) UpdateNickname(ctx context.Context, userId int64, nickname string) error {
-	panic("unimplemented")
+	return userDomain.repo.UpdateNickname(ctx, userId, nickname)
 }
 
-// UpdatePassword implements UserDomain.
+/**
+ * Update user password
+ * 更新用户密码方法
+ */
 func (userDomain *UserDomainImpl) UpdatePassword(
 	ctx context.Context,
 	userId int64,
@@ -45,7 +60,10 @@ func (userDomain *UserDomainImpl) UpdatePassword(
 	return userDomain.repo.UpdatePassword(ctx, userId, password, newPassword)
 }
 
-// DeleteUser implements UserDomain.
+/**
+ * Delete user
+ * 删除用户方法
+ */
 func (userDomain *UserDomainImpl) DeleteUser(ctx context.Context, userId int64) error {
 	panic("unimplemented")
 }
