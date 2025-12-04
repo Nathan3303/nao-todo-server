@@ -36,7 +36,7 @@ func (userDomain *UserDomainImpl) FindById(ctx context.Context, id int64) (*enti
  * 更新用户头像方法
  */
 func (userDomain *UserDomainImpl) UpdateAvatar(ctx context.Context, userId int64, avatar string) error {
-	panic("unimplemented")
+	return userDomain.repo.UpdateAvatar(ctx, userId, avatar)
 }
 
 /**

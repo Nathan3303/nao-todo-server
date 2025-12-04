@@ -114,38 +114,38 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
  * 更新用户头像（10080）
  */
 func UpdateUserAvatarHandler(ctx *gin.Context) {
-	panic("unimplemented")
+	// panic("unimplemented")
 	// 1. 获取参数
-	// var req types.UpdateUserAvatarReq
-	// err := ctx.ShouldBind(&req)
-	// if err != nil {
-	// 	Failure(ctx, types.ResponseData{
-	// 		Code:    10081,
-	// 		Message: "参数错误",
-	// 	})
-	// 	return
-	// }
-	// 2. 验证参数
-	// if len(req.Avatar) <= 0 || len(req.Avatar) > 256 {
-	// 	Failure(ctx, types.ResponseData{
-	// 		Code:    10082,
-	// 		Message: "头像 URL 长度必须在 1-256 个字符之间",
-	// 	})
-	// 	return
-	// }
-	// 3. 调用用户服务 - 更新用户头像
-	// res, err := user.App.UpdateAvatar(ctx.Request.Context(), req)
-	// if err != nil {
-	// 	Failure(ctx, types.ResponseData{
-	// 		Code:    10083,
-	// 		Message: "更新用户头像失败 - " + err.Error(),
-	// 	})
-	// 	return
-	// }
+	var req types.UpdateUserAvatarReq
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10081,
+			Message: "参数错误",
+		})
+		return
+	}
+	res := &types.UpdateUserAvatarRes{}
+	// 2. 判断是否通过 AvatarURL 更新头像
+	if req.AvatarURL != "" {
+		// 是：则调用用户服务 - 更新用户头像 URL
+		res, err = user.App.UpdateAvatar(ctx.Request.Context(), req)
+	} else {
+		// 否：则调用用户服务 - 更新用户头像文件
+		res, err = user.App.UpdateAvatarByFile(ctx)
+	}
+	// 3. 判断处理结果
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10082,
+			Message: "更新用户头像失败 - " + err.Error(),
+		})
+		return
+	}
 	// 4. 返回结果
-	// Success(ctx, types.ResponseData{
-	// 	Code:    10080,
-	// 	Message: "更新用户头像成功",
-	// 	Data:    res,
-	// })
+	Success(ctx, types.ResponseData{
+		Code:    10080,
+		Message: "更新用户头像成功",
+		Data:    res,
+	})
 }

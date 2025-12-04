@@ -26,3 +26,11 @@ type UpdateUserPasswordReq struct {
 }
 
 type UpdateUserPasswordRes struct{}
+
+type UpdateUserAvatarReq struct {
+	AvatarURL string `json:"avatarURL" form:"avatarURL"`
+}
+
+type UpdateUserAvatarRes struct {
+	AvatarURL string `json:"avatarURL"`
+}
