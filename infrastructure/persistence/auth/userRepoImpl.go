@@ -43,12 +43,13 @@ func (ur *userRepoImpl) FindByEmail(ctx context.Context, email string) (*entitie
 	// 1. 创建结果模型
 	user := &models.User{}
 	// 2. 创建查找模型
-	userModel := &models.User{Email: email}
+	findCond := &models.User{Email: email}
 	// 3. 执行查找
-	tx := ur.db.WithContext(ctx).Model(&models.User{}).Where(userModel).First(&user)
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
+	ur.db.WithContext(ctx).Model(&models.User{}).Where(findCond).First(&user)
+	// tx := ur.db.WithContext(ctx).Model(&models.User{}).Where(findCond).First(&user)
+	// if tx.Error != nil {
+	// 	return nil, tx.Error
+	// }
 	// 4. 模型转换并返回
 	return UserModel2Entity(user), nil
 }
@@ -60,13 +61,13 @@ func (ur *userRepoImpl) FindById(ctx context.Context, id int64) (*entities.User,
 	// 1. 创建结果模型
 	user := &models.User{}
 	// 2. 创建查找模型
-	userModel := &models.User{}
-	userModel.ID = id
+	findCond := &models.User{}
+	findCond.ID = id
 	// 3. 执行查找
-	tx := ur.db.WithContext(ctx).Model(&models.User{}).Where(userModel).First(&user)
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
+	ur.db.WithContext(ctx).Model(&models.User{}).Where(findCond).First(&user)
+	// if tx.Error != nil {
+	// 	return nil, tx.Error
+	// }
 	// 4. 模型转换并返回
 	return UserModel2Entity(user), nil
 }

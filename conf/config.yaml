@@ -11,10 +11,12 @@ mysql:
     username: root
     password: lianGjh3303..
     charset: utf8mb4
-
-# redis:
-#     redisDbName: 4
-#     redisHost: 127.0.0.1
-#     redisPort: 6379
-#     redisPassword: 123456
-#     redisNetwork: "tcp"
+    parseTime: True
+    loc: Local
+    
+redis:
+    redisDbName: 4
+    redisHost: 127.0.0.1
+    redisPort: 6379
+    redisPassword: 123456
+    redisNetwork: "tcp"

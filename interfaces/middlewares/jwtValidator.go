@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"naotodoserver/application/auth"
-	"naotodoserver/infrastructure/context"
+	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
 	"strings"
@@ -40,7 +40,7 @@ func JWTValidator(ctx *gin.Context) {
 	}
 	// 2. 写入用户信息到上下文
 	ctx.Request = ctx.Request.WithContext(
-		context.SetUserId(ctx.Request.Context(), userId),
+		iCtx.SetUserId(ctx.Request.Context(), userId),
 	)
 	// 3. 检测通过，继续处理请求
 	ctx.Next()

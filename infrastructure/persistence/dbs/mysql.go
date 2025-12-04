@@ -20,7 +20,8 @@ func InitMySQL() {
 		"@tcp(", mysqlConfig.Host, ":", mysqlConfig.Port, ")",
 		"/", mysqlConfig.Database,
 		"?charset=", mysqlConfig.Charset,
-		"&parseTime=True&loc=Local",
+		"&parseTime=", mysqlConfig.ParseTime,
+		"&loc=", mysqlConfig.Loc,
 	}, "")
 
 	// @step 2. 连接数据库

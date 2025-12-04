@@ -12,6 +12,11 @@ type UserApp interface {
 		ctx context.Context,
 		req types.UpdateUserNicknameReq,
 	) (*types.UpdateUserNicknameRes, error)
+	GetProfile(ctx context.Context) (*types.GetUserProfileRes, error)
+	UpdatePassword(
+		ctx context.Context,
+		req types.UpdateUserPasswordReq,
+	) (*types.UpdateUserPasswordRes, error)
 }
 
 type userAppImpl struct {

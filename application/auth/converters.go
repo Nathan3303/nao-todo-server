@@ -9,5 +9,6 @@ func SignUpReqToUserEntity(signUpReq *types.SignUpReq) *entities.User {
 	return &entities.User{
 		Email:    signUpReq.Email,
 		Password: signUpReq.Password,
+		Nickname: signUpReq.Nickname,
 	}
 }

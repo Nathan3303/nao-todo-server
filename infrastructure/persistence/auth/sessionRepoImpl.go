@@ -25,20 +25,15 @@ func NewSessionRepo(db *gorm.DB) repositories.Session {
  */
 func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.Session) error {
 	// 1. 查找现存记录
-	var currentSession *models.Session
-	findCond := &models.Session{UserId: sessionEntity.UserId, DeviceType: sessionEntity.DeviceType}
-	tx := sr.db.Model(&models.Session{}).Where(findCond).First(&currentSession)
-	if tx.Error != nil {
-		return tx.Error
-	}
-	// 2. 执行结果存在逻辑
-	session := SessionModel2Entity(currentSession)
-	if session.IsValid() {
-		// 更新记录
+	currentSession := &models.Session{}
+	findCond := &models.Session{UserId: sessionEntity.UserId}
+	sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).First(currentSession)
+	// 2. 执行结果存在逻辑 - 更新记录
+	if currentSession.ID != 0 {
 		tx := sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).UpdateColumns(
 			&models.Session{
 				Token:     sessionEntity.Token,
-				ExpiredAt: time.Now().Add(time.Hour * 48),
+				ExpiredAt: time.Now().Add(time.Hour * 24 * 7),
 			},
 		)
 		if tx.Error != nil {
@@ -46,15 +41,19 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.S
 		}
 		return nil
 	}
-	// 3. 执行结果不存在逻辑
-	tx = sr.db.WithContext(ctx).Model(&models.Session{}).Create(&sessionEntity)
+	// 3. 执行结果不存在逻辑 - 创建记录
+	createCond := SessionEntity2Model(sessionEntity)
+	createCond.ExpiredAt = time.Now().Add(time.Hour * 24 * 7)
+	tx := sr.db.WithContext(ctx).Model(&models.Session{}).Create(createCond)
 	if tx.Error != nil {
 		return tx.Error
 	}
 	return nil
 }
 
-// Delete implements repositories.Session.
+/**
+ * Delete Session
+ */
 func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token string) error {
 	// 1. 创建删除模型
 	deleteCond := &models.Session{Token: token}
@@ -69,7 +68,9 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token strin
 	return nil
 }
 
-// FindByUserIdAndToken implements repositories.Session.
+/**
+ * Find Session by User ID and Token
+ */
 func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	ctx context.Context,
 	userId int64,
@@ -85,17 +86,15 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	return SessionModel2Entity(session)
 }
 
-// UpdateToken implements repositories.Session.
+/**
+ * Update Session Token
+ */
 func (sr *sessionRepoImpl) UpdateToken(ctx context.Context, sessionEntity *entities.Session) error {
-	// 1. 创建更新模型
-	updateCond := &models.Session{
-		UserId: sessionEntity.UserId,
-		Token:  sessionEntity.Token,
-	}
+	// 1. 创建模型
+	updateCond := &models.Session{Token: sessionEntity.Token}
+	findCond := &models.Session{UserId: sessionEntity.UserId}
 	// 2. 执行更新
-	tx := sr.db.WithContext(ctx).Model(&models.Session{}).Where(updateCond).Updates(&models.Session{
-		Token: sessionEntity.Token,
-	})
+	tx := sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).Updates(updateCond)
 	if tx.Error != nil {
 		return tx.Error
 	}
