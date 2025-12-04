@@ -5,6 +5,8 @@ import (
 	"naotodoserver/domain/user/service"
 	"naotodoserver/interfaces/types"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 type UserApp interface {
@@ -17,6 +19,11 @@ type UserApp interface {
 		ctx context.Context,
 		req types.UpdateUserPasswordReq,
 	) (*types.UpdateUserPasswordRes, error)
+	UpdateAvatar(
+		ctx context.Context,
+		req types.UpdateUserAvatarReq,
+	) (*types.UpdateUserAvatarRes, error)
+	UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAvatarRes, error)
 }
 
 type userAppImpl struct {
