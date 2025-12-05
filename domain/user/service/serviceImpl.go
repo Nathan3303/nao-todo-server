@@ -7,12 +7,10 @@ import (
 )
 
 func NewUserDomain(repo repositories.User) UserDomain {
-	return &UserDomainImpl{
-		repo: repo,
-	}
+	return &UserDomainImpl{repo: repo}
 }
 
-/**
+/*
  * Create user
  * User 领域中的创建用户方法
  */
@@ -23,7 +21,7 @@ func (userDomain *UserDomainImpl) CreateUser(
 	return userDomain.repo.Create(ctx, userEntity)
 }
 
-/**
+/*
  * Find user by id
  * User 领域中的根据 id 查询用户方法
  */
@@ -31,7 +29,7 @@ func (userDomain *UserDomainImpl) FindById(ctx context.Context, id int64) (*enti
 	return userDomain.repo.FindById(ctx, id)
 }
 
-/**
+/*
  * Update user avatar
  * 更新用户头像方法
  */
@@ -39,7 +37,7 @@ func (userDomain *UserDomainImpl) UpdateAvatar(ctx context.Context, userId int64
 	return userDomain.repo.UpdateAvatar(ctx, userId, avatar)
 }
 
-/**
+/*
  * Update user nickname
  * 更新用户昵称方法
  */
@@ -47,7 +45,7 @@ func (userDomain *UserDomainImpl) UpdateNickname(ctx context.Context, userId int
 	return userDomain.repo.UpdateNickname(ctx, userId, nickname)
 }
 
-/**
+/*
  * Update user password
  * 更新用户密码方法
  */
@@ -60,7 +58,7 @@ func (userDomain *UserDomainImpl) UpdatePassword(
 	return userDomain.repo.UpdatePassword(ctx, userId, password, newPassword)
 }
 
-/**
+/*
  * Delete user
  * 删除用户方法
  */

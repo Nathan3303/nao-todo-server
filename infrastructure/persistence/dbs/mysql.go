@@ -57,6 +57,8 @@ func DoMigration() {
 		models.User{},
 		models.UserConfig{},
 		models.Session{},
+		models.Project{},
+		models.ProjectPreference{},
 	)
 
 	if err != nil {
