@@ -2,17 +2,23 @@ package container
 
 import (
 	authApp "naotodoserver/application/auth"
+	commentApp "naotodoserver/application/comment"
+	eventApp "naotodoserver/application/event"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	userApp "naotodoserver/application/user"
 	authService "naotodoserver/domain/auth/service"
+	commentService "naotodoserver/domain/comment/service"
+	eventService "naotodoserver/domain/event/service"
 	projectService "naotodoserver/domain/project/service"
 	tagService "naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
 	userService "naotodoserver/domain/user/service"
 	authRepo "naotodoserver/infrastructure/persistence/auth"
+	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
+	eventRepo "naotodoserver/infrastructure/persistence/event"
 	projectRepo "naotodoserver/infrastructure/persistence/project"
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
 	taskRepo "naotodoserver/infrastructure/persistence/task"
@@ -36,5 +42,11 @@ func LoadDomain() {
 	))
 	taskApp.RegistDomainImpl(taskService.NewTaskDomain(
 		taskRepo.NewTaskRepo(dbs.DB),
+	))
+	eventApp.RegistDomainImpl(eventService.NewEventDomain(
+		eventRepo.NewEventRepo(dbs.DB),
+	))
+	commentApp.RegistDomainImpl(commentService.NewCommentDomain(
+		commentRepo.NewCommentRepo(dbs.DB),
 	))
 }

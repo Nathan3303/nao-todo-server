@@ -92,6 +92,26 @@ func InitRouters() *gin.Engine {
 			taskGroup.DELETE("/:taskId", controllers.DeleteTaskHandler)
 			taskGroup.PUT("/restore/:taskId", controllers.RestoreTaskHandler)
 		}
+
+		// @step 3.5 检查事项路由组
+		eventGroup := v1.Group("/events", middlewares.JWTValidator)
+		{
+			eventGroup.GET("/", controllers.ListEventHandler)
+			eventGroup.GET("/:eventId", controllers.GetEventHandler)
+			eventGroup.POST("/", controllers.CreateEventHandler)
+			eventGroup.PUT("/:eventId", controllers.UpdateEventHandler)
+			eventGroup.DELETE("/:eventId", controllers.DeleteEventHandler)
+		}
+
+		// @step 3.6 评论路由组
+		commentGroup := v1.Group("/comments", middlewares.JWTValidator)
+		{
+			commentGroup.GET("/", controllers.ListCommentHandler)
+			commentGroup.GET("/:commentId", controllers.GetCommentHandler)
+			commentGroup.POST("/", controllers.CreateCommentHandler)
+			commentGroup.PUT("/:commentId", controllers.UpdateCommentHandler)
+			commentGroup.DELETE("/:commentId", controllers.DeleteCommentHandler)
+		}
 	}
 
 	// @step 4. 返回 Gin 引擎
