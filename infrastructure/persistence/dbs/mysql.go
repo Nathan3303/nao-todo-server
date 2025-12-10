@@ -12,6 +12,7 @@ import (
 
 var DB *gorm.DB
 
+// InitMySQL 初始化 MySQL 数据库连接
 func InitMySQL() {
 	// @step 1. 拼接数据库连接字符串 ("%s:%s@tcp(%s:%d)/%s")
 	mysqlConfig := conf.Conf.MySQL
@@ -50,15 +51,18 @@ func InitMySQL() {
 	DoMigration()
 }
 
+// DoMigration 执行数据库迁移
 func DoMigration() {
 	DB.Set("gorm:table_options", "charset=utf8mb4")
 
 	err := DB.AutoMigrate(
 		models.User{},
-		models.UserConfig{},
 		models.Session{},
 		models.Project{},
 		models.ProjectPreference{},
+		models.Tag{},
+		models.TagPreference{},
+		models.Task{},
 	)
 
 	if err != nil {
