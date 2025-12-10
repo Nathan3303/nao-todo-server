@@ -7,10 +7,10 @@ import (
 )
 
 type ModelBase struct {
-	ID        int64          `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt"`
+	ID        int64          `gorm:"primaryKey"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (mb *ModelBase) BeforeCreate(tx *gorm.DB) error {

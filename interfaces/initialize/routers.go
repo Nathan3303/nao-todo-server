@@ -71,6 +71,27 @@ func InitRouters() *gin.Engine {
 			projectGroup.PUT("/archive/:projectId", controllers.ArchiveProjectHandler)
 			projectGroup.PUT("/unarchive/:projectId", controllers.UnarchiveProjectHandler)
 		}
+
+		// @step 3.3 标签路由组
+		tagGroup := v1.Group("/tags", middlewares.JWTValidator)
+		{
+			tagGroup.GET("/", controllers.ListTagHandler)
+			tagGroup.GET("/:tagId", controllers.GetTagHandler)
+			tagGroup.POST("/", controllers.CreateTagHandler)
+			tagGroup.PUT("/:tagId", controllers.UpdateTagHandler)
+			tagGroup.DELETE("/:tagId", controllers.DeleteTagHandler)
+		}
+
+		// @step 3.4 任务路由组
+		taskGroup := v1.Group("/tasks", middlewares.JWTValidator)
+		{
+			taskGroup.GET("/", controllers.ListTaskHandler)
+			taskGroup.GET("/:taskId", controllers.GetTaskHandler)
+			taskGroup.POST("/", controllers.CreateTaskHandler)
+			taskGroup.PUT("/:taskId", controllers.UpdateTaskHandler)
+			taskGroup.DELETE("/:taskId", controllers.DeleteTaskHandler)
+			taskGroup.PUT("/restore/:taskId", controllers.RestoreTaskHandler)
+		}
 	}
 
 	// @step 4. 返回 Gin 引擎

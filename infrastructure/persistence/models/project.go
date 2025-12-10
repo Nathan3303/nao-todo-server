@@ -4,18 +4,18 @@ import "time"
 
 type Project struct {
 	ModelBase
-	UserId      int64              `gorm:"not null" json:"userId"`
-	Name        string             `gorm:"size:128" json:"name"`
-	Description string             `gorm:"size:256" json:"description"`
-	ArchivedAt  *time.Time         `gorm:"null" json:"archivedAt"`
-	Preference  *ProjectPreference `gorm:"foreignKey:ProjectId;constraint:OnDelete:CASCADE;" json:"preference"`
+	UserId      int64              `gorm:"not null"`
+	Name        string             `gorm:"size:128"`
+	Description string             `gorm:"size:256"`
+	ArchivedAt  *time.Time         `gorm:"null"`
+	Preference  *ProjectPreference `gorm:"foreignKey:ProjectId;constraint:OnDelete:CASCADE;"`
 }
 
 type ProjectPreference struct {
 	ModelBase
-	UserId     int64  `gorm:"not null" json:"userId"`
-	ProjectId  int64  `gorm:"not null;index" json:"projectId"`
-	ViewType   string `gorm:"size:16" json:"viewType"`
-	GetOptions string `gorm:"size:256" json:"getTodosOptions" default:""`
-	Columns    string `gorm:"size:256" json:"columns" default:""`
+	UserId     int64  `gorm:"not null"`
+	ProjectId  int64  `gorm:"not null;index"`
+	ViewType   string `gorm:"size:16"`
+	GetOptions string `gorm:"size:256"`
+	Columns    string `gorm:"size:256"`
 }
