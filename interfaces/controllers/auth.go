@@ -24,7 +24,7 @@ func UserSignInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登录
-	signInRes, err := auth.App.SignIn(ctx, &req)
+	signInRes, err := auth.App.SignIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10012,
@@ -92,7 +92,7 @@ func UserCheckInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 签到
-	checkInRes, err := auth.App.CheckIn(ctx, &req)
+	checkInRes, err := auth.App.CheckIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10022,

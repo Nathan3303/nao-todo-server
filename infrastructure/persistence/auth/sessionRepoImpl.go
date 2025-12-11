@@ -4,6 +4,8 @@ import (
 	"context"
 	"naotodoserver/domain/auth/entities"
 	"naotodoserver/domain/auth/repositories"
+	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/ip2region"
 	"naotodoserver/infrastructure/persistence/models"
 	"time"
 
@@ -28,14 +30,19 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.S
 	currentSession := &models.Session{}
 	findCond := &models.Session{UserId: sessionEntity.UserId}
 	sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).First(currentSession)
+	// 2. 获取上下文 ClientInfo
+	clientInfo := iCtx.GetClientInfo(ctx)
 	// 2. 执行结果存在逻辑 - 更新记录
 	if currentSession.ID != 0 {
-		tx := sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).UpdateColumns(
-			&models.Session{
-				Token:     sessionEntity.Token,
-				ExpiredAt: time.Now().Add(time.Hour * 24 * 7),
-			},
-		)
+		tx := sr.db.WithContext(ctx).Model(&models.Session{}).
+			Where(findCond).
+			UpdateColumns(&models.Session{
+				Token:      sessionEntity.Token,
+				ExpiredAt:  time.Now().Add(time.Hour * 24 * 7),
+				IP4:        clientInfo.IP4,
+				Region:     clientInfo.IPRegion,
+				DeviceType: clientInfo.DeviceType,
+			})
 		if tx.Error != nil {
 			return tx.Error
 		}
@@ -43,8 +50,12 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.S
 	}
 	// 3. 执行结果不存在逻辑 - 创建记录
 	createCond := SessionEntity2Model(sessionEntity)
+	createCond.IP4 = clientInfo.IP4
+	createCond.Region = clientInfo.IPRegion
+	createCond.DeviceType = clientInfo.DeviceType
 	createCond.ExpiredAt = time.Now().Add(time.Hour * 24 * 7)
-	tx := sr.db.WithContext(ctx).Model(&models.Session{}).Create(createCond)
+	tx := sr.db.WithContext(ctx).Model(&models.Session{}).
+		Create(createCond)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -78,11 +89,15 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 ) *entities.Session {
 	// 1. 创建结果模型
 	session := &models.Session{}
-	// 2. 创建查找模型
+	// 2. 创建查找模型（携带区域信息）
 	findCond := &models.Session{UserId: userId, Token: token}
-	// 3. 执行查找
+	// 3. 填充 区域信息和设备类型
+	clientInfo := iCtx.GetClientInfo(ctx)
+	findCond.Region = clientInfo.IPRegion
+	findCond.DeviceType = clientInfo.DeviceType
+	// 4. 执行查找
 	sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).First(&session)
-	// 4. 模型转换并返回
+	// 5. 模型转换并返回
 	return SessionModel2Entity(session)
 }
 
@@ -100,4 +115,17 @@ func (sr *sessionRepoImpl) UpdateToken(ctx context.Context, sessionEntity *entit
 	}
 	// 3. 返回结果
 	return nil
+}
+
+/**
+ * Ip to Region
+ */
+func (sr *sessionRepoImpl) Ip2Region(ip string) (string, error) {
+	// 1. 获取 IP 地址区域信息
+	region, err := ip2region.GetIp2RegionImpl().ParseIp(ip)
+	if err != nil {
+		return "", err
+	}
+	// 2. 返回结果
+	return region, nil
 }
