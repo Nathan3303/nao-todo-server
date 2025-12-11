@@ -28,7 +28,7 @@ func InitRouters() *gin.Engine {
 	}))
 
 	// @step 3. 创建 API v1 路由组
-	v1 := router.Group("/api")
+	v1 := router.Group("/api", middlewares.ClientIP)
 	{
 		v1.GET("/ping", func(c *gin.Context) {
 			c.String(200, "Ping OK!")
@@ -114,6 +114,12 @@ func InitRouters() *gin.Engine {
 		}
 	}
 
-	// @step 4. 返回 Gin 引擎
+	// @step 4. 设置可信代理 IP（负载均衡器或 CDN 的 IP 段）
+	err := router.SetTrustedProxies([]string{"192.168.1.0/24", "10.0.0.0/8", "127.0.0.1"})
+	if err != nil {
+		panic(err)
+	}
+
+	// @step 5. 返回 Gin 引擎
 	return router
 }

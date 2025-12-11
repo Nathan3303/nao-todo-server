@@ -8,4 +8,6 @@ type Session struct {
 	Token      string    `gorm:"size:512;index"`
 	ExpiredAt  time.Time `gorm:"not null"`
 	DeviceType string    `gorm:"size:32"`
+	IP4        string    `gorm:"size:64"`
+	Region     string    `gorm:"size:64"`
 }

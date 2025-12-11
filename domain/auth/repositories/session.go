@@ -10,4 +10,5 @@ type Session interface {
 	FindByUserIdAndToken(ctx context.Context, userId int64, token string) *entities.Session
 	UpdateToken(ctx context.Context, sessionEntity *entities.Session) error
 	Delete(ctx context.Context, userId int64, token string) error
+	Ip2Region(ip string) (string, error)
 }
