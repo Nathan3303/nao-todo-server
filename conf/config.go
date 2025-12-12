@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
@@ -11,6 +12,7 @@ var Conf *Config
 type Config struct {
 	Server *Server `yaml:"server"`
 	MySQL  *MySQL  `yaml:"mysql"`
+	Redis  *Redis  `yaml:"redis"`
 }
 
 type Server struct {
@@ -29,6 +31,14 @@ type MySQL struct {
 	Charset   string `yaml:"charset"`
 	ParseTime string `yaml:"parseTime"`
 	Loc       string `yaml:"loc"`
+}
+
+type Redis struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	DB       int    `yaml:"database"`
+	Password string `yaml:"password"`
+	Network  string `yaml:"network"`
 }
 
 func InitConfig() {
@@ -54,4 +64,5 @@ func InitConfig() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(Conf.Redis)
 }

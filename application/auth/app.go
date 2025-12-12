@@ -13,6 +13,7 @@ type AuthApp interface {
 	CheckIn(ctx context.Context, checkInReq *types.CheckInReq) (*types.CheckInRes, error)
 	SignOut(ctx context.Context, signOutReq *types.SignOutReq) (*types.SignOutRes, error)
 	Validate(ctx context.Context, token string) (int64, error)
+	RateLimit(ctx context.Context, clientIP string, limit int8) error
 }
 
 type authAppImpl struct {

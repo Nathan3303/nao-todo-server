@@ -16,7 +16,7 @@ func RegistDomainImpl(authDomain service.AuthDomain) AuthApp {
 	return App
 }
 
-/**
+/*
  * SignIn 处理用户登录
  * 通过 signInReq 中的邮箱和密码验证用户身份，验证成功后生成 JWT 令牌并创建用户会话，最后返回 JWT 令牌
  */
@@ -52,7 +52,7 @@ func (as *authAppImpl) SignIn(
 	return &types.SignInRes{Token: jwtString}, nil
 }
 
-/**
+/*
  * SignUp 处理用户注册
  * 通过 signUpReq 中的用户信息，执行密码加密后用户信息落库
  */
@@ -78,7 +78,7 @@ func (as *authAppImpl) SignUp(
 	return &types.SignUpRes{}, nil
 }
 
-/**
+/*
  * CheckIn 处理用户检入
  * 通过 checkInReq 中的令牌信息，验证用户会话，并生成新的 JWT 并更新用户会话，最后返回新的 JWT
  * 用于在 JWT 或会话期限内的免密登录
@@ -122,7 +122,7 @@ func (as *authAppImpl) CheckIn(
 	return &types.CheckInRes{Token: newJWT}, nil
 }
 
-/**
+/*
  * SignOut 处理用户登出
  * 通过 signOutReq 中的令牌信息，验证用户会话，并删除用户会话，最后返回成功结果
  */
@@ -147,7 +147,7 @@ func (as *authAppImpl) SignOut(
 	return &types.SignOutRes{}, nil
 }
 
-/**
+/*
  * Validate 处理用户令牌验证
  * 通过 Header 中的令牌信息，验证用户会话，并返回验证结果
  */
@@ -170,4 +170,21 @@ func (as *authAppImpl) Validate(
 	}
 	// 3. 返回结果
 	return userId, nil
+}
+
+/*
+ * RateLimit 处理用户限流
+ * 通过 clientIP 检查用户请求次数是否超过限流阈值
+ */
+func (as *authAppImpl) RateLimit(
+	ctx context.Context,
+	clientIP string,
+	limit int8,
+) error {
+	// 1. 构造限流 key
+	key := "rate_limit:" + clientIP
+	// 2. 检查是否超过限流阈值
+	err := as.authDomain.CheckRateLimit(ctx, key, limit)
+	// 3. 返回结果
+	return err
 }

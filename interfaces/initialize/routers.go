@@ -30,12 +30,10 @@ func InitRouters() *gin.Engine {
 	// @step 3. 创建 API v1 路由组
 	v1 := router.Group("/api", middlewares.ClientInfo)
 	{
-		v1.GET("/ping", func(c *gin.Context) {
-			c.String(200, "Ping OK!")
-		})
+		v1.GET("/ping", controllers.PingHandler)
 
 		// @step 3.1 验证路由组
-		authGroup := v1.Group("/auth")
+		authGroup := v1.Group("/auth", middlewares.RateLimiter(10, "auth"))
 		{
 			authGroup.POST("/signin", controllers.UserSignInHandler)
 			authGroup.POST("/signup", controllers.UserSignUpHandler)
@@ -51,7 +49,11 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.2 用户路由组
-		userGroup := v1.Group("/user", middlewares.JWTValidator)
+		userGroup := v1.Group(
+			"/user",
+			middlewares.RateLimiter(10, "user"),
+			middlewares.JWTValidator,
+		)
 		{
 			userGroup.GET("/profile", controllers.GetUserProfileHandler)
 			userGroup.PUT("/nickname", controllers.UpdateUserNicknameHandler)
@@ -60,7 +62,11 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.2 项目路由组
-		projectGroup := v1.Group("/projects", middlewares.JWTValidator)
+		projectGroup := v1.Group(
+			"/projects",
+			middlewares.RateLimiter(20, "projects"),
+			middlewares.JWTValidator,
+		)
 		{
 			projectGroup.GET("/", controllers.ListProjectHandler)
 			projectGroup.GET("/:projectId", controllers.GetProjectHandler)
@@ -73,7 +79,11 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.3 标签路由组
-		tagGroup := v1.Group("/tags", middlewares.JWTValidator)
+		tagGroup := v1.Group(
+			"/tags",
+			middlewares.RateLimiter(20, "tags"),
+			middlewares.JWTValidator,
+		)
 		{
 			tagGroup.GET("/", controllers.ListTagHandler)
 			tagGroup.GET("/:tagId", controllers.GetTagHandler)
@@ -83,7 +93,11 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.4 任务路由组
-		taskGroup := v1.Group("/tasks", middlewares.JWTValidator)
+		taskGroup := v1.Group(
+			"/tasks",
+			middlewares.RateLimiter(20, "tasks"),
+			middlewares.JWTValidator,
+		)
 		{
 			taskGroup.GET("/", controllers.ListTaskHandler)
 			taskGroup.GET("/:taskId", controllers.GetTaskHandler)
@@ -94,7 +108,11 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.5 检查事项路由组
-		eventGroup := v1.Group("/events", middlewares.JWTValidator)
+		eventGroup := v1.Group(
+			"/events",
+			middlewares.RateLimiter(20, "events"),
+			middlewares.JWTValidator,
+		)
 		{
 			eventGroup.GET("/", controllers.ListEventHandler)
 			eventGroup.GET("/:eventId", controllers.GetEventHandler)
@@ -104,7 +122,11 @@ func InitRouters() *gin.Engine {
 		}
 
 		// @step 3.6 评论路由组
-		commentGroup := v1.Group("/comments", middlewares.JWTValidator)
+		commentGroup := v1.Group(
+			"/comments",
+			middlewares.RateLimiter(20, "comments"),
+			middlewares.JWTValidator,
+		)
 		{
 			commentGroup.GET("/", controllers.ListCommentHandler)
 			commentGroup.GET("/:commentId", controllers.GetCommentHandler)
