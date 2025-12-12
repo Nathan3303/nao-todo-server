@@ -1,4 +1,4 @@
-package container
+package infrastructure
 
 import (
 	authApp "naotodoserver/application/auth"
@@ -19,13 +19,20 @@ import (
 	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
 	eventRepo "naotodoserver/infrastructure/persistence/event"
+	"naotodoserver/infrastructure/persistence/models"
 	projectRepo "naotodoserver/infrastructure/persistence/project"
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
 	taskRepo "naotodoserver/infrastructure/persistence/task"
 	userRepo "naotodoserver/infrastructure/persistence/user"
 )
 
-func LoadDomain() {
+func Init() {
+	dbs.InitMySQL()
+	models.InitSnowflake(1)
+	loadDomain()
+}
+
+func loadDomain() {
 	authApp.RegistDomainImpl(authService.GetAuthDomainImpl(
 		authRepo.NewJWTRepo(),
 		authRepo.NewUserRepo(dbs.DB),

@@ -27,8 +27,10 @@ func UserModel2Entity(m *models.User) *entities.User {
 	u.Email = m.Email
 	u.Nickname = m.Nickname
 	u.Password = m.Password
+	u.Avatar = m.Avatar
 	u.Role = m.Role
 	u.State = m.State
+	u.CreatedFrom = m.CreatedFrom
 	u.CreatedAt = m.CreatedAt
 	u.UpdatedAt = m.UpdatedAt
 	u.DeletedAt = m.DeletedAt

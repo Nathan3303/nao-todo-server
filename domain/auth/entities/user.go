@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -39,4 +40,13 @@ func (u *User) EncryptPassword() error {
 	// 密码赋值
 	u.Password = string(encryptedPassword)
 	return nil
+}
+
+func (u *User) FillDefaultValue() {
+	if u.Nickname == "" {
+		u.Nickname = strings.Split(u.Email, "@")[0]
+	}
+	if u.Account == "" {
+		u.Account = u.Email
+	}
 }

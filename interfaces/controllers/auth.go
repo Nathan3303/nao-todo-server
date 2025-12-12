@@ -58,7 +58,7 @@ func UserSignUpHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 注册
-	signUpRes, err := auth.App.SignUp(ctx, &req)
+	signUpRes, err := auth.App.SignUp(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10002,

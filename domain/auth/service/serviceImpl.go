@@ -28,6 +28,14 @@ func (a *authDomainImpl) CreateUser(
 	ctx context.Context,
 	userEntity *entities.User,
 ) (*entities.User, error) {
+	// 1. 密码加密
+	err := userEntity.EncryptPassword()
+	if err != nil {
+		return nil, errors.New("密码加密失败")
+	}
+	// 2. 填充默认值
+	userEntity.FillDefaultValue()
+	// 3. 创建用户
 	return a.userRepo.Create(ctx, userEntity)
 }
 

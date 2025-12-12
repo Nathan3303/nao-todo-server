@@ -58,15 +58,15 @@ func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes,
 	}
 	// 3. 返回结果
 	return &types.GetUserProfileRes{
-		Email:      userEntity.Email,
-		Nickname:   userEntity.Nickname,
-		Avatar:     userEntity.Avatar,
-		Role:       userEntity.Role,
-		CreateForm: userEntity.CreateForm,
-		State:      userEntity.State,
-		Config:     userEntity.Config,
-		CreatedAt:  userEntity.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:  userEntity.UpdatedAt.Format("2006-01-02 15:04:05"),
+		Email:       userEntity.Email,
+		Nickname:    userEntity.Nickname,
+		Avatar:      userEntity.Avatar,
+		Role:        userEntity.Role,
+		CreatedFrom: userEntity.CreatedFrom,
+		State:       userEntity.State,
+		Config:      userEntity.Config,
+		CreatedAt:   userEntity.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   userEntity.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 
