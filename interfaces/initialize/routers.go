@@ -28,7 +28,7 @@ func InitRouters() *gin.Engine {
 	}))
 
 	// @step 3. 创建 API v1 路由组
-	v1 := router.Group("/api", middlewares.ClientIP)
+	v1 := router.Group("/api", middlewares.ClientInfo)
 	{
 		v1.GET("/ping", func(c *gin.Context) {
 			c.String(200, "Ping OK!")

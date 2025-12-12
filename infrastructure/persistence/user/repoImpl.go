@@ -51,7 +51,9 @@ func (userRepo *UserRepoImpl) FindById(ctx context.Context, id int64) (*entities
 	findCond := &models.User{}
 	findCond.ID = id
 	// 3. 执行查找
-	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).Where(findCond).First(&userModel)
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where(findCond).
+		First(&userModel)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

@@ -3,15 +3,15 @@ package types
 type GetUserProfileReq struct{}
 
 type GetUserProfileRes struct {
-	Email      string `json:"email"`
-	Nickname   string `json:"nickname"`
-	Avatar     string `json:"avatar"`
-	Role       string `json:"role"`
-	CreateForm any    `json:"createForm"`
-	State      string `json:"state"`
-	Config     any    `json:"config"`
-	CreatedAt  string `json:"createdAt"`
-	UpdatedAt  string `json:"updatedAt"`
+	Email       string `json:"email"`
+	Nickname    string `json:"nickname"`
+	Avatar      string `json:"avatar"`
+	Role        string `json:"role"`
+	CreatedFrom string `json:"createdFrom"`
+	State       int8   `json:"state"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+	Config      any    `json:"config"`
 }
 
 type UpdateUserNicknameReq struct {

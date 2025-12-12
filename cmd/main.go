@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"naotodoserver/conf"
-	"naotodoserver/infrastructure/container"
-	"naotodoserver/infrastructure/persistence/dbs"
-	"naotodoserver/infrastructure/persistence/models"
+	"naotodoserver/infrastructure"
 	"naotodoserver/interfaces/initialize"
 )
 
@@ -14,9 +12,7 @@ func main() {
 	conf.InitConfig()
 
 	// @step 2. 加载 Infrastructure 层
-	dbs.InitMySQL()
-	models.InitSnowflake(1)
-	container.LoadDomain()
+	infrastructure.Init()
 
 	// @step 3. 加载路由
 	router := initialize.InitRouters()

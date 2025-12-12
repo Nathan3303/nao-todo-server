@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"naotodoserver/domain/auth/entities"
 	"naotodoserver/domain/auth/service"
 	"naotodoserver/interfaces/types"
@@ -68,20 +67,14 @@ func (as *authAppImpl) SignUp(
 		// 是：返回用户已存在
 		return nil, errors.New("用户已存在")
 	}
-	// 否：创建用户
-	// 3. 更新用户实体 - 密码加密
+	// 否：
+	// 3. 创建用户
 	userEntity = SignUpReqToUserEntity(signUpReq)
-	err := userEntity.EncryptPassword()
-	if err != nil {
-		return nil, errors.New("密码加密失败")
-	}
-	// 4. 创建用户
-	fmt.Println(userEntity)
-	_, err = as.authDomain.CreateUser(ctx, userEntity)
+	_, err := as.authDomain.CreateUser(ctx, userEntity)
 	if err != nil {
 		return nil, errors.New("注册用户失败")
 	}
-	// 5. 注册成功
+	// 4. 注册成功
 	return &types.SignUpRes{}, nil
 }
 

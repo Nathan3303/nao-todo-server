@@ -95,7 +95,7 @@ func (ip2region *Ip2RegionImpl) ParseIp(ip string) (region string, err error) {
 	}
 
 	if isPrivateIP(ip) {
-		return "本地地址", nil
+		return "未知", nil
 	}
 
 	searchRes, err := ip2region.searcher.SearchByStr(ip)

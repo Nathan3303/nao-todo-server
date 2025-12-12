@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/auth/entities"
 	"naotodoserver/domain/auth/repositories"
+	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"golang.org/x/crypto/bcrypt"
@@ -25,14 +26,17 @@ func (ur *userRepoImpl) Create(
 	ctx context.Context,
 	userEntity *entities.User,
 ) (*entities.User, error) {
-	// 1. 实体转换
+	// 1. 获取客户端信息
+	clientInfo := iCtx.GetClientInfo(ctx)
+	// 2. 实体转换
 	userModel := UserEntity2Model(userEntity)
-	// 2. 创建用户
+	userModel.CreatedFrom = clientInfo.IPRegion + " " + clientInfo.DeviceType
+	// 3. 创建用户
 	tx := ur.db.WithContext(ctx).Model(&models.User{}).Create(userModel)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	// 3. 模型转换并返回
+	// 4. 模型转换并返回
 	return UserModel2Entity(userModel), nil
 }
 

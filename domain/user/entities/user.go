@@ -9,19 +9,19 @@ import (
 )
 
 type User struct {
-	Id         int64          `json:"id"`
-	Account    string         `json:"account"`
-	Email      string         `json:"email"`
-	Password   string         `json:"password"`
-	Nickname   string         `json:"nickname"`
-	Avatar     string         `json:"avatar"`
-	CreateForm string         `json:"createForm"`
-	Role       string         `json:"role"`
-	State      string         `json:"state"`
-	Config     *UserConfig    `json:"config"`
-	CreatedAt  time.Time      `json:"createdAt"`
-	UpdatedAt  time.Time      `json:"updatedAt"`
-	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deletedAt"`
+	Id          int64          `json:"id"`
+	Account     string         `json:"account"`
+	Email       string         `json:"email"`
+	Password    string         `json:"password"`
+	Nickname    string         `json:"nickname"`
+	Avatar      string         `json:"avatar"`
+	CreatedFrom string         `json:"createdFrom"`
+	Role        string         `json:"role"`
+	State       int8           `json:"state"`
+	Config      *UserConfig    `json:"config"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deletedAt"`
 }
 
 func (u *User) IsIdValid() bool {
