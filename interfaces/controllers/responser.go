@@ -28,7 +28,11 @@ func Failure(ctx *gin.Context, resData types.ResponseData) {
 	EndWithStatus(ctx, http.StatusOK, resData)
 }
 
-func DefaultHandler(ctx *gin.Context) {
+func FailureByHttpStatus(ctx *gin.Context, status int, resData types.ResponseData) {
+	ctx.JSON(status, resData)
+}
+
+func PingHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    200,
 		Message: "success",

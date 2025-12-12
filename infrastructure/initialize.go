@@ -28,6 +28,7 @@ import (
 
 func Init() {
 	dbs.InitMySQL()
+	dbs.InitRedis()
 	models.InitSnowflake(1)
 	loadDomain()
 }
@@ -35,8 +36,9 @@ func Init() {
 func loadDomain() {
 	authApp.RegistDomainImpl(authService.GetAuthDomainImpl(
 		authRepo.NewJWTRepo(),
-		authRepo.NewUserRepo(dbs.DB),
+		authRepo.NewUserRepo(dbs.DB, dbs.RdsCli),
 		authRepo.NewSessionRepo(dbs.DB),
+		authRepo.NewRateLimitRepo(dbs.RdsCli),
 	))
 	userApp.RegistDomainImpl(userService.NewUserDomain(
 		userRepo.NewUserRepo(dbs.DB),

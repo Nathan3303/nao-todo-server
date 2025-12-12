@@ -13,10 +13,10 @@ mysql:
     charset: utf8mb4
     parseTime: True
     loc: Local
-    
+
 redis:
-    redisDbName: 4
-    redisHost: 127.0.0.1
-    redisPort: 6379
-    redisPassword: 123456
-    redisNetwork: "tcp"
+    host: localhost
+    port: 6379
+    password: lianGjh3303!
+    database: 0
+    network: tcp

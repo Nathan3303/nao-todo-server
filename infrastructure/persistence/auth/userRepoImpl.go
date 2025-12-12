@@ -7,19 +7,24 @@ import (
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/persistence/models"
 
+	"github.com/go-redis/redis/v8"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type userRepoImpl struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rds *redis.Client
 }
 
-func NewUserRepo(db *gorm.DB) repositories.User {
-	return &userRepoImpl{db: db}
+func NewUserRepo(db *gorm.DB, rds *redis.Client) repositories.User {
+	return &userRepoImpl{
+		db:  db,
+		rds: rds,
+	}
 }
 
-/**
+/*
  * Create User
  */
 func (ur *userRepoImpl) Create(
@@ -40,7 +45,7 @@ func (ur *userRepoImpl) Create(
 	return UserModel2Entity(userModel), nil
 }
 
-/**
+/*
  * Find User By Email
  */
 func (ur *userRepoImpl) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
@@ -58,7 +63,7 @@ func (ur *userRepoImpl) FindByEmail(ctx context.Context, email string) (*entitie
 	return UserModel2Entity(user), nil
 }
 
-/**
+/*
  * Find User By Id
  */
 func (ur *userRepoImpl) FindById(ctx context.Context, id int64) (*entities.User, error) {
@@ -76,9 +81,23 @@ func (ur *userRepoImpl) FindById(ctx context.Context, id int64) (*entities.User,
 	return UserModel2Entity(user), nil
 }
 
-/**
+/*
  * Compare Password
  */
 func (u *userRepoImpl) PasswordCompare(password []byte, encryptedPassword []byte) bool {
 	return bcrypt.CompareHashAndPassword(encryptedPassword, password) == nil
+}
+
+/*
+ * Get Rate Limit
+ */
+func (u *userRepoImpl) GetRateLimit(ctx context.Context, key string) (int64, error) {
+	return u.rds.Get(ctx, key).Int64()
+}
+
+/*
+ * Increment Rate Limit
+ */
+func (u *userRepoImpl) IncrementRateLimit(ctx context.Context, key string) error {
+	return u.rds.Incr(ctx, key).Err()
 }
