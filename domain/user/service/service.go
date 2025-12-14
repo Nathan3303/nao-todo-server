@@ -13,6 +13,9 @@ type UserDomain interface {
 	UpdateAvatar(ctx context.Context, userId int64, avatar string) error
 	UpdatePassword(ctx context.Context, userId int64, password string, newPassword string) error
 	DeleteUser(ctx context.Context, userId int64) error
+	Deactive(ctx context.Context, userId int64) error
+	Active(ctx context.Context, userId int64) error
+	PasswordCompare(password, encryptedPassword []byte) bool
 }
 
 type UserDomainImpl struct {

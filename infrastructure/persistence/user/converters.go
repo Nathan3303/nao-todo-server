@@ -3,6 +3,7 @@ package user
 import (
 	"naotodoserver/domain/user/entities"
 	"naotodoserver/infrastructure/persistence/models"
+	"naotodoserver/infrastructure/utils"
 )
 
 func UserEntity2Model(e *entities.User) *models.User {
@@ -17,6 +18,7 @@ func UserEntity2Model(e *entities.User) *models.User {
 	u.CreatedAt = e.CreatedAt
 	u.UpdatedAt = e.UpdatedAt
 	u.DeletedAt = e.DeletedAt
+	u.DeactivedAt = utils.TimePtr2SqlNullTime(e.DeactivedAt)
 	return u
 }
 
@@ -34,6 +36,7 @@ func UserModel2Entity(m *models.User) *entities.User {
 	u.CreatedAt = m.CreatedAt
 	u.UpdatedAt = m.UpdatedAt
 	u.DeletedAt = m.DeletedAt
+	u.DeactivedAt = utils.SqlNullTime2TimePtr(m.DeactivedAt)
 	return u
 }
 

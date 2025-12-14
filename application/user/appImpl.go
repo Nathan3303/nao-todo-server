@@ -16,7 +16,9 @@ import (
 // 注册 Domain
 func RegistDomainImpl(userDomain service.UserDomain) UserApp {
 	once.Do(func() {
-		App = &userAppImpl{userDomain: userDomain}
+		App = &userAppImpl{
+			userDomain: userDomain,
+		}
 	})
 	return App
 }
@@ -57,17 +59,7 @@ func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes,
 		return nil, err
 	}
 	// 3. 返回结果
-	return &types.GetUserProfileRes{
-		Email:       userEntity.Email,
-		Nickname:    userEntity.Nickname,
-		Avatar:      userEntity.Avatar,
-		Role:        userEntity.Role,
-		CreatedFrom: userEntity.CreatedFrom,
-		State:       userEntity.State,
-		Config:      userEntity.Config,
-		CreatedAt:   userEntity.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   userEntity.UpdatedAt.Format("2006-01-02 15:04:05"),
-	}, nil
+	return UserEntity2Res(userEntity), nil
 }
 
 /*
@@ -151,4 +143,68 @@ func (u *userAppImpl) UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAva
 	}
 	// 8. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: uniqueFilename}, nil
+}
+
+/*
+ * Deactive User
+ */
+func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error {
+	// 1. 获取 User ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("参数无效 - 用户 ID 不存在")
+	}
+	// 2. 查询用户是否存在
+	user, err := u.userDomain.FindById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	// 3. 密码比对
+	isPasswordValid := u.userDomain.PasswordCompare([]byte(req.Password), []byte(user.Password))
+	if !isPasswordValid {
+		return errors.New("密码错误")
+	}
+	// 4. 检查用户状态
+	if user.IsDeactived() {
+		return errors.New("用户已注销")
+	}
+	// 5. 更新用户状态
+	err = u.userDomain.Deactive(ctx, userId)
+	if err != nil {
+		return err
+	}
+	// 6. 返回结果
+	return nil
+}
+
+/*
+ * Active User
+ */
+func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) error {
+	// 1. 获取 User ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("参数无效 - 用户 ID 不存在")
+	}
+	// 2. 查询用户是否存在
+	user, err := u.userDomain.FindById(ctx, userId)
+	if err != nil {
+		return err
+	}
+	// 3. 密码比对
+	isPasswordValid := u.userDomain.PasswordCompare([]byte(req.Password), []byte(user.Password))
+	if !isPasswordValid {
+		return errors.New("密码错误")
+	}
+	// 4. 检查用户状态
+	if !user.IsDeactived() {
+		return errors.New("用户未注销")
+	}
+	// 5. 更新用户状态
+	err = u.userDomain.Active(ctx, userId)
+	if err != nil {
+		return err
+	}
+	// 6. 返回结果
+	return nil
 }
