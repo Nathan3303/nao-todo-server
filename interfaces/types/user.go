@@ -34,3 +34,11 @@ type UpdateUserAvatarReq struct {
 type UpdateUserAvatarRes struct {
 	AvatarURL string `json:"avatarURL"`
 }
+
+type DeactiveUserReq struct {
+	Password string `json:"password" form:"password" binding:"required"`
+}
+
+type ActiveUserReq struct {
+	Password string `json:"password" form:"password" binding:"required"`
+}

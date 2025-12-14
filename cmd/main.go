@@ -12,7 +12,9 @@ func main() {
 	conf.InitConfig()
 
 	// @step 2. 加载 Infrastructure 层
-	infrastructure.Init()
+	infrastructure.LoadDBs()
+	infrastructure.LoadDomains()
+	infrastructure.LoadCron()
 
 	// @step 3. 加载路由
 	router := initialize.InitRouters()

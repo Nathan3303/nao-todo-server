@@ -149,3 +149,67 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 		Data:    res,
 	})
 }
+
+/*
+ * Deactive user handler
+ * 禁用用户（10090）
+ */
+func DeactiveUserHandler(ctx *gin.Context) {
+	// 1. 获取参数
+	var req types.DeactiveUserReq
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10091,
+			Message: "参数错误",
+		})
+		return
+	}
+	// 2. 调用用户服务 - 禁用用户
+	err = user.App.DeactiveUser(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10092,
+			Message: "禁用用户失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 3. 返回结果
+	Success(ctx, types.ResponseData{
+		Code:    10090,
+		Message: "禁用用户成功",
+	})
+}
+
+/*
+ * Active user handler
+ * 启用用户（10100）
+ */
+func ActiveUserHandler(ctx *gin.Context) {
+	// 1. 获取参数
+	var req types.ActiveUserReq
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10101,
+			Message: "参数错误",
+		})
+		return
+	}
+	// 2. 调用用户服务 - 启用用户
+	err = user.App.ActiveUser(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10102,
+			Message: "启用用户失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 3. 返回结果
+	Success(ctx, types.ResponseData{
+		Code:    10100,
+		Message: "启用用户成功",
+	})
+}

@@ -7,7 +7,9 @@ import (
 )
 
 func NewUserDomain(repo repositories.User) UserDomain {
-	return &UserDomainImpl{repo: repo}
+	return &UserDomainImpl{
+		repo: repo,
+	}
 }
 
 /*
@@ -64,4 +66,30 @@ func (userDomain *UserDomainImpl) UpdatePassword(
  */
 func (userDomain *UserDomainImpl) DeleteUser(ctx context.Context, userId int64) error {
 	panic("unimplemented")
+}
+
+/*
+ * Deactive user
+ * 禁用用户方法
+ */
+func (userDomain *UserDomainImpl) Deactive(ctx context.Context, userId int64) error {
+	return userDomain.repo.Deactive(ctx, userId)
+}
+
+/*
+ * Active user
+ * 激活用户方法
+ */
+func (userDomain *UserDomainImpl) Active(ctx context.Context, userId int64) error {
+	return userDomain.repo.Active(ctx, userId)
+}
+
+/*
+ * Password compare
+ * 密码比较方法
+ */
+func (userDomain *UserDomainImpl) PasswordCompare(
+	password, encryptedPassword []byte,
+) bool {
+	return userDomain.repo.PasswordCompare(password, encryptedPassword)
 }

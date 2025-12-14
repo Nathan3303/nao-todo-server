@@ -24,6 +24,8 @@ type UserApp interface {
 		req types.UpdateUserAvatarReq,
 	) (*types.UpdateUserAvatarRes, error)
 	UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAvatarRes, error)
+	DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error
+	ActiveUser(ctx context.Context, req *types.ActiveUserReq) error
 }
 
 type userAppImpl struct {

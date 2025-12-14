@@ -59,6 +59,8 @@ func InitRouters() *gin.Engine {
 			userGroup.PUT("/nickname", controllers.UpdateUserNicknameHandler)
 			userGroup.PUT("/password", controllers.UpdateUserPasswordHandler)
 			userGroup.PUT("/avatar", controllers.UpdateUserAvatarHandler)
+			userGroup.PUT("/deactive", controllers.DeactiveUserHandler)
+			userGroup.PUT("/active", controllers.ActiveUserHandler)
 		}
 
 		// @step 3.2 项目路由组

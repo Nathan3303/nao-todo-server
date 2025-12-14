@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
@@ -64,5 +63,4 @@ func InitConfig() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(Conf.Redis)
 }

@@ -2,10 +2,12 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"naotodoserver/domain/user/entities"
 	"naotodoserver/domain/user/repositories"
 	"naotodoserver/infrastructure/persistence/models"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -138,4 +140,35 @@ func (userRepo *UserRepoImpl) PasswordCompare(
 	password, encryptedPassword []byte,
 ) bool {
 	return bcrypt.CompareHashAndPassword(encryptedPassword, password) == nil
+}
+
+/**
+ * Deactive User
+ */
+func (userRepo *UserRepoImpl) Deactive(ctx context.Context, userId int64) error {
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where("id = ?", userId).
+		Update("deactived_at", &sql.NullTime{Time: time.Now(), Valid: true})
+	return tx.Error
+}
+
+/**
+ * Active User
+ */
+func (userRepo *UserRepoImpl) Active(ctx context.Context, userId int64) error {
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where("id = ?", userId).
+		Update("deactived_at", &sql.NullTime{Time: time.Time{}, Valid: false})
+	return tx.Error
+}
+
+/**
+ * Delete User(s)
+ */
+func (userRepo *UserRepoImpl) Delete(ctx context.Context, whereEntity *entities.User) error {
+	userModel := UserEntity2Model(whereEntity)
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where(userModel).
+		Delete(&models.User{})
+	return tx.Error
 }

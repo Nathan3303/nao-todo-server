@@ -21,7 +21,8 @@ type User struct {
 	Config      *UserConfig    `json:"config"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deletedAt"`
+	DeletedAt   gorm.DeletedAt `json:"deletedAt"`
+	DeactivedAt *time.Time     `json:"deactivedAt"`
 }
 
 func (u *User) IsIdValid() bool {
@@ -49,4 +50,8 @@ func (u *User) EncryptPassword() error {
 	// 密码赋值
 	u.Password = string(encryptedPassword)
 	return nil
+}
+
+func (u *User) IsDeactived() bool {
+	return u.DeactivedAt != nil && u.DeactivedAt.Unix() > 0
 }
