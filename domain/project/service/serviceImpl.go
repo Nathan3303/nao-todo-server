@@ -7,8 +7,14 @@ import (
 	"naotodoserver/domain/project/vo"
 )
 
-func NewProjectDomain(repo repositories.Project) ProjectDomain {
-	return &ProjectDomainImpl{repo: repo}
+func NewProjectDomain(
+	repo repositories.Project,
+	preferenceRepo repositories.ProjectPreference,
+) ProjectDomain {
+	return &ProjectDomainImpl{
+		repo:           repo,
+		preferenceRepo: preferenceRepo,
+	}
 }
 
 /*
@@ -18,8 +24,8 @@ func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
 	projectEntity *entities.Project,
 ) (*entities.Project, error) {
-	projectPreference := vo.MakeDefaultProjectPreference(projectEntity.UserId)
-	projectEntity.Preference = projectPreference
+	// projectPreference := vo.MakeDefaultProjectPreference(projectEntity.UserId)
+	// projectEntity.Preference = projectPreference
 	return p.repo.Create(ctx, projectEntity)
 }
 
@@ -102,4 +108,18 @@ func (p *ProjectDomainImpl) GetByUserId(
 	userId int64,
 ) ([]*entities.Project, error) {
 	return p.repo.GetByUserId(ctx, userId)
+}
+
+/*
+ * Get project preference by userId and projectId
+ */
+func (p *ProjectDomainImpl) GetPreference(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+) (*vo.ProjectPreference, error) {
+	var preferenceVO vo.ProjectPreference
+	preferenceVO.UserId = userId
+	preferenceVO.ProjectId = projectId
+	return p.preferenceRepo.Get(ctx, preferenceVO)
 }

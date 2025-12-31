@@ -77,6 +77,24 @@ type HardDeleteProjectRes struct {
 	ProjectId string `json:"projectId"`
 }
 
+type ListProjectRes []*GetProjectRes
+
+type ProjectPreferenceRes struct {
+	ViewType   string `json:"viewType"`
+	GetOptions string `json:"getOptions"`
+	Columns    string `json:"columns"`
+}
+
+type GetProjectPreferenceReq struct {
+	ProjectId string
+}
+
+type GetProjectPreferenceRes struct {
+	ViewType        string `json:"viewType"`
+	GetTasksOptions string `json:"getTasksOptions"`
+	Columns         string `json:"columns"`
+}
+
 type UpdateProjectPreferenceReq struct {
 	ProjectId  string
 	Preference any `json:"preference" form:"preference"`
@@ -84,12 +102,4 @@ type UpdateProjectPreferenceReq struct {
 
 type UpdateProjectPreferenceRes struct {
 	ProjectId string `json:"projectId"`
-}
-
-type ListProjectRes []*GetProjectRes
-
-type ProjectPreferenceRes struct {
-	ViewType   string `json:"viewType"`
-	GetOptions string `json:"getOptions"`
-	Columns    string `json:"columns"`
 }

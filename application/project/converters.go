@@ -20,11 +20,11 @@ func Entity2CreateRes(e *entities.Project) *types.CreateProjectRes {
 	res.Name = e.Name
 	res.ArchivedAt = e.ArchivedAt
 	res.Description = e.Description
-	res.Preference = PreferenceEntity2Res(e.Preference)
+	res.Preference = PreferenceVO2Res(e.Preference)
 	return res
 }
 
-func PreferenceEntity2Res(e *vo.ProjectPreference) *types.ProjectPreferenceRes {
+func PreferenceVO2Res(e *vo.ProjectPreference) *types.ProjectPreferenceRes {
 	if e == nil {
 		return nil
 	}
@@ -41,7 +41,7 @@ func Entity2GetRes(e *entities.Project) *types.GetProjectRes {
 	res.Name = e.Name
 	res.Description = e.Description
 	res.ArchivedAt = e.ArchivedAt
-	res.Preference = PreferenceEntity2Res(e.Preference)
+	res.Preference = PreferenceVO2Res(e.Preference)
 	return res
 }
 

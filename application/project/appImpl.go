@@ -212,16 +212,6 @@ func (p *projectAppImpl) Unarchive(
 }
 
 /*
- * Update project preference
- */
-func (p *projectAppImpl) UpdatePreference(
-	ctx context.Context,
-	req *types.UpdateProjectPreferenceReq,
-) (*types.UpdateProjectPreferenceRes, error) {
-	panic("unimplemented")
-}
-
-/*
  * List project
  */
 func (p *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, error) {
@@ -239,4 +229,40 @@ func (p *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, error)
 	res := Entities2ListRes(eList)
 	// 3. 实体转换响应体并返回
 	return res, nil
+}
+
+/*
+ * Get project preference
+ */
+func (p *projectAppImpl) GetPreference(
+	ctx context.Context,
+	req *types.GetProjectPreferenceReq,
+) (*types.ProjectPreferenceRes, error) {
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId == 0 {
+		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+	}
+	// 2. 获取清单 ID
+	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	if err != nil {
+		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+	}
+	// 3. 调用域函数 - 获取清单偏好
+	preference, err := p.projectDomain.GetPreference(ctx, userId, projectId)
+	if err != nil {
+		return nil, err
+	}
+	// 4. 返回
+	return PreferenceVO2Res(preference), nil
+}
+
+/*
+ * Update project preference
+ */
+func (p *projectAppImpl) SavePreference(
+	ctx context.Context,
+	req *types.UpdateProjectPreferenceReq,
+) (*types.UpdateProjectPreferenceRes, error) {
+	panic("unimplemented")
 }

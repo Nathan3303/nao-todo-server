@@ -20,6 +20,7 @@ func Entity2Model(e *entities.Project) *models.Project {
 func PreferenceVO2Model(e *vo.ProjectPreference) *models.ProjectPreference {
 	m := &models.ProjectPreference{}
 	m.UserId = e.UserId
+	m.ProjectId = e.ProjectId
 	m.ViewType = e.ViewType
 	m.GetOptions = e.GetOptions
 	m.Columns = e.Columns
@@ -42,6 +43,8 @@ func PreferenceModel2VO(m *models.ProjectPreference) *vo.ProjectPreference {
 		return nil
 	}
 	vo := &vo.ProjectPreference{}
+	vo.UserId = m.UserId
+	vo.ProjectId = m.ProjectId
 	vo.ViewType = m.ViewType
 	vo.GetOptions = m.GetOptions
 	vo.Columns = m.Columns

@@ -277,3 +277,43 @@ func ListProjectHandler(ctx *gin.Context) {
 		Data:    res,
 	})
 }
+
+/*
+ * Get Project Preference Handler
+ * 获取清单偏好（20080）
+ */
+func GetProjectPreferenceHandler(ctx *gin.Context) {
+	// 1. 获取清单 ID
+	var req types.GetProjectPreferenceReq
+	req.ProjectId = ctx.Param("projectId")
+	if req.ProjectId == "" {
+		Failure(ctx, types.ResponseData{
+			Code:    20081,
+			Message: "参数错误",
+			Data:    "清单 ID 不能为空",
+		})
+		return
+	}
+	// 2. 调用应用函数 - 获取清单偏好
+	res, err := project.App.GetPreference(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    20082,
+			Message: "获取清单偏好失败",
+			Data:    err.Error(),
+		})
+		return
+	}
+	// 3. 响应结果
+	Success(ctx, types.ResponseData{
+		Code:    20080,
+		Message: "获取清单偏好成功",
+		Data:    res,
+	})
+}
+
+/*
+ * Save Project Preference Handler
+ * 保存清单偏好（20090）
+ */
+func SaveProjectPreferenceHandler(ctx *gin.Context) {}

@@ -22,11 +22,12 @@ type ProjectApp interface {
 		ctx context.Context,
 		req *types.UnarchiveProjectReq,
 	) (*types.UnarchiveProjectRes, error)
-	UpdatePreference(
+	List(ctx context.Context) (types.ListProjectRes, error)
+	GetPreference(ctx context.Context, req *types.GetProjectPreferenceReq) (*types.ProjectPreferenceRes, error)
+	SavePreference(
 		ctx context.Context,
 		req *types.UpdateProjectPreferenceReq,
 	) (*types.UpdateProjectPreferenceRes, error)
-	List(ctx context.Context) (types.ListProjectRes, error)
 }
 
 type projectAppImpl struct {

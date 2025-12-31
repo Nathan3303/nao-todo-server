@@ -45,6 +45,7 @@ func LoadDomains() {
 	))
 	projectApp.RegistDomainImpl(projectService.NewProjectDomain(
 		projectRepo.NewProjectRepo(dbs.DB),
+		projectRepo.NewProjectPreferenceRepo(dbs.DB),
 	))
 	tagApp.RegistDomainImpl(tagService.NewTagDomain(
 		tagRepo.NewTagRepo(dbs.DB),
