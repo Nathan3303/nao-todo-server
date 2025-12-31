@@ -4,6 +4,8 @@ import (
 	"context"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/vo"
+
+	"gorm.io/gorm"
 )
 
 type Task interface {
@@ -15,6 +17,12 @@ type Task interface {
 	List(
 		ctx context.Context,
 		whereEntity *entities.Task,
+		pagination *vo.Pagination,
+	) ([]*entities.Task, *vo.Pagination, error)
+	BuildQueryTx(ctx context.Context, query *vo.TaskQuery) (*gorm.DB, error)
+	ListWithQueryTx(
+		ctx context.Context,
+		tx *gorm.DB,
 		pagination *vo.Pagination,
 	) ([]*entities.Task, *vo.Pagination, error)
 }

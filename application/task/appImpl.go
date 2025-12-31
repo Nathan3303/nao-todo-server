@@ -173,10 +173,10 @@ func (taskApp *TaskAppImpl) ListTask(
 		return nil, nil, errors.New("用户 ID 无效")
 	}
 	// 2. 请求体转换实体
-	whereEntity := ListTaskReq2Entity(req)
+	query := ListTaskReq2QueryVO(req)
 	// 3. 调用领域层获取任务列表
 	pagination := &vo.Pagination{Page: req.Page, Limit: req.Limit}
-	taskEntities, pagination, err := taskApp.taskDomain.List(ctx, userId, whereEntity, pagination)
+	taskEntities, pagination, err := taskApp.taskDomain.List(ctx, userId, query, pagination)
 	if err != nil {
 		return nil, nil, err
 	}

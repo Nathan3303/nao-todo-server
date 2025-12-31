@@ -91,9 +91,20 @@ func (taskDomain *TaskDomainImpl) Restore(
 func (taskDomain *TaskDomainImpl) List(
 	ctx context.Context,
 	userId int64,
-	whereEntity *entities.Task,
+	query *vo.TaskQuery,
 	pagination *vo.Pagination,
 ) ([]*entities.Task, *vo.Pagination, error) {
-	whereEntity.UserId = userId
-	return taskDomain.taskRepo.List(ctx, whereEntity, pagination)
+	// 1. 补充 query
+	query.UserId = userId
+	// 2. 构建查询句柄
+	tx, err := taskDomain.taskRepo.BuildQueryTx(ctx, query)
+	if err != nil {
+		return nil, nil, err
+	}
+	// 3. 查询任务列表
+	taskEntities, pagination, err := taskDomain.taskRepo.ListWithQueryTx(ctx, tx, pagination)
+	if err != nil {
+		return nil, nil, err
+	}
+	return taskEntities, pagination, nil
 }

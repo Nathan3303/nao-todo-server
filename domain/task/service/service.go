@@ -21,7 +21,7 @@ type TaskDomain interface {
 	List(
 		ctx context.Context,
 		userId int64,
-		whereEntity *entities.Task,
+		query *vo.TaskQuery,
 		pagination *vo.Pagination,
 	) ([]*entities.Task, *vo.Pagination, error)
 }

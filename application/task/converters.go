@@ -1,6 +1,7 @@
 package task
 
 import (
+	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/vo"
 	"naotodoserver/infrastructure/utils"
@@ -9,40 +10,14 @@ import (
 	"time"
 )
 
-var TodoStateMap = map[string]int8{
-	"todo":        1,
-	"in-progress": 2,
-	"done":        3,
-}
-
-var TodoStateMapReverse = map[int8]string{
-	1: "todo",
-	2: "in-progress",
-	3: "done",
-}
-
-var TodoPriorityMap = map[string]int8{
-	"low":    1,
-	"medium": 2,
-	"high":   3,
-	"urgent": 4,
-}
-
-var TodoPriorityMapReverse = map[int8]string{
-	1: "low",
-	2: "medium",
-	3: "high",
-	4: "urgent",
-}
-
 func TaskEntity2Res(e *entities.Task) *types.TaskRes {
 	res := &types.TaskRes{}
 	res.Id = strconv.FormatInt(e.Id, 10)
 	res.ProjectId = strconv.FormatInt(e.ProjectId, 10)
 	res.Name = e.Name
 	res.Description = e.Description
-	res.State = TodoStateMapReverse[e.State]
-	res.Priority = TodoPriorityMapReverse[e.Priority]
+	res.State = consts.TodoStateMapReverse[e.State]
+	res.Priority = consts.TodoPriorityMapReverse[e.Priority]
 	res.StartAt = e.GetFormatedStartAt()
 	res.EndAt = e.GetFormatedEndAt()
 	res.ArchivedAt, res.IsArchived = e.ParseArchivedAt()
@@ -60,8 +35,8 @@ func CreateTaskReq2Entity(req *types.CreateTaskReq) *entities.Task {
 	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
 	e.Name = req.Name
 	e.Description = req.Description
-	e.State = TodoStateMap[req.State]
-	e.Priority = TodoPriorityMap[req.Priority]
+	e.State = consts.TodoStateMap[req.State]
+	e.Priority = consts.TodoPriorityMap[req.Priority]
 	e.StartAt = utils.DateString2TimePtr(req.StartAt)
 	e.EndAt = utils.DateString2TimePtr(req.EndAt)
 	e.Tags = req.Tags
@@ -73,8 +48,8 @@ func UpdateTaskReq2Entity(req *types.UpdateTaskReq) *entities.Task {
 	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
 	e.Name = req.Name
 	e.Description = req.Description
-	e.State = TodoStateMap[req.State]
-	e.Priority = TodoPriorityMap[req.Priority]
+	e.State = consts.TodoStateMap[req.State]
+	e.Priority = consts.TodoPriorityMap[req.Priority]
 	e.StartAt = utils.DateString2TimePtr(req.StartAt)
 	e.EndAt = utils.DateString2TimePtr(req.EndAt)
 	e.Tags = req.Tags
@@ -84,17 +59,29 @@ func UpdateTaskReq2Entity(req *types.UpdateTaskReq) *entities.Task {
 	return e
 }
 
-func ListTaskReq2Entity(req *types.ListTaskReq) *entities.Task {
-	e := &entities.Task{}
-	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	e.Name = req.Name
-	e.Description = req.Description
-	e.State = TodoStateMap[req.State]
-	e.Priority = TodoPriorityMap[req.Priority]
-	e.StartAt = utils.DateString2TimePtr(req.StartAt)
-	e.EndAt = utils.DateString2TimePtr(req.EndAt)
-	e.DeletedAt = utils.DateString2Time(req.DeletedAt)
-	return e
+func ListTaskReq2QueryVO(req *types.ListTaskReq) *vo.TaskQuery {
+	vo := &vo.TaskQuery{}
+	vo.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
+	vo.TagId = req.TagId
+	vo.Name = req.Name
+	vo.Description = req.Description
+	vo.State = req.State
+	vo.Priority = req.Priority
+	vo.StartAt = req.StartAt
+	vo.EndAt = req.EndAt
+	vo.DeletedAt = req.DeletedAt
+	vo.ArchivedAt = req.ArchivedAt
+	vo.StarMarkAt = req.StarMarkAt
+	vo.GivenUpAt = req.GivenUpAt
+	vo.IsDeleted = req.IsDeleted
+	vo.IsArchived = req.IsArchived
+	vo.IsStarMarked = req.IsStarMarked
+	vo.IsGivenUp = req.IsGivenUp
+	vo.Page = req.Page
+	vo.Limit = req.Limit
+	vo.RelativeDate = req.RelativeDate
+	vo.Sort = req.Sort
+	return vo
 }
 
 func TaskEntities2Reses(e []*entities.Task) []*types.TaskRes {

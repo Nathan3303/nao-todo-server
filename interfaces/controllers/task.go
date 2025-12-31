@@ -181,7 +181,7 @@ func RestoreTaskHandler(ctx *gin.Context) {
 func ListTaskHandler(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.ListTaskReq
-	err := ctx.ShouldBindJSON(&req)
+	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40051,

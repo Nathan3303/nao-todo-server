@@ -58,25 +58,26 @@ type RestoreTaskRes struct {
 }
 
 type ListTaskReq struct {
-	ProjectId    string `json:"projectId"`
-	TagId        string `json:"tagId"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	State        string `json:"state"`
-	Priority     string `json:"priority"`
-	StartAt      string `json:"startAt"`
-	EndAt        string `json:"endAt"`
-	DeletedAt    string `json:"deletedAt"`
-	ArchivedAt   string `json:"archivedAt"`
-	StarMarkAt   string `json:"starMarkAt"`
-	GivenUpAt    string `json:"givenUpAt"`
-	IsArchived   bool   `json:"isArchived"`
-	IsStarMarked bool   `json:"isStarMarked"`
-	IsGivenUp    bool   `json:"isGivenUp"`
-	Page         int    `json:"page"`
-	Limit        int    `json:"limit"`
-	RelativeDate string `json:"relativeDate"`
-	Sort         string `json:"sort"`
+	ProjectId    string `json:"projectId" form:"projectId"`
+	TagId        string `json:"tagId" form:"tagId"`
+	Name         string `json:"name" form:"name"`
+	Description  string `json:"description" form:"description"`
+	State        string `json:"state" form:"state"`
+	Priority     string `json:"priority" form:"priority"`
+	StartAt      string `json:"startAt" form:"startAt"`
+	EndAt        string `json:"endAt" form:"endAt"`
+	DeletedAt    string `json:"deletedAt" form:"deletedAt"`
+	ArchivedAt   string `json:"archivedAt" form:"archivedAt"`
+	StarMarkAt   string `json:"starMarkAt" form:"starMarkAt"`
+	GivenUpAt    string `json:"givenUpAt" form:"givenUpAt"`
+	IsDeleted    bool   `json:"isDeleted" form:"isDeleted"`
+	IsArchived   bool   `json:"isArchived" form:"isArchived"`
+	IsStarMarked bool   `json:"isStarMarked" form:"isStarMarked"`
+	IsGivenUp    bool   `json:"isGivenUp" form:"isGivenUp"`
+	Page         int    `json:"page" form:"page"`
+	Limit        int    `json:"limit" form:"limit"`
+	RelativeDate string `json:"relativeDate" form:"relativeDate"`
+	Sort         string `json:"sort" form:"sort"`
 }
 
 type ListTaskRes []*TaskRes
