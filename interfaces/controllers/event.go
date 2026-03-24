@@ -179,3 +179,37 @@ func ListEventHandler(ctx *gin.Context) {
 		Data:    res,
 	})
 }
+
+/*
+ * Resort Events
+ * 重排两个检查事项（50050）
+ */
+func ResortEventHandler(ctx *gin.Context) {
+	// 1. 获取请求参数
+	var req types.ResortEventsReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    50051,
+			Message: "请求参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 2. 调用服务层获取检查事项列表
+	res, err := event.App.ResortEvents(ctx.Request.Context(), req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    50052,
+			Message: "重新排序检查事项失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 2. 返回检查事项列表
+	Success(ctx, types.ResponseData{
+		Code:    50050,
+		Message: "重新排序检查事项成功",
+		Data:    res,
+	})
+}

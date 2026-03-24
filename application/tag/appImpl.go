@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"naotodoserver/domain/tag/service"
+	"naotodoserver/domain/tag/vo"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 	"strconv"
@@ -152,6 +153,34 @@ func (tagApp *TagAppImpl) ListTag(
 }
 
 /*
+ * Get tag preference
+ * 获取标签偏好设置
+ */
+func (tagApp *TagAppImpl) GetTagPreference(
+	ctx context.Context,
+	tagId string,
+) (*types.TagPreferenceRes, error) {
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	// 2. 获取标签 ID
+	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	if err != nil {
+		return nil, errors.New("标签 ID 无效")
+	}
+	// 3. 调用域函数 - 获取标签偏好设置
+	tagPreference, err := tagApp.tagDomain.GetPreference(ctx, userId, tagId64)
+	if err != nil {
+		return nil, err
+	}
+	// 4. 响应体转换并返回结果
+	return TagPreferenceVO2Res(tagPreference), nil
+
+}
+
+/*
  * Update tag preference
  * 更新标签偏好设置
  */
@@ -160,5 +189,25 @@ func (tagApp *TagAppImpl) UpdateTagPreference(
 	tagId string,
 	req *types.UpdateTagPreferenceReq,
 ) (*types.UpdateTagPreferenceRes, error) {
-	panic("unimplemented")
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+	}
+	// 2. 获取标签 ID
+	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	if err != nil {
+		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+	}
+	// 3. 调用域函数 - 更新清单偏好
+	err = tagApp.tagDomain.UpdatePreference(ctx, userId, tagId64, &vo.TagPreference{
+		ViewType:   req.Preference.ViewType,
+		Columns:    req.Preference.Columns,
+		GetOptions: req.Preference.GetOptions,
+	})
+	if err != nil {
+		return nil, err
+	}
+	// 5. 返回结果
+	return &types.UpdateTagPreferenceRes{TagId: tagId}, nil
 }

@@ -8,7 +8,7 @@ type User struct {
 	Email       string       `gorm:"size:64;unique;not null"`
 	Password    string       `gorm:"size:64;not null"`
 	Nickname    string       `gorm:"size:32;not null"`
-	Avatar      string       `gorm:"size:256;default:'https://img2.baidu.com/it/u=3422222422,2428824338&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=500'"`
+	Avatar      string       `gorm:"size:256;default:'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80'"`
 	CreatedFrom string       `gorm:"size:64;default:'unknown:unknown'"`
 	Role        string       `gorm:"size:32;default:'user'"`
 	State       int8         `gorm:"default:1"`

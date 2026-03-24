@@ -18,6 +18,7 @@ type TagDomain interface {
 	) error
 	Delete(ctx context.Context, userId int64, tagId int64) error
 	List(ctx context.Context, userId int64) ([]*entities.Tag, error)
+	GetPreference(ctx context.Context, userId, tagId int64) (*vo.TagPreference, error)
 	UpdatePreference(
 		ctx context.Context,
 		userId int64,
@@ -27,5 +28,6 @@ type TagDomain interface {
 }
 
 type TagDomainImpl struct {
-	tagRepo repositories.TagRepository
+	tagRepo        repositories.TagRepository
+	preferenceRepo repositories.TagPreference
 }

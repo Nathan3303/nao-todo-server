@@ -233,7 +233,7 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    20061,
 			Message: "参数错误",
-			Data:    "清单 ID 不能为空",
+			Error:   "清单 ID 不能为空",
 		})
 		return
 	}
@@ -243,7 +243,7 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    20062,
 			Message: "取消归档清单失败",
-			Data:    err.Error(),
+			Error:   err.Error(),
 		})
 		return
 	}
@@ -266,7 +266,7 @@ func ListProjectHandler(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    20071,
 			Message: "获取清单列表失败",
-			Data:    err.Error(),
+			Error:   err.Error(),
 		})
 		return
 	}
@@ -290,7 +290,7 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    20081,
 			Message: "参数错误",
-			Data:    "清单 ID 不能为空",
+			Error:   "清单 ID 不能为空",
 		})
 		return
 	}
@@ -300,7 +300,7 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    20082,
 			Message: "获取清单偏好失败",
-			Data:    err.Error(),
+			Error:   err.Error(),
 		})
 		return
 	}
@@ -316,4 +316,42 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
  * Save Project Preference Handler
  * 保存清单偏好（20090）
  */
-func SaveProjectPreferenceHandler(ctx *gin.Context) {}
+func SaveProjectPreferenceHandler(ctx *gin.Context) {
+	// 1. 获取 ProjectId
+	var req types.UpdateProjectPreferenceReq
+	req.ProjectId = ctx.Param("projectId")
+	if req.ProjectId == "" {
+		Failure(ctx, types.ResponseData{
+			Code:    20091,
+			Message: "参数错误",
+			Error:   "清单 ID 不能为空",
+		})
+		return
+	}
+	// 2. 获取更新参数
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    20092,
+			Message: "参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 3. 调用应用函数 - 保存清单偏好
+	res, err := project.App.SavePreference(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    20093,
+			Message: "保存清单偏好失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 4. 响应结果
+	Success(ctx, types.ResponseData{
+		Code:    20090,
+		Message: "保存清单偏好成功",
+		Data:    res,
+	})
+}

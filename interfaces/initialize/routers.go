@@ -94,6 +94,8 @@ func InitRouters() *gin.Engine {
 			tagGroup.POST("/", controllers.CreateTagHandler)
 			tagGroup.PUT("/:tagId", controllers.UpdateTagHandler)
 			tagGroup.DELETE("/:tagId", controllers.DeleteTagHandler)
+			tagGroup.GET("/:tagId/preference", controllers.GetTagPreferenceHandler)
+			tagGroup.POST("/:tagId/preference", controllers.UpdateTagPreferenceHandler)
 		}
 
 		// @step 3.4 任务路由组
@@ -123,6 +125,7 @@ func InitRouters() *gin.Engine {
 			eventGroup.POST("/", controllers.CreateEventHandler)
 			eventGroup.PUT("/:eventId", controllers.UpdateEventHandler)
 			eventGroup.DELETE("/:eventId", controllers.DeleteEventHandler)
+			eventGroup.PUT("/resort", controllers.ResortEventHandler)
 		}
 
 		// @step 3.6 评论路由组

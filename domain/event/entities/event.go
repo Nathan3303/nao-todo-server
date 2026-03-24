@@ -9,7 +9,7 @@ type Event struct {
 	Name        string
 	Description string
 	IsDone      bool
-	SortId      int32
+	SortId      uint32
 }
 
 func (e *Event) IsNameValid() bool {

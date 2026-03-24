@@ -83,9 +83,9 @@ func (eventApp *EventAppImpl) UpdateEvent(
 	}
 	// 3. 转换请求体为实体
 	updateEntity := UpdateEventReq2Entity(&req)
-	if err := updateEntity.IsValid(); err != nil {
-		return nil, err
-	}
+	// if err := updateEntity.IsValid(); err != nil {
+	// 	return nil, err
+	// }
 	// 4. 更新检查事项
 	err = eventApp.eventDomain.Update(ctx, userId, eventId64, updateEntity)
 	if err != nil {
@@ -141,4 +141,12 @@ func (eventApp *EventAppImpl) ListEvent(
 	}
 	// 返回结果
 	return EventEntities2Reses(eventEntities), nil
+}
+
+// ResortEvent 重新排序两个检查事项
+func (eventApp *EventAppImpl) ResortEvents(
+	ctx context.Context,
+	req types.ResortEventsReq,
+) (*types.ResortEventsRes, error) {
+	panic("unimplement")
 }

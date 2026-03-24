@@ -8,8 +8,14 @@ import (
 )
 
 // 标签域注册函数
-func NewTagDomain(tagRepo repositories.TagRepository) TagDomain {
-	return &TagDomainImpl{tagRepo: tagRepo}
+func NewTagDomain(
+	tagRepo repositories.TagRepository,
+	preferenceRepo repositories.TagPreference,
+) TagDomain {
+	return &TagDomainImpl{
+		tagRepo:        tagRepo,
+		preferenceRepo: preferenceRepo,
+	}
 }
 
 /*
@@ -34,7 +40,7 @@ func (tagDomain *TagDomainImpl) Create(
 	createEntity *entities.Tag,
 ) (*entities.Tag, error) {
 	createEntity.UserId = userId
-	createEntity.Preference = vo.MakeDefaultTagPreference()
+	// createEntity.Preference = vo.MakeDefaultTagPreference()
 	return tagDomain.tagRepo.Create(ctx, createEntity)
 }
 
@@ -78,6 +84,21 @@ func (tagDomain *TagDomainImpl) List(
 }
 
 /*
+ * Get tag preference
+ * 获取标签偏好
+ */
+func (tagDomain *TagDomainImpl) GetPreference(
+	ctx context.Context,
+	userId int64,
+	tagId int64,
+) (*vo.TagPreference, error) {
+	return tagDomain.preferenceRepo.Get(ctx, &vo.TagPreference{
+		UserId: userId,
+		TagId:  tagId,
+	})
+}
+
+/*
  * Update tag preference
  * 更新标签偏好
  */
@@ -87,5 +108,11 @@ func (tagDomain *TagDomainImpl) UpdatePreference(
 	tagId int64,
 	preference *vo.TagPreference,
 ) error {
-	panic("unimplemented")
+	preference.UserId = userId
+	preference.TagId = tagId
+	_, err := tagDomain.preferenceRepo.Save(ctx, preference)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -49,6 +49,7 @@ func LoadDomains() {
 	))
 	tagApp.RegistDomainImpl(tagService.NewTagDomain(
 		tagRepo.NewTagRepo(dbs.DB),
+		tagRepo.NewTagPreferenceRepo(dbs.DB),
 	))
 	taskApp.RegistDomainImpl(taskService.NewTaskDomain(
 		taskRepo.NewTaskRepo(dbs.DB),

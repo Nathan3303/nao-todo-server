@@ -28,7 +28,7 @@ func (eventDomain *EventDomainImpl) Create(
 	createEntity *entities.Event,
 ) (*entities.Event, error) {
 	createEntity.UserId = userId
-	createEntity.SortId = int32(time.Now().UnixNano())
+	createEntity.SortId = uint32(int(time.Now().Unix() % 10000))
 	return eventDomain.eventRepo.Create(ctx, createEntity)
 }
 

@@ -123,3 +123,18 @@ func (p *ProjectDomainImpl) GetPreference(
 	preferenceVO.ProjectId = projectId
 	return p.preferenceRepo.Get(ctx, preferenceVO)
 }
+
+/*
+ * Save project preference
+ */
+func (p *ProjectDomainImpl) SavePreference(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+	preferenceVO *vo.ProjectPreference,
+) error {
+	preferenceVO.UserId = userId
+	preferenceVO.ProjectId = projectId
+	_, err := p.preferenceRepo.Save(ctx, preferenceVO)
+	return err
+}

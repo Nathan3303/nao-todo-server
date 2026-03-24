@@ -81,7 +81,7 @@ type ListProjectRes []*GetProjectRes
 
 type ProjectPreferenceRes struct {
 	ViewType   string `json:"viewType"`
-	GetOptions string `json:"getOptions"`
+	GetOptions string `json:"getTasksOptions"`
 	Columns    string `json:"columns"`
 }
 
@@ -97,7 +97,7 @@ type GetProjectPreferenceRes struct {
 
 type UpdateProjectPreferenceReq struct {
 	ProjectId  string
-	Preference any `json:"preference" form:"preference"`
+	Preference ProjectPreferenceRes `json:"preference" form:"preference"`
 }
 
 type UpdateProjectPreferenceRes struct {

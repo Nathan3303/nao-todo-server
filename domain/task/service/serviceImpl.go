@@ -50,10 +50,10 @@ func (taskDomain *TaskDomainImpl) Update(
 	taskId int64,
 	updateEntity *entities.Task,
 ) error {
-	err := updateEntity.IsDatesValid()
-	if err != nil {
-		return err
-	}
+	// err := updateEntity.IsDatesValid()
+	// if err != nil {
+	// 	return err
+	// }
 	whereEntity := &entities.Task{UserId: userId, Id: taskId}
 	return taskDomain.taskRepo.Update(ctx, whereEntity, updateEntity)
 }
@@ -101,6 +101,8 @@ func (taskDomain *TaskDomainImpl) List(
 	if err != nil {
 		return nil, nil, err
 	}
+	pagination.Page = query.Page
+	pagination.Limit = query.Limit
 	// 3. 查询任务列表
 	taskEntities, pagination, err := taskDomain.taskRepo.ListWithQueryTx(ctx, tx, pagination)
 	if err != nil {

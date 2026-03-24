@@ -4,6 +4,7 @@ import "strings"
 
 type TagPreference struct {
 	Id         int64  `json:"id"`
+	UserId     int64  `json:"userId"`
 	TagId      int64  `json:"tagId"`
 	ViewType   string `json:"viewType"`
 	GetOptions string `json:"getTodosOptions"`

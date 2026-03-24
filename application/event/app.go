@@ -17,6 +17,7 @@ type EventApp interface {
 	) (*types.UpdateEventRes, error)
 	DeleteEvent(ctx context.Context, eventId string) (*types.DeleteEventRes, error)
 	ListEvent(ctx context.Context, taskId string) (types.ListEventRes, error)
+	ResortEvents(ctx context.Context, req types.ResortEventsReq) (*types.ResortEventsRes, error)
 }
 
 type EventAppImpl struct {

@@ -13,7 +13,7 @@ func Entity2Model(e *entities.Project) *models.Project {
 	m.Name = e.Name
 	m.Description = e.Description
 	m.ArchivedAt = e.ArchivedAt
-	m.Preference = PreferenceVO2Model(e.Preference)
+	// m.Preference = PreferenceVO2Model(e.Preference)
 	return m
 }
 

@@ -22,6 +22,7 @@ func TagPreferenceVO2Model(vo *vo.TagPreference) *models.TagPreference {
 		return nil
 	}
 	m := &models.TagPreference{}
+	m.UserId = vo.UserId
 	m.TagId = vo.TagId
 	m.ViewType = vo.ViewType
 	m.GetOptions = vo.GetOptions
@@ -49,6 +50,7 @@ func TagPreferenceModel2VO(m *models.TagPreference) *vo.TagPreference {
 	}
 	vo := &vo.TagPreference{}
 	vo.Id = m.ID
+	vo.UserId = m.UserId
 	vo.TagId = m.TagId
 	vo.ViewType = m.ViewType
 	vo.GetOptions = m.GetOptions

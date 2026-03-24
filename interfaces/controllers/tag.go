@@ -164,9 +164,75 @@ func ListTagHandler(ctx *gin.Context) {
 }
 
 /*
+ * Get tag preference handler
+ * 获取标签偏好处理函数（30050）
+ */
+func GetTagPreferenceHandler(ctx *gin.Context) {
+	// 1. 获取标签 ID
+	tagId := ctx.Param("tagId")
+	if tagId == "" {
+		Failure(ctx, types.ResponseData{
+			Code:    30051,
+			Message: "标签 ID 不能为空",
+		})
+		return
+	}
+	// 2. 获取标签偏好
+	res, err := tag.App.GetTagPreference(ctx.Request.Context(), tagId)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30052,
+			Message: "获取标签偏好失败 - " + err.Error(),
+		})
+		return
+	}
+	// 3. 响应结果
+	Success(ctx, types.ResponseData{
+		Code:    30050,
+		Message: "获取标签偏好成功",
+		Data:    res,
+	})
+}
+
+/*
  * Update tag preference handler
- * 更新标签偏好处理函数（30050）
+ * 更新标签偏好处理函数（30060）
  */
 func UpdateTagPreferenceHandler(ctx *gin.Context) {
-	panic("unimplemented")
+	// 1. 获取标签 ID
+	tagId := ctx.Param("tagId")
+	if tagId == "" {
+		Failure(ctx, types.ResponseData{
+			Code:    30061,
+			Message: "标签 ID 不能为空",
+		})
+		return
+	}
+	// 2. 绑定参数
+	var req types.UpdateTagPreferenceReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30062,
+			Message: "请求参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 3. 更新标签偏好
+	res, err := tag.App.UpdateTagPreference(ctx.Request.Context(), tagId, &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30063,
+			Message: "更新标签偏好失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 4. 响应结果
+	Success(ctx, types.ResponseData{
+		Code:    30060,
+		Message: "更新标签偏好成功",
+		Data:    res,
+	})
 }

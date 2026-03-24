@@ -13,6 +13,10 @@ type TagApp interface {
 	UpdateTag(ctx context.Context, req *types.UpdateTagReq) (*types.UpdateTagRes, error)
 	DeleteTag(ctx context.Context, tagId string) (*types.DeleteTagRes, error)
 	ListTag(ctx context.Context) (types.ListTagRes, error)
+	GetTagPreference(
+		ctx context.Context,
+		tagId string,
+	) (*types.TagPreferenceRes, error)
 	UpdateTagPreference(
 		ctx context.Context,
 		tagId string,

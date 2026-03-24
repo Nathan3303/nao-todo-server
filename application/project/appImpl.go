@@ -264,5 +264,23 @@ func (p *projectAppImpl) SavePreference(
 	ctx context.Context,
 	req *types.UpdateProjectPreferenceReq,
 ) (*types.UpdateProjectPreferenceRes, error) {
-	panic("unimplemented")
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId == 0 {
+		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+	}
+	// 2. 获取清单 ID
+	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	if err != nil {
+		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+	}
+	// 3. 请求体转换实体
+	preference := PreferenceRes2VO(&req.Preference)
+	// 4. 调用域函数 - 更新清单偏好
+	err = p.projectDomain.SavePreference(ctx, userId, projectId, preference)
+	if err != nil {
+		return nil, err
+	}
+	// 5. 返回结果
+	return &types.UpdateProjectPreferenceRes{ProjectId: req.ProjectId}, nil
 }

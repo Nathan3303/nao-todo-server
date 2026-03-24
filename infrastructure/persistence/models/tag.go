@@ -11,6 +11,7 @@ type Tag struct {
 
 type TagPreference struct {
 	ModelBase
+	UserId     int64  `gorm:"not null"`
 	TagId      int64  `gorm:"not null;index"`
 	ViewType   string `gorm:"size:16"`
 	GetOptions string `gorm:"size:256"`

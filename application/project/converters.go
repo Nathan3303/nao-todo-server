@@ -59,3 +59,14 @@ func Entities2ListRes(eList []*entities.Project) []*types.GetProjectRes {
 	}
 	return resList
 }
+
+func PreferenceRes2VO(res *types.ProjectPreferenceRes) *vo.ProjectPreference {
+	if res == nil {
+		return nil
+	}
+	e := &vo.ProjectPreference{}
+	e.ViewType = res.ViewType
+	e.GetOptions = res.GetOptions
+	e.Columns = res.Columns
+	return e
+}

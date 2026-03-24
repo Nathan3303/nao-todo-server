@@ -41,5 +41,29 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Save(
 	ctx context.Context,
 	preferenceVO *vo.ProjectPreference,
 ) (*vo.ProjectPreference, error) {
-	panic("unimplemented")
+	// 1. valueobject 转 model
+	preference := PreferenceVO2Model(preferenceVO)
+	// 2. 保存
+	var existPreference models.ProjectPreference
+	tx := projectPreferenceRepo.db.WithContext(ctx).
+		Model(&models.ProjectPreference{}).
+		Where("user_id = ? AND project_id = ?", preferenceVO.UserId, preferenceVO.ProjectId).
+		First(&existPreference)
+	if tx.Error == gorm.ErrRecordNotFound {
+		// 新增
+		projectPreferenceRepo.db.WithContext(ctx).
+			Model(&models.ProjectPreference{}).Create(preference)
+	} else {
+		// 更新
+		tx.Updates(models.ProjectPreference{
+			ViewType:   preference.ViewType,
+			GetOptions: preference.GetOptions,
+			Columns:    preference.Columns,
+		})
+	}
+	// if tx.Error != nil {
+	// 	return nil, tx.Error
+	// }
+	// 3. model 转 valueobject
+	return PreferenceModel2VO(preference), nil
 }

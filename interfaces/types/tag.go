@@ -10,7 +10,7 @@ type GetTagRes struct {
 
 type TagPreferenceRes struct {
 	ViewType   string `json:"viewType"`
-	GetOptions string `json:"getOptions"`
+	GetOptions string `json:"getTasksOptions"`
 	Columns    string `json:"columns"`
 }
 
@@ -45,10 +45,14 @@ type DeleteTagRes struct {
 
 type ListTagRes []*GetTagRes
 
-type UpdateTagPreferenceReq struct {
+type TagPreferenceReq struct {
 	ViewType   string `json:"viewType"`
-	GetOptions string `json:"getOptions"`
+	GetOptions string `json:"getTasksOptions"`
 	Columns    string `json:"columns"`
+}
+
+type UpdateTagPreferenceReq struct {
+	Preference *TagPreferenceReq `json:"preference"`
 }
 
 type UpdateTagPreferenceRes struct {
