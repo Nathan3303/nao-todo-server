@@ -5,7 +5,7 @@ import (
 	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
-	"naotodoserver/domain/task/vo"
+	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 	"naotodoserver/infrastructure/utils"
 	"strings"
@@ -22,18 +22,23 @@ func NewTaskRepo(db *gorm.DB) repositories.Task {
 	return &TaskRepoImpl{db: db}
 }
 
-/*
- * Get task by id
- * 根据任务ID获取任务信息
- */
+// GetById 根据任务ID获取任务信息
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @return 任务实体
+// @return error 错误
 func (taskRepo *TaskRepoImpl) GetById(
 	ctx context.Context,
-	whereEntity *entities.Task,
+	userId int64,
+	taskId int64,
 ) (*entities.Task, error) {
 	// 1. 创建结果模型
 	taskModel := &models.Task{}
 	// 2. 转换查询实体到模型
-	whereCond := TaskEntity2Model(whereEntity)
+	var whereCond models.Task
+	whereCond.UserId = userId
+	whereCond.ID = taskId
 	// 3. 查询
 	tx := taskRepo.db.WithContext(ctx).Where(whereCond).First(taskModel)
 	if tx.Error != nil {
@@ -43,16 +48,18 @@ func (taskRepo *TaskRepoImpl) GetById(
 	return TaskModel2Entity(taskModel), nil
 }
 
-/*
- * Create task
- * 创建任务
- */
+// Create 创建任务
+// @param ctx 上下文
+// @param createEntity 创建实体
+// @return 任务实体
+// @return error 错误
 func (taskRepo *TaskRepoImpl) Create(
 	ctx context.Context,
-	createEntity *entities.Task,
+	userId int64,
+	createTaskValueObject *valueobjects.CreateTask,
 ) (*entities.Task, error) {
 	// 1. 转换创建实体到模型
-	createModel := TaskEntity2Model(createEntity)
+	createModel := CreateTaskValueObjectToModel(userId, createTaskValueObject)
 	// 2. 创建
 	tx := taskRepo.db.WithContext(ctx).Create(createModel)
 	if tx.Error != nil {
@@ -62,19 +69,23 @@ func (taskRepo *TaskRepoImpl) Create(
 	return TaskModel2Entity(createModel), nil
 }
 
-/*
- * Update task
- * 更新任务
- */
+// Update 更新任务
+// @param ctx 上下文
+// @param whereEntity 查询实体
+// @param updateEntity 更新实体
+// @return error 错误
 func (taskRepo *TaskRepoImpl) Update(
 	ctx context.Context,
-	whereEntity *entities.Task,
-	updateEntity *entities.Task,
+	userId int64,
+	taskId int64,
+	updateTaskValueObject *valueobjects.UpdateTask,
 ) error {
 	// 1. 转换查询实体到模型
-	whereCond := TaskEntity2Model(whereEntity)
+	var whereCond models.Task
+	whereCond.UserId = userId
+	whereCond.ID = taskId
 	// 2. 转换更新实体到模型
-	updateModel := TaskEntity2Model(updateEntity)
+	updateModel := UpdateTaskValueObjectToModel(updateTaskValueObject)
 	// 3. 更新
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where(whereCond).
@@ -82,16 +93,16 @@ func (taskRepo *TaskRepoImpl) Update(
 	return tx.Error
 }
 
-/*
- * Delete task
- * 删除任务
- */
-func (taskRepo *TaskRepoImpl) Delete(
-	ctx context.Context,
-	whereEntity *entities.Task,
-) error {
+// Delete 删除任务
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @return error 错误
+func (taskRepo *TaskRepoImpl) Delete(ctx context.Context, userId int64, taskId int64) error {
 	// 1. 转换查询实体到模型
-	whereCond := TaskEntity2Model(whereEntity)
+	var whereCond models.Task
+	whereCond.UserId = userId
+	whereCond.ID = taskId
 	// 2. 删除
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where(whereCond).
@@ -99,16 +110,16 @@ func (taskRepo *TaskRepoImpl) Delete(
 	return tx.Error
 }
 
-/*
- * Restore task
- * 恢复任务
- */
-func (taskRepo *TaskRepoImpl) Restore(
-	ctx context.Context,
-	whereEntity *entities.Task,
-) error {
+// Restore 恢复任务
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @return error 错误
+func (taskRepo *TaskRepoImpl) Restore(ctx context.Context, userId int64, taskId int64) error {
 	// 1. 转换查询实体到模型
-	whereCond := TaskEntity2Model(whereEntity)
+	var whereCond models.Task
+	whereCond.UserId = userId
+	whereCond.ID = taskId
 	// 2. 恢复
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).Unscoped().
 		Where(whereCond).
@@ -116,17 +127,22 @@ func (taskRepo *TaskRepoImpl) Restore(
 	return tx.Error
 }
 
-/*
- * List task
- * 获取任务列表
- */
+// List 获取任务列表
+// @param ctx 上下文
+// @param userId 用户ID
+// @param query 查询值对象
+// @param pagination 分页值对象
+// @return 任务实体列表
+// @return error 错误
 func (taskRepo *TaskRepoImpl) List(
 	ctx context.Context,
-	whereEntity *entities.Task,
-	pagination *vo.Pagination,
-) ([]*entities.Task, *vo.Pagination, error) {
+	userId int64,
+	query *valueobjects.QueryTask,
+	pagination *valueobjects.Pagination,
+) ([]*entities.Task, *valueobjects.Pagination, error) {
 	// 1. 转换查询实体到模型
-	whereCond := TaskEntity2Model(whereEntity)
+	var whereCond models.Task
+	whereCond.UserId = userId
 	// 2. 查询任务总数
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where(whereCond).
@@ -152,8 +168,8 @@ func (taskRepo *TaskRepoImpl) List(
 func (taskRepo *TaskRepoImpl) ListWithQueryTx(
 	ctx context.Context,
 	tx *gorm.DB,
-	pagination *vo.Pagination,
-) ([]*entities.Task, *vo.Pagination, error) {
+	pagination *valueobjects.Pagination,
+) ([]*entities.Task, *valueobjects.Pagination, error) {
 	// 1. 查询任务总数
 	tx = tx.WithContext(ctx).Model(&models.Task{}).
 		Count(&pagination.Total)
@@ -177,7 +193,7 @@ func (taskRepo *TaskRepoImpl) ListWithQueryTx(
  */
 func (taskRepo *TaskRepoImpl) BuildQueryTx(
 	ctx context.Context,
-	query *vo.TaskQuery,
+	query *valueobjects.QueryTask,
 ) (*gorm.DB, error) {
 	// 1. 构建指定模型的操作符
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).

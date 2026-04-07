@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"naotodoserver/domain/task/service"
-	"naotodoserver/domain/task/vo"
+	"naotodoserver/domain/task/valueobjects"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 	"strconv"
@@ -20,14 +20,15 @@ func RegistDomainImpl(taskDomain service.TaskDomain) TaskApp {
 	return App
 }
 
-/*
- * Get task by id
- * 获取单个任务信息
- */
+// GetTaskById 获取单个任务信息
+// @param ctx 上下文
+// @param taskId 任务 ID
+// @return 任务响应
+// @return error 错误信息
 func (taskApp *TaskAppImpl) GetTaskById(
 	ctx context.Context,
 	taskId string,
-) (*types.TaskRes, error) {
+) (*types.GetTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -44,125 +45,125 @@ func (taskApp *TaskAppImpl) GetTaskById(
 		return nil, err
 	}
 	// 4. 转换为响应对象
-	res := TaskEntity2Res(taskEntity)
+	res := TaskEntityToGetRes(taskEntity)
 	return res, nil
 }
 
-/*
- * Create task
- * 创建任务
- */
+// CreateTask 创建任务
+// @param ctx 上下文
+// @param req 创建任务请求
+// @return 任务响应
+// @return error 错误信息
 func (taskApp *TaskAppImpl) CreateTask(
 	ctx context.Context,
 	req *types.CreateTaskReq,
-) (*types.TaskRes, error) {
+) (*types.GetTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, errors.New("用户 ID 无效")
 	}
-	// 2. 判断清单 ID 是否为空 - 为空则使用用户 ID 作为清单 ID（收集箱）
-	if req.ProjectId == "" {
-		req.ProjectId = strconv.FormatInt(userId, 10)
+	// 2. 请求体转换值对象
+	createTaskValueObject, err := CreateTaskReqToValueObject(userId, req)
+	if err != nil {
+		return nil, err
 	}
-	// 2. 请求体转换实体
-	createEntity := CreateTaskReq2Entity(req)
 	// 3. 调用领域层创建任务
-	taskEntity, err := taskApp.taskDomain.Create(ctx, userId, createEntity)
+	taskEntity, err := taskApp.taskDomain.Create(ctx, userId, createTaskValueObject)
 	if err != nil {
 		return nil, err
 	}
 	// 4. 转换为响应对象
-	res := TaskEntity2Res(taskEntity)
+	res := TaskEntityToGetRes(taskEntity)
 	return res, nil
 }
 
-/*
- * Update task
- * 创建任务
- */
+// UpdateTask 更新任务
+// @param ctx 上下文
+// @param taskId 任务 ID
+// @param req 更新任务请求
+// @return 更新任务响应
+// @return error 错误信息
 func (taskApp *TaskAppImpl) UpdateTask(
 	ctx context.Context,
 	taskId string,
 	req *types.UpdateTaskReq,
-) (*types.UpdateTaskRes, error) {
+) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 转换待办任务 ID
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskIdInt64, err := strconv.ParseInt(taskId, 10, 64)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 无效")
+		return errors.New("待办任务 ID 无效")
 	}
-	// 3. 请求体转换实体
-	updateEntity := UpdateTaskReq2Entity(req)
-	// 4. 调用领域层更新任务
-	err = taskApp.taskDomain.Update(ctx, userId, taskId64, updateEntity)
+	// 3. 请求体转换值对象
+	updateTaskValueObject, err := UpdateTaskReqToValueObject(req)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	// 4. 调用领域层更新任务
+	err = taskApp.taskDomain.Update(ctx, userId, taskIdInt64, updateTaskValueObject)
+	if err != nil {
+		return err
 	}
 	// 5. 转换为响应对象
-	return &types.UpdateTaskRes{TaskId: taskId}, nil
+	return nil
 }
 
-/*
- * Delete task
- * 删除任务
- */
+// DeleteTask 删除任务
+// @param ctx 上下文
+// @param taskId 任务 ID
+// @return 删除任务响应
+// @return error 错误信息
 func (taskApp *TaskAppImpl) DeleteTask(
 	ctx context.Context,
 	taskId string,
-) (*types.DeleteTaskRes, error) {
+) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 转换待办任务 ID
 	taskId64, err := strconv.ParseInt(taskId, 10, 64)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 无效")
+		return errors.New("待办任务 ID 无效")
 	}
 	// 3. 调用领域层删除任务
-	err = taskApp.taskDomain.Delete(ctx, userId, taskId64)
-	if err != nil {
-		return nil, err
-	}
-	return &types.DeleteTaskRes{TaskId: taskId}, nil
+	return taskApp.taskDomain.Delete(ctx, userId, taskId64)
 }
 
-/*
- * Restore task
- * 恢复任务
- */
+// RestoreTask 恢复任务
+// @param ctx 上下文
+// @param taskId 任务 ID
+// @return 恢复任务响应
+// @return error 错误信息
 func (taskApp *TaskAppImpl) RestoreTask(
 	ctx context.Context,
 	taskId string,
-) (*types.RestoreTaskRes, error) {
+) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 转换待办任务 ID
 	taskId64, err := strconv.ParseInt(taskId, 10, 64)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 无效")
+		return errors.New("待办任务 ID 无效")
 	}
 	// 3. 调用领域层恢复任务
-	err = taskApp.taskDomain.Restore(ctx, userId, taskId64)
-	if err != nil {
-		return nil, err
-	}
-	return &types.RestoreTaskRes{TaskId: taskId}, nil
+	return taskApp.taskDomain.Restore(ctx, userId, taskId64)
 }
 
-/*
- * List task
- * 获取任务列表
- */
+// ListTask 获取任务列表
+// @param ctx 上下文
+// @param req 获取任务列表请求
+// @return 任务列表响应
+// @return error 错误信息
 func (taskApp *TaskAppImpl) ListTask(
 	ctx context.Context,
 	req *types.ListTaskReq,
@@ -172,16 +173,25 @@ func (taskApp *TaskAppImpl) ListTask(
 	if userId <= 0 {
 		return nil, nil, errors.New("用户 ID 无效")
 	}
-	// 2. 请求体转换实体
-	query := ListTaskReq2QueryVO(req)
-	// 3. 调用领域层获取任务列表
-	pagination := &vo.Pagination{Page: req.Page, Limit: req.Limit}
-	taskEntities, pagination, err := taskApp.taskDomain.List(ctx, userId, query, pagination)
+	// 2. 请求体转换值对象
+	queryTaskValueObject, err := ListTaskReqToQueryTaskValueObject(userId, req)
 	if err != nil {
 		return nil, nil, err
 	}
-	// 4. 转换为响应对象
-	tasks := TaskEntities2Reses(taskEntities)
-	paginationRes := PaginationVO2Res(pagination)
+	// 3. 分页值对象
+	paginationValueObject := valueobjects.NewPagination(0, req.Page, req.Limit)
+	// 4. 调用领域层获取任务列表
+	taskEntities, paginationValueObject, err := taskApp.taskDomain.List(
+		ctx,
+		userId,
+		queryTaskValueObject,
+		paginationValueObject,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	// 5. 转换为响应对象
+	tasks := TaskEntitiesToGetReses(taskEntities)
+	paginationRes := PaginationValueObjectToRes(paginationValueObject)
 	return tasks, paginationRes, nil
 }

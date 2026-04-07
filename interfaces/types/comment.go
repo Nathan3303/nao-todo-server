@@ -1,13 +1,12 @@
 package types
 
 type CommentRes struct {
-	Id          string          `json:"id"`
-	TaskId      string          `json:"taskId"`
-	Content     string          `json:"content"`
-	CreatedAt   string          `json:"createdAt"`
-	Attachments []string        `json:"attachments"`
-	IsTopUp     bool            `json:"isTopUp"`
-	CommentUser *CommentUserRes `json:"commentUser"`
+	Id          string   `json:"id"`
+	TaskId      string   `json:"taskId"`
+	Content     string   `json:"content"`
+	CreatedAt   string   `json:"createdAt"`
+	Attachments []string `json:"attachments"`
+	IsTopUp     bool     `json:"isTopUp"`
 }
 
 type CommentUserRes struct {
@@ -24,14 +23,6 @@ type UpdateCommentReq struct {
 	Content     string   `json:"content"`
 	Attachments []string `json:"attachments"`
 	IsTopUp     bool     `json:"isTopUp"`
-}
-
-type UpdateCommentRes struct {
-	CommentId string `json:"commentId"`
-}
-
-type DeleteCommentRes struct {
-	CommentId string `json:"commentId"`
 }
 
 type ListCommentRes []*CommentRes

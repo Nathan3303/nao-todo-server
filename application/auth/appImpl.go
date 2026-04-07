@@ -16,18 +16,20 @@ func RegistDomainImpl(authDomain service.AuthDomain) AuthApp {
 	return App
 }
 
-/*
- * SignIn 处理用户登录
- * 通过 signInReq 中的邮箱和密码验证用户身份，验证成功后生成 JWT 令牌并创建用户会话，最后返回 JWT 令牌
- */
+// 处理用户登录
+// @description 通过 signInReq 中的邮箱和密码验证用户身份，验证成功后生成 JWT 令牌并创建用户会话，最后返回 JWT 令牌
+// @param ctx 上下文
+// @param signInReq 登录请求
+// @return 登录响应
+// @return error 错误
 func (as *authAppImpl) SignIn(
 	ctx context.Context,
 	signInReq *types.SignInReq,
 ) (*types.SignInRes, error) {
 	// 1. 通过 Email 查找用户记录
-	userEntity, _ := as.authDomain.FindUserByEmail(ctx, signInReq.Email)
-	if !userEntity.IsIdValid() {
-		return nil, errors.New("用户名或密码错误")
+	userEntity, err := as.authDomain.FindUserByEmail(ctx, signInReq.Email)
+	if err != nil {
+		return nil, err
 	}
 	// 2. 比对密码
 	isMatched := as.authDomain.PasswordCompare(
@@ -60,21 +62,22 @@ func (as *authAppImpl) SignUp(
 	ctx context.Context,
 	signUpReq *types.SignUpReq,
 ) (*types.SignUpRes, error) {
-	// 1. 通过 Email 查找用户记录
-	userEntity, _ := as.authDomain.FindUserByEmail(ctx, signUpReq.Email)
-	// 2. 判断用户是否存在
-	if userEntity.IsValid() {
-		// 是：返回用户已存在
-		return nil, errors.New("用户已存在")
+	// 通过 Email 查找用户记录
+	_, err := as.authDomain.FindUserByEmail(ctx, signUpReq.Email)
+	if err == nil {
+		return nil, errors.New("邮箱已存在")
 	}
-	// 否：
-	// 3. 创建用户
-	userEntity = SignUpReqToUserEntity(signUpReq)
-	_, err := as.authDomain.CreateUser(ctx, userEntity)
+	// 转换为 CreateUserValueObject
+	createUserValueObject, err := SignUpReqToCreateUserValueObject(signUpReq)
+	if err != nil {
+		return nil, err
+	}
+	// 创建
+	_, err = as.authDomain.CreateUser(ctx, createUserValueObject)
 	if err != nil {
 		return nil, errors.New("注册用户失败")
 	}
-	// 4. 注册成功
+	// 注册成功
 	return &types.SignUpRes{}, nil
 }
 
@@ -103,9 +106,9 @@ func (as *authAppImpl) CheckIn(
 	}
 	// 会话存在：
 	// 3. 查找最新的用户信息
-	userEntity, _ := as.authDomain.FindUserById(ctx, userId)
-	if !userEntity.IsIdValid() {
-		return nil, errors.New("用户信息转换失败")
+	userEntity, err := as.authDomain.FindUserById(ctx, userId)
+	if err != nil {
+		return nil, errors.New("用户信息查询失败 - " + err.Error())
 	}
 	// 4. 构建新的 JWT 令牌
 	newJWT, err := as.authDomain.GenerateJWT(ctx, userEntity)

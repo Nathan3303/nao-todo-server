@@ -7,10 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * Get task handler
- * 获取单个任务信息处理函数（40000）
- */
+// GetTaskHandler 获取待办任务详情控制器
+// @code 4000x
 func GetTaskHandler(ctx *gin.Context) {
 	// 1. 获取待办任务 ID
 	taskId := ctx.Param("taskId")
@@ -38,10 +36,8 @@ func GetTaskHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Create task handler
- * 创建任务处理函数（40010）
- */
+// CreateTaskHandler 创建待办任务控制器
+// @code 4001x
 func CreateTaskHandler(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.CreateTaskReq
@@ -70,10 +66,8 @@ func CreateTaskHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Update task handler
- * 更新任务处理函数（40020）
- */
+// UpdateTaskHandler 更新待办任务控制器
+// @code 4002x
 func UpdateTaskHandler(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.UpdateTaskReq
@@ -95,7 +89,7 @@ func UpdateTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层更新任务
-	res, err := task.App.UpdateTask(ctx.Request.Context(), taskId, &req)
+	err = task.App.UpdateTask(ctx.Request.Context(), taskId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40023,
@@ -107,14 +101,12 @@ func UpdateTaskHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    40020,
 		Message: "更新待办任务成功",
-		Data:    res,
+		Data:    taskId,
 	})
 }
 
-/*
- * Delete task handler
- * 删除任务处理函数（40030）
- */
+// DeleteTaskHandler 删除待办任务控制器
+// @code 4003x
 func DeleteTaskHandler(ctx *gin.Context) {
 	// 1. 获取任务 ID
 	taskId := ctx.Param("taskId")
@@ -126,7 +118,7 @@ func DeleteTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层删除任务
-	res, err := task.App.DeleteTask(ctx.Request.Context(), taskId)
+	err := task.App.DeleteTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40032,
@@ -138,14 +130,12 @@ func DeleteTaskHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    40030,
 		Message: "删除待办任务成功",
-		Data:    res,
+		Data:    taskId,
 	})
 }
 
-/*
- * Restore task handler
- * 恢复任务处理函数（40040）
- */
+// RestoreTaskHandler 恢复待办任务控制器
+// @code 4004x
 func RestoreTaskHandler(ctx *gin.Context) {
 	// 1. 获取任务 ID
 	taskId := ctx.Param("taskId")
@@ -157,12 +147,11 @@ func RestoreTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层恢复任务
-	res, err := task.App.RestoreTask(ctx.Request.Context(), taskId)
+	err := task.App.RestoreTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40042,
-			Message: "恢复待办任务失败",
-			Error:   err.Error(),
+			Message: err.Error(),
 		})
 		return
 	}
@@ -170,14 +159,12 @@ func RestoreTaskHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    40040,
 		Message: "恢复待办任务成功",
-		Data:    res,
+		Data:    taskId,
 	})
 }
 
-/*
- * List task handler
- * 获取任务列表处理函数（40050）
- */
+// ListTaskHandler 获取待办任务列表控制器
+// @code 4005x
 func ListTaskHandler(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.ListTaskReq

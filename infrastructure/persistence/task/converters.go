@@ -2,34 +2,54 @@ package task
 
 import (
 	"naotodoserver/domain/task/entities"
-	"naotodoserver/domain/task/vo"
+	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 	"naotodoserver/infrastructure/utils"
 
 	"gorm.io/gorm"
 )
 
-func TaskEntity2Model(e *entities.Task) *models.Task {
-	m := &models.Task{}
-	m.ID = e.Id
-	m.UserId = e.UserId
-	m.ProjectId = e.ProjectId
-	m.Name = e.Name
-	m.Description = e.Description
-	m.State = e.State
-	m.Priority = e.Priority
-	m.StartAt = utils.TimePtr2SqlNullTime(e.StartAt)
-	m.EndAt = utils.TimePtr2SqlNullTime(e.EndAt)
-	m.ArchivedAt = utils.TimePtr2SqlNullTime(e.ArchivedAt)
-	m.StarMarkAt = utils.TimePtr2SqlNullTime(e.StarMarkAt)
-	m.GivenUpAt = utils.TimePtr2SqlNullTime(e.GivenUpAt)
-	m.Tags = e.Tags
-	m.UpdatedAt = e.UpdatedAt
-	m.CreatedAt = e.CreatedAt
-	m.DeletedAt = gorm.DeletedAt{Time: e.DeletedAt}
-	return m
+// CreateTaskValueObjectToModel 创建任务值对象转换为任务模型
+// @param userId 用户ID
+// @param createTaskValueObject 创建任务值对象
+// @return models.Task 任务模型
+func CreateTaskValueObjectToModel(
+	userId int64,
+	createTaskValueObject *valueobjects.CreateTask,
+) *models.Task {
+	return &models.Task{
+		UserId:      userId,
+		ProjectId:   createTaskValueObject.ProjectId,
+		Name:        createTaskValueObject.Name,
+		Description: createTaskValueObject.Description,
+		State:       createTaskValueObject.State,
+		Priority:    createTaskValueObject.Priority,
+		StartAt:     createTaskValueObject.StartAt,
+		EndAt:       createTaskValueObject.EndAt,
+	}
 }
 
+// UpdateTaskValueObjectToModel 更新任务值对象转换为任务模型
+// @param updateTaskValueObject 更新任务值对象
+// @return models.Task 任务模型
+func UpdateTaskValueObjectToModel(
+	updateTaskValueObject *valueobjects.UpdateTask,
+) *models.Task {
+	return &models.Task{
+		UserId:      updateTaskValueObject.UserId,
+		ProjectId:   updateTaskValueObject.ProjectId,
+		Name:        updateTaskValueObject.Name,
+		Description: updateTaskValueObject.Description,
+		State:       updateTaskValueObject.State,
+		Priority:    updateTaskValueObject.Priority,
+		StartAt:     updateTaskValueObject.StartAt,
+		EndAt:       updateTaskValueObject.EndAt,
+	}
+}
+
+// TaskModel2Entity 任务模型转换为任务实体
+// @param m models.Task 任务模型
+// @return entities.Task 任务实体
 func TaskModel2Entity(m *models.Task) *entities.Task {
 	e := &entities.Task{}
 	e.Id = m.ID
@@ -51,7 +71,10 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	return e
 }
 
-func PaginationVO2Scopes(pagination *vo.Pagination) func(db *gorm.DB) *gorm.DB {
+// PaginationVO2Scopes 分页值对象转换为查询操作符
+// @param pagination 分页值对象
+// @return func(db *gorm.DB) *gorm.DB 分页操作符
+func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) *gorm.DB {
 	if pagination.Page <= 0 {
 		pagination.Page = 1
 	}
@@ -64,6 +87,9 @@ func PaginationVO2Scopes(pagination *vo.Pagination) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
+// TaskModels2Entities 任务模型列表转换为任务实体列表
+// @param mList []*models.Task 任务模型列表
+// @return []*entities.Task 任务实体列表
 func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 	eList := make([]*entities.Task, 0, len(mList))
 	for _, m := range mList {

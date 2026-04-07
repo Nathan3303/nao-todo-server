@@ -7,10 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * Get Event
- * 获取检查事项（50000）
- */
+// GetEventHandler 获取检查事项详情控制器
+// @code 5000x
 func GetEventHandler(ctx *gin.Context) {
 	// 1. 获取检查事项 ID
 	eventId := ctx.Param("eventId")
@@ -39,10 +37,8 @@ func GetEventHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Create Event
- * 创建检查事项（50010）
- */
+// CreateEventHandler 新增检查事项控制器
+// @code 5001x
 func CreateEventHandler(ctx *gin.Context) {
 	// 1. 获取请求参数
 	var req types.CreateEventReq
@@ -56,7 +52,7 @@ func CreateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层创建检查事项
-	res, err := event.App.CreateEvent(ctx.Request.Context(), req)
+	res, err := event.App.CreateEvent(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50012,
@@ -73,10 +69,8 @@ func CreateEventHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Update Event
- * 更新检查事项（50020）
- */
+// UpdateEventHandler 更新检查事项控制器
+// @code 5002x
 func UpdateEventHandler(ctx *gin.Context) {
 	// 1. 获取检查事项 ID
 	eventId := ctx.Param("eventId")
@@ -99,7 +93,7 @@ func UpdateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新检查事项
-	res, err := event.App.UpdateEvent(ctx.Request.Context(), eventId, req)
+	res, err := event.App.UpdateEvent(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50023,
@@ -116,10 +110,8 @@ func UpdateEventHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Delete Event
- * 删除检查事项（50030）
- */
+// DeleteEventHandler 删除检查事项控制器
+// @code 5003x
 func DeleteEventHandler(ctx *gin.Context) {
 	// 1. 获取检查事项 ID
 	eventId := ctx.Param("eventId")
@@ -148,10 +140,8 @@ func DeleteEventHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * List Event
- * 获取检查事项列表（50040）
- */
+// ListEventHandler 获取检查事项列表控制器
+// @code 5004x
 func ListEventHandler(ctx *gin.Context) {
 	// 1. 获取待办事项 ID
 	taskId := ctx.Query("taskId")
@@ -180,10 +170,8 @@ func ListEventHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Resort Events
- * 重排两个检查事项（50050）
- */
+// ResortEventHandler 重新排序两个检查事项控制器
+// @code 5005x
 func ResortEventHandler(ctx *gin.Context) {
 	// 1. 获取请求参数
 	var req types.ResortEventsReq
@@ -197,7 +185,7 @@ func ResortEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取检查事项列表
-	res, err := event.App.ResortEvents(ctx.Request.Context(), req)
+	res, err := event.App.ResortEvents(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50052,

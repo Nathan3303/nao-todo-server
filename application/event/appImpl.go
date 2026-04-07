@@ -17,11 +17,15 @@ func RegistDomainImpl(eventDomain service.EventDomain) EventApp {
 	return App
 }
 
-// GetEventById 获取事件详情
+// GetEventById 获取检查事项详情
+// @param ctx 上下文
+// @param eventId 检查事项 ID
+// @return 检查事项详情
+// @return error 错误信息
 func (eventApp *EventAppImpl) GetEventById(
 	ctx context.Context,
 	eventId string,
-) (*types.EventRes, error) {
+) (*types.GetEventRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -38,38 +42,51 @@ func (eventApp *EventAppImpl) GetEventById(
 		return nil, err
 	}
 	// 返回结果
-	return EventEntity2Res(eventEntity), nil
+	return EventEntityToGetRes(eventEntity), nil
 }
 
-// CreateEvent 创建事件
+// CreateEvent 创建检查事项
+// @param ctx 上下文
+// @param createEventReq 创建检查事项请求体
+// @return 创建检查事项详情
+// @return error 错误信息
 func (eventApp *EventAppImpl) CreateEvent(
 	ctx context.Context,
-	req types.CreateEventReq,
-) (*types.EventRes, error) {
+	createEventReq *types.CreateEventReq,
+) (*types.CreateEventRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 转换请求体为实体
-	createEntity := CreateEventReq2Entity(&req)
-	if err := createEntity.IsValid(); err != nil {
+	createEntity, err := CreateEventReqToValueObject(createEventReq)
+	if err != nil {
 		return nil, err
 	}
 	// 3. 创建检查事项
-	eventEntity, err := eventApp.eventDomain.Create(ctx, userId, createEntity)
+	eventEntity, err := eventApp.eventDomain.Create(
+		ctx,
+		userId,
+		createEntity,
+	)
 	if err != nil {
 		return nil, err
 	}
 	// 返回结果
-	return EventEntity2Res(eventEntity), nil
+	return EventEntityToCreateRes(eventEntity), nil
 }
 
-// UpdateEvent 更新事件
+// UpdateEvent 更新检查事项
+// @param ctx 上下文
+// @param eventId 检查事项 ID
+// @param updateEventReq 更新检查事项请求体
+// @return 更新检查事项详情
+// @return error 错误信息
 func (eventApp *EventAppImpl) UpdateEvent(
 	ctx context.Context,
 	eventId string,
-	req types.UpdateEventReq,
+	updateEventReq *types.UpdateEventReq,
 ) (*types.UpdateEventRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -82,12 +99,17 @@ func (eventApp *EventAppImpl) UpdateEvent(
 		return nil, errors.New("检查事项 ID 格式错误")
 	}
 	// 3. 转换请求体为实体
-	updateEntity := UpdateEventReq2Entity(&req)
-	// if err := updateEntity.IsValid(); err != nil {
-	// 	return nil, err
-	// }
+	updateEntity, err := UpdateEventReqToValueObject(updateEventReq)
+	if err != nil {
+		return nil, err
+	}
 	// 4. 更新检查事项
-	err = eventApp.eventDomain.Update(ctx, userId, eventId64, updateEntity)
+	err = eventApp.eventDomain.Update(
+		ctx,
+		userId,
+		eventId64,
+		updateEntity,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +117,11 @@ func (eventApp *EventAppImpl) UpdateEvent(
 	return &types.UpdateEventRes{EventId: eventId}, nil
 }
 
-// DeleteEvent 删除事件
+// DeleteEvent 删除检查事项
+// @param ctx 上下文
+// @param eventId 检查事项 ID
+// @return 删除检查事项详情
+// @return error 错误信息
 func (eventApp *EventAppImpl) DeleteEvent(
 	ctx context.Context,
 	eventId string,
@@ -119,10 +145,14 @@ func (eventApp *EventAppImpl) DeleteEvent(
 	return &types.DeleteEventRes{EventId: eventId}, nil
 }
 
-// ListEvent 获取事件列表
+// ListEvent 获取检查事项列表
+// @param ctx 上下文
+// @param taskId 待办任务 ID
+// @return 检查事项列表
+// @return error 错误信息
 func (eventApp *EventAppImpl) ListEvent(
 	ctx context.Context,
-	todoId string,
+	taskId string,
 ) (types.ListEventRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -130,12 +160,12 @@ func (eventApp *EventAppImpl) ListEvent(
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 转换待办任务 ID
-	todoId64, err := strconv.ParseInt(todoId, 10, 64)
+	taskId64, err := strconv.ParseInt(taskId, 10, 64)
 	if err != nil {
 		return nil, errors.New("待办任务 ID 格式错误")
 	}
 	// 2. 获取事件列表
-	eventEntities, err := eventApp.eventDomain.List(ctx, userId, todoId64)
+	eventEntities, err := eventApp.eventDomain.List(ctx, userId, taskId64)
 	if err != nil {
 		return nil, err
 	}
@@ -144,9 +174,13 @@ func (eventApp *EventAppImpl) ListEvent(
 }
 
 // ResortEvent 重新排序两个检查事项
+// @param ctx 上下文
+// @param resortEventsReq 排序检查事项请求体
+// @return 排序检查事项详情
+// @return error 错误信息
 func (eventApp *EventAppImpl) ResortEvents(
 	ctx context.Context,
-	req types.ResortEventsReq,
+	resortEventsReq *types.ResortEventsReq,
 ) (*types.ResortEventsRes, error) {
 	panic("unimplement")
 }

@@ -7,10 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * Get comment
- * 获取评论详情（60000）
- */
+// GetCommentHandler 获取评论详情控制器
+// @code 6000x
 func GetCommentHandler(ctx *gin.Context) {
 	// 1. 获取评论 ID
 	commentId := ctx.Param("commentId")
@@ -39,10 +37,8 @@ func GetCommentHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Create comment
- * 新增评论（60010）
- */
+// CreateCommentHandler 新增评论控制器
+// @code 6001x
 func CreateCommentHandler(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.CreateCommentReq
@@ -72,10 +68,8 @@ func CreateCommentHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Update comment
- * 更新评论（60020）
- */
+// UpdateCommentHandler 更新评论控制器
+// @code 6002x
 func UpdateCommentHandler(ctx *gin.Context) {
 	// 1. 获取评论 ID
 	commentId := ctx.Param("commentId")
@@ -97,7 +91,7 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新评论
-	res, err := comment.App.UpdateComment(ctx.Request.Context(), commentId, &req)
+	err := comment.App.UpdateComment(ctx.Request.Context(), commentId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60023,
@@ -110,15 +104,13 @@ func UpdateCommentHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    60020,
 		Message: "更新评论成功",
-		Data:    res,
+		Data:    commentId,
 	})
 
 }
 
-/*
- * Delete comment
- * 删除评论（60030）
- */
+// DeleteCommentHandler 删除评论控制器
+// @code 6003x
 func DeleteCommentHandler(ctx *gin.Context) {
 	// 1. 获取评论 ID
 	commentId := ctx.Param("commentId")
@@ -130,7 +122,7 @@ func DeleteCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除评论
-	res, err := comment.App.DeleteComment(ctx.Request.Context(), commentId)
+	err := comment.App.DeleteComment(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60032,
@@ -143,14 +135,12 @@ func DeleteCommentHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    60030,
 		Message: "删除评论成功",
-		Data:    res,
+		Data:    commentId,
 	})
 }
 
-/*
- * List comment
- * 获取评论列表（60040）
- */
+// ListCommentHandler 获取评论列表控制器
+// @code 6004x
 func ListCommentHandler(ctx *gin.Context) {
 	// 1. 获取待办任务 ID
 	taskId := ctx.Query("taskId")
@@ -162,7 +152,7 @@ func ListCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论列表
-	res, err := comment.App.ListComment(ctx.Request.Context(), taskId)
+	comments, err := comment.App.ListComment(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60042,
@@ -175,6 +165,6 @@ func ListCommentHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    60040,
 		Message: "获取评论列表成功",
-		Data:    res,
+		Data:    comments,
 	})
 }

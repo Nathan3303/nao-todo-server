@@ -5,6 +5,7 @@ import (
 	"errors"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
+	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 	"time"
 
@@ -19,15 +20,17 @@ func NewProjectRepo(db *gorm.DB) repositories.Project {
 	return &ProjectRepoImpl{db: db}
 }
 
-/*
- * Create 创建清单
- */
+// Create 创建清单
+// @param ctx 上下文
+// @param createProjectValueObject 项目创建值对象
+// @return 项目
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) Create(
 	ctx context.Context,
-	project *entities.Project,
+	createProjectValueObject *valueobjects.CreateProject,
 ) (*entities.Project, error) {
 	// 1. 转换为模型
-	m := Entity2Model(project)
+	m := CreateProjectValueObject2Model(createProjectValueObject)
 	// 2. 入库
 	tx := projectRepo.db.WithContext(ctx).Create(m)
 	if tx.Error != nil {
@@ -37,9 +40,12 @@ func (projectRepo *ProjectRepoImpl) Create(
 	return Model2Entity(m), nil
 }
 
-/*
- * GetById 获取单个清单详情
- */
+// GetById 获取单个清单详情
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return 项目
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -58,21 +64,26 @@ func (projectRepo *ProjectRepoImpl) GetById(
 	return Model2Entity(&m), nil
 }
 
-/*
- * Update 更新清单
- */
+// Update 更新清单
+// @param ctx 上下文
+// @param whereEntity 查询条件
+// @param updateEntity 更新条件
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) Update(
 	ctx context.Context,
-	whereEntity *entities.Project,
-	updateEntity *entities.Project,
+	userId int64,
+	projectId int64,
+	updateProjectValueObject *valueobjects.UpdateProject,
 ) error {
 	// 1. 转换为模型
-	whereCond := Entity2Model(whereEntity)
-	updateCond := Entity2Model(updateEntity)
+	var whereCond models.Project
+	whereCond.UserId = userId
+	whereCond.ID = projectId
+	updateCond := UpdateProjectValueObject2Model(updateProjectValueObject)
 	// 2. 更新数据库
 	tx := projectRepo.db.WithContext(ctx).
 		Model(&models.Project{}).
-		Where(whereCond).
+		Where(&whereCond).
 		Updates(updateCond)
 	// 3. 返回结果
 	if tx.Error != nil {
@@ -81,19 +92,24 @@ func (projectRepo *ProjectRepoImpl) Update(
 	return nil
 }
 
-/*
- * Delete 删除清单
- */
+// Delete 删除清单
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) Delete(
 	ctx context.Context,
-	whereEntity *entities.Project,
+	userId int64,
+	projectId int64,
 ) error {
 	// 1. 转换为模型
-	whereCond := Entity2Model(whereEntity)
+	var whereCond models.Project
+	whereCond.UserId = userId
+	whereCond.ID = projectId
 	// 2. 删除数据库
 	tx := projectRepo.db.WithContext(ctx).
 		Model(&models.Project{}).
-		Where(whereCond).
+		Where(&whereCond).
 		Delete(&models.Project{})
 	// 3. 返回结果
 	if tx.Error != nil {
@@ -102,18 +118,23 @@ func (projectRepo *ProjectRepoImpl) Delete(
 	return nil
 }
 
-/*
- * Restore 恢复清单
- */
+// Restore 恢复清单
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) Restore(
 	ctx context.Context,
-	whereEntity *entities.Project,
+	userId int64,
+	projectId int64,
 ) error {
 	// 1. 转换为模型
-	whereCond := Entity2Model(whereEntity)
+	var whereCond models.Project
+	whereCond.UserId = userId
+	whereCond.ID = projectId
 	// 2. 恢复数据库
 	tx := projectRepo.db.WithContext(ctx).Unscoped().Model(&models.Project{}).
-		Where(whereCond).
+		Where(&whereCond).
 		Update("deleted_at", nil)
 	// 3. 返回结果
 	if tx.Error != nil {
@@ -125,18 +146,23 @@ func (projectRepo *ProjectRepoImpl) Restore(
 	return nil
 }
 
-/*
- * Archive 归档清单
- */
+// Archive 归档清单
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) Archive(
 	ctx context.Context,
-	whereEntity *entities.Project,
+	userId int64,
+	projectId int64,
 ) error {
 	// 1. 转换为模型
-	whereCond := Entity2Model(whereEntity)
+	var whereCond models.Project
+	whereCond.UserId = userId
+	whereCond.ID = projectId
 	// 2. 归档数据库
 	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
-		Where(whereCond).
+		Where(&whereCond).
 		Update("archived_at", time.Now())
 	// 3. 返回结果
 	if tx.Error != nil {
@@ -148,18 +174,23 @@ func (projectRepo *ProjectRepoImpl) Archive(
 	return nil
 }
 
-/*
- * Unarchive 取消归档清单
- */
+// Unarchive 取消归档清单
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) Unarchive(
 	ctx context.Context,
-	whereEntity *entities.Project,
+	userId int64,
+	projectId int64,
 ) error {
 	// 1. 转换为模型
-	whereCond := Entity2Model(whereEntity)
+	var whereCond models.Project
+	whereCond.UserId = userId
+	whereCond.ID = projectId
 	// 2. 取消归档数据库
 	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
-		Where(whereCond).
+		Where(&whereCond).
 		Update("archived_at", nil)
 	// 3. 返回结果
 	if tx.Error != nil {
@@ -171,9 +202,11 @@ func (projectRepo *ProjectRepoImpl) Unarchive(
 	return nil
 }
 
-/*
- * GetByUserId 获取用户所有清单
- */
+// GetByUserId 获取用户所有清单
+// @param ctx 上下文
+// @param userId 用户ID
+// @return 项目列表
+// @return error 错误
 func (projectRepo *ProjectRepoImpl) GetByUserId(
 	ctx context.Context,
 	userId int64,

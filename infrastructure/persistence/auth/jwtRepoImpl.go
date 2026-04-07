@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"naotodoserver/domain/auth/repositories"
-	"naotodoserver/domain/auth/vo"
+	"naotodoserver/domain/auth/valueobjects"
 	"naotodoserver/infrastructure/auth"
 	"time"
 )
@@ -15,7 +15,7 @@ func NewJWTRepo() repositories.JWT {
 	return &JWTRepoImpl{}
 }
 
-func (r *JWTRepoImpl) Generate(ctx context.Context, jwtClaims *vo.JWTClaims) (string, error) {
+func (r *JWTRepoImpl) Generate(ctx context.Context, jwtClaims *valueobjects.JWTClaims) (string, error) {
 	token, err := auth.GetJWTService().Generate(
 		jwtClaims.UserId,
 		jwtClaims.Email,
@@ -31,7 +31,7 @@ func (r *JWTRepoImpl) Validate(ctx context.Context, jwtString string) bool {
 	return auth.GetJWTService().IsTokenExpired(jwtString)
 }
 
-func (r *JWTRepoImpl) Parse(ctx context.Context, jwtString string) (*vo.JWTClaims, error) {
+func (r *JWTRepoImpl) Parse(ctx context.Context, jwtString string) (*valueobjects.JWTClaims, error) {
 	claims, err := auth.GetJWTService().Parse(jwtString)
 	if err != nil {
 		return nil, err

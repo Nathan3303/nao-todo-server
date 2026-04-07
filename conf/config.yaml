@@ -5,7 +5,7 @@ server:
     jwtSecret: NaoTodoServerJwtSecret
 
 mysql:
-    host: localhost
+    host: 192.168.2.109
     port: 3306
     database: naotodo_test
     username: root
@@ -15,7 +15,7 @@ mysql:
     loc: Local
 
 redis:
-    host: localhost
+    host: 192.168.2.109
     port: 6379
     password: lianGjh3303!
     database: 0

@@ -4,7 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
-	"naotodoserver/domain/tag/vo"
+	"naotodoserver/domain/tag/valueobjects"
 )
 
 // 标签域注册函数
@@ -18,10 +18,12 @@ func NewTagDomain(
 	}
 }
 
-/*
- * Get tag by id
- * 根据标签ID获取标签信息
- */
+// 根据标签ID获取标签信息
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return *entities.Tag 标签信息
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -30,89 +32,85 @@ func (tagDomain *TagDomainImpl) GetById(
 	return tagDomain.tagRepo.GetById(ctx, userId, tagId)
 }
 
-/*
- * Create tag
- * 创建标签
- */
+// 创建标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param createTagValueObject 创建标签值对象
+// @return *entities.Tag 创建的标签信息
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) Create(
 	ctx context.Context,
 	userId int64,
-	createEntity *entities.Tag,
+	createTagValueObject *valueobjects.CreateTag,
 ) (*entities.Tag, error) {
-	createEntity.UserId = userId
-	// createEntity.Preference = vo.MakeDefaultTagPreference()
-	return tagDomain.tagRepo.Create(ctx, createEntity)
+	return tagDomain.tagRepo.Create(ctx, userId, createTagValueObject)
 }
 
-/*
- * Update tag
- * 更新标签信息
- */
+// 更新标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @param updateTagValueObject 更新标签值对象
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) Update(
 	ctx context.Context,
 	userId int64,
 	tagId int64,
-	updateEntity *entities.Tag,
+	updateTagValueObject *valueobjects.UpdateTag,
 ) error {
-	whereEntity := &entities.Tag{UserId: userId, Id: tagId}
-	return tagDomain.tagRepo.Update(ctx, whereEntity, updateEntity)
+	return tagDomain.tagRepo.Update(ctx, userId, tagId, updateTagValueObject)
 }
 
-/*
- * Delete tag
- * 删除标签
- */
+// 删除标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) Delete(
 	ctx context.Context,
 	userId int64,
 	tagId int64,
 ) error {
-	whereEntity := &entities.Tag{UserId: userId, Id: tagId}
-	return tagDomain.tagRepo.Delete(ctx, whereEntity)
+	return tagDomain.tagRepo.Delete(ctx, userId, tagId)
 }
 
-/*
- * List tag
- * 获取所有标签
- */
+// 获取标签列表
+// @param ctx 上下文
+// @param userId 用户ID
+// @return []*entities.Tag 标签列表
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) List(
 	ctx context.Context,
 	userId int64,
 ) ([]*entities.Tag, error) {
-	whereEntity := &entities.Tag{UserId: userId}
-	return tagDomain.tagRepo.Get(ctx, whereEntity)
+	return tagDomain.tagRepo.Get(ctx, userId)
 }
 
-/*
- * Get tag preference
- * 获取标签偏好
- */
+// 获取标签偏好
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return *entities.TagPreference 标签偏好
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) GetPreference(
 	ctx context.Context,
 	userId int64,
 	tagId int64,
-) (*vo.TagPreference, error) {
-	return tagDomain.preferenceRepo.Get(ctx, &vo.TagPreference{
-		UserId: userId,
-		TagId:  tagId,
-	})
+) (*entities.TagPreference, error) {
+	return tagDomain.preferenceRepo.Get(ctx, userId, tagId)
 }
 
-/*
- * Update tag preference
- * 更新标签偏好
- */
+// 更新标签偏好
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @param saveTagPreferenceValueObject 更新标签偏好值对象
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) UpdatePreference(
 	ctx context.Context,
 	userId int64,
 	tagId int64,
-	preference *vo.TagPreference,
+	saveTagPreferenceValueObject *valueobjects.SaveTagPreference,
 ) error {
-	preference.UserId = userId
-	preference.TagId = tagId
-	_, err := tagDomain.preferenceRepo.Save(ctx, preference)
-	if err != nil {
-		return err
-	}
-	return nil
+	return tagDomain.preferenceRepo.Save(ctx, userId, tagId, saveTagPreferenceValueObject)
 }

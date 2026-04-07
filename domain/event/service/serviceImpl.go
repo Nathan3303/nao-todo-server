@@ -4,7 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/event/entities"
 	"naotodoserver/domain/event/repositories"
-	"time"
+	"naotodoserver/domain/event/valueobjects"
 )
 
 // NewEventDomain 创建检查事项领域服务
@@ -12,7 +12,12 @@ func NewEventDomain(eventRepo repositories.Event) EventDomain {
 	return &EventDomainImpl{eventRepo: eventRepo}
 }
 
-// GetById 根据用户 ID 和检查事项 ID 获取检查事项
+// GetById 根据用户 ID 和事件 ID 获取事件
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param eventId 事件 ID
+// @return *entities.Event 事件实体
+// @return error 错误信息
 func (eventDomain *EventDomainImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -21,44 +26,58 @@ func (eventDomain *EventDomainImpl) GetById(
 	return eventDomain.eventRepo.GetById(ctx, userId, eventId)
 }
 
-// Create 创建检查事项
+// Create 创建事件
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param createEventValueObject 创建事件值对象
+// @return *entities.Event 事件实体
+// @return error 错误信息
 func (eventDomain *EventDomainImpl) Create(
 	ctx context.Context,
 	userId int64,
-	createEntity *entities.Event,
+	createEventValueObject *valueobjects.CreateEvent,
 ) (*entities.Event, error) {
-	createEntity.UserId = userId
-	createEntity.SortId = uint32(int(time.Now().Unix() % 10000))
-	return eventDomain.eventRepo.Create(ctx, createEntity)
+	return eventDomain.eventRepo.Create(ctx, userId, createEventValueObject)
 }
 
-// Update 更新检查事项
+// Update 更新事件
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param eventId 事件 ID
+// @param updateEventValueObject 更新事件值对象
+// @return error 错误信息
 func (eventDomain *EventDomainImpl) Update(
 	ctx context.Context,
 	userId int64,
 	eventId int64,
-	updateEntity *entities.Event,
+	updateEventValueObject *valueobjects.UpdateEvent,
 ) error {
-	whereEntity := &entities.Event{UserId: userId, Id: eventId}
-	return eventDomain.eventRepo.Update(ctx, whereEntity, updateEntity)
+	return eventDomain.eventRepo.Update(ctx, userId, eventId, updateEventValueObject)
 }
 
-// Delete 删除检查事项
+// Delete 删除事件
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param eventId 事件 ID
+// @return error 错误信息
 func (eventDomain *EventDomainImpl) Delete(
 	ctx context.Context,
 	userId int64,
 	eventId int64,
 ) error {
-	whereEntity := &entities.Event{UserId: userId, Id: eventId}
-	return eventDomain.eventRepo.Delete(ctx, whereEntity)
+	return eventDomain.eventRepo.Delete(ctx, userId, eventId)
 }
 
-// List 根据用户 ID 和任务 ID 获取检查事项列表
+// List 根据用户 ID 和任务 ID 获取事件列表
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param taskId 任务 ID
+// @return []*entities.Event 事件列表
+// @return error 错误信息
 func (eventDomain *EventDomainImpl) List(
 	ctx context.Context,
 	userId int64,
 	taskId int64,
 ) ([]*entities.Event, error) {
-	whereEntity := &entities.Event{UserId: userId, TaskId: taskId}
-	return eventDomain.eventRepo.Get(ctx, whereEntity)
+	return eventDomain.eventRepo.Get(ctx, userId, taskId)
 }

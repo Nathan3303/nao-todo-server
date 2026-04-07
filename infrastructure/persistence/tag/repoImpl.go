@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
+	"naotodoserver/domain/tag/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"gorm.io/gorm"
@@ -17,10 +18,12 @@ func NewTagRepo(db *gorm.DB) repositories.TagRepository {
 	return &TagRepositoryImpl{db: db}
 }
 
-/*
- * Get tag by id
- * 根据标签ID获取标签信息
- */
+// GetById 获取标签信息
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return entities.Tag 标签实体
+// @return error 错误
 func (tagRepo *TagRepositoryImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -44,16 +47,19 @@ func (tagRepo *TagRepositoryImpl) GetById(
 	return TagModel2Entity(tagModel), nil
 }
 
-/*
- * Create tag
- * 创建标签
- */
+// Create 创建标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param createTagValueObject 创建标签值对象
+// @return entities.Tag 创建标签实体
+// @return error 错误
 func (tagRepo *TagRepositoryImpl) Create(
 	ctx context.Context,
-	createEntity *entities.Tag,
+	userId int64,
+	createTagValueObject *valueobjects.CreateTag,
 ) (*entities.Tag, error) {
 	// 1. 转换标签实体为模型
-	createValue := TagEntity2Model(createEntity)
+	createValue := CreateTagValueObjectToModel(userId, createTagValueObject)
 	// 2. 插入数据库
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).Create(createValue)
 	if tx.Error != nil {
@@ -63,57 +69,61 @@ func (tagRepo *TagRepositoryImpl) Create(
 	return TagModel2Entity(createValue), nil
 }
 
-/*
- * Update tag
- * 更新标签
- */
+// Update 更新标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @param updateTagValueObject 更新标签值对象
+// @return error 错误
 func (tagRepo *TagRepositoryImpl) Update(
 	ctx context.Context,
-	whereEntity *entities.Tag,
-	updateEntity *entities.Tag,
+	userId int64,
+	tagId int64,
+	updateTagValueObject *valueobjects.UpdateTag,
 ) error {
 	// 1. 转换实体为模型
-	findCond := TagEntity2Model(whereEntity)
-	updateCond := TagEntity2Model(updateEntity)
+	var whereCond models.Tag
+	whereCond.UserId = userId
+	whereCond.ID = tagId
+	updateCond := UpdateTagValueObjectToModel(userId, updateTagValueObject)
 	// 2. 更新数据
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
-		Where(findCond).
+		Where(&whereCond).
 		Updates(updateCond)
 	return tx.Error
 }
 
-/*
- * Delete tag
- * 删除标签
- */
-func (tagRepo *TagRepositoryImpl) Delete(
-	ctx context.Context,
-	whereEntity *entities.Tag,
-) error {
+// Delete 删除标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return error 错误
+func (tagRepo *TagRepositoryImpl) Delete(ctx context.Context, userId int64, tagId int64) error {
 	// 1. 转换实体为模型
-	findCond := TagEntity2Model(whereEntity)
+	var whereCond models.Tag
+	whereCond.UserId = userId
+	whereCond.ID = tagId
 	// 2. 删除
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
-		Where(findCond).
+		Where(&whereCond).
 		Delete(&models.Tag{})
 	return tx.Error
 }
 
-/*
- * Get tag
- * 获取所有标签
- */
-func (tagRepo *TagRepositoryImpl) Get(
-	ctx context.Context,
-	whereEntity *entities.Tag,
-) ([]*entities.Tag, error) {
+// Get 获取所有标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @return []*entities.Tag 标签实体列表
+// @return error 错误
+func (tagRepo *TagRepositoryImpl) Get(ctx context.Context, userId int64) ([]*entities.Tag, error) {
 	// 1. 转换实体为模型
-	findCond := TagEntity2Model(whereEntity)
+	var findCond models.Tag
+	findCond.UserId = userId
 	// 2. 查询
 	tagModelList := []*models.Tag{}
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
 		Preload("Preference").
-		Where(findCond).
+		Where(&findCond).
 		Find(&tagModelList)
 	if tx.Error != nil {
 		return nil, tx.Error

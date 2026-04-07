@@ -1,0 +1,47 @@
+package valueobjects
+
+import "errors"
+
+// CreateEvent 创建事件值对象
+type CreateEvent struct {
+	TaskId      int64
+	Name        string
+	Description string
+}
+
+// Validate 验证创建事件值对象是否有效
+// @return error 错误信息
+func (createEvent *CreateEvent) Validate() error {
+	if createEvent.TaskId <= 0 {
+		return errors.New("任务 ID 不能为空")
+	}
+	if createEvent.Name == "" {
+		return errors.New("事件名称不能为空")
+	}
+	if len(createEvent.Name) > 128 {
+		return errors.New("事件名称长度不能超过 128 个字符")
+	}
+	if createEvent.Description != "" && len(createEvent.Description) > 256 {
+		return errors.New("事件描述长度不能超过 512 个字符")
+	}
+	return nil
+}
+
+// NewCreateEvent 创建创建事件值对象
+// @param taskId 任务 ID
+// @param name 事件名称
+// @param description 事件描述
+// @return *CreateEvent 创建事件值对象
+// @return error 错误信息
+func NewCreateEvent(taskId int64, name string, description string) (*CreateEvent, error) {
+	vo := &CreateEvent{
+		TaskId:      taskId,
+		Name:        name,
+		Description: description,
+	}
+	err := vo.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return vo, nil
+}

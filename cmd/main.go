@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"naotodoserver/conf"
 	"naotodoserver/infrastructure"
-	"naotodoserver/interfaces/initialize"
+	"naotodoserver/interfaces/routers"
 )
 
 func main() {
@@ -17,8 +17,10 @@ func main() {
 	infrastructure.LoadCron()
 
 	// @step 3. 加载路由
-	router := initialize.InitRouters()
-	err := router.Run(fmt.Sprintf("%s:%s", conf.Conf.Server.Ip, conf.Conf.Server.Port))
+	router := routers.InitRouters()
+	err := router.Run(
+		fmt.Sprintf("%s:%s", conf.Conf.Server.Ip, conf.Conf.Server.Port),
+	)
 	if err != nil {
 		panic("服务器启动失败 - " + err.Error())
 	}

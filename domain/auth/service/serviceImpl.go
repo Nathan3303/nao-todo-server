@@ -5,9 +5,10 @@ import (
 	"errors"
 	"naotodoserver/domain/auth/entities"
 	"naotodoserver/domain/auth/repositories"
-	"naotodoserver/domain/auth/vo"
+	"naotodoserver/domain/auth/valueobjects"
 )
 
+// 获取认证域实现
 func GetAuthDomainImpl(
 	jwt repositories.JWT,
 	userRepo repositories.User,
@@ -22,37 +23,32 @@ func GetAuthDomainImpl(
 	}
 }
 
-/*
- * Create User
- * 创建用户
- */
+// 创建用户
+// @param ctx 上下文
+// @param createUserValueObject 用户值对象
+// @return 用户实体
+// @return error 错误
 func (a *authDomainImpl) CreateUser(
 	ctx context.Context,
-	userEntity *entities.User,
+	createUserValueObject *valueobjects.CreateUser,
 ) (*entities.User, error) {
-	// 1. 密码加密
-	err := userEntity.EncryptPassword()
-	if err != nil {
-		return nil, errors.New("密码加密失败")
-	}
-	// 2. 填充默认值
-	userEntity.FillDefaultValue()
-	// 3. 创建用户
-	return a.userRepo.Create(ctx, userEntity)
+	return a.userRepo.Create(ctx, createUserValueObject)
 }
 
-/*
- * Create Session
- * 创建会话
- */
+// 创建会话
+// @param ctx 上下文
+// @param userId 用户ID
+// @param token 会话令牌
+// @return error 错误
 func (a *authDomainImpl) CreateSession(ctx context.Context, userId int64, token string) error {
 	return a.sessionRepo.Create(ctx, &entities.Session{UserId: userId, Token: token})
 }
 
-/*
- * Find User By Email
- * 根据邮箱查找用户
- */
+// 根据邮箱查找用户
+// @param ctx 上下文
+// @param email 邮箱
+// @return 用户实体
+// @return error 错误
 func (a *authDomainImpl) FindUserByEmail(
 	ctx context.Context,
 	email string,
@@ -60,10 +56,11 @@ func (a *authDomainImpl) FindUserByEmail(
 	return a.userRepo.FindByEmail(ctx, email)
 }
 
-/*
- * Find User By Id
- * 根据 Id 查找用户
- */
+// 根据 Id 查找用户
+// @param ctx 上下文
+// @param id 用户ID
+// @return 用户实体
+// @return error 错误
 func (a *authDomainImpl) FindUserById(
 	ctx context.Context,
 	id int64,
@@ -71,10 +68,12 @@ func (a *authDomainImpl) FindUserById(
 	return a.userRepo.FindById(ctx, id)
 }
 
-/*
- * Find Session By UserId And Token
- * 根据用户 Id 和 Token 查找会话
- */
+// 根据用户 Id 和 Token 查找会话
+// @param ctx 上下文
+// @param userId 用户ID
+// @param token 会话令牌
+// @return 会话实体
+// @return error 错误
 func (a *authDomainImpl) FindSessionByUserIdAndToken(
 	ctx context.Context,
 	userId int64,
@@ -87,10 +86,10 @@ func (a *authDomainImpl) FindSessionByUserIdAndToken(
 	return session, nil
 }
 
-/*
- * Update Session Token
- * 更新会话中 Token 字段值 (新的 JWT)
- */
+// 更新会话中 Token 字段值 (新的 JWT)
+// @param ctx 上下文
+// @param sessionEntity 会话实体
+// @return error 错误
 func (a *authDomainImpl) UpdateSessionToken(
 	ctx context.Context,
 	sessionEntity *entities.Session,
@@ -98,28 +97,29 @@ func (a *authDomainImpl) UpdateSessionToken(
 	return a.sessionRepo.UpdateToken(ctx, sessionEntity)
 }
 
-/*
- * Delete Session By UserId And Token
- * 根据用户 Id 和 Token 删除会话
- */
+// 根据用户 Id 和 Token 删除会话
+// @param ctx 上下文
+// @param sessionEntity 会话实体
+// @return error 错误
 func (a *authDomainImpl) DeleteSession(ctx context.Context, sessionEntity *entities.Session) error {
 	return a.sessionRepo.Delete(ctx, sessionEntity.UserId, sessionEntity.Token)
 }
 
-/*
- * Generate JWT
- * 生成 JWT
- */
+// 生成 JWT
+// @param ctx 上下文
+// @param userEntity 用户实体
+// @return JWT 字符串
+// @return error 错误
 func (a *authDomainImpl) GenerateJWT(
 	ctx context.Context,
 	userEntity *entities.User,
 ) (string, error) {
 	// 1. 判断 userEntity Id 是否合法
-	if !userEntity.IsIdValid() {
+	if userEntity.Id <= 0 {
 		return "", errors.New("userEntity Id 无效")
 	}
 	// 2. 创建 JWTClaims
-	jwtClaims := &vo.JWTClaims{
+	jwtClaims := &valueobjects.JWTClaims{
 		UserId: userEntity.Id,
 		Email:  userEntity.Email,
 	}
@@ -132,10 +132,11 @@ func (a *authDomainImpl) GenerateJWT(
 	return token, nil
 }
 
-/*
- * Parse JWT
- * 解析 JWT 并返回用户 Id - JWT 无效时会返回错误
- */
+// 解析 JWT
+// @param ctx 上下文
+// @param token JWT 字符串
+// @return 用户ID
+// @return error 错误
 func (a *authDomainImpl) ParseJWT(ctx context.Context, token string) (int64, error) {
 	jwtClaims, err := a.jwtRepo.Parse(ctx, token)
 	if err != nil {
@@ -144,10 +145,11 @@ func (a *authDomainImpl) ParseJWT(ctx context.Context, token string) (int64, err
 	return jwtClaims.UserId, nil
 }
 
-/*
- * Compare Passwords
- * 密码比较
- */
+// 密码比较
+// @param ctx 上下文
+// @param password 明文密码
+// @param encryptedPassword 加密后的密码
+// @return bool
 func (a *authDomainImpl) PasswordCompare(
 	ctx context.Context,
 	password []byte,
@@ -156,10 +158,11 @@ func (a *authDomainImpl) PasswordCompare(
 	return a.userRepo.PasswordCompare(password, encryptedPassword)
 }
 
-/*
- * Check Rate Limit
- * 检查用户请求次数是否超出阈值 - 避免暴力注册
- */
+// 检查用户请求次数是否超出阈值 - 避免暴力注册
+// @param ctx 上下文
+// @param key 限流键
+// @param limit 限流阈值
+// @return error 错误
 func (a *authDomainImpl) CheckRateLimit(ctx context.Context, key string, limit int8) error {
 	// 1. 通过 Key 获取用户限流次数
 	rateLimit := a.rateLimitRepo.Get(ctx, key)

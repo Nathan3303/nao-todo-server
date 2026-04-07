@@ -2,7 +2,7 @@ package auth
 
 import (
 	"naotodoserver/domain/auth/entities"
-	"naotodoserver/domain/auth/vo"
+	"naotodoserver/domain/auth/valueobjects"
 	"naotodoserver/infrastructure/auth"
 	"naotodoserver/infrastructure/persistence/models"
 )
@@ -12,8 +12,13 @@ func UserEntity2Model(e *entities.User) *models.User {
 	u.ID = e.Id
 	u.Account = e.Account
 	u.Email = e.Email
-	u.Nickname = e.Nickname
 	u.Password = e.Password
+	u.Nickname = e.Nickname
+	u.Avatar = e.Avatar
+	u.CreatedFrom = e.CreatedFrom
+	u.Role = e.Role
+	u.CreatedAt = e.CreatedAt
+	u.UpdatedAt = e.UpdatedAt
 	return u
 }
 
@@ -22,8 +27,13 @@ func UserModel2Entity(m *models.User) *entities.User {
 	u.Id = m.ID
 	u.Account = m.Account
 	u.Email = m.Email
-	u.Nickname = m.Nickname
 	u.Password = m.Password
+	u.Nickname = m.Nickname
+	u.Avatar = m.Avatar
+	u.CreatedFrom = m.CreatedFrom
+	u.Role = m.Role
+	u.CreatedAt = m.CreatedAt
+	u.UpdatedAt = m.UpdatedAt
 	return u
 }
 
@@ -47,11 +57,20 @@ func SessionEntity2Model(e *entities.Session) *models.Session {
 	return s
 }
 
-func Claims2JWTClaimsVO(c *auth.Claims) *vo.JWTClaims {
-	jc := &vo.JWTClaims{}
+func Claims2JWTClaimsVO(c *auth.Claims) *valueobjects.JWTClaims {
+	jc := &valueobjects.JWTClaims{}
 	jc.UserId = c.Id
 	jc.Email = c.Payload
 	jc.IssuedAt = c.IssuedAt.Time
 	jc.Issuer = c.Issuer
 	return jc
+}
+
+func CreateUserValueObjectToModel(createUserValueObject *valueobjects.CreateUser) *models.User {
+	return &models.User{
+		Account:  createUserValueObject.Email,
+		Email:    createUserValueObject.Email,
+		Password: createUserValueObject.EncryptedPassword,
+		Nickname: createUserValueObject.Nickname,
+	}
 }

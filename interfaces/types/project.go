@@ -3,8 +3,8 @@ package types
 import "time"
 
 type CreateProjectReq struct {
-	Name        string `json:"name" form:"name" binding:"required"`
-	Description string `json:"description" form:"description"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
 }
 
 type CreateProjectRes struct {
@@ -12,11 +12,8 @@ type CreateProjectRes struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	ArchivedAt  *time.Time `json:"archivedAt"`
-	Preference  any        `json:"preference"`
-}
-
-type GetProjectReq struct {
-	ProjectId string
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
 }
 
 type GetProjectRes struct {
@@ -24,82 +21,29 @@ type GetProjectRes struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	ArchivedAt  *time.Time `json:"archivedAt"`
-	Preference  any        `json:"preference"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
 }
 
 type UpdateProjectReq struct {
-	ProjectId   string
-	Name        string `json:"name" form:"name"`
-	Description string `json:"description" form:"description"`
-}
-
-type UpdateProjectRes struct {
-	ProjectId string `json:"projectId"`
-}
-
-type DeleteProjectReq struct {
-	ProjectId string
-}
-
-type DeleteProjectRes struct {
-	ProjectId string `json:"projectId"`
-}
-
-type RestoreProjectReq struct {
-	ProjectId string
-}
-
-type RestoreProjectRes struct {
-	ProjectId string `json:"projectId"`
-}
-
-type ArchiveProjectReq struct {
-	ProjectId string
-}
-
-type ArchiveProjectRes struct {
-	ProjectId string `json:"projectId"`
-}
-
-type UnarchiveProjectReq struct {
-	ProjectId string
-}
-
-type UnarchiveProjectRes struct {
-	ProjectId string `json:"projectId"`
-}
-
-type HardDeleteProjectReq struct {
-	ProjectId string
-}
-
-type HardDeleteProjectRes struct {
-	ProjectId string `json:"projectId"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 type ListProjectRes []*GetProjectRes
 
-type ProjectPreferenceRes struct {
-	ViewType   string `json:"viewType"`
-	GetOptions string `json:"getTasksOptions"`
-	Columns    string `json:"columns"`
-}
-
-type GetProjectPreferenceReq struct {
-	ProjectId string
-}
-
 type GetProjectPreferenceRes struct {
-	ViewType        string `json:"viewType"`
-	GetTasksOptions string `json:"getTasksOptions"`
-	Columns         string `json:"columns"`
+	Id         string    `json:"id"`
+	ProjectId  string    `json:"projectId"`
+	ViewType   string    `json:"viewType"`
+	GetOptions string    `json:"getTasksOptions"`
+	Columns    string    `json:"columns"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
 type UpdateProjectPreferenceReq struct {
-	ProjectId  string
-	Preference ProjectPreferenceRes `json:"preference" form:"preference"`
-}
-
-type UpdateProjectPreferenceRes struct {
-	ProjectId string `json:"projectId"`
+	ViewType   string `json:"viewType"`
+	GetOptions string `json:"getTasksOptions"`
+	Columns    string `json:"columns"`
 }

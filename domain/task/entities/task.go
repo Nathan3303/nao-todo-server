@@ -8,8 +8,7 @@ import (
 type Task struct {
 	Id           int64
 	UserId       int64
-	ProjectId    int64
-	ParentTodoId int64
+	ParentTaskId int64
 	Name         string
 	Description  string
 	State        int8
@@ -19,6 +18,7 @@ type Task struct {
 	ArchivedAt   *time.Time
 	StarMarkAt   *time.Time
 	GivenUpAt    *time.Time
+	ProjectId    int64
 	Tags         []string
 	UpdatedAt    time.Time
 	CreatedAt    time.Time

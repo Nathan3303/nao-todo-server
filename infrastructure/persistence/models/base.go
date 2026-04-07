@@ -8,6 +8,7 @@ import (
 
 type ModelBase struct {
 	ID        int64          `gorm:"primaryKey"`
+	UUID      string         `gorm:"primaryKey"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 	CreatedAt time.Time
 	UpdatedAt time.Time

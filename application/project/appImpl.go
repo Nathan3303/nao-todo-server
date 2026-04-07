@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// RegistDomainImpl regist project domain impl
+// 注册任务清单应用实现
 func RegistDomainImpl(projectDomain service.ProjectDomain) ProjectApp {
 	once.Do(func() {
 		App = &projectAppImpl{projectDomain: projectDomain}
@@ -17,270 +17,305 @@ func RegistDomainImpl(projectDomain service.ProjectDomain) ProjectApp {
 	return App
 }
 
-/*
- * Create project
- */
-func (p *projectAppImpl) Create(
+// 获取任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @return *types.GetProjectRes 获取任务清单响应体
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Get(ctx context.Context, projectId string) (*types.GetProjectRes, error) {
+	// 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId == 0 {
+		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+	}
+	// 转换清单 ID 为 int64 类型
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	if err != nil {
+		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+	}
+	// 获取清单
+	projectEntity, err := app.projectDomain.GetById(ctx, userId, projectIdInt64)
+	if err != nil {
+		return nil, err
+	}
+	// 实体转换响应体并返回
+	return ProjectEntityToGetRes(projectEntity), nil
+}
+
+// 创建任务清单
+// @param ctx 上下文
+// @param createProjectReq 创建任务清单请求体
+// @return *types.CreateProjectRes 创建任务清单响应体
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Create(
 	ctx context.Context,
-	req *types.CreateProjectReq,
+	createProjectReq *types.CreateProjectReq,
 ) (*types.CreateProjectRes, error) {
-	// 1. 获取 UserId
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
 		return nil, errors.New("参数错误 - 用户 ID 不能为空")
 	}
-	// 2. 请求体转换实体
-	e := CreateReq2Entity(req)
-	e.UserId = userId
-	// 3. 调用域函数 - 创建清单
-	e, err := p.projectDomain.Create(ctx, e)
+	// 请求体转换值对象
+	createProjectValueObject, err := CreateProjectReqToValueObject(userId, createProjectReq)
 	if err != nil {
 		return nil, err
 	}
-	// 4. 实体转换响应体
-	res := Entity2CreateRes(e)
-	// 5. 返回结果
-	return res, nil
+	// 创建任务清单
+	projectEntity, err := app.projectDomain.Create(ctx, createProjectValueObject)
+	if err != nil {
+		return nil, err
+	}
+	// 实体转换响应体
+	createProjectRes := ProjectEntityToCreateRes(projectEntity)
+	// 返回结果
+	return createProjectRes, nil
 }
 
-/*
- * Get project
- */
-func (p *projectAppImpl) Get(
+// 更新任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @param updateProjectReq 更新任务清单请求体
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Update(
 	ctx context.Context,
-	req *types.GetProjectReq,
-) (*types.GetProjectRes, error) {
-	// 1. 获取用户 ID
+	projectId string,
+	updateProjectReq *types.UpdateProjectReq,
+) error {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 转换清单 ID 为 int64 类型
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return errors.New("清单 ID 格式错误")
 	}
-	// 3. 调用域函数 - 获取清单
-	e, err := p.projectDomain.GetById(ctx, userId, projectId)
+	// 请求体转换实体
+	updateProjectValueObject, err := UpdateProjectReqToValueObject(updateProjectReq)
 	if err != nil {
-		return nil, err
+		return errors.New("更新任务清单请求体格式错误")
 	}
-	// 4. 实体转换响应体并返回
-	return Entity2GetRes(e), nil
+	// 调用域函数 - 更新清单
+	err = app.projectDomain.Update(ctx, userId, projectIdInt64, updateProjectValueObject)
+	if err != nil {
+		return errors.New("更新任务清单失败")
+	}
+	// 返回结果
+	return nil
 }
 
-/*
- * Update project
- */
-func (p *projectAppImpl) Update(
+// 删除任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Delete(
 	ctx context.Context,
-	req *types.UpdateProjectReq,
-) (*types.UpdateProjectRes, error) {
-	// 1. 获取用户 ID
+	projectId string,
+) error {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 获取清单 ID
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return errors.New("清单 ID 格式错误")
 	}
-	// 3. 请求体转换实体
-	updateEntity := UpdateReq2Entity(req)
-	// 4. 调用域函数 - 更新清单
-	err = p.projectDomain.Update(ctx, userId, projectId, updateEntity)
+	// 删除清单
+	err = app.projectDomain.Delete(ctx, userId, projectIdInt64)
 	if err != nil {
-		return nil, err
+		return errors.New("删除任务清单失败")
 	}
-	// 5. 返回结果
-	return &types.UpdateProjectRes{ProjectId: req.ProjectId}, nil
+	// 返回结果
+	return nil
 }
 
-/*
- * Delete project
- */
-func (p *projectAppImpl) Delete(
+// 恢复任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Restore(
 	ctx context.Context,
-	req *types.DeleteProjectReq,
-) (*types.DeleteProjectRes, error) {
-	// 1. 获取用户 ID
+	projectId string,
+) error {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 获取清单 ID
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return errors.New("清单 ID 格式错误")
 	}
-	// 3. 调用域函数 - 删除清单
-	err = p.projectDomain.Delete(ctx, userId, projectId)
+	// 恢复清单
+	err = app.projectDomain.Restore(ctx, userId, projectIdInt64)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// 4. 返回结果
-	return &types.DeleteProjectRes{ProjectId: req.ProjectId}, nil
+	// 返回结果
+	return nil
 }
 
-/*
- * Restore project
- */
-func (p *projectAppImpl) Restore(
+// 硬删除任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) HardDelete(
 	ctx context.Context,
-	req *types.RestoreProjectReq,
-) (*types.RestoreProjectRes, error) {
-	// 1. 获取用户 ID
-	userId := iCtx.GetUserId(ctx)
-	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
-	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
-	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
-	}
-	// 3. 调用域函数 - 恢复清单
-	err = p.projectDomain.Restore(ctx, userId, projectId)
-	if err != nil {
-		return nil, err
-	}
-	// 4. 返回结果
-	return &types.RestoreProjectRes{ProjectId: req.ProjectId}, nil
-}
-
-/*
- * Hard delete project
- */
-func (p *projectAppImpl) HardDelete(
-	ctx context.Context,
-	req *types.HardDeleteProjectReq,
-) (*types.HardDeleteProjectRes, error) {
+	projectId string,
+) error {
 	panic("unimplemented")
 }
 
-/*
- * Archive project
- */
-func (p *projectAppImpl) Archive(
+// 归档任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Archive(
 	ctx context.Context,
-	req *types.ArchiveProjectReq,
-) (*types.ArchiveProjectRes, error) {
-	// 1. 获取 UserId
+	projectId string,
+) error {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 获取清单 ID
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return errors.New("清单 ID 格式错误")
 	}
-	// 3. 调用域函数 - 归档清单
-	err = p.projectDomain.Archive(ctx, userId, projectId)
+	// 归档清单
+	err = app.projectDomain.Archive(ctx, userId, projectIdInt64)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// 4. 返回结果
-	return &types.ArchiveProjectRes{ProjectId: req.ProjectId}, nil
+	// 返回结果
+	return nil
 }
 
-/*
- * Unarchive project
- */
-func (p *projectAppImpl) Unarchive(
+// 取消归档任务清单
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) Unarchive(
 	ctx context.Context,
-	req *types.UnarchiveProjectReq,
-) (*types.UnarchiveProjectRes, error) {
-	// 1. 获取用户 ID
+	projectId string,
+) error {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 获取清单 ID
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return errors.New("清单 ID 格式错误")
 	}
-	// 3. 调用域函数 - 取消归档清单
-	err = p.projectDomain.Unarchive(ctx, userId, projectId)
+	// 取消归档清单
+	err = app.projectDomain.Unarchive(ctx, userId, projectIdInt64)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// 4. 返回结果
-	return &types.UnarchiveProjectRes{ProjectId: req.ProjectId}, nil
+	// 返回结果
+	return nil
 }
 
-/*
- * List project
- */
-func (p *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, error) {
-	// 1. 获取用户 ID
+// 获取用户任务清单列表
+// @param ctx 上下文
+// @return types.ListProjectRes 任务清单响应体列表
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, error) {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return nil, errors.New("用户 ID 不能为空")
 	}
-	// 2. 调用域函数 - 获取清单列表
-	eList, err := p.projectDomain.GetByUserId(ctx, userId)
+	// 获取清单列表
+	projectEntities, err := app.projectDomain.GetByUserId(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
-	// 3. 转换实体
-	res := Entities2ListRes(eList)
-	// 3. 实体转换响应体并返回
-	return res, nil
+	// 转换实体
+	getResList := EntitiesToGetResList(projectEntities)
+	// 实体转换响应体并返回
+	return getResList, nil
 }
 
-/*
- * Get project preference
- */
-func (p *projectAppImpl) GetPreference(
+// 获取任务清单偏好
+// @param ctx 上下文
+// @param req 获取任务清单偏好请求体
+// @return *types.ProjectPreferenceRes 任务清单偏好响应体
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) GetPreference(
 	ctx context.Context,
-	req *types.GetProjectPreferenceReq,
-) (*types.ProjectPreferenceRes, error) {
-	// 1. 获取用户 ID
+	projectId string,
+) (*types.GetProjectPreferenceRes, error) {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return nil, errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 获取清单 ID
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return nil, errors.New("清单 ID 格式错误")
 	}
-	// 3. 调用域函数 - 获取清单偏好
-	preference, err := p.projectDomain.GetPreference(ctx, userId, projectId)
+	// 获取清单偏好
+	projectPreferenceEntity, err := app.projectDomain.GetPreference(
+		ctx,
+		userId,
+		projectIdInt64,
+	)
 	if err != nil {
 		return nil, err
 	}
-	// 4. 返回
-	return PreferenceVO2Res(preference), nil
+	// 返回
+	return ProjectPreferenceEntityToGetRes(projectPreferenceEntity), nil
 }
 
-/*
- * Update project preference
- */
-func (p *projectAppImpl) SavePreference(
+// 保存任务清单偏好
+// @param ctx 上下文
+// @param projectId 任务清单 ID
+// @param req 更新任务清单偏好请求体
+// @return *types.UpdateProjectPreferenceRes 更新任务清单偏好响应体
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) SavePreference(
 	ctx context.Context,
-	req *types.UpdateProjectPreferenceReq,
-) (*types.UpdateProjectPreferenceRes, error) {
-	// 1. 获取用户 ID
+	projectId string,
+	updateProjectPreferenceReq *types.UpdateProjectPreferenceReq,
+) error {
+	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return errors.New("用户 ID 不能为空")
 	}
-	// 2. 获取清单 ID
-	projectId, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	// 获取清单 ID
+	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return errors.New("清单 ID 格式错误")
 	}
-	// 3. 请求体转换实体
-	preference := PreferenceRes2VO(&req.Preference)
-	// 4. 调用域函数 - 更新清单偏好
-	err = p.projectDomain.SavePreference(ctx, userId, projectId, preference)
+	// 请求体转换实体
+	saveProjectPreferenceValueObject, err := UpdateProjectPreferenceReqToValueObject(
+		updateProjectPreferenceReq,
+	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// 5. 返回结果
-	return &types.UpdateProjectPreferenceRes{ProjectId: req.ProjectId}, nil
+	// 更新清单偏好
+	err = app.projectDomain.SavePreference(
+		ctx,
+		userId,
+		projectIdInt64,
+		saveProjectPreferenceValueObject,
+	)
+	if err != nil {
+		return err
+	}
+	// 返回结果
+	return nil
 }

@@ -7,33 +7,55 @@ import (
 	"sync"
 )
 
+// 任务清单应用接口
 type ProjectApp interface {
-	Create(ctx context.Context, req *types.CreateProjectReq) (*types.CreateProjectRes, error)
-	Get(ctx context.Context, req *types.GetProjectReq) (*types.GetProjectRes, error)
-	Update(ctx context.Context, req *types.UpdateProjectReq) (*types.UpdateProjectRes, error)
-	Delete(ctx context.Context, req *types.DeleteProjectReq) (*types.DeleteProjectRes, error)
-	Restore(ctx context.Context, req *types.RestoreProjectReq) (*types.RestoreProjectRes, error)
-	HardDelete(
+	// 获取任务清单
+	Get(ctx context.Context, projectId string) (*types.GetProjectRes, error)
+
+	// 创建任务清单
+	Create(
 		ctx context.Context,
-		req *types.HardDeleteProjectReq,
-	) (*types.HardDeleteProjectRes, error)
-	Archive(ctx context.Context, req *types.ArchiveProjectReq) (*types.ArchiveProjectRes, error)
-	Unarchive(
-		ctx context.Context,
-		req *types.UnarchiveProjectReq,
-	) (*types.UnarchiveProjectRes, error)
+		createProjectReq *types.CreateProjectReq,
+	) (*types.CreateProjectRes, error)
+
+	// 更新任务清单
+	Update(ctx context.Context, projectId string, updateProjectReq *types.UpdateProjectReq) error
+
+	// 删除任务清单
+	Delete(ctx context.Context, projectId string) error
+
+	// 恢复任务清单
+	Restore(ctx context.Context, projectId string) error
+
+	// 硬删除任务清单
+	HardDelete(ctx context.Context, projectId string) error
+
+	// 归档任务清单
+	Archive(ctx context.Context, projectId string) error
+
+	// 取消归档任务清单
+	Unarchive(ctx context.Context, projectId string) error
+
+	// 获取任务清单列表
 	List(ctx context.Context) (types.ListProjectRes, error)
-	GetPreference(ctx context.Context, req *types.GetProjectPreferenceReq) (*types.ProjectPreferenceRes, error)
+
+	// 获取任务清单偏好
+	GetPreference(ctx context.Context, projectId string) (*types.GetProjectPreferenceRes, error)
+
+	// 保存任务清单偏好
 	SavePreference(
 		ctx context.Context,
-		req *types.UpdateProjectPreferenceReq,
-	) (*types.UpdateProjectPreferenceRes, error)
+		projectId string,
+		updateProjectPreferenceReq *types.UpdateProjectPreferenceReq,
+	) error
 }
 
+// 任务清单应用实现
 type projectAppImpl struct {
 	projectDomain service.ProjectDomain
 }
 
+// 任务清单应用单例
 var (
 	App  *projectAppImpl
 	once sync.Once

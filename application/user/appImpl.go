@@ -23,35 +23,32 @@ func RegistDomainImpl(userDomain service.UserDomain) UserApp {
 	return App
 }
 
-/*
- * Update Nickname
- */
+// UpdateNickname 更新用户昵称
+// @param ctx 上下文
+// @param req 更新用户昵称请求
+// @return error 错误
 func (u *userAppImpl) UpdateNickname(
 	ctx context.Context,
 	req types.UpdateUserNicknameReq,
-) (*types.UpdateUserNicknameRes, error) {
+) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("参数无效 - 用户 ID 不存在")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 更新用户昵称
-	err := u.userDomain.UpdateNickname(ctx, userId, req.Nickname)
-	if err != nil {
-		return nil, err
-	}
-	// 3. 返回结果
-	return &types.UpdateUserNicknameRes{}, nil
+	return u.userDomain.UpdateNickname(ctx, userId, req.Nickname)
 }
 
-/*
- * Get User Profile
- */
+// GetProfile 获取用户个人信息
+// @param ctx 上下文
+// @return *types.GetUserProfileRes 用户个人信息
+// @return error 错误
 func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes, error) {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("参数无效 - 用户 ID 不存在")
+		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 获取用户详情
 	userEntity, err := u.userDomain.FindById(ctx, userId)
@@ -62,30 +59,32 @@ func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes,
 	return UserEntity2Res(userEntity), nil
 }
 
-/*
- * Update User Password
- */
+// UpdatePassword 更新用户密码
+// @param ctx 上下文
+// @param req 更新用户密码请求
+// @return error 错误
 func (u *userAppImpl) UpdatePassword(
 	ctx context.Context,
 	req types.UpdateUserPasswordReq,
-) (*types.UpdateUserPasswordRes, error) {
+) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("参数无效 - 用户 ID 不存在")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 更新用户密码
-	err := u.userDomain.UpdatePassword(ctx, userId, req.OldPassword, req.NewPassword)
-	if err != nil {
-		return nil, err
-	}
-	// 3. 返回结果
-	return &types.UpdateUserPasswordRes{}, nil
+	return u.userDomain.UpdatePassword(
+		ctx, userId,
+		req.OldPassword,
+		req.NewPassword,
+	)
 }
 
-/*
- * Update User Avatar
- */
+// UpdateAvatar 更新用户头像
+// @param ctx 上下文
+// @param req 更新用户头像请求
+// @return *types.UpdateUserAvatarRes 更新用户头像响应
+// @return error 错误
 func (u *userAppImpl) UpdateAvatar(
 	ctx context.Context,
 	req types.UpdateUserAvatarReq,
@@ -93,7 +92,7 @@ func (u *userAppImpl) UpdateAvatar(
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("参数无效 - 用户 ID 不存在")
+		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 更新用户头像
 	err := u.userDomain.UpdateAvatar(ctx, userId, req.AvatarURL)
@@ -104,14 +103,15 @@ func (u *userAppImpl) UpdateAvatar(
 	return &types.UpdateUserAvatarRes{AvatarURL: req.AvatarURL}, nil
 }
 
-/*
- * Update User Avatar by File
- */
+// UpdateAvatarByFile 更新用户头像（通过文件上传）
+// @param ctx 上下文
+// @return *types.UpdateUserAvatarRes 更新用户头像响应
+// @return error 错误
 func (u *userAppImpl) UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAvatarRes, error) {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("参数无效 - 用户 ID 不存在")
+		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 获取文件
 	file, err := ctx.FormFile("avatar")
@@ -145,14 +145,15 @@ func (u *userAppImpl) UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAva
 	return &types.UpdateUserAvatarRes{AvatarURL: uniqueFilename}, nil
 }
 
-/*
- * Deactive User
- */
+// DeactiveUser 禁用用户
+// @param ctx 上下文
+// @param req 禁用用户请求
+// @return error 错误
 func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("参数无效 - 用户 ID 不存在")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 查询用户是否存在
 	user, err := u.userDomain.FindById(ctx, userId)
@@ -160,7 +161,10 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 		return err
 	}
 	// 3. 密码比对
-	isPasswordValid := u.userDomain.PasswordCompare([]byte(req.Password), []byte(user.Password))
+	isPasswordValid := u.userDomain.PasswordCompare(
+		[]byte(req.Password),
+		[]byte(user.Password),
+	)
 	if !isPasswordValid {
 		return errors.New("密码错误")
 	}
@@ -169,22 +173,20 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 		return errors.New("用户已注销")
 	}
 	// 5. 更新用户状态
-	err = u.userDomain.Deactive(ctx, userId)
-	if err != nil {
-		return err
-	}
-	// 6. 返回结果
-	return nil
+	return u.userDomain.Deactive(ctx, userId)
 }
 
-/*
- * Active User
- */
+// ActiveUser 激活用户
+// @param ctx 上下文
+// @param req 激活用户请求
+// @param ctx 上下文
+// @param req 激活用户请求
+// @return error 错误
 func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("参数无效 - 用户 ID 不存在")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 查询用户是否存在
 	user, err := u.userDomain.FindById(ctx, userId)
@@ -192,7 +194,10 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 		return err
 	}
 	// 3. 密码比对
-	isPasswordValid := u.userDomain.PasswordCompare([]byte(req.Password), []byte(user.Password))
+	isPasswordValid := u.userDomain.PasswordCompare(
+		[]byte(req.Password),
+		[]byte(user.Password),
+	)
 	if !isPasswordValid {
 		return errors.New("密码错误")
 	}
@@ -201,10 +206,5 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 		return errors.New("用户未注销")
 	}
 	// 5. 更新用户状态
-	err = u.userDomain.Active(ctx, userId)
-	if err != nil {
-		return err
-	}
-	// 6. 返回结果
-	return nil
+	return u.userDomain.Active(ctx, userId)
 }

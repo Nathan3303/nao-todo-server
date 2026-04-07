@@ -2,8 +2,9 @@ package project
 
 import (
 	"context"
+	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
-	"naotodoserver/domain/project/vo"
+	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"gorm.io/gorm"
@@ -17,13 +18,20 @@ func NewProjectPreferenceRepo(db *gorm.DB) repositories.ProjectPreference {
 	return &ProjectPreferenceRepoImpl{db: db}
 }
 
-// Get implements [repositories.ProjectPreference].
+// Get 获取项目偏好设置
+// @param ctx 上下文
+// @param preferenceVO 项目偏好设置
+// @return 项目偏好设置
+// @return error 错误
 func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Get(
 	ctx context.Context,
-	preferenceVO vo.ProjectPreference,
-) (*vo.ProjectPreference, error) {
+	userId int64,
+	projectId int64,
+) (*entities.ProjectPreference, error) {
 	// 1. valueobject 转 model
-	whereCond := PreferenceVO2Model(&preferenceVO)
+	var whereCond models.ProjectPreference
+	whereCond.UserId = userId
+	whereCond.ProjectId = projectId
 	// 2. 查询
 	var preference models.ProjectPreference
 	tx := projectPreferenceRepo.db.WithContext(ctx).Model(&models.ProjectPreference{}).
@@ -33,37 +41,44 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Get(
 		return nil, tx.Error
 	}
 	// 3. model 转 valueobject
-	return PreferenceModel2VO(&preference), nil
+	return PreferenceModel2Entity(&preference), nil
 }
 
-// Save implements [repositories.ProjectPreference].
+// Save 保存项目偏好设置
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @param saveProjectPreference 项目偏好设置
+// @return 项目偏好设置
+// @return error 错误
 func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Save(
 	ctx context.Context,
-	preferenceVO *vo.ProjectPreference,
-) (*vo.ProjectPreference, error) {
+	userId int64,
+	projectId int64,
+	saveProjectPreference *valueobjects.SaveProjectPreference,
+) error {
 	// 1. valueobject 转 model
-	preference := PreferenceVO2Model(preferenceVO)
+	var whereCond models.ProjectPreference
+	whereCond.UserId = userId
+	whereCond.ProjectId = projectId
 	// 2. 保存
 	var existPreference models.ProjectPreference
 	tx := projectPreferenceRepo.db.WithContext(ctx).
 		Model(&models.ProjectPreference{}).
-		Where("user_id = ? AND project_id = ?", preferenceVO.UserId, preferenceVO.ProjectId).
+		Where(&whereCond).
 		First(&existPreference)
 	if tx.Error == gorm.ErrRecordNotFound {
 		// 新增
 		projectPreferenceRepo.db.WithContext(ctx).
-			Model(&models.ProjectPreference{}).Create(preference)
+			Model(&models.ProjectPreference{}).Create(saveProjectPreference)
 	} else {
 		// 更新
 		tx.Updates(models.ProjectPreference{
-			ViewType:   preference.ViewType,
-			GetOptions: preference.GetOptions,
-			Columns:    preference.Columns,
+			ViewType:   saveProjectPreference.ViewType,
+			GetOptions: saveProjectPreference.GetOptions,
+			Columns:    saveProjectPreference.Columns,
 		})
 	}
-	// if tx.Error != nil {
-	// 	return nil, tx.Error
-	// }
 	// 3. model 转 valueobject
-	return PreferenceModel2VO(preference), nil
+	return nil
 }

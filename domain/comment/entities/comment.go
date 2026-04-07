@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"naotodoserver/domain/comment/vo"
 	"time"
 )
 
@@ -11,7 +10,15 @@ type Comment struct {
 	TaskId      int64
 	Content     string
 	Attachments []string
-	CommentUser *vo.CommentUser
-	CreatedAt   *time.Time
 	IsTopUp     bool
+	CommentUser *CommentUser
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type CommentUser struct {
+	Id        int64
+	CommentId int64
+	Nickname  string
+	Avatar    string
 }

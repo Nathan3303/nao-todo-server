@@ -7,10 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * UserSignInHandler
- * 用户登录控制器
- */
+// UserSignInHandler 用户登录控制器
+// @code 1001x
 func UserSignInHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	req := types.SignInReq{}
@@ -41,10 +39,8 @@ func UserSignInHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * UserSignUpHandler
- * 用户注册控制器
- */
+// UserSignUpHandler 用户注册控制器
+// @code 1000x
 func UserSignUpHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	var req = types.SignUpReq{}
@@ -75,10 +71,8 @@ func UserSignUpHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * UserCheckInHandler
- * 用户签到控制器
- */
+// UserCheckInHandler 用户检入控制器
+// @code 1002x
 func UserCheckInHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	var req = types.CheckInReq{}
@@ -91,7 +85,7 @@ func UserCheckInHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// @step 2. 调用用户服务 - 签到
+	// @step 2. 调用用户服务 - 检入
 	checkInRes, err := auth.App.CheckIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
@@ -110,10 +104,8 @@ func UserCheckInHandler(ctx *gin.Context) {
 
 }
 
-/*
- * UserSignOutHandler
- * 用户登出控制器
- */
+// UserSignOutHandler 用户登出控制器
+// @code 1003x
 func UserSignOutHandler(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	var req = types.SignOutReq{}
@@ -127,7 +119,7 @@ func UserSignOutHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登出
-	signOutRes, err := auth.App.SignOut(ctx, &req)
+	signOutRes, err := auth.App.SignOut(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10032,

@@ -3,103 +3,159 @@ package task
 import (
 	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
-	"naotodoserver/domain/task/vo"
+	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 	"strconv"
-	"time"
 )
 
-func TaskEntity2Res(e *entities.Task) *types.TaskRes {
-	res := &types.TaskRes{}
-	res.Id = strconv.FormatInt(e.Id, 10)
-	res.ProjectId = strconv.FormatInt(e.ProjectId, 10)
-	res.Name = e.Name
-	res.Description = e.Description
-	res.State = consts.TodoStateMapReverse[e.State]
-	res.Priority = consts.TodoPriorityMapReverse[e.Priority]
-	res.StartAt = e.GetFormatedStartAt()
-	res.EndAt = e.GetFormatedEndAt()
-	res.ArchivedAt, res.IsArchived = e.ParseArchivedAt()
-	res.StarMarkAt, res.IsStarMarked = e.ParseStarMarkAt()
-	res.GivenUpAt, res.IsGivenUp = e.ParseGivenUpAt()
-	res.Tags = e.Tags
-	res.UpdatedAt = e.GetFormatedUpdatedAt()
-	res.CreatedAt = e.GetFormatedCreatedAt()
-	res.DeletedAt, res.IsDeleted = e.GetFormatedDeletedAt()
+// TaskEntityToGetRes 任务实体转换为获取任务响应
+// @param taskEntity 任务实体
+// @return 任务响应
+func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
+	res := &types.GetTaskRes{}
+	res.Id = strconv.FormatInt(taskEntity.Id, 10)
+	res.ParentTaskId = strconv.FormatInt(taskEntity.ParentTaskId, 10)
+	res.Name = taskEntity.Name
+	res.Description = taskEntity.Description
+	res.State = consts.TodoStateMapReverse[taskEntity.State]
+	res.Priority = consts.TodoPriorityMapReverse[taskEntity.Priority]
+	res.StartAt = taskEntity.GetFormatedStartAt()
+	res.EndAt = taskEntity.GetFormatedEndAt()
+	res.ProjectId = strconv.FormatInt(taskEntity.ProjectId, 10)
+	res.Tags = taskEntity.Tags
+	res.ArchivedAt, _ = taskEntity.ParseArchivedAt()
+	res.StarMarkAt, _ = taskEntity.ParseStarMarkAt()
+	res.GivenUpAt, _ = taskEntity.ParseGivenUpAt()
+	res.UpdatedAt = taskEntity.UpdatedAt
+	res.CreatedAt = taskEntity.CreatedAt
+	res.DeletedAt = taskEntity.DeletedAt
 	return res
 }
 
-func CreateTaskReq2Entity(req *types.CreateTaskReq) *entities.Task {
-	e := &entities.Task{}
-	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	e.Name = req.Name
-	e.Description = req.Description
-	e.State = consts.TodoStateMap[req.State]
-	e.Priority = consts.TodoPriorityMap[req.Priority]
-	e.StartAt = utils.DateString2TimePtr(req.StartAt)
-	e.EndAt = utils.DateString2TimePtr(req.EndAt)
-	e.Tags = req.Tags
-	return e
-}
-
-func UpdateTaskReq2Entity(req *types.UpdateTaskReq) *entities.Task {
-	e := &entities.Task{}
-	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	e.Name = req.Name
-	e.Description = req.Description
-	e.State = consts.TodoStateMap[req.State]
-	e.Priority = consts.TodoPriorityMap[req.Priority]
-	e.StartAt = utils.DateString2TimePtr(req.StartAt)
-	e.EndAt = utils.DateString2TimePtr(req.EndAt)
-	e.Tags = req.Tags
-	if req.IsStarMarked {
-		*e.StarMarkAt = time.Now()
+// CreateTaskReqToValueObject 创建任务请求转换为创建任务值对象
+// @param userId 用户 ID
+// @param req 创建任务请求
+// @return 创建任务值对象
+// @error 错误
+func CreateTaskReqToValueObject(
+	userId int64,
+	req *types.CreateTaskReq,
+) (*valueobjects.CreateTask, error) {
+	parentTaskIdInt64, err := strconv.ParseInt(req.ParentTaskId, 10, 64)
+	if err != nil {
+		return nil, err
 	}
-	return e
+	var projectIdInt64 int64
+	if req.ProjectId == "" {
+		projectIdInt64 = userId
+	} else {
+		projectIdInt64, err = strconv.ParseInt(req.ProjectId, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return valueobjects.NewCreateTask(
+		parentTaskIdInt64,
+		req.Name,
+		req.Description,
+		consts.TodoStateMap[req.State],
+		consts.TodoPriorityMap[req.Priority],
+		utils.String2SqlNullTime(req.StartAt),
+		utils.String2SqlNullTime(req.EndAt),
+		projectIdInt64,
+		req.Tags,
+	)
 }
 
-func ListTaskReq2QueryVO(req *types.ListTaskReq) *vo.TaskQuery {
-	vo := &vo.TaskQuery{}
-	vo.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	vo.TagId = req.TagId
-	vo.Name = req.Name
-	vo.Description = req.Description
-	vo.State = req.State
-	vo.Priority = req.Priority
-	vo.StartAt = req.StartAt
-	vo.EndAt = req.EndAt
-	vo.DeletedAt = req.DeletedAt
-	vo.ArchivedAt = req.ArchivedAt
-	vo.StarMarkAt = req.StarMarkAt
-	vo.GivenUpAt = req.GivenUpAt
-	vo.IsDeleted = req.IsDeleted
-	vo.IsArchived = req.IsArchived
-	vo.IsStarMarked = req.IsStarMarked
-	vo.IsGivenUp = req.IsGivenUp
-	vo.Page = req.Page
-	vo.Limit = req.Limit
-	vo.RelativeDate = req.RelativeDate
-	vo.Sort = req.Sort
-	return vo
+// UpdateTaskReqToValueObject 更新任务请求转换为更新任务值对象
+// @param req 更新任务请求
+// @return 更新任务值对象
+// @error 错误
+func UpdateTaskReqToValueObject(req *types.UpdateTaskReq) (*valueobjects.UpdateTask, error) {
+	parentIdInt64, err := strconv.ParseInt(req.ParentTaskId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	projectIdInt64, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return valueobjects.NewUpdateTask(
+		0,
+		parentIdInt64,
+		req.Name,
+		req.Description,
+		consts.TodoStateMap[req.State],
+		consts.TodoPriorityMap[req.Priority],
+		utils.String2SqlNullTime(req.StartAt),
+		utils.String2SqlNullTime(req.EndAt),
+		projectIdInt64,
+		req.Tags,
+		utils.String2SqlNullTime(req.ArchivedAt),
+		utils.String2SqlNullTime(req.StarMarkAt),
+		utils.String2SqlNullTime(req.GivenUpAt),
+	)
 }
 
-func TaskEntities2Reses(e []*entities.Task) []*types.TaskRes {
-	reses := make([]*types.TaskRes, 0, len(e))
-	for _, item := range e {
-		reses = append(reses, TaskEntity2Res(item))
+// ListTaskReqToQueryTaskValueObject 列表任务请求转换为查询任务值对象
+// @param userId 用户 ID
+// @param req 列表任务请求
+// @return 查询任务值对象
+// @error 错误
+func ListTaskReqToQueryTaskValueObject(
+	userId int64,
+	req *types.ListTaskReq,
+) (*valueobjects.QueryTask, error) {
+	projectIdInt64, err := strconv.ParseInt(req.ProjectId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return valueobjects.NewQueryTask(
+		userId,
+		projectIdInt64,
+		req.TagId,
+		req.Name,
+		req.Description,
+		req.State,
+		req.Priority,
+		req.StartAt,
+		req.EndAt,
+		req.DeletedAt,
+		req.ArchivedAt,
+		req.StarMarkAt,
+		req.GivenUpAt,
+		req.IsDeleted,
+		req.IsArchived,
+		req.IsStarMarked,
+		req.IsGivenUp,
+		req.Page,
+		req.Limit,
+		req.RelativeDate,
+		req.Sort,
+	)
+}
+
+// TaskEntitiesToGetReses 任务实体转换为获取任务响应列表
+// @param taskEntities 任务实体列表
+// @return 任务响应列表
+func TaskEntitiesToGetReses(taskEntities []*entities.Task) []*types.GetTaskRes {
+	reses := make([]*types.GetTaskRes, 0, len(taskEntities))
+	for _, item := range taskEntities {
+		reses = append(reses, TaskEntityToGetRes(item))
 	}
 	return reses
 }
 
-func PaginationVO2Res(pagination *vo.Pagination) *types.Pagination {
-	res := &types.Pagination{}
-	res.Page = pagination.Page
-	res.Limit = pagination.Limit
-	res.Total = pagination.Total
-	res.MaxPage = int(pagination.Total / int64(pagination.Limit))
-	if pagination.Total%int64(pagination.Limit) > 0 {
-		res.MaxPage++
+// PaginationValueObjectToRes 分页值对象转换为分页响应
+// @param paginationValueObject 分页值对象
+// @return 分页响应
+func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) *types.Pagination {
+	paginationValueObject.CalcMaxPage()
+	return &types.Pagination{
+		Page:    paginationValueObject.Page,
+		Limit:   paginationValueObject.Limit,
+		Total:   paginationValueObject.Total,
+		MaxPage: paginationValueObject.MaxPage,
 	}
-	return res
 }

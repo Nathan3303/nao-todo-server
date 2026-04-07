@@ -4,9 +4,10 @@ import (
 	"context"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
-	"naotodoserver/domain/project/vo"
+	"naotodoserver/domain/project/valueobjects"
 )
 
+// 创建任务清单领域服务实现
 func NewProjectDomain(
 	repo repositories.Project,
 	preferenceRepo repositories.ProjectPreference,
@@ -17,21 +18,15 @@ func NewProjectDomain(
 	}
 }
 
-/*
- * Create project
- */
+// 创建任务清单
 func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
-	projectEntity *entities.Project,
+	createProjectValueObject *valueobjects.CreateProject,
 ) (*entities.Project, error) {
-	// projectPreference := vo.MakeDefaultProjectPreference(projectEntity.UserId)
-	// projectEntity.Preference = projectPreference
-	return p.repo.Create(ctx, projectEntity)
+	return p.repo.Create(ctx, createProjectValueObject)
 }
 
-/*
- * Get project by userId and projectId
- */
+// 根据用户ID和任务清单ID获取任务清单
 func (p *ProjectDomainImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -40,69 +35,53 @@ func (p *ProjectDomainImpl) GetById(
 	return p.repo.GetById(ctx, userId, projectId)
 }
 
-/*
- * Update project
- */
+// 更新任务清单
 func (p *ProjectDomainImpl) Update(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
-	updateEntity *entities.Project,
+	updateProjectValueObject *valueobjects.UpdateProject,
 ) error {
-	return p.repo.Update(
-		ctx,
-		&entities.Project{UserId: userId, Id: projectId},
-		updateEntity,
-	)
+	return p.repo.Update(ctx, userId, projectId, updateProjectValueObject)
 }
 
-/*
- * Delete project
- */
+// 删除任务清单
 func (p *ProjectDomainImpl) Delete(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Delete(ctx, &entities.Project{UserId: userId, Id: projectId})
+	return p.repo.Delete(ctx, userId, projectId)
 }
 
-/*
- * Restore project
- */
+// 恢复任务清单
 func (p *ProjectDomainImpl) Restore(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Restore(ctx, &entities.Project{UserId: userId, Id: projectId})
+	return p.repo.Restore(ctx, userId, projectId)
 }
 
-/*
- * Archive project
- */
+// 归档任务清单
 func (p *ProjectDomainImpl) Archive(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Archive(ctx, &entities.Project{UserId: userId, Id: projectId})
+	return p.repo.Archive(ctx, userId, projectId)
 }
 
-/*
- * Unarchive project
- */
+// 取消归档任务清单
 func (p *ProjectDomainImpl) Unarchive(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Unarchive(ctx, &entities.Project{UserId: userId, Id: projectId})
+	return p.repo.Unarchive(ctx, userId, projectId)
 }
 
-/*
- * Get projects by userId
- */
+// 根据用户ID获取任务清单列表
 func (p *ProjectDomainImpl) GetByUserId(
 	ctx context.Context,
 	userId int64,
@@ -110,31 +89,21 @@ func (p *ProjectDomainImpl) GetByUserId(
 	return p.repo.GetByUserId(ctx, userId)
 }
 
-/*
- * Get project preference by userId and projectId
- */
+// 根据用户ID和任务清单ID获取任务清单偏好
 func (p *ProjectDomainImpl) GetPreference(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
-) (*vo.ProjectPreference, error) {
-	var preferenceVO vo.ProjectPreference
-	preferenceVO.UserId = userId
-	preferenceVO.ProjectId = projectId
-	return p.preferenceRepo.Get(ctx, preferenceVO)
+) (*entities.ProjectPreference, error) {
+	return p.preferenceRepo.Get(ctx, userId, projectId)
 }
 
-/*
- * Save project preference
- */
+// 保存任务清单偏好
 func (p *ProjectDomainImpl) SavePreference(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
-	preferenceVO *vo.ProjectPreference,
+	saveProjectPreference *valueobjects.SaveProjectPreference,
 ) error {
-	preferenceVO.UserId = userId
-	preferenceVO.ProjectId = projectId
-	_, err := p.preferenceRepo.Save(ctx, preferenceVO)
-	return err
+	return p.preferenceRepo.Save(ctx, userId, projectId, saveProjectPreference)
 }

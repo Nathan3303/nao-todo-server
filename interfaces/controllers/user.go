@@ -7,10 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * Update user nickname handler
- * 更新用户昵称（10050）
- */
+// UpdateUserNicknameHandler 更新用户昵称控制器
+// @code 1005x
 func UpdateUserNicknameHandler(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.UpdateUserNicknameReq
@@ -31,11 +29,11 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户昵称
-	res, err := user.App.UpdateNickname(ctx.Request.Context(), req)
+	err = user.App.UpdateNickname(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10053,
-			Message: "更新用户昵称失败 - " + err.Error(),
+			Message: err.Error(),
 		})
 		return
 	}
@@ -43,14 +41,11 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    10050,
 		Message: "更新用户昵称成功",
-		Data:    res,
 	})
 }
 
-/*
- * Get user profile handler
- * 获取用户详情（10060）
- */
+// GetUserProfileHandler 获取用户详情控制器
+// @code 1006x
 func GetUserProfileHandler(ctx *gin.Context) {
 	// 1. 调用用户服务 - 获取用户详情
 	res, err := user.App.GetProfile(ctx.Request.Context())
@@ -69,10 +64,8 @@ func GetUserProfileHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Update user password handler
- * 更新用户密码（10070）
- */
+// UpdateUserPasswordHandler 更新用户密码控制器
+// @code 1007x
 func UpdateUserPasswordHandler(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.UpdateUserPasswordReq
@@ -93,11 +86,11 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户密码
-	res, err := user.App.UpdatePassword(ctx.Request.Context(), req)
+	err = user.App.UpdatePassword(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10074,
-			Message: "更新用户密码失败 - " + err.Error(),
+			Message: err.Error(),
 		})
 		return
 	}
@@ -105,14 +98,11 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    10070,
 		Message: "更新用户密码成功",
-		Data:    res,
 	})
 }
 
-/*
- * Update user avatar handler
- * 更新用户头像（10080）
- */
+// UpdateUserAvatarHandler 更新用户头像控制器
+// @code 1008x
 func UpdateUserAvatarHandler(ctx *gin.Context) {
 	// panic("unimplemented")
 	// 1. 获取参数
@@ -150,10 +140,8 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Deactive user handler
- * 禁用用户（10090）
- */
+// DeactiveUserHandler 禁用用户控制器
+// @code 1009x
 func DeactiveUserHandler(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.DeactiveUserReq
@@ -182,10 +170,8 @@ func DeactiveUserHandler(ctx *gin.Context) {
 	})
 }
 
-/*
- * Active user handler
- * 启用用户（10100）
- */
+// ActiveUserHandler 启用用户控制器
+// @code 1010x
 func ActiveUserHandler(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.ActiveUserReq

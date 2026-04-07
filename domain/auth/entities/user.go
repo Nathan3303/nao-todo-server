@@ -1,52 +1,21 @@
 package entities
 
 import (
-	"errors"
-	"strings"
-
-	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
+// User 用户实体
 type User struct {
-	Id       int64  `json:"id"`
-	Account  string `json:"account"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Nickname string `json:"nickname"`
-}
-
-func (u *User) IsIdValid() bool {
-	return u != nil && u.Id > 0
-}
-
-func (u *User) IsNicknameValid() bool {
-	return u != nil && len(u.Nickname) >= 2 && len(u.Nickname) <= 20
-}
-
-func (u *User) IsValid() bool {
-	return u.IsIdValid() && u.IsNicknameValid()
-}
-
-func (u *User) EncryptPassword() error {
-	// 密码不能为空
-	if u.Password == "" {
-		return errors.New("密码不能为空")
-	}
-	// 密码加密
-	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.New("密码加密失败")
-	}
-	// 密码赋值
-	u.Password = string(encryptedPassword)
-	return nil
-}
-
-func (u *User) FillDefaultValue() {
-	if u.Nickname == "" {
-		u.Nickname = strings.Split(u.Email, "@")[0]
-	}
-	if u.Account == "" {
-		u.Account = u.Email
-	}
+	Id          int64
+	Account     string
+	Email       string
+	Password    string
+	Nickname    string
+	Avatar      string
+	CreatedFrom string
+	Role        string
+	State       int8
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeactivedAt time.Time
 }

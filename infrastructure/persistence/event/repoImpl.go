@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/event/entities"
 	"naotodoserver/domain/event/repositories"
+	"naotodoserver/domain/event/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"gorm.io/gorm"
@@ -18,6 +19,11 @@ func NewEventRepo(db *gorm.DB) repositories.Event {
 }
 
 // GetById 获取事件详情
+// @param ctx 上下文
+// @param userId 用户ID
+// @param eventId 事件ID
+// @return 事件详情
+// @return error 错误
 func (eventRepo *EventRepoImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -39,12 +45,17 @@ func (eventRepo *EventRepoImpl) GetById(
 }
 
 // Create 创建事件
+// @param ctx 上下文
+// @param createEntity 创建事件实体
+// @return 事件详情
+// @return error 错误
 func (eventRepo *EventRepoImpl) Create(
 	ctx context.Context,
-	createEntity *entities.Event,
+	userId int64,
+	createEventValueObject *valueobjects.CreateEvent,
 ) (*entities.Event, error) {
 	// 1. 转换为模型
-	eventModel := EventEntity2Model(createEntity)
+	eventModel := CreateEventValueObjectToModel(createEventValueObject)
 	// 2. 插入数据库
 	tx := eventRepo.db.WithContext(ctx).Model(&models.Event{}).Create(&eventModel)
 	if tx.Error != nil {
@@ -54,14 +65,22 @@ func (eventRepo *EventRepoImpl) Create(
 }
 
 // Update 更新事件
+// @param ctx 上下文
+// @param userId 用户ID
+// @param eventId 事件ID
+// @param updateEventValueObject 更新事件值对象
+// @return error 错误
 func (eventRepo *EventRepoImpl) Update(
 	ctx context.Context,
-	whereEntity *entities.Event,
-	updateEntity *entities.Event,
+	userId int64,
+	eventId int64,
+	updateEventValueObject *valueobjects.UpdateEvent,
 ) error {
 	// 1. 转换为模型
-	whereCond := EventEntity2Model(whereEntity)
-	updateCond := EventEntity2Model(updateEntity)
+	var whereCond models.Event
+	whereCond.ID = eventId
+	whereCond.UserId = userId
+	updateCond := UpdateEventValueObjectToModel(updateEventValueObject)
 	// 2. 更新数据库
 	tx := eventRepo.db.WithContext(ctx).Model(&models.Event{}).
 		Where(whereCond).
@@ -70,12 +89,19 @@ func (eventRepo *EventRepoImpl) Update(
 }
 
 // Delete 删除事件
+// @param ctx 上下文
+// @param userId 用户ID
+// @param eventId 事件ID
+// @return error 错误
 func (eventRepo *EventRepoImpl) Delete(
 	ctx context.Context,
-	whereEntity *entities.Event,
+	userId int64,
+	eventId int64,
 ) error {
 	// 1. 转换为模型
-	whereCond := EventEntity2Model(whereEntity)
+	var whereCond models.Event
+	whereCond.UserId = userId
+	whereCond.ID = eventId
 	// 2. 删除数据库
 	tx := eventRepo.db.WithContext(ctx).Model(&models.Event{}).
 		Where(whereCond).
@@ -84,12 +110,20 @@ func (eventRepo *EventRepoImpl) Delete(
 }
 
 // Get 获取事件列表
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @return 事件列表
+// @return error 错误
 func (eventRepo *EventRepoImpl) Get(
 	ctx context.Context,
-	whereEntity *entities.Event,
+	userId int64,
+	taskId int64,
 ) ([]*entities.Event, error) {
 	// 1. 转换为模型
-	whereCond := EventEntity2Model(whereEntity)
+	var whereCond models.Event
+	whereCond.UserId = userId
+	whereCond.TaskId = taskId
 	// 2. 查询数据库
 	var events []*models.Event
 	tx := eventRepo.db.WithContext(ctx).Model(&models.Event{}).
