@@ -20,10 +20,10 @@ type EventApp interface {
 		ctx context.Context,
 		eventId string,
 		req *types.UpdateEventReq,
-	) (*types.UpdateEventRes, error)
+	) error
 
 	// 删除检查事项
-	DeleteEvent(ctx context.Context, eventId string) (*types.DeleteEventRes, error)
+	DeleteEvent(ctx context.Context, eventId string) error
 
 	// 获取检查事项列表
 	ListEvent(ctx context.Context, taskId string) (types.ListEventRes, error)

@@ -36,7 +36,7 @@ func (updateTask *UpdateTask) Validate() error {
 	}
 	if updateTask.EndAt.Valid &&
 		updateTask.StartAt.Valid &&
-		updateTask.EndAt.Time.After(updateTask.StartAt.Time) {
+		updateTask.EndAt.Time.Before(updateTask.StartAt.Time) {
 		return errors.New("结束时间不能早于开始时间")
 	}
 	return nil

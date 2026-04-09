@@ -55,4 +55,11 @@ type Event interface {
 	// @return []*entities.Event 事件列表
 	// @return error 错误信息
 	Get(ctx context.Context, userId int64, taskId int64) ([]*entities.Event, error)
+
+	// GetMaxSortId 获取最大排序 ID
+	// @param ctx 上下文
+	// @param userId 用户 ID
+	// @param taskId 任务 ID
+	// @return maxSortId 最大排序 ID
+	GetMaxSortId(ctx context.Context, userId int64, taskId int64) uint16
 }

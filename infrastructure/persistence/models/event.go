@@ -7,5 +7,5 @@ type Event struct {
 	Name        string `gorm:"size:128"`
 	Description string `gorm:"size:512"`
 	IsDone      bool
-	SortId      uint32
+	SortId      uint16
 }

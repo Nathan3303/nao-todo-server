@@ -1,25 +1,23 @@
 package types
 
-import "time"
-
 // GetTaskRes 获取任务响应
 type GetTaskRes struct {
-	Id           string    `json:"id"`
-	ParentTaskId string    `json:"parentTaskId"`
-	Name         string    `json:"name"`
-	Description  string    `json:"description"`
-	State        string    `json:"state"`
-	Priority     string    `json:"priority"`
-	StartAt      string    `json:"startAt"`
-	EndAt        string    `json:"endAt"`
-	Tags         []string  `json:"tags"`
-	ProjectId    string    `json:"projectId"`
-	ArchivedAt   string    `json:"archivedAt"`
-	StarMarkAt   string    `json:"starMarkAt"`
-	GivenUpAt    string    `json:"givenUpAt"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	DeletedAt    time.Time `json:"deletedAt"`
+	Id           string   `json:"id"`
+	ParentTaskId string   `json:"parentTaskId"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	State        string   `json:"state"`
+	Priority     string   `json:"priority"`
+	StartAt      string   `json:"startAt"`
+	EndAt        string   `json:"endAt"`
+	Tags         []string `json:"tags"`
+	ProjectId    string   `json:"projectId"`
+	ArchivedAt   string   `json:"archivedAt"`
+	StarMarkAt   string   `json:"starMarkAt"`
+	GivenUpAt    string   `json:"givenUpAt"`
+	CreatedAt    string   `json:"createdAt"`
+	UpdatedAt    string   `json:"updatedAt"`
+	DeletedAt    string   `json:"deletedAt"`
 }
 
 // CreateTaskReq 创建任务请求

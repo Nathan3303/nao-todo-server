@@ -36,14 +36,14 @@ func UpdateTaskValueObjectToModel(
 	updateTaskValueObject *valueobjects.UpdateTask,
 ) *models.Task {
 	return &models.Task{
-		UserId:      updateTaskValueObject.UserId,
-		ProjectId:   updateTaskValueObject.ProjectId,
 		Name:        updateTaskValueObject.Name,
 		Description: updateTaskValueObject.Description,
 		State:       updateTaskValueObject.State,
 		Priority:    updateTaskValueObject.Priority,
 		StartAt:     updateTaskValueObject.StartAt,
 		EndAt:       updateTaskValueObject.EndAt,
+		ProjectId:   updateTaskValueObject.ProjectId,
+		Tags:        updateTaskValueObject.Tags,
 	}
 }
 

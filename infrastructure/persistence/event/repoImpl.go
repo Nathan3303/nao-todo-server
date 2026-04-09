@@ -134,3 +134,27 @@ func (eventRepo *EventRepoImpl) Get(
 	}
 	return EventModels2Entities(events), nil
 }
+
+// GetMaxSortId 获取最大排序 ID
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @return maxSortId 最大排序 ID
+// @return error 错误信息
+func (eventRepo *EventRepoImpl) GetMaxSortId(
+	ctx context.Context,
+	userId int64,
+	taskId int64,
+) uint16 {
+	// 1. 构建查询条件
+	var whereCond models.Event
+	whereCond.UserId = userId
+	whereCond.TaskId = taskId
+	// 2. 查询数据库
+	var maxSortId uint16 = 255
+	eventRepo.db.WithContext(ctx).Model(&models.Event{}).
+		Where(whereCond).
+		Pluck("MAX(sort_id)", &maxSortId)
+	// 3. 返回最大排序 ID
+	return maxSortId
+}

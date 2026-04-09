@@ -30,7 +30,7 @@ func (queryTask *QueryTask) Validate() error {
 
 func NewQueryTask(
 	userId int64,
-	projectid int64,
+	projectId int64,
 	tagId string,
 	name string,
 	description string,
@@ -53,7 +53,7 @@ func NewQueryTask(
 ) (*QueryTask, error) {
 	vo := &QueryTask{
 		UserId:       userId,
-		ProjectId:    projectid,
+		ProjectId:    projectId,
 		TagId:        tagId,
 		Name:         name,
 		Description:  description,

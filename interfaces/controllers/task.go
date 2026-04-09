@@ -45,7 +45,8 @@ func CreateTaskHandler(ctx *gin.Context) {
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40011,
-			Message: err.Error(),
+			Message: "参数错误",
+			Error:   err.Error(),
 		})
 		return
 	}
@@ -54,7 +55,8 @@ func CreateTaskHandler(ctx *gin.Context) {
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40012,
-			Message: err.Error(),
+			Message: "创建待办任务失败",
+			Error:   err.Error(),
 		})
 		return
 	}

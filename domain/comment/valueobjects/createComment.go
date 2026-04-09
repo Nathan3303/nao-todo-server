@@ -6,6 +6,7 @@ import "errors"
 // 评论内容最多 512 个字符
 // 最多拥有 8 个附件
 type CreateComment struct {
+	UserId      int64
 	TaskId      int64
 	Content     string
 	Attachments []string
@@ -15,6 +16,9 @@ type CreateComment struct {
 // Validate 验证创建评论 Value Object 是否符合要求
 // @return error 验证失败时返回错误
 func (createComment *CreateComment) Validate() error {
+	if createComment.UserId <= 0 {
+		return errors.New("用户 Id 不能为空")
+	}
 	if createComment.TaskId <= 0 {
 		return errors.New("待办任务 Id 不能为空")
 	}
@@ -38,12 +42,14 @@ func (createComment *CreateComment) Validate() error {
 // @return *CreateComment 创建评论 Value Object
 // @return error 创建失败时返回错误
 func NewCreateComment(
+	userId int64,
 	taskId int64,
 	content string,
 	attachments []string,
 	isTopUp bool,
 ) (*CreateComment, error) {
 	vo := &CreateComment{
+		UserId:      userId,
 		TaskId:      taskId,
 		Content:     content,
 		Attachments: attachments,

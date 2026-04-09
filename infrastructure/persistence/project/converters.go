@@ -78,11 +78,14 @@ func PreferenceModel2Entity(m *models.ProjectPreference) *entities.ProjectPrefer
 		return nil
 	}
 	e := &entities.ProjectPreference{}
+	e.Id = m.ID
 	e.UserId = m.UserId
 	e.ProjectId = m.ProjectId
 	e.ViewType = m.ViewType
 	e.GetOptions = m.GetOptions
 	e.Columns = m.Columns
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
 	return e
 }
 
@@ -95,4 +98,23 @@ func Models2Entities(ms []*models.Project) []*entities.Project {
 		es = append(es, Model2Entity(m))
 	}
 	return es
+}
+
+// UpdateProjectPrefrenceValueObjectToModel 更新项目偏好值对象转模型
+// @param userId 用户 ID
+// @param projectId 项目 ID
+// @param updateProjectPreferenceValueObject 更新项目偏好值对象
+// @return 更新项目偏好模型
+func UpdateProjectPrefrenceValueObjectToModel(
+	userId int64,
+	projectId int64,
+	updateProjectPreferenceValueObject *valueobjects.SaveProjectPreference,
+) *models.ProjectPreference {
+	m := &models.ProjectPreference{}
+	m.UserId = userId
+	m.ProjectId = projectId
+	m.ViewType = updateProjectPreferenceValueObject.ViewType
+	m.GetOptions = updateProjectPreferenceValueObject.GetOptions
+	m.Columns = updateProjectPreferenceValueObject.Columns
+	return m
 }

@@ -11,9 +11,11 @@ import (
 // @return 事件模型
 func CreateEventValueObjectToModel(createEventValueObject *valueobjects.CreateEvent) *models.Event {
 	m := &models.Event{}
+	m.UserId = createEventValueObject.UserId
 	m.TaskId = createEventValueObject.TaskId
 	m.Name = createEventValueObject.Name
 	m.Description = createEventValueObject.Description
+	m.SortId = createEventValueObject.SortId
 	return m
 }
 
@@ -29,6 +31,9 @@ func UpdateEventValueObjectToModel(updateEventValueObject *valueobjects.UpdateEv
 	return m
 }
 
+// EventModel2Entity 事件模型转换为事件实体
+// @param m models.Event 事件模型
+// @return entities.Event 事件实体
 func EventModel2Entity(m *models.Event) *entities.Event {
 	e := &entities.Event{}
 	e.Id = m.ID
@@ -38,9 +43,14 @@ func EventModel2Entity(m *models.Event) *entities.Event {
 	e.Description = m.Description
 	e.IsDone = m.IsDone
 	e.SortId = m.SortId
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
 	return e
 }
 
+// EventEntity2Model 事件实体转换为事件模型
+// @param e entities.Event 事件实体
+// @return models.Event 事件模型
 func EventEntity2Model(e *entities.Event) *models.Event {
 	m := &models.Event{}
 	m.ID = e.Id
@@ -53,6 +63,9 @@ func EventEntity2Model(e *entities.Event) *models.Event {
 	return m
 }
 
+// EventModels2Entities 事件模型列表转换为事件实体列表
+// @param mList []*models.Event 事件模型列表
+// @return []*entities.Event 事件实体列表
 func EventModels2Entities(mList []*models.Event) []*entities.Event {
 	eList := make([]*entities.Event, 0, len(mList))
 	for _, m := range mList {

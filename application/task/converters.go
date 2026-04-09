@@ -27,9 +27,9 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res.ArchivedAt, _ = taskEntity.ParseArchivedAt()
 	res.StarMarkAt, _ = taskEntity.ParseStarMarkAt()
 	res.GivenUpAt, _ = taskEntity.ParseGivenUpAt()
-	res.UpdatedAt = taskEntity.UpdatedAt
-	res.CreatedAt = taskEntity.CreatedAt
-	res.DeletedAt = taskEntity.DeletedAt
+	res.UpdatedAt = utils.Time2String(taskEntity.UpdatedAt)
+	res.CreatedAt = utils.Time2String(taskEntity.CreatedAt)
+	res.DeletedAt = utils.Time2String(taskEntity.DeletedAt)
 	return res
 }
 
@@ -44,7 +44,7 @@ func CreateTaskReqToValueObject(
 ) (*valueobjects.CreateTask, error) {
 	parentTaskIdInt64, err := strconv.ParseInt(req.ParentTaskId, 10, 64)
 	if err != nil {
-		return nil, err
+		parentTaskIdInt64 = 0
 	}
 	var projectIdInt64 int64
 	if req.ProjectId == "" {
@@ -75,11 +75,11 @@ func CreateTaskReqToValueObject(
 func UpdateTaskReqToValueObject(req *types.UpdateTaskReq) (*valueobjects.UpdateTask, error) {
 	parentIdInt64, err := strconv.ParseInt(req.ParentTaskId, 10, 64)
 	if err != nil {
-		return nil, err
+		parentIdInt64 = 0
 	}
 	projectIdInt64, err := strconv.ParseInt(req.ProjectId, 10, 64)
 	if err != nil {
-		return nil, err
+		projectIdInt64 = 0
 	}
 	return valueobjects.NewUpdateTask(
 		0,
@@ -109,7 +109,7 @@ func ListTaskReqToQueryTaskValueObject(
 ) (*valueobjects.QueryTask, error) {
 	projectIdInt64, err := strconv.ParseInt(req.ProjectId, 10, 64)
 	if err != nil {
-		return nil, err
+		projectIdInt64 = 0
 	}
 	return valueobjects.NewQueryTask(
 		userId,

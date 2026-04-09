@@ -7,7 +7,7 @@ server:
 mysql:
     host: 192.168.2.109
     port: 3306
-    database: naotodo_test
+    database: naotodo
     username: root
     password: lianGjh3303..
     charset: utf8mb4

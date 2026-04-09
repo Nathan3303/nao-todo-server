@@ -1,12 +1,16 @@
 package valueobjects
 
-import "errors"
+import (
+	"errors"
+)
 
 // CreateEvent 创建事件值对象
 type CreateEvent struct {
+	UserId      int64
 	TaskId      int64
 	Name        string
 	Description string
+	SortId      uint16
 }
 
 // Validate 验证创建事件值对象是否有效
@@ -28,13 +32,20 @@ func (createEvent *CreateEvent) Validate() error {
 }
 
 // NewCreateEvent 创建创建事件值对象
+// @param userId 用户ID
 // @param taskId 任务 ID
 // @param name 事件名称
 // @param description 事件描述
 // @return *CreateEvent 创建事件值对象
 // @return error 错误信息
-func NewCreateEvent(taskId int64, name string, description string) (*CreateEvent, error) {
+func NewCreateEvent(
+	userId int64,
+	taskId int64,
+	name string,
+	description string,
+) (*CreateEvent, error) {
 	vo := &CreateEvent{
+		UserId:      userId,
 		TaskId:      taskId,
 		Name:        name,
 		Description: description,

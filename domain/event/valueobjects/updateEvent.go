@@ -7,7 +7,7 @@ type UpdateEvent struct {
 	Name        string
 	Description string
 	IsDone      bool
-	SortId      uint32
+	SortId      uint16
 }
 
 // Validate 验证更新事件值对象是否有效
@@ -36,7 +36,7 @@ func NewUpdateEvent(
 	name string,
 	description string,
 	isDone bool,
-	sortId uint32,
+	sortId uint16,
 ) (*UpdateEvent, error) {
 	vo := &UpdateEvent{
 		Name:        name,

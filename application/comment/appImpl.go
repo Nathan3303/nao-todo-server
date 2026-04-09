@@ -50,7 +50,7 @@ func (commentApp *CommentAppImpl) GetComment(
 // @param ctx 上下文
 // @param req 创建评论请求体
 // @return 评论详情
-// @return error 错误
+// @return error 错误信息
 func (commentApp *CommentAppImpl) CreateComment(
 	ctx context.Context,
 	req *types.CreateCommentReq,
@@ -61,7 +61,7 @@ func (commentApp *CommentAppImpl) CreateComment(
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 转换请求体为实体
-	createCommentValueObject, err := CreateCommentReqToValueObject(req)
+	createCommentValueObject, err := CreateCommentReqToValueObject(userId, req)
 	if err != nil {
 		return nil, err
 	}

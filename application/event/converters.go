@@ -24,10 +24,12 @@ func EventEntityToGetRes(eventEntity *entities.Event) *types.GetEventRes {
 }
 
 // CreateEventReqToValueObject 将创建检查事项请求体转换为创建检查事项值对象
+// @param userId 用户ID
 // @param createEventReq 创建检查事项请求体
 // @return 创建检查事项值对象
 // @return error 错误信息
 func CreateEventReqToValueObject(
+	userId int64,
 	createEventReq *types.CreateEventReq,
 ) (*valueobjects.CreateEvent, error) {
 	taskId, err := strconv.ParseInt(createEventReq.TaskId, 10, 64)
@@ -35,6 +37,7 @@ func CreateEventReqToValueObject(
 		return nil, err
 	}
 	return valueobjects.NewCreateEvent(
+		userId,
 		taskId,
 		createEventReq.Name,
 		createEventReq.Description,

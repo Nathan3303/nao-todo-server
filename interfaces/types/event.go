@@ -8,7 +8,7 @@ type GetEventRes struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	IsDone      bool      `json:"isDone"`
-	SortId      uint32    `json:"sortId"`
+	SortId      uint16    `json:"sortId"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -25,7 +25,7 @@ type CreateEventRes struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	IsDone      bool      `json:"isDone"`
-	SortId      uint32    `json:"sortId"`
+	SortId      uint16    `json:"sortId"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -34,15 +34,7 @@ type UpdateEventReq struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	IsDone      bool   `json:"isDone"`
-	SortId      uint32 `json:"sortId"`
-}
-
-type UpdateEventRes struct {
-	EventId string `json:"eventId"`
-}
-
-type DeleteEventRes struct {
-	EventId string `json:"eventId"`
+	SortId      uint16 `json:"sortId"`
 }
 
 type ListEventRes []*GetEventRes
@@ -54,6 +46,6 @@ type ResortEventsReq struct {
 }
 
 type ResortEventsRes struct {
-	OriginalSortId uint32 `json:"originalSortId"`
-	BoundSortId    uint32 `json:"boundSortId"`
+	OriginalSortId uint16 `json:"originalSortId"`
+	BoundSortId    uint16 `json:"boundSortId"`
 }

@@ -44,10 +44,11 @@ func UpdateTagValueObjectToModel(
 func TagEntity2Model(e *entities.Tag) *models.Tag {
 	m := &models.Tag{}
 	m.ID = e.Id
-	m.UserId = e.UserId
 	m.Name = e.Name
 	m.Description = e.Description
 	m.Color = e.Color
+	m.CreatedAt = e.CreatedAt
+	m.UpdatedAt = e.UpdatedAt
 	return m
 }
 
@@ -59,11 +60,13 @@ func TagPreferenceEntity2Model(e *entities.TagPreference) *models.TagPreference 
 		return nil
 	}
 	m := &models.TagPreference{}
-	m.UserId = e.UserId
+	m.ID = e.Id
 	m.TagId = e.TagId
 	m.ViewType = e.ViewType
 	m.GetOptions = e.GetOptions
 	m.Columns = e.Columns
+	m.CreatedAt = e.CreatedAt
+	m.UpdatedAt = e.UpdatedAt
 	return m
 }
 
@@ -80,6 +83,8 @@ func TagModel2Entity(m *models.Tag) *entities.Tag {
 	e.Name = m.Name
 	e.Description = m.Description
 	e.Color = m.Color
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
 	return e
 }
 
@@ -97,6 +102,8 @@ func TagPreferenceModel2Entity(m *models.TagPreference) *entities.TagPreference 
 	e.ViewType = m.ViewType
 	e.GetOptions = m.GetOptions
 	e.Columns = m.Columns
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
 	return e
 }
 
@@ -115,9 +122,13 @@ func TagModelList2EntityList(mList []*models.Tag) []*entities.Tag {
 // @param updateTagPreferenceValueObject 更新标签偏好值对象
 // @return models.TagPreference 标签偏好模型
 func UpdateTagPreferenceValueObjectToModel(
+	userId int64,
+	tagId int64,
 	updateTagPreferenceValueObject *valueobjects.SaveTagPreference,
 ) *models.TagPreference {
 	return &models.TagPreference{
+		UserId:     userId,
+		TagId:      tagId,
 		ViewType:   updateTagPreferenceValueObject.ViewType,
 		GetOptions: updateTagPreferenceValueObject.GetOptions,
 		Columns:    updateTagPreferenceValueObject.Columns,

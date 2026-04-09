@@ -11,6 +11,7 @@ import (
 // @return 评论模型
 func CreateCommentValueObjectToModel(vo *valueobjects.CreateComment) *models.Comment {
 	m := &models.Comment{}
+	m.UserId = vo.UserId
 	m.TaskId = vo.TaskId
 	m.Content = vo.Content
 	m.Attachments = vo.Attachments
@@ -71,6 +72,7 @@ func CommentModel2Entity(m *models.Comment) *entities.Comment {
 	e.Attachments = m.Attachments
 	e.IsTopUp = m.IsTopUp
 	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
 	e.CommentUser = CommentUserModel2Entity(m.CommentUser)
 	return e
 }

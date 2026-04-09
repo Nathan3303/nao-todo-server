@@ -68,9 +68,15 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Save(
 		Where(&whereCond).
 		First(&existPreference)
 	if tx.Error == gorm.ErrRecordNotFound {
+		// 转换为 model
+		preferenceModel := UpdateProjectPrefrenceValueObjectToModel(
+			userId,
+			projectId,
+			saveProjectPreference,
+		)
 		// 新增
 		projectPreferenceRepo.db.WithContext(ctx).
-			Model(&models.ProjectPreference{}).Create(saveProjectPreference)
+			Model(&models.ProjectPreference{}).Create(preferenceModel)
 	} else {
 		// 更新
 		tx.Updates(models.ProjectPreference{
@@ -79,6 +85,6 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Save(
 			Columns:    saveProjectPreference.Columns,
 		})
 	}
-	// 3. model 转 valueobject
+	// 3. 返回结果
 	return nil
 }

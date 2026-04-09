@@ -9,7 +9,7 @@ type Event struct {
 	Name        string
 	Description string
 	IsDone      bool
-	SortId      uint32
+	SortId      uint16
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

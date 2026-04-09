@@ -61,6 +61,8 @@ func (t *TagPreferenceRepoImpl) Save(
 ) error {
 	// 1. valueobject 转 model
 	preference := UpdateTagPreferenceValueObjectToModel(
+		userId,
+		tagId,
 		saveTagPreferenceValueObject,
 	)
 	// 2. 定义查找模型

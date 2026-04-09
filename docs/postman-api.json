@@ -1,0 +1,2112 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Nao Todo Server API",
+    "version": "1.0.0",
+    "description": "Nao Todo Server API 文档，支持 Postman 导入"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "本地开发服务器"
+    }
+  ],
+  "paths": {
+    "/api/ping": {
+      "get": {
+        "summary": "健康检查",
+        "description": "检查服务器是否正常运行",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "pong",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signin": {
+      "post": {
+        "summary": "用户登录",
+        "description": "用户登录获取 JWT token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "用户密码"
+                  }
+                },
+                "required": ["email", "password"]
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10010",
+                  "message": "登录成功",
+                  "data": {
+                    "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signup": {
+      "post": {
+        "summary": "用户注册",
+        "description": "用户注册新账号",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "用户密码"
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "description": "用户昵称"
+                  }
+                },
+                "required": ["email", "password"]
+              },
+              "example": {
+                "email": "newuser@example.com",
+                "password": "password123",
+                "nickname": "新用户"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "注册成功",
+                  "data": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/checkin": {
+      "put": {
+        "summary": "用户检入",
+        "description": "用户检入更新登录状态",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jwt": {
+                    "type": "string",
+                    "description": "JWT token"
+                  },
+                  "deviceType": {
+                    "type": "string",
+                    "description": "设备类型"
+                  }
+                },
+                "required": ["jwt"]
+              },
+              "example": {
+                "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "deviceType": "web"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "检入成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10020",
+                  "message": "检入成功",
+                  "data": {
+                    "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signout": {
+      "delete": {
+        "summary": "用户登出",
+        "description": "用户登出并失效 token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jwt": {
+                    "type": "string",
+                    "description": "JWT token"
+                  },
+                  "deviceType": {
+                    "type": "string",
+                    "description": "设备类型"
+                  }
+                },
+                "required": ["jwt"]
+              },
+              "example": {
+                "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "deviceType": "web"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登出成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10030",
+                  "message": "登出成功",
+                  "data": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/validate": {
+      "get": {
+        "summary": "验证 JWT",
+        "description": "验证 JWT token 是否有效",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "验证通过",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10040",
+                  "message": "JWT 验证通过"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile": {
+      "get": {
+        "summary": "获取用户信息",
+        "description": "获取当前用户的详细信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "id": "1",
+                    "email": "user@example.com",
+                    "nickname": "用户昵称",
+                    "avatar": "https://example.com/avatar.jpg",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/nickname": {
+      "put": {
+        "summary": "更新用户昵称",
+        "description": "更新当前用户的昵称",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nickname": {
+                    "type": "string",
+                    "description": "新昵称"
+                  }
+                },
+                "required": ["nickname"]
+              },
+              "example": {
+                "nickname": "新昵称"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/password": {
+      "put": {
+        "summary": "更新用户密码",
+        "description": "更新当前用户的密码",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "oldPassword": {
+                    "type": "string",
+                    "description": "旧密码"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "description": "新密码"
+                  }
+                },
+                "required": ["oldPassword", "newPassword"]
+              },
+              "example": {
+                "oldPassword": "oldpassword123",
+                "newPassword": "newpassword123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/avatar": {
+      "put": {
+        "summary": "更新用户头像",
+        "description": "更新当前用户的头像",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "description": "头像 URL"
+                  }
+                },
+                "required": ["avatar"]
+              },
+              "example": {
+                "avatar": "https://example.com/new-avatar.jpg"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/active": {
+      "put": {
+        "summary": "激活用户",
+        "description": "激活当前用户账号",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "激活成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "激活成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/deactive": {
+      "put": {
+        "summary": "禁用用户",
+        "description": "禁用当前用户账号",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "禁用成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "禁用成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/": {
+      "get": {
+        "summary": "获取项目列表",
+        "description": "获取当前用户的所有项目",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": [
+                    {
+                      "id": "1",
+                      "name": "项目名称",
+                      "description": "项目描述",
+                      "isArchived": false,
+                      "createdAt": "2023-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建项目",
+        "description": "创建新的项目",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "项目名称"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "项目描述"
+                  }
+                },
+                "required": ["name"]
+              },
+              "example": {
+                "name": "新项目",
+                "description": "项目描述"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "创建成功",
+                  "data": {
+                    "id": "1",
+                    "name": "新项目",
+                    "description": "项目描述",
+                    "isArchived": false,
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}": {
+      "get": {
+        "summary": "获取项目详情",
+        "description": "获取指定项目的详细信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "id": "1",
+                    "name": "项目名称",
+                    "description": "项目描述",
+                    "isArchived": false,
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新项目",
+        "description": "更新指定项目的信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "项目名称"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "项目描述"
+                  }
+                }
+              },
+              "example": {
+                "name": "更新的项目名称",
+                "description": "更新的项目描述"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": {
+                    "id": "1",
+                    "name": "更新的项目名称",
+                    "description": "更新的项目描述",
+                    "isArchived": false,
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除项目",
+        "description": "删除指定项目",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/restore/{projectId}": {
+      "put": {
+        "summary": "恢复项目",
+        "description": "恢复已删除的项目",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "恢复成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "恢复成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/archive/{projectId}": {
+      "put": {
+        "summary": "归档项目",
+        "description": "归档指定项目",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "归档成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "归档成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/unarchive/{projectId}": {
+      "put": {
+        "summary": "取消归档项目",
+        "description": "取消归档指定项目",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "取消归档成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "取消归档成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/preference": {
+      "get": {
+        "summary": "获取项目偏好",
+        "description": "获取指定项目的偏好设置",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "projectId": "1",
+                    "color": "#ff0000",
+                    "icon": "📁"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "保存项目偏好",
+        "description": "保存指定项目的偏好设置",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "项目 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "description": "项目颜色"
+                  },
+                  "icon": {
+                    "type": "string",
+                    "description": "项目图标"
+                  }
+                }
+              },
+              "example": {
+                "color": "#ff0000",
+                "icon": "📁"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "保存成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tags/": {
+      "get": {
+        "summary": "获取标签列表",
+        "description": "获取当前用户的所有标签",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": [
+                    {
+                      "id": "1",
+                      "name": "标签名称",
+                      "color": "#ff0000",
+                      "createdAt": "2023-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建标签",
+        "description": "创建新的标签",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "标签名称"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "标签颜色"
+                  }
+                },
+                "required": ["name"]
+              },
+              "example": {
+                "name": "新标签",
+                "color": "#ff0000"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "创建成功",
+                  "data": {
+                    "id": "1",
+                    "name": "新标签",
+                    "color": "#ff0000",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tags/{tagId}": {
+      "get": {
+        "summary": "获取标签详情",
+        "description": "获取指定标签的详细信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tagId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "标签 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "id": "1",
+                    "name": "标签名称",
+                    "color": "#ff0000",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新标签",
+        "description": "更新指定标签的信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tagId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "标签 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "标签名称"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "标签颜色"
+                  }
+                }
+              },
+              "example": {
+                "name": "更新的标签名称",
+                "color": "#00ff00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": {
+                    "id": "1",
+                    "name": "更新的标签名称",
+                    "color": "#00ff00",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除标签",
+        "description": "删除指定标签",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tagId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "标签 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tags/{tagId}/preference": {
+      "get": {
+        "summary": "获取标签偏好",
+        "description": "获取指定标签的偏好设置",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tagId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "标签 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "tagId": "1",
+                    "color": "#ff0000",
+                    "icon": "🏷️"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "更新标签偏好",
+        "description": "更新指定标签的偏好设置",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tagId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "标签 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "description": "标签颜色"
+                  },
+                  "icon": {
+                    "type": "string",
+                    "description": "标签图标"
+                  }
+                }
+              },
+              "example": {
+                "color": "#ff0000",
+                "icon": "🏷️"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/": {
+      "get": {
+        "summary": "获取任务列表",
+        "description": "获取当前用户的所有任务",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": [
+                    {
+                      "id": "1",
+                      "title": "任务标题",
+                      "description": "任务描述",
+                      "status": "pending",
+                      "dueDate": "2023-01-31T23:59:59Z",
+                      "projectId": "1",
+                      "tagIds": ["1", "2"],
+                      "createdAt": "2023-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建任务",
+        "description": "创建新的任务",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "任务标题"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "任务描述"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "任务状态"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "截止日期"
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "description": "项目 ID"
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签 ID 列表"
+                  }
+                },
+                "required": ["title"]
+              },
+              "example": {
+                "title": "新任务",
+                "description": "任务描述",
+                "status": "pending",
+                "dueDate": "2023-01-31T23:59:59Z",
+                "projectId": "1",
+                "tagIds": ["1", "2"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "创建成功",
+                  "data": {
+                    "id": "1",
+                    "title": "新任务",
+                    "description": "任务描述",
+                    "status": "pending",
+                    "dueDate": "2023-01-31T23:59:59Z",
+                    "projectId": "1",
+                    "tagIds": ["1", "2"],
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{taskId}": {
+      "get": {
+        "summary": "获取任务详情",
+        "description": "获取指定任务的详细信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "任务 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "id": "1",
+                    "title": "任务标题",
+                    "description": "任务描述",
+                    "status": "pending",
+                    "dueDate": "2023-01-31T23:59:59Z",
+                    "projectId": "1",
+                    "tagIds": ["1", "2"],
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新任务",
+        "description": "更新指定任务的信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "任务 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "任务标题"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "任务描述"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "任务状态"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "截止日期"
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "description": "项目 ID"
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签 ID 列表"
+                  }
+                }
+              },
+              "example": {
+                "title": "更新的任务标题",
+                "description": "更新的任务描述",
+                "status": "in_progress",
+                "dueDate": "2023-01-31T23:59:59Z",
+                "projectId": "1",
+                "tagIds": ["1", "2", "3"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": {
+                    "id": "1",
+                    "title": "更新的任务标题",
+                    "description": "更新的任务描述",
+                    "status": "in_progress",
+                    "dueDate": "2023-01-31T23:59:59Z",
+                    "projectId": "1",
+                    "tagIds": ["1", "2", "3"],
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除任务",
+        "description": "删除指定任务",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "任务 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/restore/{taskId}": {
+      "put": {
+        "summary": "恢复任务",
+        "description": "恢复已删除的任务",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "任务 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "恢复成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "恢复成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/": {
+      "get": {
+        "summary": "获取事件列表",
+        "description": "获取当前用户的所有事件",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": [
+                    {
+                      "id": "1",
+                      "title": "事件标题",
+                      "description": "事件描述",
+                      "status": "pending",
+                      "taskId": "1",
+                      "order": 1,
+                      "createdAt": "2023-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建事件",
+        "description": "创建新的事件",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "事件标题"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "事件描述"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "事件状态"
+                  },
+                  "taskId": {
+                    "type": "string",
+                    "description": "任务 ID"
+                  },
+                  "order": {
+                    "type": "integer",
+                    "description": "事件顺序"
+                  }
+                },
+                "required": ["title", "taskId"]
+              },
+              "example": {
+                "title": "新事件",
+                "description": "事件描述",
+                "status": "pending",
+                "taskId": "1",
+                "order": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "创建成功",
+                  "data": {
+                    "id": "1",
+                    "title": "新事件",
+                    "description": "事件描述",
+                    "status": "pending",
+                    "taskId": "1",
+                    "order": 1,
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}": {
+      "get": {
+        "summary": "获取事件详情",
+        "description": "获取指定事件的详细信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "事件 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "id": "1",
+                    "title": "事件标题",
+                    "description": "事件描述",
+                    "status": "pending",
+                    "taskId": "1",
+                    "order": 1,
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新事件",
+        "description": "更新指定事件的信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "事件 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "事件标题"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "事件描述"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "事件状态"
+                  },
+                  "order": {
+                    "type": "integer",
+                    "description": "事件顺序"
+                  }
+                }
+              },
+              "example": {
+                "title": "更新的事件标题",
+                "description": "更新的事件描述",
+                "status": "completed",
+                "order": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": {
+                    "id": "1",
+                    "title": "更新的事件标题",
+                    "description": "更新的事件描述",
+                    "status": "completed",
+                    "taskId": "1",
+                    "order": 2,
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除事件",
+        "description": "删除指定事件",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "事件 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/resort": {
+      "put": {
+        "summary": "重新排序事件",
+        "description": "重新排序指定任务的事件",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "taskId": {
+                    "type": "string",
+                    "description": "任务 ID"
+                  },
+                  "eventIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "事件 ID 列表，按新顺序排列"
+                  }
+                },
+                "required": ["taskId", "eventIds"]
+              },
+              "example": {
+                "taskId": "1",
+                "eventIds": ["3", "1", "2"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "排序成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "排序成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comments/": {
+      "get": {
+        "summary": "获取评论列表",
+        "description": "获取指定任务的所有评论",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "任务 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": [
+                    {
+                      "id": "1",
+                      "content": "评论内容",
+                      "taskId": "1",
+                      "userId": "1",
+                      "userNickname": "用户昵称",
+                      "createdAt": "2023-01-01T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "创建评论",
+        "description": "创建新的评论",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "评论内容"
+                  },
+                  "taskId": {
+                    "type": "string",
+                    "description": "任务 ID"
+                  }
+                },
+                "required": ["content", "taskId"]
+              },
+              "example": {
+                "content": "新评论",
+                "taskId": "1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "创建成功",
+                  "data": {
+                    "id": "1",
+                    "content": "新评论",
+                    "taskId": "1",
+                    "userId": "1",
+                    "userNickname": "用户昵称",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comments/{commentId}": {
+      "get": {
+        "summary": "获取评论详情",
+        "description": "获取指定评论的详细信息",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "评论 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "获取成功",
+                  "data": {
+                    "id": "1",
+                    "content": "评论内容",
+                    "taskId": "1",
+                    "userId": "1",
+                    "userNickname": "用户昵称",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "更新评论",
+        "description": "更新指定评论的内容",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "评论 ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "评论内容"
+                  }
+                },
+                "required": ["content"]
+              },
+              "example": {
+                "content": "更新的评论内容"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "更新成功",
+                  "data": {
+                    "id": "1",
+                    "content": "更新的评论内容",
+                    "taskId": "1",
+                    "userId": "1",
+                    "userNickname": "用户昵称",
+                    "createdAt": "2023-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "删除评论",
+        "description": "删除指定评论",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "评论 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "10000",
+                  "message": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ]
+}

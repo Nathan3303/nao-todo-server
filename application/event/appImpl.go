@@ -60,7 +60,7 @@ func (eventApp *EventAppImpl) CreateEvent(
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 转换请求体为实体
-	createEntity, err := CreateEventReqToValueObject(createEventReq)
+	createEntity, err := CreateEventReqToValueObject(userId, createEventReq)
 	if err != nil {
 		return nil, err
 	}
@@ -87,34 +87,29 @@ func (eventApp *EventAppImpl) UpdateEvent(
 	ctx context.Context,
 	eventId string,
 	updateEventReq *types.UpdateEventReq,
-) (*types.UpdateEventRes, error) {
+) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 转换检查事项 ID
 	eventId64, err := strconv.ParseInt(eventId, 10, 64)
 	if err != nil {
-		return nil, errors.New("检查事项 ID 格式错误")
+		return errors.New("检查事项 ID 格式错误")
 	}
 	// 3. 转换请求体为实体
 	updateEntity, err := UpdateEventReqToValueObject(updateEventReq)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// 4. 更新检查事项
-	err = eventApp.eventDomain.Update(
+	return eventApp.eventDomain.Update(
 		ctx,
 		userId,
 		eventId64,
 		updateEntity,
 	)
-	if err != nil {
-		return nil, err
-	}
-	// 返回结果
-	return &types.UpdateEventRes{EventId: eventId}, nil
 }
 
 // DeleteEvent 删除检查事项
@@ -125,24 +120,19 @@ func (eventApp *EventAppImpl) UpdateEvent(
 func (eventApp *EventAppImpl) DeleteEvent(
 	ctx context.Context,
 	eventId string,
-) (*types.DeleteEventRes, error) {
+) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return errors.New("用户 ID 无效")
 	}
 	// 2. 转换检查事项 ID
 	eventId64, err := strconv.ParseInt(eventId, 10, 64)
 	if err != nil {
-		return nil, errors.New("检查事项 ID 格式错误")
+		return errors.New("检查事项 ID 格式错误")
 	}
 	// 3. 删除检查事项
-	err = eventApp.eventDomain.Delete(ctx, userId, eventId64)
-	if err != nil {
-		return nil, err
-	}
-	// 返回结果
-	return &types.DeleteEventRes{EventId: eventId}, nil
+	return eventApp.eventDomain.Delete(ctx, userId, eventId64)
 }
 
 // ListEvent 获取检查事项列表

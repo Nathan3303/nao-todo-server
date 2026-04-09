@@ -93,7 +93,7 @@ func UpdateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新检查事项
-	res, err := event.App.UpdateEvent(ctx.Request.Context(), eventId, &req)
+	err = event.App.UpdateEvent(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50023,
@@ -106,7 +106,7 @@ func UpdateEventHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    50020,
 		Message: "更新检查事项成功",
-		Data:    res,
+		Data:    eventId,
 	})
 }
 
@@ -123,7 +123,7 @@ func DeleteEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除检查事项
-	res, err := event.App.DeleteEvent(ctx.Request.Context(), eventId)
+	err := event.App.DeleteEvent(ctx.Request.Context(), eventId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50032,
@@ -136,7 +136,7 @@ func DeleteEventHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    50030,
 		Message: "删除检查事项成功",
-		Data:    res,
+		Data:    eventId,
 	})
 }
 
