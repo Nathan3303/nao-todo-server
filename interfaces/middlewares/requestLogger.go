@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/logging"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,16 +33,16 @@ func RequestLogger() gin.HandlerFunc {
 
 		// 构建日志字段
 		fields := map[string]interface{}{
-			"method":     c.Request.Method,
-			"path":       c.Request.URL.Path,
-			"status":     c.Writer.Status(),
-			"duration":   duration.String(),
-			"ip":         clientInfo.IP4,
-			"ip_region":  clientInfo.IPRegion,
-			"device_type": clientInfo.DeviceType,
-			"user_agent": c.Request.UserAgent(),
-			"content_type": c.ContentType(),
-			"content_length": c.Request.ContentLength,
+			"method":          c.Request.Method,
+			"path":            c.Request.URL.Path,
+			"status":          c.Writer.Status(),
+			"duration":        duration.String(),
+			"ip":              clientInfo.IP4,
+			"ip_region":       clientInfo.IPRegion,
+			"device_type":     clientInfo.DeviceType,
+			"user_agent":      c.Request.UserAgent(),
+			"content_type":    c.ContentType(),
+			"content_length":  c.Request.ContentLength,
 			"response_length": c.Writer.Size(),
 		}
 

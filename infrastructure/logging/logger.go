@@ -7,7 +7,7 @@ import (
 
 	"naotodoserver/conf"
 
-	"github.com/lestrrat-go/file-rotatelogs"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
@@ -40,7 +40,7 @@ func InitLogger() {
 	// 配置日志文件滚动（只设置一个限制，避免冲突）
 	var writer *rotatelogs.RotateLogs
 	var logErr error
-	
+
 	if conf.Conf.Log.MaxAge > 0 {
 		// 使用最大保留天数
 		writer, logErr = rotatelogs.New(

@@ -9,9 +9,9 @@ import (
 var Conf *Config
 
 type Config struct {
-	Server *Server  `yaml:"server"`
-	MySQL  *MySQL   `yaml:"mysql"`
-	Redis  *Redis   `yaml:"redis"`
+	Server *Server    `yaml:"server"`
+	MySQL  *MySQL     `yaml:"mysql"`
+	Redis  *Redis     `yaml:"redis"`
 	Log    *LogConfig `yaml:"log"`
 }
 
