@@ -33,7 +33,10 @@ type UserApp interface {
 	) (*types.UpdateUserAvatarRes, error)
 
 	// UpdateAvatarByFile 更新用户头像（通过文件上传）
-	UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAvatarRes, error)
+	UpdateAvatarByFile(
+		ctxRaw *gin.Context,
+		ctx context.Context,
+	) (*types.UpdateUserAvatarRes, error)
 
 	// DeactiveUser 禁用用户
 	DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error

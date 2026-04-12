@@ -27,8 +27,16 @@ func InitRouters() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// 配置静态文件服务器
+	// 映射 /static/uploads 到本地 uploads 目录
+	router.Static("/static/uploads", "./uploads")
+
 	// 创建 API v1 路由组 - 应用 ClientInfo 和 RequestLogger 中间件
-	v1 := router.Group("/api", middlewares.ClientInfo, middlewares.RequestLogger())
+	v1 := router.Group(
+		"/api",
+		middlewares.ClientInfo,
+		middlewares.RequestLogger(),
+	)
 	{
 		v1.GET("/ping", controllers.PingHandler)
 		UseAuthRouter(v1)

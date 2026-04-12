@@ -104,17 +104,21 @@ func (u *userAppImpl) UpdateAvatar(
 }
 
 // UpdateAvatarByFile 更新用户头像（通过文件上传）
-// @param ctx 上下文
+// @param ctx 原始上下文
+// @param iCtx 上下文
 // @return *types.UpdateUserAvatarRes 更新用户头像响应
 // @return error 错误
-func (u *userAppImpl) UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAvatarRes, error) {
+func (u *userAppImpl) UpdateAvatarByFile(
+	ctxRaw *gin.Context,
+	ctx context.Context,
+) (*types.UpdateUserAvatarRes, error) {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 获取文件
-	file, err := ctx.FormFile("avatar")
+	file, err := ctxRaw.FormFile("avatar")
 	if err != nil {
 		return nil, errors.New("文件上传失败 - " + err.Error())
 	}
@@ -126,23 +130,31 @@ func (u *userAppImpl) UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAva
 	ext := filepath.Ext(file.Filename)
 	allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
 	if !allowedExts[ext] {
-		return nil, errors.New("不支持的文件类型")
+		return nil, errors.New("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
 	}
-	// 4. 生成唯一文件名
-	uniqueFilename := fmt.Sprintf("/uploads/avatars/%d%s", userId, ext)
-	// 5. 确保目录存在
-	os.MkdirAll("/uploads/avatars", os.ModePerm)
+	// 4. 确保上传目录存在
+	uploadDir := "uploads/avatars"
+	if err = os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		return nil, errors.New("创建上传目录失败 - " + err.Error())
+	}
+	// 5. 生成唯一文件名
+	uniqueFilename := fmt.Sprintf("%d%s", userId, ext)
+	savePath := filepath.Join(uploadDir, uniqueFilename)
 	// 6. 保存文件
-	if err = ctx.SaveUploadedFile(file, uniqueFilename); err != nil {
-		return nil, err
+	if err = ctxRaw.SaveUploadedFile(file, savePath); err != nil {
+		return nil, errors.New("文件保存失败 - " + err.Error())
 	}
-	// 7. 更新用户头像
-	err = u.userDomain.UpdateAvatar(ctx, userId, uniqueFilename)
+	// 7. 构造可访问的 URL
+	avatarURL := fmt.Sprintf("/static/%s/%s", uploadDir, uniqueFilename)
+	// 8. 更新用户头像
+	err = u.userDomain.UpdateAvatar(ctx, userId, avatarURL)
 	if err != nil {
+		// 更新失败时删除已上传的文件
+		os.Remove(savePath)
 		return nil, err
 	}
-	// 8. 返回结果
-	return &types.UpdateUserAvatarRes{AvatarURL: uniqueFilename}, nil
+	// 9. 返回结果
+	return &types.UpdateUserAvatarRes{AvatarURL: avatarURL}, nil
 }
 
 // DeactiveUser 禁用用户

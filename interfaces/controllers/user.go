@@ -104,26 +104,46 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 // UpdateUserAvatarHandler 更新用户头像控制器
 // @code 1008x
 func UpdateUserAvatarHandler(ctx *gin.Context) {
-	// panic("unimplemented")
-	// 1. 获取参数
+	// 1. 判断请求类型
+	contentType := ctx.ContentType()
+
 	var req types.UpdateUserAvatarReq
-	err := ctx.ShouldBind(&req)
-	if err != nil {
+	var res *types.UpdateUserAvatarRes
+	var err error
+
+	// 2. 根据请求类型处理
+	switch contentType {
+	case "application/json", "text/plain;charset=utf-8":
+		// JSON 请求：通过 URL 更新
+		err = ctx.ShouldBind(&req)
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    10081,
+				Message: "参数错误",
+			})
+			return
+		}
+
+		if req.AvatarURL != "" {
+			res, err = user.App.UpdateAvatar(ctx.Request.Context(), req)
+		} else {
+			Failure(ctx, types.ResponseData{
+				Code:    10081,
+				Message: "头像 URL 不能为空",
+			})
+			return
+		}
+	case "multipart/form-data":
+		// 表单请求：通过文件上传更新
+		res, err = user.App.UpdateAvatarByFile(ctx, ctx.Request.Context())
+	default:
 		Failure(ctx, types.ResponseData{
 			Code:    10081,
-			Message: "参数错误",
+			Message: "不支持的请求类型",
 		})
 		return
 	}
-	res := &types.UpdateUserAvatarRes{}
-	// 2. 判断是否通过 AvatarURL 更新头像
-	if req.AvatarURL != "" {
-		// 是：则调用用户服务 - 更新用户头像 URL
-		res, err = user.App.UpdateAvatar(ctx.Request.Context(), req)
-	} else {
-		// 否：则调用用户服务 - 更新用户头像文件
-		res, err = user.App.UpdateAvatarByFile(ctx)
-	}
+
 	// 3. 判断处理结果
 	if err != nil {
 		Failure(ctx, types.ResponseData{
@@ -132,6 +152,7 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 		})
 		return
 	}
+
 	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    10080,
