@@ -69,10 +69,14 @@ func CreateTaskReqToValueObject(
 }
 
 // UpdateTaskReqToValueObject 更新任务请求转换为更新任务值对象
+// @param userId 用户 ID
 // @param req 更新任务请求
 // @return 更新任务值对象
 // @error 错误
-func UpdateTaskReqToValueObject(req *types.UpdateTaskReq) (*valueobjects.UpdateTask, error) {
+func UpdateTaskReqToValueObject(
+	userId int64,
+	req *types.UpdateTaskReq,
+) (*valueobjects.UpdateTask, error) {
 	var iParentId, iProjectId *int64
 	var iState, iPriority *int8
 	if req.ParentTaskId != nil {
@@ -80,8 +84,12 @@ func UpdateTaskReqToValueObject(req *types.UpdateTaskReq) (*valueobjects.UpdateT
 		iParentId = &iParentIdValue
 	}
 	if req.ProjectId != nil {
-		iProjectIdValue, _ := strconv.ParseInt(*req.ProjectId, 10, 64)
-		iProjectId = &iProjectIdValue
+		if *req.ProjectId == "inbox" {
+			iProjectId = &userId
+		} else {
+			iProjectIdValue, _ := strconv.ParseInt(*req.ProjectId, 10, 64)
+			iProjectId = &iProjectIdValue
+		}
 	}
 	if req.State != nil {
 		iStateValue := consts.TodoStateMap[*req.State]
@@ -117,9 +125,16 @@ func ListTaskReqToQueryTaskValueObject(
 	userId int64,
 	req *types.ListTaskReq,
 ) (*valueobjects.QueryTask, error) {
-	projectIdInt64, err := strconv.ParseInt(req.ProjectId, 10, 64)
-	if err != nil {
-		projectIdInt64 = 0
+	var projectIdInt64 int64
+	if req.ProjectId == "inbox" {
+		projectIdInt64 = userId
+	} else {
+		porjectIdValue, err := strconv.ParseInt(req.ProjectId, 10, 64)
+		if err != nil {
+			projectIdInt64 = 0
+		} else {
+			projectIdInt64 = porjectIdValue
+		}
 	}
 	return valueobjects.NewQueryTask(
 		userId,

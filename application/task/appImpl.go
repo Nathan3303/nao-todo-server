@@ -100,7 +100,7 @@ func (taskApp *TaskAppImpl) UpdateTask(
 		return errors.New("待办任务 ID 无效")
 	}
 	// 3. 请求体转换值对象
-	updateTaskValueObject, err := UpdateTaskReqToValueObject(req)
+	updateTaskValueObject, err := UpdateTaskReqToValueObject(userId, req)
 	if err != nil {
 		return err
 	}
