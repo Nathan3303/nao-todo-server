@@ -11,7 +11,10 @@ func main() {
 	// @step 1. 加载配置文件
 	conf.InitConfig()
 
-	// @step 2. 加载 Infrastructure 层
+	// @step 2. 初始化日志系统
+	infrastructure.LoadLogger()
+
+	// @step 3. 加载 Infrastructure 层
 	infrastructure.LoadDBs()
 	infrastructure.LoadDomains()
 	infrastructure.LoadCron()

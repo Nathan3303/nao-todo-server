@@ -9,9 +9,20 @@ import (
 var Conf *Config
 
 type Config struct {
-	Server *Server `yaml:"server"`
-	MySQL  *MySQL  `yaml:"mysql"`
-	Redis  *Redis  `yaml:"redis"`
+	Server *Server  `yaml:"server"`
+	MySQL  *MySQL   `yaml:"mysql"`
+	Redis  *Redis   `yaml:"redis"`
+	Log    *LogConfig `yaml:"log"`
+}
+
+type LogConfig struct {
+	Level         string `yaml:"level"`         // 日志级别：debug, info, warn, error, fatal, panic
+	FilePath      string `yaml:"filePath"`      // 日志文件路径
+	MaxSize       int    `yaml:"maxSize"`       // 单个日志文件最大大小（MB）
+	MaxAge        int    `yaml:"maxAge"`        // 日志文件保留天数
+	MaxBackups    int    `yaml:"maxBackups"`    // 保留的日志文件副本数量
+	Compress      bool   `yaml:"compress"`      // 是否压缩日志文件
+	OutputConsole bool   `yaml:"outputConsole"` // 是否同时输出到控制台
 }
 
 type Server struct {

@@ -18,3 +18,12 @@ redis:
     redisPort: 6379
     redisPassword: 123456
     redisNetwork: "tcp"
+
+log:
+    level: info
+    filePath: logs/app.log
+    maxSize: 100
+    maxAge: 30
+    maxBackups: 10
+    compress: true
+    outputConsole: true

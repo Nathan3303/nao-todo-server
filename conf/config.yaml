@@ -20,3 +20,12 @@ redis:
     password: lianGjh3303!
     database: 0
     network: tcp
+
+log:
+    level: info
+    filePath: logs/app.log
+    maxSize: 100
+    maxAge: 30
+    maxBackups: 10
+    compress: true
+    outputConsole: true

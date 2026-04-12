@@ -27,8 +27,8 @@ func InitRouters() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 创建 API v1 路由组
-	v1 := router.Group("/api", middlewares.ClientInfo)
+	// 创建 API v1 路由组 - 应用 ClientInfo 和 RequestLogger 中间件
+	v1 := router.Group("/api", middlewares.ClientInfo, middlewares.RequestLogger())
 	{
 		v1.GET("/ping", controllers.PingHandler)
 		UseAuthRouter(v1)

@@ -16,6 +16,7 @@ import (
 	taskService "naotodoserver/domain/task/service"
 	userService "naotodoserver/domain/user/service"
 	"naotodoserver/infrastructure/cron"
+	"naotodoserver/infrastructure/logging"
 	authRepo "naotodoserver/infrastructure/persistence/auth"
 	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
@@ -26,6 +27,11 @@ import (
 	taskRepo "naotodoserver/infrastructure/persistence/task"
 	userRepo "naotodoserver/infrastructure/persistence/user"
 )
+
+// LoadLogger 初始化日志系统
+func LoadLogger() {
+	logging.InitLogger()
+}
 
 func LoadDBs() {
 	dbs.InitMySQL()

@@ -60,3 +60,4 @@ Thumbs.db
 .old/
 .fresh.tmp/
 .local
+logs
