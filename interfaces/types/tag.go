@@ -37,9 +37,9 @@ type CreateTagRes struct {
 }
 
 type UpdateTagReq struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Color       string `json:"color"`
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	Color       *string `json:"color"`
 }
 
 type ListTagRes []*GetTagRes

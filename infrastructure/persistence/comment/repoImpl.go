@@ -88,17 +88,13 @@ func (commentRepo *CommentRepoImpl) Update(
 	commentId int64,
 	updateCommentValueObject *valueobjects.UpdateComment,
 ) error {
-	commentModel := UpdateCommentValueObjectToModel(updateCommentValueObject)
 	var whereCond models.Comment
 	whereCond.UserId = userId
 	whereCond.ID = commentId
-	err := commentRepo.db.WithContext(ctx).Model(&models.Comment{}).
+	updateCond := UpdateCommentValueObjectToMap(updateCommentValueObject)
+	return commentRepo.db.WithContext(ctx).Model(&models.Comment{}).
 		Where(&whereCond).
-		Updates(commentModel).Error
-	if err != nil {
-		return err
-	}
-	return nil
+		Updates(updateCond).Error
 }
 
 // Delete 删除评论

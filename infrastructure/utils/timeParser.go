@@ -50,6 +50,13 @@ func String2SqlNullTime(rfc3399DateStr string) sql.NullTime {
 	return sql.NullTime{Time: t, Valid: true}
 }
 
+func StringPtr2SqlNullTime(rfc3399DateStr *string) sql.NullTime {
+	if rfc3399DateStr == nil {
+		return sql.NullTime{Valid: false}
+	}
+	return String2SqlNullTime(*rfc3399DateStr)
+}
+
 func SqlNullTime2Time(t sql.NullTime) time.Time {
 	if !t.Valid {
 		return time.Time{}

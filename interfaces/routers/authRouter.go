@@ -31,7 +31,7 @@ func UseAuthRouter(router *gin.RouterGroup) {
 			"/validate",
 			middlewares.JWTValidator,
 			func(ctx *gin.Context) {
-				ctx.JSON(200, gin.H{"code": "10040", "message": "JWT 验证通过"})
+				ctx.JSON(200, gin.H{"code": 10040, "message": "JWT 验证通过"})
 			},
 		)
 	}

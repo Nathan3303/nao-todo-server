@@ -15,8 +15,6 @@ type SignUpReq struct {
 	Nickname string `json:"nickname" form:"nickname"`
 }
 
-type SignUpRes struct{}
-
 type SignOutReq struct {
 	Token      string `json:"jwt" form:"jwt" binding:"required"`
 	DeviceType string `json:"deviceType" form:"deviceType"`

@@ -85,7 +85,7 @@ func (tagRepo *TagRepositoryImpl) Update(
 	var whereCond models.Tag
 	whereCond.UserId = userId
 	whereCond.ID = tagId
-	updateCond := UpdateTagValueObjectToModel(userId, updateTagValueObject)
+	updateCond := UpdateTagValueObjectToMap(updateTagValueObject)
 	// 2. 更新数据
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
 		Where(&whereCond).

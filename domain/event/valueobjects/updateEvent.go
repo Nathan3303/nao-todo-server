@@ -4,22 +4,22 @@ import "errors"
 
 // UpdateEvent 更新事件值对象
 type UpdateEvent struct {
-	Name        string
-	Description string
-	IsDone      bool
-	SortId      uint16
+	Name        *string
+	Description *string
+	IsDone      *bool
+	SortId      *uint16
 }
 
 // Validate 验证更新事件值对象是否有效
 // @return error 错误信息
 func (updateEvent *UpdateEvent) Validate() error {
-	if updateEvent.Name != "" && len(updateEvent.Name) > 128 {
+	if updateEvent.Name != nil && len(*updateEvent.Name) > 128 {
 		return errors.New("事件名称长度不能超过 128 个字符")
 	}
-	if updateEvent.Description != "" && len(updateEvent.Description) > 256 {
+	if updateEvent.Description != nil && len(*updateEvent.Description) > 256 {
 		return errors.New("事件描述长度不能超过 512 个字符")
 	}
-	if updateEvent.SortId == 0 {
+	if updateEvent.SortId != nil && *updateEvent.SortId == 0 {
 		return errors.New("排序 ID 不能为空")
 	}
 	return nil
@@ -33,10 +33,10 @@ func (updateEvent *UpdateEvent) Validate() error {
 // @return *UpdateEvent 更新事件值对象
 // @return error 错误信息
 func NewUpdateEvent(
-	name string,
-	description string,
-	isDone bool,
-	sortId uint16,
+	name *string,
+	description *string,
+	isDone *bool,
+	sortId *uint16,
 ) (*UpdateEvent, error) {
 	vo := &UpdateEvent{
 		Name:        name,

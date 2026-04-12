@@ -66,8 +66,9 @@ func (projectRepo *ProjectRepoImpl) GetById(
 
 // Update 更新清单
 // @param ctx 上下文
-// @param whereEntity 查询条件
-// @param updateEntity 更新条件
+// @param userId 用户ID
+// @param projectId 项目ID
+// @param updateProjectValueObject 更新项目值对象
 // @return error 错误
 func (projectRepo *ProjectRepoImpl) Update(
 	ctx context.Context,
@@ -79,17 +80,15 @@ func (projectRepo *ProjectRepoImpl) Update(
 	var whereCond models.Project
 	whereCond.UserId = userId
 	whereCond.ID = projectId
-	updateCond := UpdateProjectValueObject2Model(updateProjectValueObject)
-	// 2. 更新数据库
+	// 2. 更新值对象转换为 map 格式
+	updateCond := UpdateProjectValueObjectToMap(updateProjectValueObject)
+	// 3. 更新数据库
 	tx := projectRepo.db.WithContext(ctx).
 		Model(&models.Project{}).
 		Where(&whereCond).
 		Updates(updateCond)
-	// 3. 返回结果
-	if tx.Error != nil {
-		return tx.Error
-	}
-	return nil
+	// 4. 返回结果
+	return tx.Error
 }
 
 // Delete 删除清单

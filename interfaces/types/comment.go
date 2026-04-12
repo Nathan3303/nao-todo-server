@@ -22,9 +22,9 @@ type CreateCommentReq struct {
 }
 
 type UpdateCommentReq struct {
-	Content     string   `json:"content"`
-	Attachments []string `json:"attachments"`
-	IsTopUp     bool     `json:"isTopUp"`
+	Content     *string   `json:"content"`
+	Attachments *[]string `json:"attachments"`
+	IsTopUp     *bool     `json:"isTopUp"`
 }
 
 type ListCommentRes []*CommentRes

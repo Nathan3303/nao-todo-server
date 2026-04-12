@@ -2,9 +2,13 @@ package user
 
 import (
 	"naotodoserver/domain/user/entities"
+	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 )
 
+// UserEntity2Res 用户实体转换为获取用户响应
+// @param e 用户实体
+// @return 获取用户响应
 func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res := &types.GetUserProfileRes{}
 	res.Email = e.Email
@@ -14,7 +18,7 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res.CreatedFrom = e.CreatedFrom
 	res.State = e.State
 	res.Config = e.Config
-	res.CreatedAt = e.CreatedAt.Format("2006-01-02 15:04:05")
-	res.UpdatedAt = e.UpdatedAt.Format("2006-01-02 15:04:05")
+	res.CreatedAt = utils.Time2String(e.CreatedAt)
+	res.UpdatedAt = utils.Time2String(e.UpdatedAt)
 	return res
 }

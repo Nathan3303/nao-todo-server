@@ -24,11 +24,42 @@ func CreateEventValueObjectToModel(createEventValueObject *valueobjects.CreateEv
 // @return 事件模型
 func UpdateEventValueObjectToModel(updateEventValueObject *valueobjects.UpdateEvent) *models.Event {
 	m := &models.Event{}
-	m.Name = updateEventValueObject.Name
-	m.Description = updateEventValueObject.Description
-	m.IsDone = updateEventValueObject.IsDone
-	m.SortId = updateEventValueObject.SortId
+	if updateEventValueObject.Name != nil {
+		m.Name = *updateEventValueObject.Name
+	}
+	if updateEventValueObject.Description != nil {
+		m.Description = *updateEventValueObject.Description
+	}
+	if updateEventValueObject.IsDone != nil {
+		m.IsDone = *updateEventValueObject.IsDone
+	}
+	if updateEventValueObject.SortId != nil {
+		m.SortId = *updateEventValueObject.SortId
+	}
 	return m
+}
+
+// UpdateEventValueObjectToMap 更新事件值对象转换为 map
+// - 用于更新事件时，将更新值对象转换为 map 格式以实现零值更新
+// @param updateEventValueObject 更新事件值对象
+// @return map[string]any 事件更新值对象 map
+func UpdateEventValueObjectToMap(
+	updateEventValueObject *valueobjects.UpdateEvent,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if updateEventValueObject.Name != nil {
+		updateMap["Name"] = *updateEventValueObject.Name
+	}
+	if updateEventValueObject.Description != nil {
+		updateMap["Description"] = *updateEventValueObject.Description
+	}
+	if updateEventValueObject.IsDone != nil {
+		updateMap["IsDone"] = *updateEventValueObject.IsDone
+	}
+	if updateEventValueObject.SortId != nil {
+		updateMap["SortId"] = *updateEventValueObject.SortId
+	}
+	return updateMap
 }
 
 // EventModel2Entity 事件模型转换为事件实体

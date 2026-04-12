@@ -14,13 +14,13 @@ type AuthApp interface {
 	SignIn(ctx context.Context, signInReq *types.SignInReq) (*types.SignInRes, error)
 
 	// 处理用户注册
-	SignUp(ctx context.Context, signUpReq *types.SignUpReq) (*types.SignUpRes, error)
+	SignUp(ctx context.Context, signUpReq *types.SignUpReq) error
 
 	// 处理用户检查登录状态
 	CheckIn(ctx context.Context, checkInReq *types.CheckInReq) (*types.CheckInRes, error)
 
 	// 处理用户登出
-	SignOut(ctx context.Context, signOutReq *types.SignOutReq) (*types.SignOutRes, error)
+	SignOut(ctx context.Context, signOutReq *types.SignOutReq) error
 
 	// 处理用户令牌验证
 	Validate(ctx context.Context, token string) (int64, error)

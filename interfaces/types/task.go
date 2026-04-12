@@ -35,42 +35,42 @@ type CreateTaskReq struct {
 
 // UpdateTaskReq 更新任务请求
 type UpdateTaskReq struct {
-	ParentTaskId string   `json:"parentTaskId"`
-	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	State        string   `json:"state"`
-	Priority     string   `json:"priority"`
-	StartAt      string   `json:"startAt"`
-	EndAt        string   `json:"endAt"`
-	ProjectId    string   `json:"projectId"`
+	ParentTaskId *string  `json:"parentTaskId"`
+	Name         *string  `json:"name"`
+	Description  *string  `json:"description"`
+	State        *string  `json:"state"`
+	Priority     *string  `json:"priority"`
+	StartAt      *string  `json:"startAt"`
+	EndAt        *string  `json:"endAt"`
+	ProjectId    *string  `json:"projectId"`
 	Tags         []string `json:"tags"`
-	ArchivedAt   string   `json:"archivedAt"`
-	StarMarkAt   string   `json:"starMarkAt"`
-	GivenUpAt    string   `json:"givenUpAt"`
+	ArchivedAt   *string  `json:"archivedAt"`
+	StarMarkAt   *string  `json:"starMarkAt"`
+	GivenUpAt    *string  `json:"givenUpAt"`
 }
 
 // ListTaskReq 列表任务请求
 type ListTaskReq struct {
-	ProjectId    string `json:"projectId"`
-	TagId        string `json:"tagId"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	State        string `json:"state"`
-	Priority     string `json:"priority"`
-	StartAt      string `json:"startAt"`
-	EndAt        string `json:"endAt"`
-	DeletedAt    string `json:"deletedAt"`
-	ArchivedAt   string `json:"archivedAt"`
-	StarMarkAt   string `json:"starMarkAt"`
-	GivenUpAt    string `json:"givenUpAt"`
-	IsDeleted    bool   `json:"isDeleted"`
-	IsArchived   bool   `json:"isArchived"`
-	IsStarMarked bool   `json:"isStarMarked"`
-	IsGivenUp    bool   `json:"isGivenUp"`
-	Page         int    `json:"page"`
-	Limit        int    `json:"limit"`
-	RelativeDate string `json:"relativeDate"`
-	Sort         string `json:"sort"`
+	ProjectId    string `form:"projectId"`
+	TagId        string `form:"tagId"`
+	Name         string `form:"name"`
+	Description  string `form:"description"`
+	State        string `form:"state"`
+	Priority     string `form:"priority"`
+	StartAt      string `form:"startAt"`
+	EndAt        string `form:"endAt"`
+	DeletedAt    string `form:"deletedAt"`
+	ArchivedAt   string `form:"archivedAt"`
+	StarMarkAt   string `form:"starMarkAt"`
+	GivenUpAt    string `form:"givenUpAt"`
+	IsDeleted    bool   `form:"isDeleted"`
+	IsArchived   bool   `form:"isArchived"`
+	IsStarMarked bool   `form:"isStarMarked"`
+	IsGivenUp    bool   `form:"isGivenUp"`
+	Page         int    `form:"page"`
+	Limit        int    `form:"limit"`
+	RelativeDate string `form:"relativeDate"`
+	Sort         string `form:"sort"`
 }
 
 // ListTaskRes 列表任务响应

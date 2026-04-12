@@ -8,14 +8,14 @@ import (
 // UpdateTask 更新任务值对象
 type UpdateTask struct {
 	UserId       int64
-	ParentTaskId int64
-	Name         string
-	Description  string
-	State        int8
-	Priority     int8
+	ParentTaskId *int64
+	Name         *string
+	Description  *string
+	State        *int8
+	Priority     *int8
 	StartAt      sql.NullTime
 	EndAt        sql.NullTime
-	ProjectId    int64
+	ProjectId    *int64
 	Tags         []string
 	ArchivedAt   sql.NullTime
 	StarMarkAt   sql.NullTime
@@ -25,17 +25,16 @@ type UpdateTask struct {
 // Validate 验证更新任务值对象
 // @return error 错误信息
 func (updateTask *UpdateTask) Validate() error {
-	if updateTask.Name == "" {
+	if updateTask.Name != nil && len(*updateTask.Name) == 0 {
 		return errors.New("任务名称不能为空")
 	}
-	if len(updateTask.Name) > 64 {
+	if updateTask.Name != nil && len(*updateTask.Name) > 64 {
 		return errors.New("任务名称最多64个字符")
 	}
-	if updateTask.Description != "" && len(updateTask.Description) > 256 {
+	if updateTask.Description != nil && len(*updateTask.Description) > 256 {
 		return errors.New("任务描述最多256个字符")
 	}
-	if updateTask.EndAt.Valid &&
-		updateTask.StartAt.Valid &&
+	if updateTask.EndAt.Valid && updateTask.StartAt.Valid &&
 		updateTask.EndAt.Time.Before(updateTask.StartAt.Time) {
 		return errors.New("结束时间不能早于开始时间")
 	}
@@ -60,14 +59,14 @@ func (updateTask *UpdateTask) Validate() error {
 // @return error 错误信息
 func NewUpdateTask(
 	userId int64,
-	parentTaskId int64,
-	name string,
-	description string,
-	state int8,
-	priority int8,
+	parentTaskId *int64,
+	name *string,
+	description *string,
+	state *int8,
+	priority *int8,
 	startAt sql.NullTime,
 	endAt sql.NullTime,
-	projectId int64,
+	projectId *int64,
 	tags []string,
 	archivedAt sql.NullTime,
 	starMarkAt sql.NullTime,

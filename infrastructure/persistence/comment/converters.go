@@ -1,6 +1,7 @@
 package comment
 
 import (
+	"encoding/json"
 	"naotodoserver/domain/comment/entities"
 	"naotodoserver/domain/comment/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
@@ -24,10 +25,37 @@ func CreateCommentValueObjectToModel(vo *valueobjects.CreateComment) *models.Com
 // @return 评论模型
 func UpdateCommentValueObjectToModel(vo *valueobjects.UpdateComment) *models.Comment {
 	m := &models.Comment{}
-	m.Content = vo.Content
-	m.Attachments = vo.Attachments
-	m.IsTopUp = vo.IsTopUp
+	if vo.Content != nil {
+		m.Content = *vo.Content
+	}
+	if vo.Attachments != nil {
+		m.Attachments = *vo.Attachments
+	}
+	if vo.IsTopUp != nil {
+		m.IsTopUp = *vo.IsTopUp
+	}
 	return m
+}
+
+// UpdateCommentValueObjectToMap 更新评论值对象转换为 map
+// - 用于更新评论时，将更新值对象转换为 map 格式以实现零值更新
+// @param vo 更新评论值对象
+// @return map[string]any 评论更新值对象 map
+func UpdateCommentValueObjectToMap(vo *valueobjects.UpdateComment) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if vo.Content != nil {
+		updateMap["Content"] = *vo.Content
+	}
+	if vo.Attachments != nil {
+		attachmentsJson, err := json.Marshal(vo.Attachments)
+		if err == nil {
+			updateMap["Attachments"] = string(attachmentsJson)
+		}
+	}
+	if vo.IsTopUp != nil {
+		updateMap["IsTopUp"] = *vo.IsTopUp
+	}
+	return updateMap
 }
 
 // CommentEntity2Model 评论实体转换为评论模型

@@ -73,28 +73,38 @@ func CreateTaskReqToValueObject(
 // @return 更新任务值对象
 // @error 错误
 func UpdateTaskReqToValueObject(req *types.UpdateTaskReq) (*valueobjects.UpdateTask, error) {
-	parentIdInt64, err := strconv.ParseInt(req.ParentTaskId, 10, 64)
-	if err != nil {
-		parentIdInt64 = 0
+	var iParentId, iProjectId *int64
+	var iState, iPriority *int8
+	if req.ParentTaskId != nil {
+		iParentIdValue, _ := strconv.ParseInt(*req.ParentTaskId, 10, 64)
+		iParentId = &iParentIdValue
 	}
-	projectIdInt64, err := strconv.ParseInt(req.ProjectId, 10, 64)
-	if err != nil {
-		projectIdInt64 = 0
+	if req.ProjectId != nil {
+		iProjectIdValue, _ := strconv.ParseInt(*req.ProjectId, 10, 64)
+		iProjectId = &iProjectIdValue
+	}
+	if req.State != nil {
+		iStateValue := consts.TodoStateMap[*req.State]
+		iState = &iStateValue
+	}
+	if req.Priority != nil {
+		iPriorityValue := consts.TodoPriorityMap[*req.Priority]
+		iPriority = &iPriorityValue
 	}
 	return valueobjects.NewUpdateTask(
 		0,
-		parentIdInt64,
+		iParentId,
 		req.Name,
 		req.Description,
-		consts.TodoStateMap[req.State],
-		consts.TodoPriorityMap[req.Priority],
-		utils.String2SqlNullTime(req.StartAt),
-		utils.String2SqlNullTime(req.EndAt),
-		projectIdInt64,
+		iState,
+		iPriority,
+		utils.StringPtr2SqlNullTime(req.StartAt),
+		utils.StringPtr2SqlNullTime(req.EndAt),
+		iProjectId,
 		req.Tags,
-		utils.String2SqlNullTime(req.ArchivedAt),
-		utils.String2SqlNullTime(req.StarMarkAt),
-		utils.String2SqlNullTime(req.GivenUpAt),
+		utils.StringPtr2SqlNullTime(req.ArchivedAt),
+		utils.StringPtr2SqlNullTime(req.StarMarkAt),
+		utils.StringPtr2SqlNullTime(req.GivenUpAt),
 	)
 }
 

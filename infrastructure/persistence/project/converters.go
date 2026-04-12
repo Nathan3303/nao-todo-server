@@ -26,9 +26,29 @@ func UpdateProjectValueObject2Model(
 	updateProjectValueObject *valueobjects.UpdateProject,
 ) *models.Project {
 	m := &models.Project{}
-	m.Name = updateProjectValueObject.Name
-	m.Description = updateProjectValueObject.Description
+	m.Name = *updateProjectValueObject.Name
+	m.Description = *updateProjectValueObject.Description
 	return m
+}
+
+// UpdateProjectValueObjectToMap 更新项目 valueobject 转 map
+// - 用于更新项目时，将更新值对象转换为 map 格式以实现零值更新
+// @param updateProjectValueObject 项目更新值对象
+// @return map[string]any 项目更新值对象 map
+func UpdateProjectValueObjectToMap(
+	updateProjectValueObject *valueobjects.UpdateProject,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if updateProjectValueObject.Name != nil {
+		updateMap["Name"] = *updateProjectValueObject.Name
+	}
+	if updateProjectValueObject.Description != nil {
+		updateMap["Description"] = *updateProjectValueObject.Description
+	}
+	// 输出更新 map 内容
+	// println("更新 map 内容:")
+	// println(updateMap)
+	return updateMap
 }
 
 // Entity2Model 项目实体转模型
@@ -67,6 +87,8 @@ func Model2Entity(m *models.Project) *entities.Project {
 	e.Name = m.Name
 	e.Description = m.Description
 	e.ArchivedAt = m.ArchivedAt
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
 	return e
 }
 

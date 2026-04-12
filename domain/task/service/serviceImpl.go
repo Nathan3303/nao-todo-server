@@ -96,14 +96,14 @@ func (taskDomain *TaskDomainImpl) List(
 	// 1. 补充 query
 	query.UserId = userId
 	// 2. 构建查询句柄
-	_, err := taskDomain.taskRepo.BuildQueryTx(ctx, query)
+	tx, err := taskDomain.taskRepo.BuildQueryTx(ctx, query)
 	if err != nil {
 		return nil, nil, err
 	}
 	pagination.Page = query.Page
 	pagination.Limit = query.Limit
 	// 3. 查询任务列表
-	taskEntities, pagination, err := taskDomain.taskRepo.List(ctx, userId, query, pagination)
+	taskEntities, pagination, err := taskDomain.taskRepo.ListWithQueryTx(ctx, tx, pagination)
 	if err != nil {
 		return nil, nil, err
 	}

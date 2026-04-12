@@ -31,10 +31,10 @@ type CreateEventRes struct {
 }
 
 type UpdateEventReq struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	IsDone      bool   `json:"isDone"`
-	SortId      uint16 `json:"sortId"`
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	IsDone      *bool   `json:"isDone"`
+	SortId      *uint16 `json:"sortId"`
 }
 
 type ListEventRes []*GetEventRes

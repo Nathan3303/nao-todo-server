@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/json"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
@@ -35,16 +36,100 @@ func CreateTaskValueObjectToModel(
 func UpdateTaskValueObjectToModel(
 	updateTaskValueObject *valueobjects.UpdateTask,
 ) *models.Task {
-	return &models.Task{
-		Name:        updateTaskValueObject.Name,
-		Description: updateTaskValueObject.Description,
-		State:       updateTaskValueObject.State,
-		Priority:    updateTaskValueObject.Priority,
-		StartAt:     updateTaskValueObject.StartAt,
-		EndAt:       updateTaskValueObject.EndAt,
-		ProjectId:   updateTaskValueObject.ProjectId,
-		Tags:        updateTaskValueObject.Tags,
+	m := &models.Task{}
+	if updateTaskValueObject.UserId == 0 {
+		m.UserId = updateTaskValueObject.UserId
 	}
+	if updateTaskValueObject.ParentTaskId != nil {
+		m.ParentTaskId = *updateTaskValueObject.ParentTaskId
+	}
+	if updateTaskValueObject.Name != nil {
+		m.Name = *updateTaskValueObject.Name
+	}
+	if updateTaskValueObject.Description != nil {
+		m.Description = *updateTaskValueObject.Description
+	}
+	if updateTaskValueObject.State != nil {
+		m.State = *updateTaskValueObject.State
+	}
+	if updateTaskValueObject.Priority != nil {
+		m.Priority = *updateTaskValueObject.Priority
+	}
+	if updateTaskValueObject.StartAt.Valid {
+		m.StartAt = updateTaskValueObject.StartAt
+	}
+	if updateTaskValueObject.EndAt.Valid {
+		m.EndAt = updateTaskValueObject.EndAt
+	}
+	if updateTaskValueObject.ProjectId != nil {
+		m.ProjectId = *updateTaskValueObject.ProjectId
+	}
+	if updateTaskValueObject.Tags != nil {
+		m.Tags = updateTaskValueObject.Tags
+	}
+	if updateTaskValueObject.ArchivedAt.Valid {
+		m.ArchivedAt = updateTaskValueObject.ArchivedAt
+	}
+	if updateTaskValueObject.StarMarkAt.Valid {
+		m.StarMarkAt = updateTaskValueObject.StarMarkAt
+	}
+	if updateTaskValueObject.GivenUpAt.Valid {
+		m.GivenUpAt = updateTaskValueObject.GivenUpAt
+	}
+	return m
+}
+
+// UpdateTaskValueObjectToMap 更新任务值对象转换为 map
+// - 用于更新任务时，将更新值对象转换为 map 格式以实现零值更新
+// @param updateTaskValueObject 更新任务值对象
+// @return map[string]any 任务更新值对象 map
+func UpdateTaskValueObjectToMap(
+	updateTaskValueObject *valueobjects.UpdateTask,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if updateTaskValueObject.UserId != 0 {
+		updateMap["UserId"] = updateTaskValueObject.UserId
+	}
+	if updateTaskValueObject.ParentTaskId != nil {
+		updateMap["ParentTaskId"] = *updateTaskValueObject.ParentTaskId
+	}
+	if updateTaskValueObject.Name != nil {
+		updateMap["Name"] = *updateTaskValueObject.Name
+	}
+	if updateTaskValueObject.Description != nil {
+		updateMap["Description"] = *updateTaskValueObject.Description
+	}
+	if updateTaskValueObject.State != nil {
+		updateMap["State"] = *updateTaskValueObject.State
+	}
+	if updateTaskValueObject.Priority != nil {
+		updateMap["Priority"] = *updateTaskValueObject.Priority
+	}
+	if updateTaskValueObject.StartAt.Valid {
+		updateMap["StartAt"] = updateTaskValueObject.StartAt
+	}
+	if updateTaskValueObject.EndAt.Valid {
+		updateMap["EndAt"] = updateTaskValueObject.EndAt
+	}
+	if updateTaskValueObject.ProjectId != nil {
+		updateMap["ProjectId"] = *updateTaskValueObject.ProjectId
+	}
+	if updateTaskValueObject.Tags != nil {
+		tagsJSON, err := json.Marshal(updateTaskValueObject.Tags)
+		if err == nil {
+			updateMap["Tags"] = string(tagsJSON)
+		}
+	}
+	if updateTaskValueObject.ArchivedAt.Valid {
+		updateMap["ArchivedAt"] = updateTaskValueObject.ArchivedAt
+	}
+	if updateTaskValueObject.StarMarkAt.Valid {
+		updateMap["StarMarkAt"] = updateTaskValueObject.StarMarkAt
+	}
+	if updateTaskValueObject.GivenUpAt.Valid {
+		updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt
+	}
+	return updateMap
 }
 
 // TaskModel2Entity 任务模型转换为任务实体

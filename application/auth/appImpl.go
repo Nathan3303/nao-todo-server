@@ -61,24 +61,24 @@ func (as *authAppImpl) SignIn(
 func (as *authAppImpl) SignUp(
 	ctx context.Context,
 	signUpReq *types.SignUpReq,
-) (*types.SignUpRes, error) {
+) error {
 	// 通过 Email 查找用户记录
 	_, err := as.authDomain.FindUserByEmail(ctx, signUpReq.Email)
 	if err == nil {
-		return nil, errors.New("邮箱已存在")
+		return errors.New("邮箱已存在")
 	}
 	// 转换为 CreateUserValueObject
 	createUserValueObject, err := SignUpReqToCreateUserValueObject(signUpReq)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// 创建
 	_, err = as.authDomain.CreateUser(ctx, createUserValueObject)
 	if err != nil {
-		return nil, errors.New("注册用户失败")
+		return errors.New("注册用户失败")
 	}
 	// 注册成功
-	return &types.SignUpRes{}, nil
+	return nil
 }
 
 /*
@@ -132,11 +132,11 @@ func (as *authAppImpl) CheckIn(
 func (as *authAppImpl) SignOut(
 	ctx context.Context,
 	signOutReq *types.SignOutReq,
-) (*types.SignOutRes, error) {
+) error {
 	// 1. 解析 JWT 令牌
 	userId, err := as.authDomain.ParseJWT(ctx, signOutReq.Token)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// 2. 通过 JWT 令牌和用户 ID 删除会话
 	err = as.authDomain.DeleteSession(ctx, &entities.Session{
@@ -144,10 +144,10 @@ func (as *authAppImpl) SignOut(
 		Token:  signOutReq.Token,
 	})
 	if err != nil {
-		return nil, errors.New("用户 Session 删除失败 - " + err.Error())
+		return errors.New(err.Error())
 	}
 	// 3. 返回结果
-	return &types.SignOutRes{}, nil
+	return nil
 }
 
 /*

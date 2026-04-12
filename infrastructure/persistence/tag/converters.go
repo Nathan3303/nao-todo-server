@@ -30,12 +30,38 @@ func UpdateTagValueObjectToModel(
 	userId int64,
 	updateTagValueObject *valueobjects.UpdateTag,
 ) *models.Tag {
-	return &models.Tag{
-		UserId:      userId,
-		Name:        updateTagValueObject.Name,
-		Description: updateTagValueObject.Description,
-		Color:       updateTagValueObject.Color,
+	m := &models.Tag{}
+	m.UserId = userId
+	if updateTagValueObject.Name != nil {
+		m.Name = *updateTagValueObject.Name
 	}
+	if updateTagValueObject.Description != nil {
+		m.Description = *updateTagValueObject.Description
+	}
+	if updateTagValueObject.Color != nil {
+		m.Color = *updateTagValueObject.Color
+	}
+	return m
+}
+
+// UpdateTagValueObjectToMap 更新标签值对象转换为 map
+// - 用于更新标签时，将更新值对象转换为 map 格式以实现零值更新
+// @param updateTagValueObject 更新标签值对象
+// @return map[string]any 标签更新值对象 map
+func UpdateTagValueObjectToMap(
+	updateTagValueObject *valueobjects.UpdateTag,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if updateTagValueObject.Name != nil {
+		updateMap["Name"] = *updateTagValueObject.Name
+	}
+	if updateTagValueObject.Description != nil {
+		updateMap["Description"] = *updateTagValueObject.Description
+	}
+	if updateTagValueObject.Color != nil {
+		updateMap["Color"] = *updateTagValueObject.Color
+	}
+	return updateMap
 }
 
 // TagEntity2Model 标签实体转换为标签模型

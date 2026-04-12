@@ -54,7 +54,7 @@ func UserSignUpHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 注册
-	signUpRes, err := auth.App.SignUp(ctx.Request.Context(), &req)
+	err = auth.App.SignUp(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10002,
@@ -67,7 +67,6 @@ func UserSignUpHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    10000,
 		Message: "注册成功",
-		Data:    signUpRes,
 	})
 }
 
@@ -119,7 +118,7 @@ func UserSignOutHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登出
-	signOutRes, err := auth.App.SignOut(ctx.Request.Context(), &req)
+	err = auth.App.SignOut(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10032,
@@ -132,6 +131,5 @@ func UserSignOutHandler(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    10030,
 		Message: "登出成功",
-		Data:    signOutRes,
 	})
 }

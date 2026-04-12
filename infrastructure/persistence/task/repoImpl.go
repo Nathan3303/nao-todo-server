@@ -84,12 +84,12 @@ func (taskRepo *TaskRepoImpl) Update(
 	var whereCond models.Task
 	whereCond.UserId = userId
 	whereCond.ID = taskId
-	// 2. 转换更新实体到模型
-	updateModel := UpdateTaskValueObjectToModel(updateTaskValueObject)
+	// 2. 转换更新实体到 map
+	updateMap := UpdateTaskValueObjectToMap(updateTaskValueObject)
 	// 3. 更新
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where(whereCond).
-		Updates(updateModel)
+		Updates(updateMap)
 	return tx.Error
 }
 
@@ -226,8 +226,8 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 	// 5. 处理优先级过滤条件
 	if query.Priority != "" {
 		var priorityIDs []int8
-		for _, p := range strings.Split(query.Priority, ",") {
-			if val, exists := consts.TodoPriorityMap[p]; exists {
+		for s := range strings.SplitSeq(query.Priority, ",") {
+			if val, exists := consts.TodoPriorityMap[s]; exists {
 				priorityIDs = append(priorityIDs, val)
 			}
 		}

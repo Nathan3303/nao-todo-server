@@ -80,7 +80,7 @@ func (eventRepo *EventRepoImpl) Update(
 	var whereCond models.Event
 	whereCond.ID = eventId
 	whereCond.UserId = userId
-	updateCond := UpdateEventValueObjectToModel(updateEventValueObject)
+	updateCond := UpdateEventValueObjectToMap(updateEventValueObject)
 	// 2. 更新数据库
 	tx := eventRepo.db.WithContext(ctx).Model(&models.Event{}).
 		Where(whereCond).
