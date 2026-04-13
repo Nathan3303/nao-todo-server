@@ -244,7 +244,11 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 	}
 	// 7. 处理所有布尔类型的过滤条件
 	if query.IsDeleted {
-		tx = tx.Where("deleted_at IS NOT NULL")
+		// 30 天内删除的任务
+		tx = tx.Unscoped().Where(
+			"deleted_at >= ?",
+			time.Now().AddDate(0, 0, -30),
+		)
 	}
 	if query.IsArchived {
 		tx = tx.Where("archived_at IS NOT NULL")
