@@ -30,6 +30,9 @@ type EventApp interface {
 
 	// 排序检查事项
 	ResortEvents(ctx context.Context, req *types.ResortEventsReq) (*types.ResortEventsRes, error)
+
+	// 批量更新检查事项
+	BatchUpdateEvents(ctx context.Context, req *types.BatchUpdateEventReq) (*types.BatchUpdateEventRes, error)
 }
 
 // 检查事项应用实现

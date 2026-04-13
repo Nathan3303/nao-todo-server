@@ -85,3 +85,31 @@ func EventEntities2Reses(eventEntities []*entities.Event) types.ListEventRes {
 	}
 	return listRes
 }
+
+// BatchUpdateEventReqToValueObjects 将批量更新检查事项请求体转换为批量更新检查事项值对象集合
+// @param batchUpdateEventReq 批量更新检查事项请求体
+// @return 批量更新检查事项值对象集合
+// @return error 错误信息
+func BatchUpdateEventReqToValueObjects(
+	batchUpdateEventReq *types.BatchUpdateEventReq,
+) ([]*valueobjects.BatchUpdateEvent, error) {
+	batchVOs := make([]*valueobjects.BatchUpdateEvent, 0, len(batchUpdateEventReq.Events))
+	for _, event := range batchUpdateEventReq.Events {
+		id, err := strconv.ParseInt(event.Id, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		batchVO, err := valueobjects.NewBatchUpdateEvent(
+			id,
+			event.Name,
+			event.Description,
+			event.IsDone,
+			event.SortId,
+		)
+		if err != nil {
+			return nil, err
+		}
+		batchVOs = append(batchVOs, batchVO)
+	}
+	return batchVOs, nil
+}

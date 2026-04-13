@@ -174,3 +174,36 @@ func (eventApp *EventAppImpl) ResortEvents(
 ) (*types.ResortEventsRes, error) {
 	panic("unimplement")
 }
+
+// BatchUpdateEvents 批量更新检查事项
+// @param ctx 上下文
+// @param batchUpdateEventReq 批量更新检查事项请求体
+// @return 批量更新检查事项响应
+// @return error 错误信息
+func (eventApp *EventAppImpl) BatchUpdateEvents(
+	ctx context.Context,
+	batchUpdateEventReq *types.BatchUpdateEventReq,
+) (*types.BatchUpdateEventRes, error) {
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	// 2. 转换请求体为值对象
+	batchVOs, err := BatchUpdateEventReqToValueObjects(batchUpdateEventReq)
+	if err != nil {
+		return nil, err
+	}
+	// 3. 调用领域服务批量更新事件
+	updatedEntities, err := eventApp.eventDomain.BatchUpdate(ctx, userId, batchVOs)
+	if err != nil {
+		return nil, err
+	}
+	// 4. 转换实体为响应
+	eventResList := EventEntities2Reses(updatedEntities)
+	// 返回结果
+	return &types.BatchUpdateEventRes{
+		UpdatedCount: int64(len(eventResList)),
+		Events:       eventResList,
+	}, nil
+}

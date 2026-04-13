@@ -90,3 +90,17 @@ func (eventDomain *EventDomainImpl) List(
 ) ([]*entities.Event, error) {
 	return eventDomain.eventRepo.Get(ctx, userId, taskId)
 }
+
+// BatchUpdate 批量更新检查事项
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param batchUpdateEvents 批量更新检查事项值对象集合
+// @return []*entities.Event 更新后的检查事项实体列表
+// @return error 错误信息
+func (eventDomain *EventDomainImpl) BatchUpdate(
+	ctx context.Context,
+	userId int64,
+	batchUpdateEvents []*valueobjects.BatchUpdateEvent,
+) ([]*entities.Event, error) {
+	return eventDomain.eventRepo.BatchUpdate(ctx, userId, batchUpdateEvents)
+}

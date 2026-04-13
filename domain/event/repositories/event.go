@@ -62,4 +62,16 @@ type Event interface {
 	// @param taskId 任务 ID
 	// @return maxSortId 最大排序 ID
 	GetMaxSortId(ctx context.Context, userId int64, taskId int64) uint16
+
+	// BatchUpdate 批量更新事件
+	// @param ctx 上下文
+	// @param userId 用户 ID
+	// @param batchUpdateEvents 批量更新事件值对象集合
+	// @return []*entities.Event 更新后的事件实体列表
+	// @return error 错误信息
+	BatchUpdate(
+		ctx context.Context,
+		userId int64,
+		batchUpdateEvents []*valueobjects.BatchUpdateEvent,
+	) ([]*entities.Event, error)
 }

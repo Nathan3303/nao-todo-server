@@ -201,3 +201,35 @@ func ResortEventHandler(ctx *gin.Context) {
 		Data:    res,
 	})
 }
+
+// BatchUpdateEventHandler 批量更新检查事项控制器
+// @code 5006x
+func BatchUpdateEventHandler(ctx *gin.Context) {
+	// 1. 获取请求参数
+	var req types.BatchUpdateEventReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    50061,
+			Message: "请求参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 2. 调用服务层批量更新检查事项
+	res, err := event.App.BatchUpdateEvents(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    50062,
+			Message: "批量更新检查事项失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 3. 返回检查事项列表
+	Success(ctx, types.ResponseData{
+		Code:    50060,
+		Message: "批量更新检查事项成功",
+		Data:    res,
+	})
+}

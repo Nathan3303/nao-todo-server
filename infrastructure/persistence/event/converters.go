@@ -104,3 +104,26 @@ func EventModels2Entities(mList []*models.Event) []*entities.Event {
 	}
 	return eList
 }
+
+// BatchUpdateEventValueObjectToMap 批量更新事件值对象转换为 map
+// - 用于批量更新事件时，将更新值对象转换为 map 格式
+// @param batchUpdateEventValueObject 批量更新事件值对象
+// @return map[string]any 事件更新值对象 map
+func BatchUpdateEventValueObjectToMap(
+	batchUpdateEventValueObject *valueobjects.BatchUpdateEvent,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if batchUpdateEventValueObject.Name != nil {
+		updateMap["Name"] = *batchUpdateEventValueObject.Name
+	}
+	if batchUpdateEventValueObject.Description != nil {
+		updateMap["Description"] = *batchUpdateEventValueObject.Description
+	}
+	if batchUpdateEventValueObject.IsDone != nil {
+		updateMap["IsDone"] = *batchUpdateEventValueObject.IsDone
+	}
+	if batchUpdateEventValueObject.SortId != nil {
+		updateMap["SortId"] = *batchUpdateEventValueObject.SortId
+	}
+	return updateMap
+}

@@ -158,3 +158,56 @@ func (eventRepo *EventRepoImpl) GetMaxSortId(
 	// 3. 返回最大排序 ID
 	return maxSortId
 }
+
+// BatchUpdate 批量更新事件
+// @param ctx 上下文
+// @param userId 用户ID
+// @param batchUpdateEvents 批量更新事件值对象集合
+// @return []*entities.Event 更新后的事件实体列表
+// @return error 错误
+func (eventRepo *EventRepoImpl) BatchUpdate(
+	ctx context.Context,
+	userId int64,
+	batchUpdateEvents []*valueobjects.BatchUpdateEvent,
+) ([]*entities.Event, error) {
+	// 开始事务
+	tx := eventRepo.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	updatedEventIds := make([]int64, 0, len(batchUpdateEvents))
+
+	// 逐个更新事件
+	for _, batchEvent := range batchUpdateEvents {
+		whereCond := &models.Event{}
+		whereCond.ID = batchEvent.Id
+		whereCond.UserId = userId
+		updateCond := BatchUpdateEventValueObjectToMap(batchEvent)
+
+		// 更新数据库
+		if err := tx.Model(&models.Event{}).
+			Where(whereCond).
+			Updates(updateCond).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		updatedEventIds = append(updatedEventIds, batchEvent.Id)
+	}
+
+	// 查询更新后的事件
+	var updatedEvents []*models.Event
+	if err := tx.Model(&models.Event{}).
+		Where("id IN ? AND user_id = ?", updatedEventIds, userId).
+		Find(&updatedEvents).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return EventModels2Entities(updatedEvents), nil
+}
