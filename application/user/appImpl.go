@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"naotodoserver/conf"
 	"naotodoserver/domain/user/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
@@ -123,9 +124,12 @@ func (u *userAppImpl) UpdateAvatarByFile(
 		return nil, errors.New("文件上传失败 - " + err.Error())
 	}
 	// 3. 验证文件大小和类型
-	const maxSize = 1024 * 1024 * 2 // 2MB
+	maxSize := conf.Conf.Uploads.MaxFileSize
+	if maxSize <= 0 {
+		maxSize = 1024 * 1024 * 2 // 默认 2MB
+	}
 	if file.Size > maxSize {
-		return nil, errors.New("文件大小不能超过 2MB")
+		return nil, fmt.Errorf("文件大小不能超过 %dMB", maxSize/1024/1024)
 	}
 	ext := filepath.Ext(file.Filename)
 	allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
@@ -133,7 +137,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 		return nil, errors.New("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
 	}
 	// 4. 确保上传目录存在
-	uploadDir := "uploads/avatars"
+	uploadDir := filepath.Join(conf.Conf.Uploads.UploadDir, conf.Conf.Uploads.AvatarDir)
 	if err = os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		return nil, errors.New("创建上传目录失败 - " + err.Error())
 	}
@@ -145,7 +149,11 @@ func (u *userAppImpl) UpdateAvatarByFile(
 		return nil, errors.New("文件保存失败 - " + err.Error())
 	}
 	// 7. 构造可访问的 URL
-	avatarURL := fmt.Sprintf("/static/%s/%s", uploadDir, uniqueFilename)
+	staticPath := conf.Conf.Uploads.StaticPath
+	if staticPath == "" {
+		staticPath = "/static/uploads"
+	}
+	avatarURL := fmt.Sprintf("%s/%s/%s", staticPath, conf.Conf.Uploads.AvatarDir, uniqueFilename)
 	// 8. 更新用户头像
 	err = u.userDomain.UpdateAvatar(ctx, userId, avatarURL)
 	if err != nil {

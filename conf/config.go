@@ -9,10 +9,18 @@ import (
 var Conf *Config
 
 type Config struct {
-	Server *Server    `yaml:"server"`
-	MySQL  *MySQL     `yaml:"mysql"`
-	Redis  *Redis     `yaml:"redis"`
-	Log    *LogConfig `yaml:"log"`
+	Server  *Server    `yaml:"server"`
+	MySQL   *MySQL     `yaml:"mysql"`
+	Redis   *Redis     `yaml:"redis"`
+	Log     *LogConfig `yaml:"log"`
+	Uploads *Uploads   `yaml:"uploads"`
+}
+
+type Uploads struct {
+	UploadDir   string `yaml:"uploadDir"`   // 文件上传根目录
+	AvatarDir   string `yaml:"avatarDir"`   // 头像存储子目录
+	MaxFileSize int64  `yaml:"maxFileSize"` // 最大文件大小（字节）
+	StaticPath  string `yaml:"staticPath"`  // 静态文件访问路径
 }
 
 type LogConfig struct {
