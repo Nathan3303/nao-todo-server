@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
@@ -43,7 +44,32 @@ func (tagDomain *TagDomainImpl) Create(
 	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
 ) (*entities.Tag, error) {
-	return tagDomain.tagRepo.Create(ctx, userId, createTagValueObject)
+	// 创建标签
+	tagEntity, err := tagDomain.tagRepo.Create(ctx, userId, createTagValueObject)
+	if err != nil {
+		return nil, err
+	}
+	// 创建标签基础偏好
+	tagPreferenceValueObject, err := valueobjects.NewSaveTagPreference(
+		"table",
+		fmt.Sprintf("{\"tagId\": \"%d\"}", tagEntity.Id),
+		"{}",
+	)
+	if err != nil {
+		return nil, err
+	}
+	// 保存标签基础偏好
+	err = tagDomain.preferenceRepo.Save(
+		ctx,
+		userId,
+		tagEntity.Id,
+		tagPreferenceValueObject,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// 返回标签信息
+	return tagEntity, nil
 }
 
 // 更新标签
@@ -71,7 +97,13 @@ func (tagDomain *TagDomainImpl) Delete(
 	userId int64,
 	tagId int64,
 ) error {
-	return tagDomain.tagRepo.Delete(ctx, userId, tagId)
+	// 删除标签
+	err := tagDomain.tagRepo.Delete(ctx, userId, tagId)
+	if err != nil {
+		return err
+	}
+	// 删除标签偏好
+	return tagDomain.preferenceRepo.Delete(ctx, userId, tagId)
 }
 
 // 获取标签列表

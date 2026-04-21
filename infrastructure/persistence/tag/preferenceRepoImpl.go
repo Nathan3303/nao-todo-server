@@ -96,3 +96,19 @@ func (t *TagPreferenceRepoImpl) Save(
 	// 3. model 转 valueobject
 	return nil
 }
+
+// Delete 删除标签偏好
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return error 错误
+func (t *TagPreferenceRepoImpl) Delete(
+	ctx context.Context,
+	userId int64,
+	tagId int64,
+) error {
+	return t.db.WithContext(ctx).
+		Model(&models.TagPreference{}).
+		Where(&models.TagPreference{UserId: userId, TagId: tagId}).
+		Delete(&models.TagPreference{}).Error
+}

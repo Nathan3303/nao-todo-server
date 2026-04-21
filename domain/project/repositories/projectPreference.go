@@ -18,4 +18,10 @@ type ProjectPreference interface {
 		projectId int64,
 		saveProjectPreference *valueobjects.SaveProjectPreference,
 	) error
+
+	// Delete 删除任务清单偏好
+	Delete(ctx context.Context, userId int64, projectId int64) error
+
+	// Restore 恢复任务清单偏好
+	Restore(ctx context.Context, userId int64, projectId int64) error
 }

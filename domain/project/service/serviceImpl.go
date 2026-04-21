@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
@@ -23,7 +24,32 @@ func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
 	createProjectValueObject *valueobjects.CreateProject,
 ) (*entities.Project, error) {
-	return p.repo.Create(ctx, createProjectValueObject)
+	// 创建任务清单
+	projectEntity, err := p.repo.Create(ctx, createProjectValueObject)
+	if err != nil {
+		return nil, err
+	}
+	// 创建任务清单基础偏好值对象
+	projectPreferenceValueObject, err := valueobjects.NewSaveProjectPreference(
+		"table",
+		fmt.Sprintf("{\"projectId\": \"%d\"}", projectEntity.Id),
+		"{}",
+	)
+	if err != nil {
+		return nil, err
+	}
+	// 保存任务清单基础偏好值对象
+	err = p.preferenceRepo.Save(
+		ctx,
+		createProjectValueObject.UserId,
+		projectEntity.Id,
+		projectPreferenceValueObject,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// 返回任务清单实体
+	return projectEntity, nil
 }
 
 // 根据用户ID和任务清单ID获取任务清单
@@ -51,7 +77,13 @@ func (p *ProjectDomainImpl) Delete(
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Delete(ctx, userId, projectId)
+	// 删除任务清单
+	err := p.repo.Delete(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 删除任务清单偏好
+	return p.preferenceRepo.Delete(ctx, userId, projectId)
 }
 
 // 恢复任务清单
@@ -60,7 +92,13 @@ func (p *ProjectDomainImpl) Restore(
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Restore(ctx, userId, projectId)
+	// 恢复任务清单
+	err := p.repo.Restore(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 恢复任务清单偏好
+	return p.preferenceRepo.Restore(ctx, userId, projectId)
 }
 
 // 归档任务清单

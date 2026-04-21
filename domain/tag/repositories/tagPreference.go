@@ -28,4 +28,11 @@ type TagPreference interface {
 		tagId int64,
 		saveTagPreferenceValueObject *valueobjects.SaveTagPreference,
 	) error
+
+	// 删除标签偏好
+	// @param ctx 上下文
+	// @param userId 用户ID
+	// @param tagId 标签ID
+	// @return error 错误
+	Delete(ctx context.Context, userId int64, tagId int64) error
 }

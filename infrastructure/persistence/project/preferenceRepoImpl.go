@@ -88,3 +88,41 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Save(
 	// 3. 返回结果
 	return nil
 }
+
+// Delete 删除项目偏好设置
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
+func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Delete(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+) error {
+	return projectPreferenceRepo.db.WithContext(ctx).
+		Model(&models.ProjectPreference{}).
+		Where(&models.ProjectPreference{
+			UserId:    userId,
+			ProjectId: projectId,
+		}).
+		Delete(&models.ProjectPreference{}).Error
+}
+
+// Restore 恢复项目偏好设置
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
+func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Restore(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+) error {
+	return projectPreferenceRepo.db.WithContext(ctx).
+		Model(&models.ProjectPreference{}).
+		Where(&models.ProjectPreference{
+			UserId:    userId,
+			ProjectId: projectId,
+		}).
+		UpdateColumn("is_deleted", nil).Error
+}

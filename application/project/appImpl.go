@@ -22,16 +22,19 @@ func RegistDomainImpl(projectDomain service.ProjectDomain) ProjectApp {
 // @param projectId 任务清单 ID
 // @return *types.GetProjectRes 获取任务清单响应体
 // @return error 验证失败返回错误，否则返回 nil
-func (app *projectAppImpl) Get(ctx context.Context, projectId string) (*types.GetProjectRes, error) {
+func (app *projectAppImpl) Get(
+	ctx context.Context,
+	projectId string,
+) (*types.GetProjectRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return nil, errors.New("用户 ID 不能为空")
 	}
 	// 转换清单 ID 为 int64 类型
 	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
 	if err != nil {
-		return nil, errors.New("参数错误 - 清单 ID 格式错误")
+		return nil, errors.New("清单 ID 格式错误")
 	}
 	// 获取清单
 	projectEntity, err := app.projectDomain.GetById(ctx, userId, projectIdInt64)
@@ -54,7 +57,7 @@ func (app *projectAppImpl) Create(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("参数错误 - 用户 ID 不能为空")
+		return nil, errors.New("用户 ID 不能为空")
 	}
 	// 请求体转换值对象
 	createProjectValueObject, err := CreateProjectReqToValueObject(userId, createProjectReq)
