@@ -91,7 +91,7 @@ func (projectRepo *ProjectRepoImpl) Update(
 	return tx.Error
 }
 
-// Delete 删除清单
+// Delete 删除清单（软删除，设置 deactived_at）
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
@@ -105,11 +105,11 @@ func (projectRepo *ProjectRepoImpl) Delete(
 	var whereCond models.Project
 	whereCond.UserId = userId
 	whereCond.ID = projectId
-	// 2. 删除数据库
+	// 2. 更新 deactived_at 为当前时间
 	tx := projectRepo.db.WithContext(ctx).
 		Model(&models.Project{}).
 		Where(&whereCond).
-		Delete(&models.Project{})
+		Update("deactived_at", time.Now())
 	// 3. 返回结果
 	if tx.Error != nil {
 		return tx.Error
@@ -117,7 +117,7 @@ func (projectRepo *ProjectRepoImpl) Delete(
 	return nil
 }
 
-// Restore 恢复清单
+// Restore 恢复清单（取消软删除，设置 deactived_at 为 nil）
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
@@ -131,10 +131,10 @@ func (projectRepo *ProjectRepoImpl) Restore(
 	var whereCond models.Project
 	whereCond.UserId = userId
 	whereCond.ID = projectId
-	// 2. 恢复数据库
-	tx := projectRepo.db.WithContext(ctx).Unscoped().Model(&models.Project{}).
+	// 2. 恢复 deactived_at 为 nil
+	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
 		Where(&whereCond).
-		Update("deleted_at", nil)
+		Update("deactived_at", nil)
 	// 3. 返回结果
 	if tx.Error != nil {
 		return tx.Error

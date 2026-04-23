@@ -124,5 +124,5 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Restore(
 			UserId:    userId,
 			ProjectId: projectId,
 		}).
-		UpdateColumn("is_deleted", nil).Error
+		UpdateColumn("deleted_at", nil).Error
 }

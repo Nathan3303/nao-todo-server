@@ -4,11 +4,12 @@ import "time"
 
 type Project struct {
 	ModelBase
-	UserId      int64              `gorm:"not null"`
-	Name        string             `gorm:"size:128"`
-	Description string             `gorm:"size:256"`
-	ArchivedAt  *time.Time         `gorm:"null"`
-	Preference  *ProjectPreference `gorm:"foreignKey:ProjectId;constraint:OnDelete:CASCADE;"`
+	UserId       int64              `gorm:"not null"`
+	Name         string             `gorm:"size:128"`
+	Description  string             `gorm:"size:256"`
+	ArchivedAt   *time.Time         `gorm:"null"`
+	DeactivedAt  *time.Time         `gorm:"index"`
+	Preference   *ProjectPreference `gorm:"foreignKey:ProjectId;constraint:OnDelete:CASCADE;"`
 }
 
 type ProjectPreference struct {

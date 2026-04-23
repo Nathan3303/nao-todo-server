@@ -8,21 +8,23 @@ type CreateProjectReq struct {
 }
 
 type CreateProjectRes struct {
-	Id          string     `json:"id"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	ArchivedAt  *time.Time `json:"archivedAt"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+	Id           string     `json:"id"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	ArchivedAt   *time.Time `json:"archivedAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	DeactivedAt  *time.Time `json:"deactivedAt"`
 }
 
 type GetProjectRes struct {
-	Id          string     `json:"id"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	ArchivedAt  *time.Time `json:"archivedAt"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+	Id           string     `json:"id"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	ArchivedAt   *time.Time `json:"archivedAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	DeactivedAt  *time.Time `json:"deactivedAt"`
 }
 
 type UpdateProjectReq struct {

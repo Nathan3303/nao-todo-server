@@ -61,6 +61,7 @@ func Entity2Model(e *entities.Project) *models.Project {
 	m.Name = e.Name
 	m.Description = e.Description
 	m.ArchivedAt = e.ArchivedAt
+	m.DeactivedAt = e.DeactivedAt
 	return m
 }
 
@@ -89,6 +90,7 @@ func Model2Entity(m *models.Project) *entities.Project {
 	e.ArchivedAt = m.ArchivedAt
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
+	e.DeactivedAt = m.DeactivedAt
 	return e
 }
 
