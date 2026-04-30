@@ -28,11 +28,11 @@ func (updateTask *UpdateTask) Validate() error {
 	if updateTask.Name != nil && len(*updateTask.Name) == 0 {
 		return errors.New("任务名称不能为空")
 	}
-	if updateTask.Name != nil && len(*updateTask.Name) > 64 {
-		return errors.New("任务名称最多64个字符")
+	if updateTask.Name != nil && len(*updateTask.Name) > 256 {
+		return errors.New("任务名称最多256个字符")
 	}
-	if updateTask.Description != nil && len(*updateTask.Description) > 256 {
-		return errors.New("任务描述最多256个字符")
+	if updateTask.Description != nil && len(*updateTask.Description) > 512 {
+		return errors.New("任务描述最多512个字符")
 	}
 	if updateTask.EndAt.Valid && updateTask.StartAt.Valid &&
 		updateTask.EndAt.Time.Before(updateTask.StartAt.Time) {

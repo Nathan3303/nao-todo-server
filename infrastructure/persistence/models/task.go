@@ -8,8 +8,8 @@ type Task struct {
 	ModelBase
 	UserId       int64        `gorm:"not null"`
 	ParentTaskId int64        `gorm:"null"`
-	Name         string       `gorm:"size:64" `
-	Description  string       `gorm:"size:256" `
+	Name         string       `gorm:"size:256" `
+	Description  string       `gorm:"size:512" `
 	State        int8         `gorm:"default:0"`
 	Priority     int8         `gorm:"default:0"`
 	StartAt      sql.NullTime `gorm:"null"`
