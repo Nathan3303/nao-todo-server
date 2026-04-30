@@ -7,7 +7,7 @@ type User struct {
 	Account     string       `gorm:"size:64;unique;not null"`
 	Email       string       `gorm:"size:64;unique;not null"`
 	Password    string       `gorm:"size:64;not null"`
-	Nickname    string       `gorm:"size:32;not null"`
+	Nickname    string       `gorm:"size:64;not null"`
 	Avatar      string       `gorm:"size:256;default:'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80'"`
 	CreatedFrom string       `gorm:"size:64;default:'unknown:unknown'"`
 	Role        string       `gorm:"size:32;default:'user'"`
