@@ -17,7 +17,7 @@ mysql:
 redis:
     host: 192.168.2.109
     port: 6379
-    password: lianGjh3303!
+    password: lianGjh3303..
     database: 0
     network: tcp
 
