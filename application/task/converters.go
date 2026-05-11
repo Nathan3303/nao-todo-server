@@ -106,13 +106,13 @@ func UpdateTaskReqToValueObject(
 		req.Description,
 		iState,
 		iPriority,
-		utils.StringPtr2NullableTime(req.StartAt),
-		utils.StringPtr2NullableTime(req.EndAt),
+		utils.NullableString2NullableTime(req.StartAt),
+		utils.NullableString2NullableTime(req.EndAt),
 		iProjectId,
 		req.Tags,
-		utils.StringPtr2NullableTime(req.ArchivedAt),
-		utils.StringPtr2NullableTime(req.StarMarkAt),
-		utils.StringPtr2NullableTime(req.GivenUpAt),
+		utils.NullableString2NullableTime(req.ArchivedAt),
+		utils.NullableString2NullableTime(req.StarMarkAt),
+		utils.NullableString2NullableTime(req.GivenUpAt),
 	)
 }
 

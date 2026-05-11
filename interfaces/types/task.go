@@ -35,18 +35,18 @@ type CreateTaskReq struct {
 
 // UpdateTaskReq 更新任务请求
 type UpdateTaskReq struct {
-	ParentTaskId *string  `json:"parentTaskId"`
-	Name         *string  `json:"name"`
-	Description  *string  `json:"description"`
-	State        *string  `json:"state"`
-	Priority     *string  `json:"priority"`
-	StartAt      *string  `json:"startAt"`
-	EndAt        *string  `json:"endAt"`
-	ProjectId    *string  `json:"projectId"`
-	Tags         []string `json:"tags"`
-	ArchivedAt   *string  `json:"archivedAt"`
-	StarMarkAt   *string  `json:"starMarkAt"`
-	GivenUpAt    *string  `json:"givenUpAt"`
+	ParentTaskId *string        `json:"parentTaskId"`
+	Name         *string        `json:"name"`
+	Description  *string        `json:"description"`
+	State        *string        `json:"state"`
+	Priority     *string        `json:"priority"`
+	StartAt      NullableString `json:"startAt"`
+	EndAt        NullableString `json:"endAt"`
+	ProjectId    *string        `json:"projectId"`
+	Tags         []string       `json:"tags"`
+	ArchivedAt   NullableString `json:"archivedAt"`
+	StarMarkAt   NullableString `json:"starMarkAt"`
+	GivenUpAt    NullableString `json:"givenUpAt"`
 }
 
 // ListTaskReq 列表任务请求

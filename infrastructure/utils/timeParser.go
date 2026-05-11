@@ -85,6 +85,28 @@ func StringPtr2NullableTime(s *string) *NullableTime {
 	return NewNullableTimeWithTime(t)
 }
 
+type NullableString interface {
+	ToUpdateState() (shouldUpdate bool, isNull bool, value string)
+}
+
+func NullableString2NullableTime(ns NullableString) *NullableTime {
+	shouldUpdate, isNull, value := ns.ToUpdateState()
+	if !shouldUpdate {
+		return nil
+	}
+	if isNull {
+		return NewNullableTimeNull()
+	}
+	if value == "" {
+		return NewNullableTimeNull()
+	}
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return nil
+	}
+	return NewNullableTimeWithTime(t)
+}
+
 // 获取某时间所在周的开始（周一）和结束（周日）
 func GetWeekRange(t time.Time) (start, end time.Time) {
 	// 将时间调整到 UTC 或本地时区（根据你的数据库时区设置）
