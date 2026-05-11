@@ -10,10 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// CreateTaskValueObjectToModel 创建任务值对象转换为任务模型
-// @param userId 用户ID
-// @param createTaskValueObject 创建任务值对象
-// @return models.Task 任务模型
 func CreateTaskValueObjectToModel(
 	userId int64,
 	createTaskValueObject *valueobjects.CreateTask,
@@ -31,9 +27,6 @@ func CreateTaskValueObjectToModel(
 	}
 }
 
-// UpdateTaskValueObjectToModel 更新任务值对象转换为任务模型
-// @param updateTaskValueObject 更新任务值对象
-// @return models.Task 任务模型
 func UpdateTaskValueObjectToModel(
 	updateTaskValueObject *valueobjects.UpdateTask,
 ) *models.Task {
@@ -56,11 +49,11 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.Priority != nil {
 		m.Priority = *updateTaskValueObject.Priority
 	}
-	if updateTaskValueObject.StartAt.Valid {
-		m.StartAt = updateTaskValueObject.StartAt
+	if updateTaskValueObject.StartAt != nil && updateTaskValueObject.StartAt.ShouldUpdate() && !updateTaskValueObject.StartAt.IsSetToNull() {
+		m.StartAt = updateTaskValueObject.StartAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.EndAt.Valid {
-		m.EndAt = updateTaskValueObject.EndAt
+	if updateTaskValueObject.EndAt != nil && updateTaskValueObject.EndAt.ShouldUpdate() && !updateTaskValueObject.EndAt.IsSetToNull() {
+		m.EndAt = updateTaskValueObject.EndAt.ToSqlNullTime()
 	}
 	if updateTaskValueObject.ProjectId != nil {
 		m.ProjectId = *updateTaskValueObject.ProjectId
@@ -68,22 +61,18 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.Tags != nil {
 		m.Tags = updateTaskValueObject.Tags
 	}
-	if updateTaskValueObject.ArchivedAt.Valid {
-		m.ArchivedAt = updateTaskValueObject.ArchivedAt
+	if updateTaskValueObject.ArchivedAt != nil && updateTaskValueObject.ArchivedAt.ShouldUpdate() && !updateTaskValueObject.ArchivedAt.IsSetToNull() {
+		m.ArchivedAt = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.StarMarkAt.Valid {
-		m.StarMarkAt = updateTaskValueObject.StarMarkAt
+	if updateTaskValueObject.StarMarkAt != nil && updateTaskValueObject.StarMarkAt.ShouldUpdate() && !updateTaskValueObject.StarMarkAt.IsSetToNull() {
+		m.StarMarkAt = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.GivenUpAt.Valid {
-		m.GivenUpAt = updateTaskValueObject.GivenUpAt
+	if updateTaskValueObject.GivenUpAt != nil && updateTaskValueObject.GivenUpAt.ShouldUpdate() && !updateTaskValueObject.GivenUpAt.IsSetToNull() {
+		m.GivenUpAt = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
 	}
 	return m
 }
 
-// UpdateTaskValueObjectToMap 更新任务值对象转换为 map
-// - 用于更新任务时，将更新值对象转换为 map 格式以实现零值更新
-// @param updateTaskValueObject 更新任务值对象
-// @return map[string]any 任务更新值对象 map
 func UpdateTaskValueObjectToMap(
 	updateTaskValueObject *valueobjects.UpdateTask,
 ) map[string]interface{} {
@@ -106,11 +95,19 @@ func UpdateTaskValueObjectToMap(
 	if updateTaskValueObject.Priority != nil {
 		updateMap["Priority"] = *updateTaskValueObject.Priority
 	}
-	if updateTaskValueObject.StartAt.Valid {
-		updateMap["StartAt"] = updateTaskValueObject.StartAt
+	if updateTaskValueObject.StartAt != nil && updateTaskValueObject.StartAt.ShouldUpdate() {
+		if updateTaskValueObject.StartAt.IsSetToNull() {
+			updateMap["StartAt"] = nil
+		} else {
+			updateMap["StartAt"] = updateTaskValueObject.StartAt.ToSqlNullTime()
+		}
 	}
-	if updateTaskValueObject.EndAt.Valid {
-		updateMap["EndAt"] = updateTaskValueObject.EndAt
+	if updateTaskValueObject.EndAt != nil && updateTaskValueObject.EndAt.ShouldUpdate() {
+		if updateTaskValueObject.EndAt.IsSetToNull() {
+			updateMap["EndAt"] = nil
+		} else {
+			updateMap["EndAt"] = updateTaskValueObject.EndAt.ToSqlNullTime()
+		}
 	}
 	if updateTaskValueObject.ProjectId != nil {
 		updateMap["ProjectId"] = *updateTaskValueObject.ProjectId
@@ -121,21 +118,30 @@ func UpdateTaskValueObjectToMap(
 			updateMap["Tags"] = string(tagsJSON)
 		}
 	}
-	if updateTaskValueObject.ArchivedAt.Valid {
-		updateMap["ArchivedAt"] = updateTaskValueObject.ArchivedAt
+	if updateTaskValueObject.ArchivedAt != nil && updateTaskValueObject.ArchivedAt.ShouldUpdate() {
+		if updateTaskValueObject.ArchivedAt.IsSetToNull() {
+			updateMap["ArchivedAt"] = nil
+		} else {
+			updateMap["ArchivedAt"] = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
+		}
 	}
-	if updateTaskValueObject.StarMarkAt.Valid {
-		updateMap["StarMarkAt"] = updateTaskValueObject.StarMarkAt
+	if updateTaskValueObject.StarMarkAt != nil && updateTaskValueObject.StarMarkAt.ShouldUpdate() {
+		if updateTaskValueObject.StarMarkAt.IsSetToNull() {
+			updateMap["StarMarkAt"] = nil
+		} else {
+			updateMap["StarMarkAt"] = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
+		}
 	}
-	if updateTaskValueObject.GivenUpAt.Valid {
-		updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt
+	if updateTaskValueObject.GivenUpAt != nil && updateTaskValueObject.GivenUpAt.ShouldUpdate() {
+		if updateTaskValueObject.GivenUpAt.IsSetToNull() {
+			updateMap["GivenUpAt"] = nil
+		} else {
+			updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
+		}
 	}
 	return updateMap
 }
 
-// TaskModel2Entity 任务模型转换为任务实体
-// @param m models.Task 任务模型
-// @return entities.Task 任务实体
 func TaskModel2Entity(m *models.Task) *entities.Task {
 	e := &entities.Task{}
 	e.Id = m.ID
@@ -157,9 +163,6 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	return e
 }
 
-// PaginationVO2Scopes 分页值对象转换为查询操作符
-// @param pagination 分页值对象
-// @return func(db *gorm.DB) *gorm.DB 分页操作符
 func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) *gorm.DB {
 	if pagination.Page <= 0 {
 		pagination.Page = 1
@@ -173,9 +176,6 @@ func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) 
 	}
 }
 
-// TaskModels2Entities 任务模型列表转换为任务实体列表
-// @param mList []*models.Task 任务模型列表
-// @return []*entities.Task 任务实体列表
 func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 	eList := make([]*entities.Task, 0, len(mList))
 	for _, m := range mList {

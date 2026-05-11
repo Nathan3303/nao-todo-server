@@ -258,6 +258,8 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 	}
 	if query.IsGivenUp {
 		tx = tx.Where("given_up_at IS NOT NULL")
+	} else {
+		tx = tx.Where("given_up_at IS NULL")
 	}
 	// 8. 处理相对日期过滤条件
 	if query.RelativeDate != "" {

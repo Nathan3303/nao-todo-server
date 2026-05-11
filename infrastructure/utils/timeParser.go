@@ -71,6 +71,20 @@ func SqlNullTime2TimePtr(t sql.NullTime) *time.Time {
 	return &t.Time
 }
 
+func StringPtr2NullableTime(s *string) *NullableTime {
+	if s == nil {
+		return nil
+	}
+	if *s == "" || *s == "null" {
+		return NewNullableTimeNull()
+	}
+	t, err := time.Parse(time.RFC3339, *s)
+	if err != nil {
+		return nil
+	}
+	return NewNullableTimeWithTime(t)
+}
+
 // 获取某时间所在周的开始（周一）和结束（周日）
 func GetWeekRange(t time.Time) (start, end time.Time) {
 	// 将时间调整到 UTC 或本地时区（根据你的数据库时区设置）
