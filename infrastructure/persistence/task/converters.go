@@ -27,6 +27,7 @@ func CreateTaskValueObjectToModel(
 		Priority:    createTaskValueObject.Priority,
 		StartAt:     createTaskValueObject.StartAt,
 		EndAt:       createTaskValueObject.EndAt,
+		Tags:        createTaskValueObject.Tags,
 	}
 }
 
