@@ -28,6 +28,9 @@ type TaskApp interface {
 	// RestoreTask 恢复任务
 	RestoreTask(ctx context.Context, taskId string) error
 
+	// CopyTask 复制任务
+	CopyTask(ctx context.Context, taskId string) (*types.GetTaskRes, error)
+
 	// ListTask 获取任务列表
 	ListTask(
 		ctx context.Context,

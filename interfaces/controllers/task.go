@@ -165,6 +165,35 @@ func RestoreTaskHandler(ctx *gin.Context) {
 	})
 }
 
+// CopyTaskHandler 复制待办任务控制器
+// @code 4006x
+func CopyTaskHandler(ctx *gin.Context) {
+	// 1. 获取任务 ID
+	taskId := ctx.Param("taskId")
+	if taskId == "" {
+		Failure(ctx, types.ResponseData{
+			Code:    40061,
+			Message: "任务 ID 无效",
+		})
+		return
+	}
+	// 2. 调用应用层复制任务
+	res, err := task.App.CopyTask(ctx.Request.Context(), taskId)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    40062,
+			Message: err.Error(),
+		})
+		return
+	}
+	// 3. 返回结果
+	Success(ctx, types.ResponseData{
+		Code:    40060,
+		Message: "复制待办任务成功",
+		Data:    res,
+	})
+}
+
 // ListTaskHandler 获取待办任务列表控制器
 // @code 4005x
 func ListTaskHandler(ctx *gin.Context) {

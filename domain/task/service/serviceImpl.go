@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
@@ -78,6 +79,50 @@ func (taskDomain *TaskDomainImpl) Restore(
 	taskId int64,
 ) error {
 	return taskDomain.taskRepo.Restore(ctx, userId, taskId)
+}
+
+// Copy 复制任务
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @return 任务实体
+// @return error 错误信息
+func (taskDomain *TaskDomainImpl) Copy(
+	ctx context.Context,
+	userId int64,
+	taskId int64,
+) (*entities.Task, error) {
+	// 1. 获取原任务（含所有权校验）
+	existingTask, err := taskDomain.taskRepo.GetById(ctx, userId, taskId)
+	if err != nil {
+		return nil, err
+	}
+	// 2. 将 *time.Time 转换为 sql.NullTime
+	var startAt sql.NullTime
+	if existingTask.StartAt != nil {
+		startAt = sql.NullTime{Time: *existingTask.StartAt, Valid: true}
+	}
+	var endAt sql.NullTime
+	if existingTask.EndAt != nil {
+		endAt = sql.NullTime{Time: *existingTask.EndAt, Valid: true}
+	}
+	// 3. 构建创建任务值对象
+	createTaskVO, err := valueobjects.NewCreateTask(
+		0,
+		existingTask.Name,
+		existingTask.Description,
+		existingTask.State,
+		existingTask.Priority,
+		startAt,
+		endAt,
+		existingTask.ProjectId,
+		existingTask.Tags,
+	)
+	if err != nil {
+		return nil, err
+	}
+	// 4. 创建新任务
+	return taskDomain.taskRepo.Create(ctx, userId, createTaskVO)
 }
 
 // List 获取任务列表

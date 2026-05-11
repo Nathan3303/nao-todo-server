@@ -56,6 +56,14 @@ type TaskDomain interface {
 	// @return error 错误信息
 	Restore(ctx context.Context, userId int64, taskId int64) error
 
+	// Copy 复制任务
+	// @param ctx 上下文
+	// @param userId 用户ID
+	// @param taskId 任务ID
+	// @return 任务实体
+	// @return error 错误信息
+	Copy(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
+
 	// List 获取任务列表
 	// @param ctx 上下文
 	// @param userId 用户ID

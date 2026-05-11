@@ -159,6 +159,35 @@ func (taskApp *TaskAppImpl) RestoreTask(
 	return taskApp.taskDomain.Restore(ctx, userId, taskId64)
 }
 
+// CopyTask 复制任务
+// @param ctx 上下文
+// @param taskId 任务 ID
+// @return 任务响应
+// @return error 错误信息
+func (taskApp *TaskAppImpl) CopyTask(
+	ctx context.Context,
+	taskId string,
+) (*types.GetTaskRes, error) {
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	// 2. 转换待办任务 ID
+	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	if err != nil {
+		return nil, errors.New("待办任务 ID 无效")
+	}
+	// 3. 调用领域层复制任务
+	taskEntity, err := taskApp.taskDomain.Copy(ctx, userId, taskId64)
+	if err != nil {
+		return nil, err
+	}
+	// 4. 转换为响应对象
+	res := TaskEntityToGetRes(taskEntity)
+	return res, nil
+}
+
 // ListTask 获取任务列表
 // @param ctx 上下文
 // @param req 获取任务列表请求

@@ -32,5 +32,8 @@ func UseTaskRouter(router *gin.RouterGroup) {
 
 		// 恢复待办任务路由
 		taskGroup.PUT("/restore/:taskId", controllers.RestoreTaskHandler)
+
+		// 复制待办任务路由
+		taskGroup.POST("/:taskId/copy", controllers.CopyTaskHandler)
 	}
 }
