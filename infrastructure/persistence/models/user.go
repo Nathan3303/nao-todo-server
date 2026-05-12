@@ -19,5 +19,5 @@ type User struct {
 type UserConfig struct {
 	ModelBase
 	UserId     int64  `gorm:"not null;index:idx_user_config_user"`
-	Appearance string `gorm:"size:32;default:'auto'"`
+	Appearance string `gorm:"size:32;default:'system'"`
 }

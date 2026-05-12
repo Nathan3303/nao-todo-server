@@ -24,14 +24,14 @@ GET /api/user/config
   "code": 10110,
   "message": "获取用户配置成功",
   "data": {
-    "appearance": "auto"
+    "appearance": "system"
   }
 }
 ```
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `data.appearance` | `string` | 外观主题，默认 `auto` |
+| `data.appearance` | `string` | 外观主题，默认 `system` |
 
 **失败 (10111):**
 
