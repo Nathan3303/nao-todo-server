@@ -109,7 +109,7 @@ func (taskDomain *TaskDomainImpl) Copy(
 	// 3. 构建创建任务值对象
 	createTaskVO, err := valueobjects.NewCreateTask(
 		0,
-		existingTask.Name,
+		existingTask.Name+"的复制",
 		existingTask.Description,
 		existingTask.State,
 		existingTask.Priority,
