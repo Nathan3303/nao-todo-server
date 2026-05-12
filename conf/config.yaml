@@ -3,6 +3,7 @@ server:
     port: 3302
     version: 1.0
     jwtSecret: NaoTodoServerJwtSecret
+    goMaxProc: 2
 
 mysql:
     host: 192.168.2.109

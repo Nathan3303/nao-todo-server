@@ -38,6 +38,7 @@ type Server struct {
 	Port      string `yaml:"port"`
 	Version   string `yaml:"version"`
 	JwtSecret string `yaml:"jwtSecret"`
+	GoMaxProc int    `yaml:"goMaxProc"`
 }
 
 type MySQL struct {

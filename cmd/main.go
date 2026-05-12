@@ -5,11 +5,15 @@ import (
 	"naotodoserver/conf"
 	"naotodoserver/infrastructure"
 	"naotodoserver/interfaces/routers"
+	"runtime"
 )
 
 func main() {
-	// @step 1. 加载配置文件
+	// @step 0. 加载配置文件
 	conf.InitConfig()
+
+	// @step 1. 限制 Go 进程资源
+	runtime.GOMAXPROCS(conf.Conf.Server.GoMaxProc)
 
 	// @step 2. 初始化日志系统
 	infrastructure.LoadLogger()
