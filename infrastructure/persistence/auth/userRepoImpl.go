@@ -45,7 +45,10 @@ func (ur *userRepoImpl) Create(
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	// 4. 模型转换并返回
+	// 4. 创建用户默认配置
+	userConfig := &models.UserConfig{UserId: userModel.ID, Appearance: "auto"}
+	ur.db.WithContext(ctx).Create(userConfig)
+	// 5. 模型转换并返回
 	return UserModel2Entity(userModel), nil
 }
 

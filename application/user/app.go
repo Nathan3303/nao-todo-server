@@ -43,6 +43,12 @@ type UserApp interface {
 
 	// ActiveUser 激活用户
 	ActiveUser(ctx context.Context, req *types.ActiveUserReq) error
+
+	// GetConfig 获取用户配置
+	GetConfig(ctx context.Context) (*types.GetUserConfigRes, error)
+
+	// UpdateConfig 更新用户配置
+	UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error
 }
 
 // userAppImpl 用户应用实现

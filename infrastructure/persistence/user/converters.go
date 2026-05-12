@@ -44,7 +44,6 @@ func UserConfigEntity2Model(e *entities.UserConfig) *models.UserConfig {
 	u := &models.UserConfig{}
 	u.ID = e.Id
 	u.UserId = e.UserId
-	u.State = e.State
 	u.Appearance = e.Appearance
 	u.CreatedAt = e.CreatedAt
 	u.UpdatedAt = e.UpdatedAt
@@ -56,7 +55,6 @@ func UserConfigModel2Entity(m *models.UserConfig) *entities.UserConfig {
 	u := &entities.UserConfig{}
 	u.Id = m.ID
 	u.UserId = m.UserId
-	u.State = m.State
 	u.Appearance = m.Appearance
 	u.CreatedAt = m.CreatedAt
 	u.UpdatedAt = m.UpdatedAt

@@ -36,3 +36,11 @@ type DeactiveUserReq struct {
 type ActiveUserReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
+
+type GetUserConfigRes struct {
+	Appearance string `json:"appearance"`
+}
+
+type UpdateUserConfigReq struct {
+	Appearance string `json:"appearance" form:"appearance" binding:"required"`
+}

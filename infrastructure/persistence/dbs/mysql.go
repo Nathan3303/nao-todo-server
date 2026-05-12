@@ -57,6 +57,7 @@ func DoMigration() {
 
 	err := DB.AutoMigrate(
 		models.User{},
+		models.UserConfig{},
 		models.Session{},
 		models.Project{},
 		models.ProjectPreference{},

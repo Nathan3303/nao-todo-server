@@ -220,3 +220,54 @@ func ActiveUserHandler(ctx *gin.Context) {
 		Message: "启用用户成功",
 	})
 }
+
+// GetUserConfigHandler 获取用户配置控制器
+// @code 1011x
+func GetUserConfigHandler(ctx *gin.Context) {
+	res, err := user.App.GetConfig(ctx.Request.Context())
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10111,
+			Message: "获取用户配置失败 - " + err.Error(),
+		})
+		return
+	}
+	Success(ctx, types.ResponseData{
+		Code:    10110,
+		Message: "获取用户配置成功",
+		Data:    res,
+	})
+}
+
+// UpdateUserConfigHandler 更新用户配置控制器
+// @code 1012x
+func UpdateUserConfigHandler(ctx *gin.Context) {
+	var req types.UpdateUserConfigReq
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10121,
+			Message: "参数错误",
+		})
+		return
+	}
+	// if req.Appearance != "auto" && req.Appearance != "light" && req.Appearance != "dark" {
+	// 	Failure(ctx, types.ResponseData{
+	// 		Code:    10122,
+	// 		Message: "外观设置只能为 auto、light 或 dark",
+	// 	})
+	// 	return
+	// }
+	err = user.App.UpdateConfig(ctx.Request.Context(), req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10123,
+			Message: "更新用户配置失败 - " + err.Error(),
+		})
+		return
+	}
+	Success(ctx, types.ResponseData{
+		Code:    10120,
+		Message: "更新用户配置成功",
+	})
+}

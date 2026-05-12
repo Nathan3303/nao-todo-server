@@ -163,12 +163,65 @@ func (userRepo *UserRepoImpl) Active(ctx context.Context, userId int64) error {
 }
 
 /**
+ * Get User Config
+ */
+func (userRepo *UserRepoImpl) GetConfig(ctx context.Context, userId int64) (*entities.UserConfig, error) {
+	configModel := &models.UserConfig{}
+	tx := userRepo.db.WithContext(ctx).Model(&models.UserConfig{}).
+		Where("user_id = ?", userId).
+		First(configModel)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			defaultConfig := &models.UserConfig{UserId: userId, Appearance: "auto"}
+			if err := userRepo.db.WithContext(ctx).Create(defaultConfig).Error; err != nil {
+				return nil, err
+			}
+			return UserConfigModel2Entity(defaultConfig), nil
+		}
+		return nil, tx.Error
+	}
+	return UserConfigModel2Entity(configModel), nil
+}
+
+/**
+ * Update User Config
+ */
+func (userRepo *UserRepoImpl) UpdateConfig(ctx context.Context, userId int64, appearance string) error {
+	configModel := &models.UserConfig{}
+	tx := userRepo.db.WithContext(ctx).Model(&models.UserConfig{}).
+		Where("user_id = ?", userId).
+		First(configModel)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			newConfig := &models.UserConfig{UserId: userId, Appearance: appearance}
+			return userRepo.db.WithContext(ctx).Create(newConfig).Error
+		}
+		return tx.Error
+	}
+	return userRepo.db.WithContext(ctx).Model(configModel).Update("appearance", appearance).Error
+}
+
+/**
  * Delete User(s)
  */
 func (userRepo *UserRepoImpl) Delete(ctx context.Context, whereEntity *entities.User) error {
 	userModel := UserEntity2Model(whereEntity)
+	// 先查询需要删除的用户ID列表
+	var userIds []int64
 	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).
 		Where(userModel).
-		Delete(&models.User{})
-	return tx.Error
+		Pluck("id", &userIds)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if len(userIds) > 0 {
+		// 软删除关联的 UserConfig
+		userRepo.db.WithContext(ctx).Model(&models.UserConfig{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.UserConfig{})
+	}
+	// 软删除用户
+	return userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where(userModel).
+		Delete(&models.User{}).Error
 }

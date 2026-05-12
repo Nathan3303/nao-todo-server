@@ -65,7 +65,7 @@ func (userDomain *UserDomainImpl) UpdatePassword(
  * 删除用户方法
  */
 func (userDomain *UserDomainImpl) DeleteUser(ctx context.Context, userId int64) error {
-	panic("unimplemented")
+	return userDomain.repo.Delete(ctx, &entities.User{Id: userId})
 }
 
 /*
@@ -82,6 +82,22 @@ func (userDomain *UserDomainImpl) Deactive(ctx context.Context, userId int64) er
  */
 func (userDomain *UserDomainImpl) Active(ctx context.Context, userId int64) error {
 	return userDomain.repo.Active(ctx, userId)
+}
+
+/*
+ * Get user config
+ * 获取用户配置方法
+ */
+func (userDomain *UserDomainImpl) GetConfig(ctx context.Context, userId int64) (*entities.UserConfig, error) {
+	return userDomain.repo.GetConfig(ctx, userId)
+}
+
+/*
+ * Update user config
+ * 更新用户配置方法
+ */
+func (userDomain *UserDomainImpl) UpdateConfig(ctx context.Context, userId int64, appearance string) error {
+	return userDomain.repo.UpdateConfig(ctx, userId, appearance)
 }
 
 /*

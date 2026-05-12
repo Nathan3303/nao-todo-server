@@ -196,6 +196,28 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 	return u.userDomain.Deactive(ctx, userId)
 }
 
+// GetConfig 获取用户配置
+func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	config, err := u.userDomain.GetConfig(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return ConfigEntity2Res(config), nil
+}
+
+// UpdateConfig 更新用户配置
+func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("用户 ID 无效")
+	}
+	return u.userDomain.UpdateConfig(ctx, userId, req.Appearance)
+}
+
 // ActiveUser 激活用户
 // @param ctx 上下文
 // @param req 激活用户请求

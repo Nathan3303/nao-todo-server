@@ -22,3 +22,10 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res.UpdatedAt = utils.Time2String(e.UpdatedAt)
 	return res
 }
+
+// ConfigEntity2Res 用户配置实体转换为获取用户配置响应
+func ConfigEntity2Res(e *entities.UserConfig) *types.GetUserConfigRes {
+	return &types.GetUserConfigRes{
+		Appearance: e.Appearance,
+	}
+}

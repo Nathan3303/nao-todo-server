@@ -32,5 +32,11 @@ func UseUserRouter(router *gin.RouterGroup) {
 
 		/* 禁用用户路由 */
 		userGroup.PUT("/deactive", controllers.DeactiveUserHandler)
+
+		/* 获取用户配置路由 */
+		userGroup.GET("/config", controllers.GetUserConfigHandler)
+
+		/* 更新用户配置路由 */
+		userGroup.PUT("/config", controllers.UpdateUserConfigHandler)
 	}
 }
