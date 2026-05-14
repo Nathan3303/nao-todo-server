@@ -33,6 +33,12 @@ func UseProjectRouter(router *gin.RouterGroup) {
 			controllers.CreateProjectHandler,
 		)
 
+		/* 批量更新项目路由 */
+		projectGroup.PUT(
+			"/",
+			controllers.BatchUpdateProjectsHandler,
+		)
+
 		/* 更新项目路由 */
 		projectGroup.PUT(
 			"/:projectId",

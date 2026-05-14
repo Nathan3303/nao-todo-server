@@ -7,6 +7,7 @@ type GetTagRes struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Color       string    `json:"color"`
+	SortId      uint16    `json:"sortId"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -32,6 +33,7 @@ type CreateTagRes struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Color       string    `json:"color"`
+	SortId      uint16    `json:"sortId"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -40,6 +42,22 @@ type UpdateTagReq struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Color       *string `json:"color"`
+	SortId      *uint16 `json:"sortId"`
+}
+
+type BatchUpdateTagReq struct {
+	Tags []*struct {
+		Id          string  `json:"id" binding:"required"`
+		Name        *string `json:"name"`
+		Description *string `json:"description"`
+		Color       *string `json:"color"`
+		SortId      *uint16 `json:"sortId"`
+	} `json:"tags" binding:"required,min=1"`
+}
+
+type BatchUpdateTagRes struct {
+	UpdatedCount int64         `json:"updatedCount"`
+	Tags         []*GetTagRes  `json:"tags"`
 }
 
 type ListTagRes []*GetTagRes

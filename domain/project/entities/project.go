@@ -15,4 +15,5 @@ type Project struct {
 	UpdatedAt    time.Time
 	DeletedAt    *time.Time
 	DeactivedAt  *time.Time
+	SortId       uint16
 }

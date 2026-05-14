@@ -249,6 +249,39 @@ func (app *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, erro
 	return getResList, nil
 }
 
+// 批量更新任务清单
+// @param ctx 上下文
+// @param req 批量更新任务清单请求体
+// @return *types.BatchUpdateProjectRes 批量更新任务清单响应体
+// @return error 验证失败返回错误，否则返回 nil
+func (app *projectAppImpl) BatchUpdate(
+	ctx context.Context,
+	req *types.BatchUpdateProjectReq,
+) (*types.BatchUpdateProjectRes, error) {
+	// 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId == 0 {
+		return nil, errors.New("用户 ID 不能为空")
+	}
+	// 请求体转换值对象
+	batchVOs, err := BatchUpdateProjectReqToValueObjects(req)
+	if err != nil {
+		return nil, err
+	}
+	// 调用域函数 - 批量更新清单
+	updatedEntities, err := app.projectDomain.BatchUpdate(ctx, userId, batchVOs)
+	if err != nil {
+		return nil, err
+	}
+	// 实体转换响应体
+	projectResList := EntitiesToGetResList(updatedEntities)
+	// 返回结果
+	return &types.BatchUpdateProjectRes{
+		UpdatedCount: int64(len(projectResList)),
+		Projects:     projectResList,
+	}, nil
+}
+
 // 获取任务清单偏好
 // @param ctx 上下文
 // @param req 获取任务清单偏好请求体

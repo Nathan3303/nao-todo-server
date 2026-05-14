@@ -44,6 +44,8 @@ func (tagDomain *TagDomainImpl) Create(
 	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
 ) (*entities.Tag, error) {
+	// 设置排序 ID
+	createTagValueObject.SortId = tagDomain.tagRepo.GetMaxSortId(ctx, userId) + 1
 	// 创建标签
 	tagEntity, err := tagDomain.tagRepo.Create(ctx, userId, createTagValueObject)
 	if err != nil {
@@ -116,6 +118,15 @@ func (tagDomain *TagDomainImpl) List(
 	userId int64,
 ) ([]*entities.Tag, error) {
 	return tagDomain.tagRepo.Get(ctx, userId)
+}
+
+// 批量更新标签
+func (tagDomain *TagDomainImpl) BatchUpdate(
+	ctx context.Context,
+	userId int64,
+	batchUpdateTags []*valueobjects.BatchUpdateTag,
+) ([]*entities.Tag, error) {
+	return tagDomain.tagRepo.BatchUpdate(ctx, userId, batchUpdateTags)
 }
 
 // 获取标签偏好

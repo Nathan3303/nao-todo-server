@@ -15,6 +15,7 @@ type CreateProjectRes struct {
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
 	DeactivedAt  *time.Time `json:"deactivedAt"`
+	SortId       uint16     `json:"sortId"`
 }
 
 type GetProjectRes struct {
@@ -25,11 +26,27 @@ type GetProjectRes struct {
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
 	DeactivedAt  *time.Time `json:"deactivedAt"`
+	SortId       uint16     `json:"sortId"`
 }
 
 type UpdateProjectReq struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
+	SortId      *uint16 `json:"sortId"`
+}
+
+type BatchUpdateProjectReq struct {
+	Projects []*struct {
+		Id          string  `json:"id" binding:"required"`
+		Name        *string `json:"name"`
+		Description *string `json:"description"`
+		SortId      *uint16 `json:"sortId"`
+	} `json:"projects" binding:"required,min=1"`
+}
+
+type BatchUpdateProjectRes struct {
+	UpdatedCount int64             `json:"updatedCount"`
+	Projects     []*GetProjectRes  `json:"projects"`
 }
 
 type ListProjectRes []*GetProjectRes

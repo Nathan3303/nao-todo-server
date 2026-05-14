@@ -16,6 +16,7 @@ func CreateProjectValueObject2Model(
 	m.UserId = createProjectValueObject.UserId
 	m.Name = createProjectValueObject.Name
 	m.Description = createProjectValueObject.Description
+	m.SortId = createProjectValueObject.SortId
 	return m
 }
 
@@ -45,9 +46,9 @@ func UpdateProjectValueObjectToMap(
 	if updateProjectValueObject.Description != nil {
 		updateMap["Description"] = *updateProjectValueObject.Description
 	}
-	// 输出更新 map 内容
-	// println("更新 map 内容:")
-	// println(updateMap)
+	if updateProjectValueObject.SortId != nil {
+		updateMap["SortId"] = *updateProjectValueObject.SortId
+	}
 	return updateMap
 }
 
@@ -62,6 +63,7 @@ func Entity2Model(e *entities.Project) *models.Project {
 	m.Description = e.Description
 	m.ArchivedAt = e.ArchivedAt
 	m.DeactivedAt = e.DeactivedAt
+	m.SortId = e.SortId
 	return m
 }
 
@@ -91,6 +93,7 @@ func Model2Entity(m *models.Project) *entities.Project {
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeactivedAt = m.DeactivedAt
+	e.SortId = m.SortId
 	return e
 }
 
@@ -122,6 +125,23 @@ func Models2Entities(ms []*models.Project) []*entities.Project {
 		es = append(es, Model2Entity(m))
 	}
 	return es
+}
+
+// BatchUpdateProjectValueObjectToMap 批量更新项目值对象转 map
+func BatchUpdateProjectValueObjectToMap(
+	vo *valueobjects.BatchUpdateProject,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if vo.Name != nil {
+		updateMap["Name"] = *vo.Name
+	}
+	if vo.Description != nil {
+		updateMap["Description"] = *vo.Description
+	}
+	if vo.SortId != nil {
+		updateMap["SortId"] = *vo.SortId
+	}
+	return updateMap
 }
 
 // UpdateProjectPrefrenceValueObjectToModel 更新项目偏好值对象转模型

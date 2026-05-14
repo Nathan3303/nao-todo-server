@@ -6,6 +6,7 @@ type Tag struct {
 	Name        string         `gorm:"size:64"`
 	Description string         `gorm:"size:512"`
 	Color       string         `gorm:"size:16"`
+	SortId      uint16
 	Preference  *TagPreference `gorm:"foreignKey:TagId;constraint:OnDelete:CASCADE;"`
 }
 

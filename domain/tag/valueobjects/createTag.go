@@ -7,6 +7,7 @@ type CreateTag struct {
 	Name        string
 	Description string
 	Color       string
+	SortId      uint16
 }
 
 // 校验创建标签值对象

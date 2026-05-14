@@ -9,6 +9,7 @@ type Project struct {
 	Description string             `gorm:"size:512"`
 	ArchivedAt  *time.Time         `gorm:"null;index:idx_project_archived_at"`
 	DeactivedAt *time.Time         `gorm:"index:idx_project_deactived_at"`
+	SortId      uint16
 	Preference  *ProjectPreference `gorm:"foreignKey:ProjectId;constraint:OnDelete:CASCADE;"`
 }
 

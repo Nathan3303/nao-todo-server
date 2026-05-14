@@ -33,6 +33,13 @@ type TagDomain interface {
 	// 获取标签列表
 	List(ctx context.Context, userId int64) ([]*entities.Tag, error)
 
+	// 批量更新标签
+	BatchUpdate(
+		ctx context.Context,
+		userId int64,
+		batchUpdateTags []*valueobjects.BatchUpdateTag,
+	) ([]*entities.Tag, error)
+
 	// 获取标签偏好
 	GetPreference(ctx context.Context, userId, tagId int64) (*entities.TagPreference, error)
 

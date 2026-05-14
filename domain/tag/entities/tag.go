@@ -10,6 +10,7 @@ type Tag struct {
 	Name        string
 	Description string
 	Color       string
+	SortId      uint16
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

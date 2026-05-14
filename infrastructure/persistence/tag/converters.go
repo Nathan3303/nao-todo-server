@@ -19,6 +19,7 @@ func CreateTagValueObjectToModel(
 		Name:        createTagValueObject.Name,
 		Description: createTagValueObject.Description,
 		Color:       createTagValueObject.Color,
+		SortId:      createTagValueObject.SortId,
 	}
 }
 
@@ -61,6 +62,9 @@ func UpdateTagValueObjectToMap(
 	if updateTagValueObject.Color != nil {
 		updateMap["Color"] = *updateTagValueObject.Color
 	}
+	if updateTagValueObject.SortId != nil {
+		updateMap["SortId"] = *updateTagValueObject.SortId
+	}
 	return updateMap
 }
 
@@ -73,6 +77,7 @@ func TagEntity2Model(e *entities.Tag) *models.Tag {
 	m.Name = e.Name
 	m.Description = e.Description
 	m.Color = e.Color
+	m.SortId = e.SortId
 	m.CreatedAt = e.CreatedAt
 	m.UpdatedAt = e.UpdatedAt
 	return m
@@ -109,6 +114,7 @@ func TagModel2Entity(m *models.Tag) *entities.Tag {
 	e.Name = m.Name
 	e.Description = m.Description
 	e.Color = m.Color
+	e.SortId = m.SortId
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	return e
@@ -142,6 +148,26 @@ func TagModelList2EntityList(mList []*models.Tag) []*entities.Tag {
 		eList = append(eList, TagModel2Entity(m))
 	}
 	return eList
+}
+
+// BatchUpdateTagValueObjectToMap 批量更新标签值对象转 map
+func BatchUpdateTagValueObjectToMap(
+	vo *valueobjects.BatchUpdateTag,
+) map[string]interface{} {
+	updateMap := make(map[string]interface{})
+	if vo.Name != nil {
+		updateMap["Name"] = *vo.Name
+	}
+	if vo.Description != nil {
+		updateMap["Description"] = *vo.Description
+	}
+	if vo.Color != nil {
+		updateMap["Color"] = *vo.Color
+	}
+	if vo.SortId != nil {
+		updateMap["SortId"] = *vo.SortId
+	}
+	return updateMap
 }
 
 // UpdateTagPreferenceValueObjectToModel 更新标签偏好值对象转换为标签偏好模型

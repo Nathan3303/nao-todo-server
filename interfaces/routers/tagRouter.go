@@ -24,6 +24,9 @@ func UseTagRouter(router *gin.RouterGroup) {
 		/* 创建标签路由 */
 		tagGroup.POST("/", controllers.CreateTagHandler)
 
+		/* 批量更新标签路由 */
+		tagGroup.PUT("/", controllers.BatchUpdateTagsHandler)
+
 		/* 更新标签路由 */
 		tagGroup.PUT("/:tagId", controllers.UpdateTagHandler)
 

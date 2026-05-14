@@ -124,10 +124,70 @@ func (tagRepo *TagRepositoryImpl) Get(ctx context.Context, userId int64) ([]*ent
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
 		Preload("Preference").
 		Where(&findCond).
+		Order("sort_id ASC").
 		Find(&tagModelList)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	// 3. 返回结果
 	return TagModelList2EntityList(tagModelList), nil
+}
+
+// GetMaxSortId 获取最大排序 ID
+// @param ctx 上下文
+// @param userId 用户ID
+// @return maxSortId 最大排序 ID
+func (tagRepo *TagRepositoryImpl) GetMaxSortId(
+	ctx context.Context,
+	userId int64,
+) uint16 {
+	var maxSortId uint16 = 255
+	tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
+		Where("user_id = ?", userId).
+		Pluck("MAX(sort_id)", &maxSortId)
+	return maxSortId
+}
+
+// BatchUpdate 批量更新标签
+func (tagRepo *TagRepositoryImpl) BatchUpdate(
+	ctx context.Context,
+	userId int64,
+	batchUpdateTags []*valueobjects.BatchUpdateTag,
+) ([]*entities.Tag, error) {
+	tx := tagRepo.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	updatedIds := make([]int64, 0, len(batchUpdateTags))
+
+	for _, batchTag := range batchUpdateTags {
+		whereCond := &models.Tag{}
+		whereCond.ID = batchTag.Id
+		whereCond.UserId = userId
+		updateCond := BatchUpdateTagValueObjectToMap(batchTag)
+
+		if err := tx.Model(&models.Tag{}).
+			Where(whereCond).
+			Updates(updateCond).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		updatedIds = append(updatedIds, batchTag.Id)
+	}
+
+	var updatedTags []*models.Tag
+	if err := tx.Model(&models.Tag{}).
+		Preload("Preference").
+		Where("id IN ? AND user_id = ?", updatedIds, userId).
+		Find(&updatedTags).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return TagModelList2EntityList(updatedTags), nil
 }

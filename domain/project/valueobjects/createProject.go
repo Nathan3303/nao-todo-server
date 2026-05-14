@@ -7,6 +7,7 @@ type CreateProject struct {
 	UserId      int64
 	Name        string
 	Description string
+	SortId      uint16
 }
 
 // 验证创建任务清单值对象是否符合要求

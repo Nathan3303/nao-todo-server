@@ -39,6 +39,9 @@ type ProjectApp interface {
 	// 获取任务清单列表
 	List(ctx context.Context) (types.ListProjectRes, error)
 
+	// 批量更新任务清单
+	BatchUpdate(ctx context.Context, req *types.BatchUpdateProjectReq) (*types.BatchUpdateProjectRes, error)
+
 	// 获取任务清单偏好
 	GetPreference(ctx context.Context, projectId string) (*types.GetProjectPreferenceRes, error)
 

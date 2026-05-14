@@ -201,6 +201,50 @@ func (projectRepo *ProjectRepoImpl) Unarchive(
 	return nil
 }
 
+// BatchUpdate 批量更新清单
+func (projectRepo *ProjectRepoImpl) BatchUpdate(
+	ctx context.Context,
+	userId int64,
+	batchUpdateProjects []*valueobjects.BatchUpdateProject,
+) ([]*entities.Project, error) {
+	tx := projectRepo.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	updatedIds := make([]int64, 0, len(batchUpdateProjects))
+
+	for _, batchProject := range batchUpdateProjects {
+		whereCond := &models.Project{}
+		whereCond.ID = batchProject.Id
+		whereCond.UserId = userId
+		updateCond := BatchUpdateProjectValueObjectToMap(batchProject)
+
+		if err := tx.Model(&models.Project{}).
+			Where(whereCond).
+			Updates(updateCond).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		updatedIds = append(updatedIds, batchProject.Id)
+	}
+
+	var updatedProjects []*models.Project
+	if err := tx.Model(&models.Project{}).
+		Preload("Preference").
+		Where("id IN ? AND user_id = ?", updatedIds, userId).
+		Find(&updatedProjects).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return Models2Entities(updatedProjects), nil
+}
+
 // GetByUserId 获取用户所有清单
 // @param ctx 上下文
 // @param userId 用户ID
@@ -215,10 +259,26 @@ func (projectRepo *ProjectRepoImpl) GetByUserId(
 	tx := projectRepo.db.WithContext(ctx).
 		Preload("Preference").
 		Where("user_id = ?", userId).
+		Order("sort_id ASC").
 		Find(&ms)
 	// 2. 转换为实体并返回结果
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	return Models2Entities(ms), nil
+}
+
+// GetMaxSortId 获取最大排序 ID
+// @param ctx 上下文
+// @param userId 用户ID
+// @return maxSortId 最大排序 ID
+func (projectRepo *ProjectRepoImpl) GetMaxSortId(
+	ctx context.Context,
+	userId int64,
+) uint16 {
+	var maxSortId uint16 = 255
+	projectRepo.db.WithContext(ctx).Model(&models.Project{}).
+		Where("user_id = ?", userId).
+		Pluck("MAX(sort_id)", &maxSortId)
+	return maxSortId
 }

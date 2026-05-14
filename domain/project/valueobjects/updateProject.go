@@ -6,6 +6,7 @@ import "errors"
 type UpdateProject struct {
 	Name        *string
 	Description *string
+	SortId      *uint16
 }
 
 // 验证更新任务清单值对象是否符合要求
@@ -24,6 +25,9 @@ func (updateVO *UpdateProject) Validate() error {
 			return errors.New("任务清单描述不能超过256个字符")
 		}
 	}
+	if updateVO.SortId != nil && *updateVO.SortId == 0 {
+		return errors.New("排序ID不能为0")
+	}
 	return nil
 }
 
@@ -32,10 +36,11 @@ func (updateVO *UpdateProject) Validate() error {
 // @param description 任务清单描述
 // @return *UpdateProject 更新任务清单值对象
 // @return error 验证失败返回错误，否则返回 nil
-func NewUpdateProject(name *string, description *string) (*UpdateProject, error) {
+func NewUpdateProject(name *string, description *string, sortId *uint16) (*UpdateProject, error) {
 	vo := &UpdateProject{
 		Name:        name,
 		Description: description,
+		SortId:      sortId,
 	}
 	err := vo.Validate()
 	if err != nil {

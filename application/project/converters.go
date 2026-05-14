@@ -39,6 +39,7 @@ func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProj
 		CreatedAt:    projectEntity.CreatedAt,
 		UpdatedAt:    projectEntity.UpdatedAt,
 		DeactivedAt:  projectEntity.DeactivedAt,
+		SortId:       projectEntity.SortId,
 	}
 }
 
@@ -54,6 +55,7 @@ func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes
 		CreatedAt:    projectEntity.CreatedAt,
 		UpdatedAt:    projectEntity.UpdatedAt,
 		DeactivedAt:  projectEntity.DeactivedAt,
+		SortId:       projectEntity.SortId,
 	}
 }
 
@@ -67,6 +69,7 @@ func UpdateProjectReqToValueObject(
 	updateProjectValueObject, err := valueobjects.NewUpdateProject(
 		updateProjectReq.Name,
 		updateProjectReq.Description,
+		updateProjectReq.SortId,
 	)
 	if err != nil {
 		return nil, err
@@ -83,6 +86,28 @@ func EntitiesToGetResList(projectEntities []*entities.Project) []*types.GetProje
 		getResList = append(getResList, ProjectEntityToGetRes(projectEntity))
 	}
 	return getResList
+}
+
+// 批量更新任务清单请求体转换值对象
+// @param req 批量更新任务清单请求体
+// @return []*valueobjects.BatchUpdateProject 批量更新任务清单值对象列表
+// @return error 验证失败返回错误，否则返回 nil
+func BatchUpdateProjectReqToValueObjects(
+	req *types.BatchUpdateProjectReq,
+) ([]*valueobjects.BatchUpdateProject, error) {
+	batchVOs := make([]*valueobjects.BatchUpdateProject, 0, len(req.Projects))
+	for _, project := range req.Projects {
+		id, err := strconv.ParseInt(project.Id, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		vo, err := valueobjects.NewBatchUpdateProject(id, project.Name, project.Description, project.SortId)
+		if err != nil {
+			return nil, err
+		}
+		batchVOs = append(batchVOs, vo)
+	}
+	return batchVOs, nil
 }
 
 // 任务清单偏好实体转换响应体

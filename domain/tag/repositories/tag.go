@@ -54,4 +54,14 @@ type TagRepository interface {
 	// @return []*entities.Tag 标签实体列表
 	// @return error 错误
 	Get(ctx context.Context, userId int64) ([]*entities.Tag, error)
+
+	// 获取最大排序 ID
+	GetMaxSortId(ctx context.Context, userId int64) uint16
+
+	// 批量更新标签
+	BatchUpdate(
+		ctx context.Context,
+		userId int64,
+		batchUpdateTags []*valueobjects.BatchUpdateTag,
+	) ([]*entities.Tag, error)
 }

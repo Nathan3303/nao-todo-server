@@ -189,6 +189,35 @@ func GetTagPreferenceHandler(ctx *gin.Context) {
 	})
 }
 
+// 批量更新标签接入点
+// @code 3007x
+func BatchUpdateTagsHandler(ctx *gin.Context) {
+	var req types.BatchUpdateTagReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30071,
+			Message: "请求参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	res, err := tag.App.BatchUpdateTags(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30072,
+			Message: "批量更新标签失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	Success(ctx, types.ResponseData{
+		Code:    30070,
+		Message: "批量更新标签成功",
+		Data:    res,
+	})
+}
+
 // 更新标签偏好接入点
 // @code 3006x
 func UpdateTagPreferenceHandler(ctx *gin.Context) {

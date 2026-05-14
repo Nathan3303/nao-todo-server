@@ -7,6 +7,7 @@ type UpdateTag struct {
 	Name        *string
 	Description *string
 	Color       *string
+	SortId      *uint16
 }
 
 // 校验更新标签值对象
@@ -21,6 +22,9 @@ func (updateTag *UpdateTag) Validate() error {
 	if updateTag.Color != nil && len(*updateTag.Color) > 16 {
 		return errors.New("标签颜色长度不能超过16个字符")
 	}
+	if updateTag.SortId != nil && *updateTag.SortId == 0 {
+		return errors.New("排序ID不能为0")
+	}
 	return nil
 }
 
@@ -30,11 +34,12 @@ func (updateTag *UpdateTag) Validate() error {
 // @param color 标签颜色
 // @return *UpdateTag 更新标签值对象
 // @return error 校验失败返回错误，否则返回 nil
-func NewUpdateTag(name, description, color *string) (*UpdateTag, error) {
+func NewUpdateTag(name, description, color *string, sortId *uint16) (*UpdateTag, error) {
 	vo := &UpdateTag{
 		Name:        name,
 		Description: description,
 		Color:       color,
+		SortId:      sortId,
 	}
 	if err := vo.Validate(); err != nil {
 		return nil, err

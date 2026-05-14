@@ -292,6 +292,35 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 	})
 }
 
+// 批量更新清单接入点
+// @code 2010x
+func BatchUpdateProjectsHandler(ctx *gin.Context) {
+	var req types.BatchUpdateProjectReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    20101,
+			Message: "请求参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	res, err := project.App.BatchUpdate(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    20102,
+			Message: "批量更新清单失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	Success(ctx, types.ResponseData{
+		Code:    20100,
+		Message: "批量更新清单成功",
+		Data:    res,
+	})
+}
+
 // 保存清单偏好接入点
 // @code 2009x
 func SaveProjectPreferenceHandler(ctx *gin.Context) {

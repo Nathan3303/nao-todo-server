@@ -158,6 +158,35 @@ func (tagApp *TagAppImpl) ListTag(
 	return TagEntitiesToGetResList(tagEntities), nil
 }
 
+// 批量更新标签
+func (tagApp *TagAppImpl) BatchUpdateTags(
+	ctx context.Context,
+	req *types.BatchUpdateTagReq,
+) (*types.BatchUpdateTagRes, error) {
+	// 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	// 请求体转换值对象
+	batchVOs, err := BatchUpdateTagReqToValueObjects(req)
+	if err != nil {
+		return nil, err
+	}
+	// 调用域函数 - 批量更新标签
+	updatedEntities, err := tagApp.tagDomain.BatchUpdate(ctx, userId, batchVOs)
+	if err != nil {
+		return nil, err
+	}
+	// 实体转换响应体
+	tagResList := TagEntitiesToGetResList(updatedEntities)
+	// 返回结果
+	return &types.BatchUpdateTagRes{
+		UpdatedCount: int64(len(tagResList)),
+		Tags:         tagResList,
+	}, nil
+}
+
 // 获取标签偏好设置
 // @param ctx 上下文
 // @param tagId 标签 ID

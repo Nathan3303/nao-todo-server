@@ -39,4 +39,14 @@ type Project interface {
 
 	// 根据用户ID获取任务清单列表
 	GetByUserId(ctx context.Context, userId int64) ([]*entities.Project, error)
+
+	// 获取最大排序 ID
+	GetMaxSortId(ctx context.Context, userId int64) uint16
+
+	// 批量更新任务清单
+	BatchUpdate(
+		ctx context.Context,
+		userId int64,
+		batchUpdateProjects []*valueobjects.BatchUpdateProject,
+	) ([]*entities.Project, error)
 }

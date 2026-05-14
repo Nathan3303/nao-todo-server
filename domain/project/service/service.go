@@ -38,6 +38,13 @@ type ProjectDomain interface {
 	// 取消归档任务清单
 	Unarchive(ctx context.Context, userId int64, projectId int64) error
 
+	// 批量更新任务清单
+	BatchUpdate(
+		ctx context.Context,
+		userId int64,
+		batchUpdateProjects []*valueobjects.BatchUpdateProject,
+	) ([]*entities.Project, error)
+
 	// 根据用户ID获取任务清单列表
 	GetByUserId(ctx context.Context, userId int64) ([]*entities.Project, error)
 

@@ -24,6 +24,8 @@ func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
 	createProjectValueObject *valueobjects.CreateProject,
 ) (*entities.Project, error) {
+	// 设置排序 ID
+	createProjectValueObject.SortId = p.repo.GetMaxSortId(ctx, createProjectValueObject.UserId) + 1
 	// 创建任务清单
 	projectEntity, err := p.repo.Create(ctx, createProjectValueObject)
 	if err != nil {
@@ -125,6 +127,15 @@ func (p *ProjectDomainImpl) GetByUserId(
 	userId int64,
 ) ([]*entities.Project, error) {
 	return p.repo.GetByUserId(ctx, userId)
+}
+
+// 批量更新任务清单
+func (p *ProjectDomainImpl) BatchUpdate(
+	ctx context.Context,
+	userId int64,
+	batchUpdateProjects []*valueobjects.BatchUpdateProject,
+) ([]*entities.Project, error) {
+	return p.repo.BatchUpdate(ctx, userId, batchUpdateProjects)
 }
 
 // 根据用户ID和任务清单ID获取任务清单偏好

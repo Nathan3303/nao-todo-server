@@ -31,6 +31,9 @@ type TagApp interface {
 	// 获取标签列表
 	ListTag(ctx context.Context) ([]*types.GetTagRes, error)
 
+	// 批量更新标签
+	BatchUpdateTags(ctx context.Context, req *types.BatchUpdateTagReq) (*types.BatchUpdateTagRes, error)
+
 	// 获取标签偏好设置
 	GetTagPreference(
 		ctx context.Context,

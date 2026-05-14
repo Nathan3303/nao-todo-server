@@ -16,6 +16,7 @@ func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
 	res.Color = tagEntity.Color
+	res.SortId = tagEntity.SortId
 	res.CreatedAt = tagEntity.CreatedAt
 	res.UpdatedAt = tagEntity.UpdatedAt
 	return res
@@ -41,6 +42,7 @@ func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
 	res.Color = tagEntity.Color
+	res.SortId = tagEntity.SortId
 	res.CreatedAt = tagEntity.CreatedAt
 	res.UpdatedAt = tagEntity.UpdatedAt
 	return res
@@ -54,6 +56,7 @@ func UpdateTagReqToValueObject(updateTagReq *types.UpdateTagReq) (*valueobjects.
 		updateTagReq.Name,
 		updateTagReq.Description,
 		updateTagReq.Color,
+		updateTagReq.SortId,
 	)
 }
 
@@ -96,4 +99,23 @@ func UpdateTagPreferenceReqToValueObject(
 		updateTagPreferenceReq.GetOptions,
 		updateTagPreferenceReq.Columns,
 	)
+}
+
+// 批量更新标签请求体转换值对象
+func BatchUpdateTagReqToValueObjects(
+	req *types.BatchUpdateTagReq,
+) ([]*valueobjects.BatchUpdateTag, error) {
+	batchVOs := make([]*valueobjects.BatchUpdateTag, 0, len(req.Tags))
+	for _, tag := range req.Tags {
+		id, err := strconv.ParseInt(tag.Id, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		vo, err := valueobjects.NewBatchUpdateTag(id, tag.Name, tag.Description, tag.Color, tag.SortId)
+		if err != nil {
+			return nil, err
+		}
+		batchVOs = append(batchVOs, vo)
+	}
+	return batchVOs, nil
 }
