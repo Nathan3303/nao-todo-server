@@ -98,12 +98,12 @@ func (app *projectAppImpl) Update(
 	// 请求体转换实体
 	updateProjectValueObject, err := UpdateProjectReqToValueObject(updateProjectReq)
 	if err != nil {
-		return errors.New("更新任务清单请求体格式错误")
+		return errors.New("更新任务清单请求体格式错误: " + err.Error())
 	}
 	// 调用域函数 - 更新清单
 	err = app.projectDomain.Update(ctx, userId, projectIdInt64, updateProjectValueObject)
 	if err != nil {
-		return errors.New("更新任务清单失败")
+		return errors.New("更新任务清单失败: " + err.Error())
 	}
 	// 返回结果
 	return nil
