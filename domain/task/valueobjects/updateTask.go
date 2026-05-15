@@ -22,13 +22,13 @@ type UpdateTask struct {
 }
 
 func (updateTask *UpdateTask) Validate() error {
-	if updateTask.Name != nil && len(*updateTask.Name) == 0 {
+	if updateTask.Name != nil && utils.RuneLength(*updateTask.Name) == 0 {
 		return errors.New("任务名称不能为空")
 	}
-	if updateTask.Name != nil && len(*updateTask.Name) > 256 {
+	if updateTask.Name != nil && utils.RuneLength(*updateTask.Name) > 256 {
 		return errors.New("任务名称最多256个字符")
 	}
-	if updateTask.Description != nil && len(*updateTask.Description) > 512 {
+	if updateTask.Description != nil && utils.RuneLength(*updateTask.Description) > 512 {
 		return errors.New("任务描述最多512个字符")
 	}
 	if updateTask.EndAt != nil && updateTask.EndAt.ShouldUpdate() && !updateTask.EndAt.IsSetToNull() &&

@@ -63,6 +63,6 @@ type BatchUpdateEventReq struct {
 
 // BatchUpdateEventRes 批量更新事件响应
 type BatchUpdateEventRes struct {
-	UpdatedCount int64           `json:"updatedCount"`
-	Events       []*GetEventRes  `json:"events"`
+	UpdatedCount int64          `json:"updatedCount"`
+	Events       []*GetEventRes `json:"events"`
 }

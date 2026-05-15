@@ -6,6 +6,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+
+	"naotodoserver/infrastructure/utils"
 )
 
 type User struct {
@@ -30,7 +32,7 @@ func (u *User) IsIdValid() bool {
 }
 
 func (u *User) IsNicknameValid() bool {
-	return u != nil && len(u.Nickname) >= 2 && len(u.Nickname) <= 20
+	return u != nil && utils.RuneLength(u.Nickname) >= 2 && utils.RuneLength(u.Nickname) <= 20
 }
 
 func (u *User) IsValid() bool {

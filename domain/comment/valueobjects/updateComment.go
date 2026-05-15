@@ -1,6 +1,10 @@
 package valueobjects
 
-import "errors"
+import (
+	"errors"
+
+	"naotodoserver/infrastructure/utils"
+)
 
 // UpdateComment 更新评论 Value Object
 type UpdateComment struct {
@@ -12,10 +16,10 @@ type UpdateComment struct {
 // Validate 验证创建评论 Value Object 是否符合要求
 // @return error 验证失败时返回错误
 func (updateComment *UpdateComment) Validate() error {
-	if updateComment.Content != nil && len(*updateComment.Content) == 0 {
+	if updateComment.Content != nil && utils.RuneLength(*updateComment.Content) == 0 {
 		return errors.New("评论内容不能为空")
 	}
-	if updateComment.Content != nil && len(*updateComment.Content) > 512 {
+	if updateComment.Content != nil && utils.RuneLength(*updateComment.Content) > 512 {
 		return errors.New("评论内容最多 512 个字符")
 	}
 	if updateComment.Attachments != nil && len(*updateComment.Attachments) > 8 {

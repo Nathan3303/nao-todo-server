@@ -8,25 +8,25 @@ type CreateProjectReq struct {
 }
 
 type CreateProjectRes struct {
-	Id           string     `json:"id"`
-	Name         string     `json:"name"`
-	Description  string     `json:"description"`
-	ArchivedAt   *time.Time `json:"archivedAt"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
-	DeactivedAt  *time.Time `json:"deactivedAt"`
-	SortId       uint16     `json:"sortId"`
+	Id          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	ArchivedAt  *time.Time `json:"archivedAt"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+	DeactivedAt *time.Time `json:"deactivedAt"`
+	SortId      uint16     `json:"sortId"`
 }
 
 type GetProjectRes struct {
-	Id           string     `json:"id"`
-	Name         string     `json:"name"`
-	Description  string     `json:"description"`
-	ArchivedAt   *time.Time `json:"archivedAt"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
-	DeactivedAt  *time.Time `json:"deactivedAt"`
-	SortId       uint16     `json:"sortId"`
+	Id          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	ArchivedAt  *time.Time `json:"archivedAt"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+	DeactivedAt *time.Time `json:"deactivedAt"`
+	SortId      uint16     `json:"sortId"`
 }
 
 type UpdateProjectReq struct {
@@ -45,8 +45,8 @@ type BatchUpdateProjectReq struct {
 }
 
 type BatchUpdateProjectRes struct {
-	UpdatedCount int64             `json:"updatedCount"`
-	Projects     []*GetProjectRes  `json:"projects"`
+	UpdatedCount int64            `json:"updatedCount"`
+	Projects     []*GetProjectRes `json:"projects"`
 }
 
 type ListProjectRes []*GetProjectRes

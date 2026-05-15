@@ -1,6 +1,10 @@
 package valueobjects
 
-import "errors"
+import (
+	"errors"
+
+	"naotodoserver/infrastructure/utils"
+)
 
 // 更新标签值对象
 type UpdateTag struct {
@@ -13,13 +17,13 @@ type UpdateTag struct {
 // 校验更新标签值对象
 // @return error 校验失败返回错误，否则返回 nil
 func (updateTag *UpdateTag) Validate() error {
-	if updateTag.Name != nil && len(*updateTag.Name) > 128 {
-		return errors.New("标签名称长度不能超过128个字符")
+	if updateTag.Name != nil && utils.RuneLength(*updateTag.Name) > 64 {
+		return errors.New("标签名称长度不能超过64个字符")
 	}
-	if updateTag.Description != nil && len(*updateTag.Description) > 256 {
-		return errors.New("标签描述长度不能超过256个字符")
+	if updateTag.Description != nil && utils.RuneLength(*updateTag.Description) > 512 {
+		return errors.New("标签描述长度不能超过512个字符")
 	}
-	if updateTag.Color != nil && len(*updateTag.Color) > 16 {
+	if updateTag.Color != nil && utils.RuneLength(*updateTag.Color) > 16 {
 		return errors.New("标签颜色长度不能超过16个字符")
 	}
 	if updateTag.SortId != nil && *updateTag.SortId == 0 {

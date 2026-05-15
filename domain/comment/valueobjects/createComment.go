@@ -1,6 +1,10 @@
 package valueobjects
 
-import "errors"
+import (
+	"errors"
+
+	"naotodoserver/infrastructure/utils"
+)
 
 // CreateComment 创建评论 Value Object
 // 评论内容最多 512 个字符
@@ -25,7 +29,7 @@ func (createComment *CreateComment) Validate() error {
 	if createComment.Content == "" {
 		return errors.New("评论内容不能为空")
 	}
-	if len(createComment.Content) > 512 {
+	if utils.RuneLength(createComment.Content) > 512 {
 		return errors.New("评论内容最多 512 个字符")
 	}
 	if len(createComment.Attachments) > 8 {

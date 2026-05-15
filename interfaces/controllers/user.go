@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"naotodoserver/application/user"
+	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -21,10 +22,10 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 验证参数
-	if len(req.Nickname) <= 2 || len(req.Nickname) > 32 {
+	if utils.RuneLength(req.Nickname) < 2 || utils.RuneLength(req.Nickname) > 20 {
 		Failure(ctx, types.ResponseData{
 			Code:    10052,
-			Message: "昵称长度必须在 2-32 个字符之间",
+			Message: "昵称长度必须在 2-20 个字符之间",
 		})
 		return
 	}
@@ -78,7 +79,7 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 验证参数
-	if len(req.NewPassword) < 8 || len(req.NewPassword) > 32 {
+	if utils.RuneLength(req.NewPassword) < 8 || utils.RuneLength(req.NewPassword) > 32 {
 		Failure(ctx, types.ResponseData{
 			Code:    10073,
 			Message: "新密码长度必须在 8-32 个字符之间",

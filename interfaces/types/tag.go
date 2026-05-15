@@ -56,8 +56,8 @@ type BatchUpdateTagReq struct {
 }
 
 type BatchUpdateTagRes struct {
-	UpdatedCount int64         `json:"updatedCount"`
-	Tags         []*GetTagRes  `json:"tags"`
+	UpdatedCount int64        `json:"updatedCount"`
+	Tags         []*GetTagRes `json:"tags"`
 }
 
 type ListTagRes []*GetTagRes

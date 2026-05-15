@@ -80,12 +80,30 @@ GORM with MySQL. `ModelBase` (embedded in all models) provides auto-generated Sn
 
 Follow the format in `.trae/rules/git-commit-message.md`:
 
-```text
-feat|fix|chore|change(功能点或变更点): 描述变更
+## Plan file storage
 
-变更点：
-- 具体变更描述
+All the plan file storage in `docs/plans`. If the directory doesn't exist? just make it.
 
-其他（可选）:
-- 非功能点变更说明
+## 代码注释
+
+需要按照如下规则编写注释：
+
+- 必须编写函数注释。
+- 函数中分步骤执行则需要按步骤写注释，错误处理除外。
+- 结构体也需要分成员写注释。
+
+```go
+// 两数相加
+// @description 用于两数个整数相加，返回整数
+// @param a int
+// @param b int
+// @returns int
+func Add(a int, b int) int {
+    // 创建缓存变量
+    var res int
+    // 相加
+    res = a + b
+    // 返回
+    return res
+}
 ```

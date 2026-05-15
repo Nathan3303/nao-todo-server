@@ -32,14 +32,14 @@ func CreateProjectReqToValueObject(
 // @return *types.CreateProjectRes 创建任务清单响应体
 func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProjectRes {
 	return &types.CreateProjectRes{
-		Id:           strconv.FormatInt(projectEntity.Id, 10),
-		Name:         projectEntity.Name,
-		Description:  projectEntity.Description,
-		ArchivedAt:   projectEntity.ArchivedAt,
-		CreatedAt:    projectEntity.CreatedAt,
-		UpdatedAt:    projectEntity.UpdatedAt,
-		DeactivedAt:  projectEntity.DeactivedAt,
-		SortId:       projectEntity.SortId,
+		Id:          strconv.FormatInt(projectEntity.Id, 10),
+		Name:        projectEntity.Name,
+		Description: projectEntity.Description,
+		ArchivedAt:  projectEntity.ArchivedAt,
+		CreatedAt:   projectEntity.CreatedAt,
+		UpdatedAt:   projectEntity.UpdatedAt,
+		DeactivedAt: projectEntity.DeactivedAt,
+		SortId:      projectEntity.SortId,
 	}
 }
 
@@ -48,14 +48,14 @@ func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProj
 // @return *types.GetProjectRes 获取任务清单响应体
 func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes {
 	return &types.GetProjectRes{
-		Id:           strconv.FormatInt(projectEntity.Id, 10),
-		Name:         projectEntity.Name,
-		Description:  projectEntity.Description,
-		ArchivedAt:   projectEntity.ArchivedAt,
-		CreatedAt:    projectEntity.CreatedAt,
-		UpdatedAt:    projectEntity.UpdatedAt,
-		DeactivedAt:  projectEntity.DeactivedAt,
-		SortId:       projectEntity.SortId,
+		Id:          strconv.FormatInt(projectEntity.Id, 10),
+		Name:        projectEntity.Name,
+		Description: projectEntity.Description,
+		ArchivedAt:  projectEntity.ArchivedAt,
+		CreatedAt:   projectEntity.CreatedAt,
+		UpdatedAt:   projectEntity.UpdatedAt,
+		DeactivedAt: projectEntity.DeactivedAt,
+		SortId:      projectEntity.SortId,
 	}
 }
 
