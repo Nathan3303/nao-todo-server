@@ -11,7 +11,7 @@ import (
 func UseTagRouter(router *gin.RouterGroup) {
 	tagGroup := router.Group(
 		"/tags",
-		middlewares.RateLimiter(20, "tags"),
+		middlewares.RateLimiter(32, "tags"),
 		middlewares.JWTValidator,
 	)
 	{

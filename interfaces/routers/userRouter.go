@@ -11,7 +11,7 @@ import (
 func UseUserRouter(router *gin.RouterGroup) {
 	userGroup := router.Group(
 		"/user",
-		middlewares.RateLimiter(10, "user"),
+		middlewares.RateLimiter(16, "user"),
 		middlewares.JWTValidator,
 	)
 	{

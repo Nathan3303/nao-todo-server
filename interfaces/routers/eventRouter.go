@@ -11,7 +11,7 @@ import (
 func UseEventRouter(router *gin.RouterGroup) {
 	eventGroup := router.Group(
 		"/events",
-		middlewares.RateLimiter(20, "events"),
+		middlewares.RateLimiter(64, "events"),
 		middlewares.JWTValidator,
 	)
 	{

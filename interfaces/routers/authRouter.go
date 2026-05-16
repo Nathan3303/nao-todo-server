@@ -11,7 +11,7 @@ import (
 func UseAuthRouter(router *gin.RouterGroup) {
 	authGroup := router.Group(
 		"/auth",
-		middlewares.RateLimiter(10, "auth"),
+		middlewares.RateLimiter(8, "auth"),
 	)
 	{
 		/* 登录路由 */

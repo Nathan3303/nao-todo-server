@@ -11,7 +11,7 @@ import (
 func UseProjectRouter(router *gin.RouterGroup) {
 	projectGroup := router.Group(
 		"/projects",
-		middlewares.RateLimiter(20, "projects"),
+		middlewares.RateLimiter(32, "projects"),
 		middlewares.JWTValidator,
 	)
 	{

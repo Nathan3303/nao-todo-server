@@ -11,7 +11,7 @@ import (
 func UseTaskRouter(router *gin.RouterGroup) {
 	taskGroup := router.Group(
 		"/tasks",
-		middlewares.RateLimiter(20, "tasks"),
+		middlewares.RateLimiter(48, "tasks"),
 		middlewares.JWTValidator,
 	)
 	{

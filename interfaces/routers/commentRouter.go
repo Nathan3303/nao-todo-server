@@ -11,7 +11,7 @@ import (
 func UseCommentRouter(router *gin.RouterGroup) {
 	commentGroup := router.Group(
 		"/comments",
-		middlewares.RateLimiter(20, "comments"),
+		middlewares.RateLimiter(32, "comments"),
 		middlewares.JWTValidator,
 	)
 	{

@@ -34,7 +34,7 @@ func (rateLimitRepo *RateLimitRepoImpl) Get(ctx context.Context, key string) int
 }
 
 func (rateLimitRepo *RateLimitRepoImpl) Incr(ctx context.Context, key string) error {
-	// 原子递增并设置过期时间（1 小时）
+	// 原子递增并设置过期时间（1 分钟）
 	_, err := rateLimitRepo.rds.Incr(ctx, key).Result()
 	if err != nil {
 		return errors.New("限流阈值设置失败" + err.Error())
