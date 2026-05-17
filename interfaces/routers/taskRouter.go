@@ -35,5 +35,8 @@ func UseTaskRouter(router *gin.RouterGroup) {
 
 		// 复制待办任务路由
 		taskGroup.POST("/copy/:taskId", controllers.CopyTaskHandler)
+
+		// 稍后提醒路由
+		taskGroup.POST("/:taskId/snooze", controllers.SnoozeTaskHandler)
 	}
 }

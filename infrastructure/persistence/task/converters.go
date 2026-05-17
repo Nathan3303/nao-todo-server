@@ -15,15 +15,19 @@ func CreateTaskValueObjectToModel(
 	createTaskValueObject *valueobjects.CreateTask,
 ) *models.Task {
 	return &models.Task{
-		UserId:      userId,
-		ProjectId:   createTaskValueObject.ProjectId,
-		Name:        createTaskValueObject.Name,
-		Description: createTaskValueObject.Description,
-		State:       createTaskValueObject.State,
-		Priority:    createTaskValueObject.Priority,
-		StartAt:     createTaskValueObject.StartAt,
-		EndAt:       createTaskValueObject.EndAt,
-		Tags:        createTaskValueObject.Tags,
+		UserId:         userId,
+		ProjectId:      createTaskValueObject.ProjectId,
+		Name:           createTaskValueObject.Name,
+		Description:    createTaskValueObject.Description,
+		State:          createTaskValueObject.State,
+		Priority:       createTaskValueObject.Priority,
+		StartAt:        createTaskValueObject.StartAt,
+		EndAt:          createTaskValueObject.EndAt,
+		Tags:           createTaskValueObject.Tags,
+		RemindAt:       createTaskValueObject.RemindAt,
+		RemindRepeat:   createTaskValueObject.RemindRepeat,
+		RemindTime:     createTaskValueObject.RemindTime,
+		RemindWeekdays: createTaskValueObject.RemindWeekdays,
 	}
 }
 
@@ -69,6 +73,18 @@ func UpdateTaskValueObjectToModel(
 	}
 	if updateTaskValueObject.GivenUpAt != nil && updateTaskValueObject.GivenUpAt.ShouldUpdate() && !updateTaskValueObject.GivenUpAt.IsSetToNull() {
 		m.GivenUpAt = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
+	}
+	if updateTaskValueObject.RemindAt != nil && updateTaskValueObject.RemindAt.ShouldUpdate() && !updateTaskValueObject.RemindAt.IsSetToNull() {
+		m.RemindAt = updateTaskValueObject.RemindAt.ToSqlNullTime()
+	}
+	if updateTaskValueObject.RemindRepeat != nil {
+		m.RemindRepeat = *updateTaskValueObject.RemindRepeat
+	}
+	if updateTaskValueObject.RemindTime != nil {
+		m.RemindTime = *updateTaskValueObject.RemindTime
+	}
+	if updateTaskValueObject.RemindWeekdays != nil {
+		m.RemindWeekdays = *updateTaskValueObject.RemindWeekdays
 	}
 	return m
 }
@@ -139,13 +155,31 @@ func UpdateTaskValueObjectToMap(
 			updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
 		}
 	}
+	if updateTaskValueObject.RemindAt != nil && updateTaskValueObject.RemindAt.ShouldUpdate() {
+		if updateTaskValueObject.RemindAt.IsSetToNull() {
+			updateMap["RemindAt"] = nil
+		} else {
+			updateMap["RemindAt"] = updateTaskValueObject.RemindAt.ToSqlNullTime()
+		}
+	}
+	if updateTaskValueObject.RemindRepeat != nil {
+		updateMap["RemindRepeat"] = *updateTaskValueObject.RemindRepeat
+	}
+	if updateTaskValueObject.RemindTime != nil {
+		updateMap["RemindTime"] = *updateTaskValueObject.RemindTime
+	}
+	if updateTaskValueObject.RemindWeekdays != nil {
+		updateMap["RemindWeekdays"] = *updateTaskValueObject.RemindWeekdays
+	}
 	return updateMap
 }
 
+// TaskModel2Entity 模型转换为任务实体
 func TaskModel2Entity(m *models.Task) *entities.Task {
 	e := &entities.Task{}
 	e.Id = m.ID
 	e.UserId = m.UserId
+	e.ParentTaskId = m.ParentTaskId
 	e.ProjectId = m.ProjectId
 	e.Name = m.Name
 	e.Description = m.Description
@@ -156,6 +190,10 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.ArchivedAt = utils.SqlNullTime2TimePtr(m.ArchivedAt)
 	e.StarMarkAt = utils.SqlNullTime2TimePtr(m.StarMarkAt)
 	e.GivenUpAt = utils.SqlNullTime2TimePtr(m.GivenUpAt)
+	e.RemindAt = utils.SqlNullTime2TimePtr(m.RemindAt)
+	e.RemindRepeat = m.RemindRepeat
+	e.RemindTime = m.RemindTime
+	e.RemindWeekdays = m.RemindWeekdays
 	e.Tags = m.Tags
 	e.UpdatedAt = m.UpdatedAt
 	e.CreatedAt = m.CreatedAt

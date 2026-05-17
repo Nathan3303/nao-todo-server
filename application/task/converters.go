@@ -9,6 +9,35 @@ import (
 	"strconv"
 )
 
+// weekdaysToBitmask 星期数组转换位掩码
+// @param weekdays 星期数组
+// @return int8 位掩码
+func weekdaysToBitmask(weekdays []int) int8 {
+	var mask int8
+	for _, d := range weekdays {
+		if v, ok := consts.WeekdayBitmask[d]; ok {
+			mask |= v
+		}
+	}
+	return mask
+}
+
+// bitmaskToWeekdays 位掩码转换星期数组
+// @param mask 位掩码
+// @return []int 星期数组
+func bitmaskToWeekdays(mask int8) []int {
+	var weekdays []int
+	for bit, day := range consts.WeekdayBitmaskReverse {
+		if mask&bit != 0 {
+			weekdays = append(weekdays, day)
+		}
+	}
+	if weekdays == nil {
+		weekdays = []int{}
+	}
+	return weekdays
+}
+
 // TaskEntityToGetRes 任务实体转换为获取任务响应
 // @param taskEntity 任务实体
 // @return 任务响应
@@ -27,6 +56,10 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res.ArchivedAt, _ = taskEntity.ParseArchivedAt()
 	res.StarMarkAt, _ = taskEntity.ParseStarMarkAt()
 	res.GivenUpAt, _ = taskEntity.ParseGivenUpAt()
+	res.RemindAt = taskEntity.GetFormatedRemindAt()
+	res.RemindRepeat = consts.RemindRepeatMapReverse[taskEntity.RemindRepeat]
+	res.RemindTime = taskEntity.RemindTime
+	res.RemindWeekdays = bitmaskToWeekdays(taskEntity.RemindWeekdays)
 	res.UpdatedAt = utils.Time2String(taskEntity.UpdatedAt)
 	res.CreatedAt = utils.Time2String(taskEntity.CreatedAt)
 	res.DeletedAt = utils.Time2String(taskEntity.DeletedAt)
@@ -65,6 +98,10 @@ func CreateTaskReqToValueObject(
 		utils.String2SqlNullTime(req.EndAt),
 		projectIdInt64,
 		req.Tags,
+		utils.String2SqlNullTime(req.RemindAt),
+		consts.RemindRepeatMap[req.RemindRepeat],
+		req.RemindTime,
+		weekdaysToBitmask(req.RemindWeekdays),
 	)
 }
 
@@ -79,6 +116,8 @@ func UpdateTaskReqToValueObject(
 ) (*valueobjects.UpdateTask, error) {
 	var iParentId, iProjectId *int64
 	var iState, iPriority *int8
+	var iRemindRepeat *int8
+	var iRemindWeekdays *int8
 	if req.ParentTaskId != nil {
 		iParentIdValue, _ := strconv.ParseInt(*req.ParentTaskId, 10, 64)
 		iParentId = &iParentIdValue
@@ -99,6 +138,14 @@ func UpdateTaskReqToValueObject(
 		iPriorityValue := consts.TodoPriorityMap[*req.Priority]
 		iPriority = &iPriorityValue
 	}
+	if req.RemindRepeat != nil {
+		iRemindRepeatValue := consts.RemindRepeatMap[*req.RemindRepeat]
+		iRemindRepeat = &iRemindRepeatValue
+	}
+	if req.RemindWeekdays != nil {
+		iRemindWeekdaysValue := weekdaysToBitmask(req.RemindWeekdays)
+		iRemindWeekdays = &iRemindWeekdaysValue
+	}
 	return valueobjects.NewUpdateTask(
 		0,
 		iParentId,
@@ -113,6 +160,10 @@ func UpdateTaskReqToValueObject(
 		utils.NullableString2NullableTime(req.ArchivedAt),
 		utils.NullableString2NullableTime(req.StarMarkAt),
 		utils.NullableString2NullableTime(req.GivenUpAt),
+		utils.NullableString2NullableTime(req.RemindAt),
+		iRemindRepeat,
+		req.RemindTime,
+		iRemindWeekdays,
 	)
 }
 

@@ -36,6 +36,14 @@ type TaskApp interface {
 		ctx context.Context,
 		req *types.ListTaskReq,
 	) (types.ListTaskRes, *types.Pagination, error)
+
+	// SnoozeTask 稍后提醒
+	// @param ctx 上下文
+	// @param taskId 任务ID
+	// @param req 稍后提醒请求
+	// @return 稍后提醒响应
+	// @return error 错误
+	SnoozeTask(ctx context.Context, taskId string, req *types.SnoozeTaskReq) (*types.SnoozeTaskRes, error)
 }
 
 type TaskAppImpl struct {

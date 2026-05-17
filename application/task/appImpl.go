@@ -224,3 +224,35 @@ func (taskApp *TaskAppImpl) ListTask(
 	paginationRes := PaginationValueObjectToRes(paginationValueObject)
 	return tasks, paginationRes, nil
 }
+
+// SnoozeTask 稍后提醒
+// @param ctx 上下文
+// @param taskId 任务ID
+// @param req 稍后提醒请求
+// @return 稍后提醒响应
+// @return error 错误
+func (taskApp *TaskAppImpl) SnoozeTask(
+	ctx context.Context,
+	taskId string,
+	req *types.SnoozeTaskReq,
+) (*types.SnoozeTaskRes, error) {
+	// 1. 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	// 2. 转换任务 ID
+	taskIdInt64, err := strconv.ParseInt(taskId, 10, 64)
+	if err != nil {
+		return nil, errors.New("任务 ID 无效")
+	}
+	// 3. 调用领域层设置稍后提醒
+	newRemindAt, err := taskApp.taskDomain.Snooze(ctx, userId, taskIdInt64, req.DurationMinutes)
+	if err != nil {
+		return nil, err
+	}
+	// 4. 返回结果
+	return &types.SnoozeTaskRes{
+		RemindAt: newRemindAt,
+	}, nil
+}

@@ -46,6 +46,7 @@ func InitRouters() *gin.Engine {
 		UseTaskRouter(v1)
 		UseEventRouter(v1)
 		UseCommentRouter(v1)
+		UseSSERouter(v1)
 	}
 
 	// 设置可信代理 IP（负载均衡器或 CDN 的 IP 段）

@@ -6,6 +6,9 @@ import (
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func NewTaskDomain(taskRepo repositories.Task) TaskDomain {
@@ -106,7 +109,12 @@ func (taskDomain *TaskDomainImpl) Copy(
 	if existingTask.EndAt != nil {
 		endAt = sql.NullTime{Time: *existingTask.EndAt, Valid: true}
 	}
-	// 3. 构建创建任务值对象
+	// 3. 转换提醒时间
+	var remindAt sql.NullTime
+	if existingTask.RemindAt != nil {
+		remindAt = sql.NullTime{Time: *existingTask.RemindAt, Valid: true}
+	}
+	// 4. 构建创建任务值对象
 	createTaskVO, err := valueobjects.NewCreateTask(
 		0,
 		existingTask.Name+"的复制",
@@ -117,11 +125,15 @@ func (taskDomain *TaskDomainImpl) Copy(
 		endAt,
 		existingTask.ProjectId,
 		existingTask.Tags,
+		remindAt,
+		existingTask.RemindRepeat,
+		existingTask.RemindTime,
+		existingTask.RemindWeekdays,
 	)
 	if err != nil {
 		return nil, err
 	}
-	// 4. 创建新任务
+	// 5. 创建新任务
 	return taskDomain.taskRepo.Create(ctx, userId, createTaskVO)
 }
 
@@ -153,4 +165,86 @@ func (taskDomain *TaskDomainImpl) List(
 		return nil, nil, err
 	}
 	return taskEntities, pagination, nil
+}
+
+// Snooze 稍后提醒
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @param durationMinutes 延迟分钟数
+// @return 新提醒时间
+// @return error 错误
+func (taskDomain *TaskDomainImpl) Snooze(ctx context.Context, userId int64, taskId int64, durationMinutes int) (string, error) {
+	// 1. 校验任务归属
+	_, err := taskDomain.taskRepo.GetById(ctx, userId, taskId)
+	if err != nil {
+		return "", err
+	}
+	// 2. 计算新提醒时间
+	newRemindAt := time.Now().Add(time.Duration(durationMinutes) * time.Minute).Format(time.RFC3339)
+	// 3. 更新提醒时间
+	err = taskDomain.taskRepo.Snooze(ctx, userId, taskId, newRemindAt)
+	if err != nil {
+		return "", err
+	}
+	return newRemindAt, nil
+}
+
+// CalculateNextRemindAt 计算下一次提醒时间
+// @param remindAt 当前提醒时间
+// @param repeat 重复类型
+// @param remindTime 提醒时刻 HH:mm
+// @param remindWeekdays 每周提醒位掩码
+// @param endAt 任务结束时间
+// @return *time.Time 下一次提醒时间，nil 表示无需重复
+func CalculateNextRemindAt(remindAt time.Time, repeat int8, remindTime string, remindWeekdays int8, endAt *time.Time) *time.Time {
+	// 1. 解析提醒时刻
+	var hour, minute int
+	if remindTime != "" {
+		parts := strings.Split(remindTime, ":")
+		if len(parts) == 2 {
+			h, _ := strconv.Atoi(parts[0])
+			m, _ := strconv.Atoi(parts[1])
+			if h >= 0 && h <= 23 && m >= 0 && m <= 59 {
+				hour = h
+				minute = m
+			}
+		}
+	}
+	// 2. 计算目标时刻
+	target := time.Date(remindAt.Year(), remindAt.Month(), remindAt.Day(), hour, minute, 0, 0, remindAt.Location())
+	var next time.Time
+	switch repeat {
+	case 1: // daily
+		next = target.AddDate(0, 0, 1)
+	case 2: // weekly
+		next = calculateNextWeekly(target, remindWeekdays)
+		if next.IsZero() {
+			return nil
+		}
+	case 3: // monthly
+		next = target.AddDate(0, 1, 0)
+	default:
+		return nil
+	}
+	// 3. 如果有结束时间且超出则返回 nil
+	if endAt != nil && next.After(*endAt) {
+		return nil
+	}
+	return &next
+}
+
+// calculateNextWeekly 计算下一个匹配的星期
+// @param from 起始时间
+// @param weekdays 位掩码
+// @return time.Time
+func calculateNextWeekly(from time.Time, weekdays int8) time.Time {
+	for i := 1; i <= 7; i++ {
+		candidate := from.AddDate(0, 0, i)
+		bit := int8(1 << uint(candidate.Weekday()))
+		if weekdays&bit != 0 {
+			return candidate
+		}
+	}
+	return time.Time{}
 }

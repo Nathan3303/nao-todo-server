@@ -224,3 +224,43 @@ func ListTaskHandler(ctx *gin.Context) {
 		Pagination: paginationRes,
 	})
 }
+
+// SnoozeTaskHandler 稍后提醒控制器
+// @code 4009x
+func SnoozeTaskHandler(ctx *gin.Context) {
+	// 1. 获取任务 ID
+	taskId := ctx.Param("taskId")
+	if taskId == "" {
+		Failure(ctx, types.ResponseData{
+			Code:    40091,
+			Message: "任务 ID 无效",
+		})
+		return
+	}
+	// 2. 绑定请求参数
+	var req types.SnoozeTaskReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    40092,
+			Message: "参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 3. 调用应用层设置稍后提醒
+	res, err := task.App.SnoozeTask(ctx.Request.Context(), taskId, &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    40093,
+			Message: err.Error(),
+		})
+		return
+	}
+	// 4. 返回结果
+	Success(ctx, types.ResponseData{
+		Code:    40090,
+		Message: "稍后提醒已设置",
+		Data:    res,
+	})
+}

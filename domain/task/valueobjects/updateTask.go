@@ -6,19 +6,23 @@ import (
 )
 
 type UpdateTask struct {
-	UserId       int64
-	ParentTaskId *int64
-	Name         *string
-	Description  *string
-	State        *int8
-	Priority     *int8
-	StartAt      *utils.NullableTime
-	EndAt        *utils.NullableTime
-	ProjectId    *int64
-	Tags         []string
-	ArchivedAt   *utils.NullableTime
-	StarMarkAt   *utils.NullableTime
-	GivenUpAt    *utils.NullableTime
+	UserId         int64
+	ParentTaskId   *int64
+	Name           *string
+	Description    *string
+	State          *int8
+	Priority       *int8
+	StartAt        *utils.NullableTime
+	EndAt          *utils.NullableTime
+	ProjectId      *int64
+	Tags           []string
+	ArchivedAt     *utils.NullableTime
+	StarMarkAt     *utils.NullableTime
+	GivenUpAt      *utils.NullableTime
+	RemindAt       *utils.NullableTime
+	RemindRepeat   *int8
+	RemindTime     *string
+	RemindWeekdays *int8
 }
 
 func (updateTask *UpdateTask) Validate() error {
@@ -53,21 +57,29 @@ func NewUpdateTask(
 	archivedAt *utils.NullableTime,
 	starMarkAt *utils.NullableTime,
 	givenUpAt *utils.NullableTime,
+	remindAt *utils.NullableTime,
+	remindRepeat *int8,
+	remindTime *string,
+	remindWeekdays *int8,
 ) (*UpdateTask, error) {
 	updateTask := &UpdateTask{
-		UserId:       userId,
-		ParentTaskId: parentTaskId,
-		Name:         name,
-		Description:  description,
-		State:        state,
-		Priority:     priority,
-		StartAt:      startAt,
-		EndAt:        endAt,
-		ProjectId:    projectId,
-		Tags:         tags,
-		ArchivedAt:   archivedAt,
-		StarMarkAt:   starMarkAt,
-		GivenUpAt:    givenUpAt,
+		UserId:         userId,
+		ParentTaskId:   parentTaskId,
+		Name:           name,
+		Description:    description,
+		State:          state,
+		Priority:       priority,
+		StartAt:        startAt,
+		EndAt:          endAt,
+		ProjectId:      projectId,
+		Tags:           tags,
+		ArchivedAt:     archivedAt,
+		StarMarkAt:     starMarkAt,
+		GivenUpAt:      givenUpAt,
+		RemindAt:       remindAt,
+		RemindRepeat:   remindRepeat,
+		RemindTime:     remindTime,
+		RemindWeekdays: remindWeekdays,
 	}
 	err := updateTask.Validate()
 	if err != nil {

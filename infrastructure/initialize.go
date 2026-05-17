@@ -77,5 +77,11 @@ func LoadCron() {
 		panic("删除注销用户定时任务添加失败：" + err.Error())
 	}
 
+	// 任务提醒扫描定时任务（每分钟）
+	_, err = cronService.AddJob("* * * * *", cron.NewReminderJob())
+	if err != nil {
+		panic("任务提醒扫描定时任务添加失败：" + err.Error())
+	}
+
 	cronService.Start()
 }

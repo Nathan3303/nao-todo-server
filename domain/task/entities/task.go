@@ -6,25 +6,38 @@ import (
 )
 
 type Task struct {
-	Id           int64
-	UserId       int64
-	ParentTaskId int64
-	Name         string
-	Description  string
-	State        int8
-	Priority     int8
-	StartAt      *time.Time
-	EndAt        *time.Time
-	ArchivedAt   *time.Time
-	StarMarkAt   *time.Time
-	GivenUpAt    *time.Time
-	ProjectId    int64
-	Tags         []string
-	UpdatedAt    time.Time
-	CreatedAt    time.Time
-	DeletedAt    time.Time
+	Id             int64
+	UserId         int64
+	ParentTaskId   int64
+	Name           string
+	Description    string
+	State          int8
+	Priority       int8
+	StartAt        *time.Time
+	EndAt          *time.Time
+	ArchivedAt     *time.Time
+	StarMarkAt     *time.Time
+	GivenUpAt      *time.Time
+	ProjectId      int64
+	Tags           []string
+	RemindAt       *time.Time
+	RemindRepeat   int8
+	RemindTime     string
+	RemindWeekdays int8
+	UpdatedAt      time.Time
+	CreatedAt      time.Time
+	DeletedAt      time.Time
 }
 
+// GetFormatedRemindAt 获取格式化后的提醒时间
+func (task *Task) GetFormatedRemindAt() string {
+	if task.RemindAt == nil {
+		return ""
+	}
+	return task.RemindAt.Format(time.RFC3339)
+}
+
+// GetFormatedStartAt 获取格式化后的开始时间
 func (task *Task) GetFormatedStartAt() string {
 	if task.StartAt == nil {
 		return ""

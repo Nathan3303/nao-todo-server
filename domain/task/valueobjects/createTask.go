@@ -10,15 +10,19 @@ import (
 
 // CreateTask 创建任务值对象
 type CreateTask struct {
-	ParentTaskId int64
-	Name         string
-	Description  string
-	State        int8
-	Priority     int8
-	StartAt      sql.NullTime
-	EndAt        sql.NullTime
-	ProjectId    int64
-	Tags         []string
+	ParentTaskId   int64
+	Name           string
+	Description    string
+	State          int8
+	Priority       int8
+	StartAt        sql.NullTime
+	EndAt          sql.NullTime
+	ProjectId      int64
+	Tags           []string
+	RemindAt       sql.NullTime
+	RemindRepeat   int8
+	RemindTime     string
+	RemindWeekdays int8
 }
 
 // Validate 验证创建任务值对象
@@ -59,6 +63,10 @@ func (createTask *CreateTask) FillStartAt() {
 // @param endAt 任务结束时间
 // @param projectId 项目 ID
 // @param tags 任务标签
+// @param remindAt 提醒时间
+// @param remindRepeat 重复提醒类型
+// @param remindTime 提醒时刻
+// @param remindWeekdays 每周提醒星期
 // @return *CreateTask 创建任务值对象
 // @return error 创建失败返回错误
 func NewCreateTask(
@@ -71,17 +79,25 @@ func NewCreateTask(
 	endAt sql.NullTime,
 	projectId int64,
 	tags []string,
+	remindAt sql.NullTime,
+	remindRepeat int8,
+	remindTime string,
+	remindWeekdays int8,
 ) (*CreateTask, error) {
 	createTask := &CreateTask{
-		ParentTaskId: parentTaskId,
-		Name:         name,
-		Description:  description,
-		State:        state,
-		Priority:     priority,
-		StartAt:      startAt,
-		EndAt:        endAt,
-		ProjectId:    projectId,
-		Tags:         tags,
+		ParentTaskId:   parentTaskId,
+		Name:           name,
+		Description:    description,
+		State:          state,
+		Priority:       priority,
+		StartAt:        startAt,
+		EndAt:          endAt,
+		ProjectId:      projectId,
+		Tags:           tags,
+		RemindAt:       remindAt,
+		RemindRepeat:   remindRepeat,
+		RemindTime:     remindTime,
+		RemindWeekdays: remindWeekdays,
 	}
 	createTask.FillStartAt()
 	err := createTask.Validate()

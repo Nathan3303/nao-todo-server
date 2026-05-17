@@ -2,51 +2,63 @@ package types
 
 // GetTaskRes 获取任务响应
 type GetTaskRes struct {
-	Id           string   `json:"id"`
-	ParentTaskId string   `json:"parentTaskId"`
-	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	State        string   `json:"state"`
-	Priority     string   `json:"priority"`
-	StartAt      string   `json:"startAt"`
-	EndAt        string   `json:"endAt"`
-	Tags         []string `json:"tags"`
-	ProjectId    string   `json:"projectId"`
-	ArchivedAt   string   `json:"archivedAt"`
-	StarMarkAt   string   `json:"starMarkAt"`
-	GivenUpAt    string   `json:"givenUpAt"`
-	CreatedAt    string   `json:"createdAt"`
-	UpdatedAt    string   `json:"updatedAt"`
-	DeletedAt    string   `json:"deletedAt"`
+	Id             string   `json:"id"`
+	ParentTaskId   string   `json:"parentTaskId"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	State          string   `json:"state"`
+	Priority       string   `json:"priority"`
+	StartAt        string   `json:"startAt"`
+	EndAt          string   `json:"endAt"`
+	Tags           []string `json:"tags"`
+	ProjectId      string   `json:"projectId"`
+	ArchivedAt     string   `json:"archivedAt"`
+	StarMarkAt     string   `json:"starMarkAt"`
+	GivenUpAt      string   `json:"givenUpAt"`
+	RemindAt       string   `json:"remindAt"`
+	RemindRepeat   string   `json:"remindRepeat"`
+	RemindTime     string   `json:"remindTime"`
+	RemindWeekdays []int    `json:"remindWeekdays"`
+	CreatedAt      string   `json:"createdAt"`
+	UpdatedAt      string   `json:"updatedAt"`
+	DeletedAt      string   `json:"deletedAt"`
 }
 
 // CreateTaskReq 创建任务请求
 type CreateTaskReq struct {
-	ParentTaskId string   `json:"parentTaskId"`
-	Name         string   `json:"name" binding:"required"`
-	Description  string   `json:"description"`
-	State        string   `json:"state" binding:"required"`
-	Priority     string   `json:"priority" binding:"required"`
-	StartAt      string   `json:"startAt"`
-	EndAt        string   `json:"endAt"`
-	ProjectId    string   `json:"projectId"`
-	Tags         []string `json:"tags"`
+	ParentTaskId   string   `json:"parentTaskId"`
+	Name           string   `json:"name" binding:"required"`
+	Description    string   `json:"description"`
+	State          string   `json:"state" binding:"required"`
+	Priority       string   `json:"priority" binding:"required"`
+	StartAt        string   `json:"startAt"`
+	EndAt          string   `json:"endAt"`
+	ProjectId      string   `json:"projectId"`
+	Tags           []string `json:"tags"`
+	RemindAt       string   `json:"remindAt"`
+	RemindRepeat   string   `json:"remindRepeat"`
+	RemindTime     string   `json:"remindTime"`
+	RemindWeekdays []int    `json:"remindWeekdays"`
 }
 
 // UpdateTaskReq 更新任务请求
 type UpdateTaskReq struct {
-	ParentTaskId *string        `json:"parentTaskId"`
-	Name         *string        `json:"name"`
-	Description  *string        `json:"description"`
-	State        *string        `json:"state"`
-	Priority     *string        `json:"priority"`
-	StartAt      NullableString `json:"startAt"`
-	EndAt        NullableString `json:"endAt"`
-	ProjectId    *string        `json:"projectId"`
-	Tags         []string       `json:"tags"`
-	ArchivedAt   NullableString `json:"archivedAt"`
-	StarMarkAt   NullableString `json:"starMarkAt"`
-	GivenUpAt    NullableString `json:"givenUpAt"`
+	ParentTaskId   *string        `json:"parentTaskId"`
+	Name           *string        `json:"name"`
+	Description    *string        `json:"description"`
+	State          *string        `json:"state"`
+	Priority       *string        `json:"priority"`
+	StartAt        NullableString `json:"startAt"`
+	EndAt          NullableString `json:"endAt"`
+	ProjectId      *string        `json:"projectId"`
+	Tags           []string       `json:"tags"`
+	ArchivedAt     NullableString `json:"archivedAt"`
+	StarMarkAt     NullableString `json:"starMarkAt"`
+	GivenUpAt      NullableString `json:"givenUpAt"`
+	RemindAt       NullableString `json:"remindAt"`
+	RemindRepeat   *string        `json:"remindRepeat"`
+	RemindTime     *string        `json:"remindTime"`
+	RemindWeekdays []int          `json:"remindWeekdays"`
 }
 
 // ListTaskReq 列表任务请求

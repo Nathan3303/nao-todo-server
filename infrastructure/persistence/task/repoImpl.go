@@ -289,3 +289,93 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 	// 10. 返回
 	return tx, nil
 }
+
+// Snooze 稍后提醒
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 任务ID
+// @param remindAt 新提醒时间
+// @return error 错误
+func (taskRepo *TaskRepoImpl) Snooze(ctx context.Context, userId int64, taskId int64, remindAt string) error {
+	// 1. 构建查询条件
+	var whereCond models.Task
+	whereCond.UserId = userId
+	whereCond.ID = taskId
+	// 2. 更新 remind_at
+	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
+		Where(whereCond).
+		Update("remind_at", remindAt)
+	return tx.Error
+}
+
+// GetDueReminders 获取到期提醒任务
+// @param ctx 上下文
+// @return 任务实体列表
+// @return error 错误
+func (taskRepo *TaskRepoImpl) GetDueReminders(ctx context.Context) ([]*entities.Task, error) {
+	// 1. 确保上下文非空
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	// 2. 查询到期提醒
+	var taskModels []*models.Task
+	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
+		Where("remind_at <= NOW()").
+		Where("remind_at IS NOT NULL").
+		Find(&taskModels)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	// 3. 转换模型到实体
+	return TaskModels2Entities(taskModels), nil
+}
+
+// ClearRemindRepeat 清除提醒重复规则
+// @param ctx 上下文
+// @param taskId 任务ID
+// @return error 错误
+func (taskRepo *TaskRepoImpl) ClearRemindRepeat(ctx context.Context, taskId int64) error {
+	// 1. 确保上下文非空
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	// 2. 构建查询条件
+	var whereCond models.Task
+	whereCond.ID = taskId
+	// 3. 更新
+	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
+		Where(whereCond).
+		Updates(map[string]interface{}{
+			"remind_repeat":   0,
+			"remind_at":       nil,
+			"remind_time":     "",
+			"remind_weekdays": 0,
+		})
+	return tx.Error
+}
+
+// UpdateRemindAt 更新提醒时间
+// @param ctx 上下文
+// @param taskId 任务ID
+// @param remindAt 新提醒时间，空字符串表示清除
+// @return error 错误
+func (taskRepo *TaskRepoImpl) UpdateRemindAt(ctx context.Context, taskId int64, remindAt string) error {
+	// 1. 确保上下文非空
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	// 2. 构建查询条件
+	var whereCond models.Task
+	whereCond.ID = taskId
+	// 3. 更新
+	if remindAt == "" {
+		tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
+			Where(whereCond).
+			Update("remind_at", nil)
+		return tx.Error
+	}
+	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
+		Where(whereCond).
+		Update("remind_at", remindAt)
+	return tx.Error
+}

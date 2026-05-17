@@ -78,6 +78,15 @@ type TaskDomain interface {
 		query *valueobjects.QueryTask,
 		pagination *valueobjects.Pagination,
 	) ([]*entities.Task, *valueobjects.Pagination, error)
+
+	// Snooze 稍后提醒
+	// @param ctx 上下文
+	// @param userId 用户ID
+	// @param taskId 任务ID
+	// @param durationMinutes 延迟分钟数
+	// @return 新提醒时间
+	// @return error 错误
+	Snooze(ctx context.Context, userId int64, taskId int64, durationMinutes int) (string, error)
 }
 
 // TaskDomainImpl 任务领域服务实现
