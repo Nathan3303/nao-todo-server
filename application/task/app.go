@@ -43,7 +43,11 @@ type TaskApp interface {
 	// @param req 稍后提醒请求
 	// @return 稍后提醒响应
 	// @return error 错误
-	SnoozeTask(ctx context.Context, taskId string, req *types.SnoozeTaskReq) (*types.SnoozeTaskRes, error)
+	SnoozeTask(
+		ctx context.Context,
+		taskId string,
+		req *types.SnoozeTaskReq,
+	) (*types.SnoozeTaskRes, error)
 }
 
 type TaskAppImpl struct {
