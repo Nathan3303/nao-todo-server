@@ -11,6 +11,11 @@ import (
 )
 
 func getJwtString(ctx *gin.Context) string {
+	// 优先从 query param 获取（兼容 EventSource，不支持自定义 header）
+	if token := ctx.Query("token"); token != "" {
+		return token
+	}
+	// 其次从 Authorization header 获取
 	jwtRaw := ctx.GetHeader("Authorization")
 	jwtString := strings.Split(jwtRaw, "Bearer ")
 	jwtString = append(jwtString, "")
