@@ -3,6 +3,7 @@ package valueobjects
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"naotodoserver/infrastructure/utils"
 )
@@ -33,6 +34,19 @@ func (createTask *CreateTask) Validate() error {
 		return errors.New("任务描述最多512个字符")
 	}
 	return nil
+}
+
+// FillStartAt 填充开始时间
+func (createTask *CreateTask) FillStartAt() {
+	if createTask.StartAt.Valid || !createTask.EndAt.Valid {
+		return
+	}
+	t := time.Now()
+	if createTask.EndAt.Time.Before(t) {
+		createTask.StartAt = sql.NullTime{Time: t.Add(-1 * time.Minute), Valid: true}
+	} else {
+		createTask.StartAt = sql.NullTime{Time: t, Valid: true}
+	}
 }
 
 // NewCreateTask 创建创建任务值对象
@@ -69,6 +83,7 @@ func NewCreateTask(
 		ProjectId:    projectId,
 		Tags:         tags,
 	}
+	createTask.FillStartAt()
 	err := createTask.Validate()
 	if err != nil {
 		return nil, err
