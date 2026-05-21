@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+// 创建任务值对象转换为任务模型
+// @param userId 用户ID
+// @param createTaskValueObject 创建任务值对象
+// @return 任务模型
 func CreateTaskValueObjectToModel(
 	userId int64,
 	createTaskValueObject *valueobjects.CreateTask,
@@ -31,6 +35,9 @@ func CreateTaskValueObjectToModel(
 	}
 }
 
+// 更新任务值对象转换为任务模型
+// @param updateTaskValueObject 更新任务值对象
+// @return 任务模型
 func UpdateTaskValueObjectToModel(
 	updateTaskValueObject *valueobjects.UpdateTask,
 ) *models.Task {
@@ -53,10 +60,14 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.Priority != nil {
 		m.Priority = *updateTaskValueObject.Priority
 	}
-	if updateTaskValueObject.StartAt != nil && updateTaskValueObject.StartAt.ShouldUpdate() && !updateTaskValueObject.StartAt.IsSetToNull() {
+	if updateTaskValueObject.StartAt != nil &&
+		updateTaskValueObject.StartAt.ShouldUpdate() &&
+		!updateTaskValueObject.StartAt.IsSetToNull() {
 		m.StartAt = updateTaskValueObject.StartAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.EndAt != nil && updateTaskValueObject.EndAt.ShouldUpdate() && !updateTaskValueObject.EndAt.IsSetToNull() {
+	if updateTaskValueObject.EndAt != nil &&
+		updateTaskValueObject.EndAt.ShouldUpdate() &&
+		!updateTaskValueObject.EndAt.IsSetToNull() {
 		m.EndAt = updateTaskValueObject.EndAt.ToSqlNullTime()
 	}
 	if updateTaskValueObject.ProjectId != nil {
@@ -65,16 +76,24 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.Tags != nil {
 		m.Tags = updateTaskValueObject.Tags
 	}
-	if updateTaskValueObject.ArchivedAt != nil && updateTaskValueObject.ArchivedAt.ShouldUpdate() && !updateTaskValueObject.ArchivedAt.IsSetToNull() {
+	if updateTaskValueObject.ArchivedAt != nil &&
+		updateTaskValueObject.ArchivedAt.ShouldUpdate() &&
+		!updateTaskValueObject.ArchivedAt.IsSetToNull() {
 		m.ArchivedAt = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.StarMarkAt != nil && updateTaskValueObject.StarMarkAt.ShouldUpdate() && !updateTaskValueObject.StarMarkAt.IsSetToNull() {
+	if updateTaskValueObject.StarMarkAt != nil &&
+		updateTaskValueObject.StarMarkAt.ShouldUpdate() &&
+		!updateTaskValueObject.StarMarkAt.IsSetToNull() {
 		m.StarMarkAt = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.GivenUpAt != nil && updateTaskValueObject.GivenUpAt.ShouldUpdate() && !updateTaskValueObject.GivenUpAt.IsSetToNull() {
+	if updateTaskValueObject.GivenUpAt != nil &&
+		updateTaskValueObject.GivenUpAt.ShouldUpdate() &&
+		!updateTaskValueObject.GivenUpAt.IsSetToNull() {
 		m.GivenUpAt = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.RemindAt != nil && updateTaskValueObject.RemindAt.ShouldUpdate() && !updateTaskValueObject.RemindAt.IsSetToNull() {
+	if updateTaskValueObject.RemindAt != nil &&
+		updateTaskValueObject.RemindAt.ShouldUpdate() &&
+		!updateTaskValueObject.RemindAt.IsSetToNull() {
 		m.RemindAt = updateTaskValueObject.RemindAt.ToSqlNullTime()
 	}
 	if updateTaskValueObject.RemindRepeat != nil {
@@ -89,6 +108,9 @@ func UpdateTaskValueObjectToModel(
 	return m
 }
 
+// 更新任务值对象转换为任务映射
+// @param updateTaskValueObject 更新任务值对象
+// @return 任务映射
 func UpdateTaskValueObjectToMap(
 	updateTaskValueObject *valueobjects.UpdateTask,
 ) map[string]interface{} {
@@ -174,7 +196,9 @@ func UpdateTaskValueObjectToMap(
 	return updateMap
 }
 
-// TaskModel2Entity 模型转换为任务实体
+// 模型转换为任务实体
+// @param m 任务模型
+// @return 任务实体
 func TaskModel2Entity(m *models.Task) *entities.Task {
 	e := &entities.Task{}
 	e.Id = m.ID
@@ -201,6 +225,9 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	return e
 }
 
+// 分页值对象转换为分页范围
+// @param pagination 分页值对象
+// @return 分页范围
 func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) *gorm.DB {
 	if pagination.Page <= 0 {
 		pagination.Page = 1
@@ -214,6 +241,9 @@ func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) 
 	}
 }
 
+// 任务模型列表转换为任务实体列表
+// @param mList 任务模型列表
+// @return 任务实体列表
 func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 	eList := make([]*entities.Task, 0, len(mList))
 	for _, m := range mList {

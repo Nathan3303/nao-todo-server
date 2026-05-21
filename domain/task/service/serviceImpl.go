@@ -174,7 +174,12 @@ func (taskDomain *TaskDomainImpl) List(
 // @param durationMinutes 延迟分钟数
 // @return 新提醒时间
 // @return error 错误
-func (taskDomain *TaskDomainImpl) Snooze(ctx context.Context, userId int64, taskId int64, durationMinutes int) (string, error) {
+func (taskDomain *TaskDomainImpl) Snooze(
+	ctx context.Context,
+	userId int64,
+	taskId int64,
+	durationMinutes int,
+) (string, error) {
 	// 1. 校验任务归属
 	_, err := taskDomain.taskRepo.GetById(ctx, userId, taskId)
 	if err != nil {
@@ -197,7 +202,13 @@ func (taskDomain *TaskDomainImpl) Snooze(ctx context.Context, userId int64, task
 // @param remindWeekdays 每周提醒位掩码
 // @param endAt 任务结束时间
 // @return *time.Time 下一次提醒时间，nil 表示无需重复
-func CalculateNextRemindAt(remindAt time.Time, repeat int8, remindTime string, remindWeekdays int8, endAt *time.Time) *time.Time {
+func CalculateNextRemindAt(
+	remindAt time.Time,
+	repeat int8,
+	remindTime string,
+	remindWeekdays int8,
+	endAt *time.Time,
+) *time.Time {
 	// 1. 解析提醒时刻
 	var hour, minute int
 	if remindTime != "" {
@@ -212,7 +223,16 @@ func CalculateNextRemindAt(remindAt time.Time, repeat int8, remindTime string, r
 		}
 	}
 	// 2. 计算目标时刻
-	target := time.Date(remindAt.Year(), remindAt.Month(), remindAt.Day(), hour, minute, 0, 0, remindAt.Location())
+	target := time.Date(
+		remindAt.Year(),
+		remindAt.Month(),
+		remindAt.Day(),
+		hour,
+		minute,
+		0,
+		0,
+		remindAt.Location(),
+	)
 	var next time.Time
 	switch repeat {
 	case 1: // daily

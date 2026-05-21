@@ -1,11 +1,12 @@
 package cron
 
 import (
+	"context"
 	"fmt"
 	"naotodoserver/domain/task/service"
-	"naotodoserver/infrastructure/sse"
-	taskRepo "naotodoserver/infrastructure/persistence/task"
 	"naotodoserver/infrastructure/persistence/dbs"
+	taskRepo "naotodoserver/infrastructure/persistence/task"
+	"naotodoserver/infrastructure/sse"
 	"strconv"
 )
 
@@ -22,7 +23,7 @@ func (rj *ReminderJob) Run() {
 	// 1. 创建仓库实例
 	repo := taskRepo.NewTaskRepo(dbs.DB)
 	// 2. 查询到期提醒
-	tasks, err := repo.GetDueReminders(nil)
+	tasks, err := repo.GetDueReminders(context.TODO())
 	if err != nil {
 		fmt.Println("查询到期提醒失败：" + err.Error())
 		return
@@ -49,13 +50,17 @@ func (rj *ReminderJob) Run() {
 				task.EndAt,
 			)
 			if next != nil {
-				repo.UpdateRemindAt(nil, task.Id, next.Format("2006-01-02 15:04:05"))
+				repo.UpdateRemindAt(
+					context.TODO(),
+					task.Id,
+					next.Format("2006-01-02 15:04:05"),
+				)
 			} else {
-				repo.ClearRemindRepeat(nil, task.Id)
+				repo.ClearRemindRepeat(context.TODO(), task.Id)
 			}
 		} else {
 			// 单次提醒，清除 remind_at
-			repo.UpdateRemindAt(nil, task.Id, "")
+			repo.UpdateRemindAt(context.TODO(), task.Id, "")
 		}
 	}
 	if len(tasks) > 0 {

@@ -296,7 +296,12 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 // @param taskId 任务ID
 // @param remindAt 新提醒时间
 // @return error 错误
-func (taskRepo *TaskRepoImpl) Snooze(ctx context.Context, userId int64, taskId int64, remindAt string) error {
+func (taskRepo *TaskRepoImpl) Snooze(
+	ctx context.Context,
+	userId int64,
+	taskId int64,
+	remindAt string,
+) error {
 	// 1. 构建查询条件
 	var whereCond models.Task
 	whereCond.UserId = userId
@@ -359,7 +364,11 @@ func (taskRepo *TaskRepoImpl) ClearRemindRepeat(ctx context.Context, taskId int6
 // @param taskId 任务ID
 // @param remindAt 新提醒时间，空字符串表示清除
 // @return error 错误
-func (taskRepo *TaskRepoImpl) UpdateRemindAt(ctx context.Context, taskId int64, remindAt string) error {
+func (taskRepo *TaskRepoImpl) UpdateRemindAt(
+	ctx context.Context,
+	taskId int64,
+	remindAt string,
+) error {
 	// 1. 确保上下文非空
 	if ctx == nil {
 		ctx = context.Background()
