@@ -1,0 +1,12 @@
+# 基础安全
+# 必须设置强密码
+requirepass YOUR_REDIS_PASSWORD_HERE
+bind * -::*
+protected-mode yes
+
+# 持久化
+appendonly yes
+appendfsync everysec
+
+# 数据持久化目录
+dir /data

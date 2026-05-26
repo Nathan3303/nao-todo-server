@@ -7,7 +7,7 @@ scene: git_message
 
 ## 格式
 
-feat|fix|chore|change(功能点或变更点): 描述变更
+feat|fix|chore|change(功能点或变更点): 描述变更，必须中文。
 
 变更点：
 - 时间选择面板不会显示 NaN 字样
