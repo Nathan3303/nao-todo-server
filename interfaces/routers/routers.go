@@ -21,6 +21,7 @@ func InitRouters() *gin.Engine {
 			"http://localhost:4173",
 			"http://localhost:3302",
 			"https://nao-todo.vercel.app",
+			"https://todo.nathanao.space",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
