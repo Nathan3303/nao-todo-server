@@ -8,7 +8,6 @@ services:
             - ./deploy/data/mysql:/var/lib/mysql
             - ./deploy/conf/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
             - ./deploy/conf/mysql/client.cnf:/etc/mysql/client.cnf:ro
-            - ./deploy/backup/mysql:/backup
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
             - MYSQL_DATABASE=${MYSQL_DATABASE}

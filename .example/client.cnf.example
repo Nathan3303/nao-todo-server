@@ -1,4 +1,4 @@
-[mysqld]
+[client]
 host=YOUR_MYSQL_HOHST
 port=YOUR_MYSQL_PORT
 user=YOUR_CLIENT_USER
