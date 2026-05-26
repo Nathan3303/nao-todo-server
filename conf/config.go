@@ -2,6 +2,7 @@ package conf
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/spf13/viper"
 )
@@ -61,26 +62,61 @@ type Redis struct {
 }
 
 func InitConfig() {
-	// @step 1. 获取当前目录
 	configDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
-	// @step 2. 设置配置文件名称预类型，并拼接配置文件路径
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir + "/conf")
 
-	// @step 3. 读取配置文件
 	err = viper.ReadInConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	// @step 4. 将配置文件内容解析到 Conf 中
 	err = viper.Unmarshal(&Conf)
 	if err != nil {
 		panic(err)
+	}
+
+	overrideWithEnv()
+}
+
+func overrideWithEnv() {
+	if env := os.Getenv("MYSQL_HOST"); env != "" {
+		Conf.MySQL.Host = env
+	}
+	if env := os.Getenv("MYSQL_PORT"); env != "" {
+		Conf.MySQL.Port = env
+	}
+	if env := os.Getenv("MYSQL_USER"); env != "" {
+		Conf.MySQL.Username = env
+	}
+	if env := os.Getenv("MYSQL_PASSWORD"); env != "" {
+		Conf.MySQL.Password = env
+	}
+	if env := os.Getenv("MYSQL_DATABASE"); env != "" {
+		Conf.MySQL.Database = env
+	}
+
+	if env := os.Getenv("REDIS_HOST"); env != "" {
+		Conf.Redis.Host = env
+	}
+	if env := os.Getenv("REDIS_PORT"); env != "" {
+		Conf.Redis.Port = env
+	}
+	if env := os.Getenv("REDIS_PASSWORD"); env != "" {
+		Conf.Redis.Password = env
+	}
+	if env := os.Getenv("REDIS_DB"); env != "" {
+		if db, err := strconv.Atoi(env); err == nil {
+			Conf.Redis.DB = db
+		}
+	}
+
+	if env := os.Getenv("JWT_SECRET"); env != "" {
+		Conf.Server.JwtSecret = env
 	}
 }

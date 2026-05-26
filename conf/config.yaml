@@ -2,23 +2,23 @@ server:
     ip:
     port: 3302
     version: 1.0
-    jwtSecret: NaoTodoServerJwtSecret
-    goMaxProc: 2
+    jwtSecret: jwt@naotodo-test.secret
+    goMaxProc: 1
 
 mysql:
-    host: 192.168.2.109
+    host: localhost
     port: 3306
     database: naotodo
     username: root
-    password: lianGjh3303..
+    password: naotodo-test@mysql.pass
     charset: utf8mb4
     parseTime: True
     loc: Local
 
 redis:
-    host: 192.168.2.109
+    host: localhost
     port: 6379
-    password: lianGjh3303..
+    password: naotodo-test@redis.pass
     database: 0
     network: tcp
 

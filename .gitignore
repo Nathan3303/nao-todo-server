@@ -62,3 +62,5 @@ Thumbs.db
 .local
 logs/
 uploads/
+deploy/
+naotodoserver
