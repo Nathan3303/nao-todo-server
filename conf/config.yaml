@@ -1,0 +1,38 @@
+server:
+    ip:
+    port: 3302
+    version: 1.0
+    jwtSecret: jwt@naotodo-test.secret
+    goMaxProc: 1
+
+mysql:
+    host: localhost
+    port: 3306
+    database: naotodo
+    username: root
+    password: naotodo-test@mysql.pass
+    charset: utf8mb4
+    parseTime: True
+    loc: Local
+
+redis:
+    host: localhost
+    port: 6379
+    password: naotodo-test@redis.pass
+    database: 0
+    network: tcp
+
+log:
+    level: info
+    filePath: logs/app.log
+    maxSize: 100
+    maxAge: 30
+    maxBackups: 10
+    compress: true
+    outputConsole: true
+
+uploads:
+    uploadDir: uploads
+    avatarDir: avatars
+    maxFileSize: 2097152
+    staticPath: /static/uploads

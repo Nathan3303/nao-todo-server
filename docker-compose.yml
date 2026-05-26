@@ -1,0 +1,76 @@
+services:
+    mysql:
+        image: mysql:latest
+        container_name: naotodo-mysql
+        ports:
+            - "3306:${MYSQL_PORT}"
+        volumes:
+            - ./deploy/data/mysql:/var/lib/mysql
+            - ./deploy/conf/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+            - ./deploy/conf/mysql/client.cnf:/etc/mysql/client.cnf:ro
+            - ./deploy/backup/mysql:/backup
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - TZ=Asia/Shanghai
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-u",
+                    "root",
+                    "-p${MYSQL_PASSWORD}",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        restart: unless-stopped
+
+    redis:
+        image: redis:latest
+        container_name: naotodo-redis
+        ports:
+            - "6379:${REDIS_PORT}"
+        volumes:
+            - ./deploy/data/redis:/data
+            - ./deploy/conf/redis/redis.conf:/etc/redis/redis.conf:ro
+        environment:
+            - TZ=Asia/Shanghai
+        command: redis-server /etc/redis/redis.conf --appendonly yes
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+        restart: unless-stopped
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: naotodo-server
+        ports:
+            - "3302:3302"
+        environment:
+            - MYSQL_HOST=mysql
+            - MYSQL_PORT=${MYSQL_PORT}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - REDIS_HOST=redis
+            - REDIS_PORT=${REDIS_PORT}
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+            - REDIS_DB=${REDIS_DB}
+            - JWT_SECRET=${JWT_SECRET}
+            - TZ=Asia/Shanghai
+        depends_on:
+            mysql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
