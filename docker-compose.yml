@@ -1,6 +1,6 @@
 services:
     mysql:
-        image: mysql:latest
+        image: mysql:8.4.9
         container_name: naotodo-mysql
         ports:
             - "3306:${MYSQL_PORT}"
@@ -31,7 +31,7 @@ services:
         restart: unless-stopped
 
     redis:
-        image: redis:latest
+        image: redis:8.8.0
         container_name: naotodo-redis
         ports:
             - "6379:${REDIS_PORT}"
