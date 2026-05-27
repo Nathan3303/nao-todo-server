@@ -14,15 +14,12 @@ func InitRouters() *gin.Engine {
 	router := gin.Default()
 
 	// 添加 CORS 中间件
+	// 处理 SSE 请求
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://127.0.0.1",
-			"http://localhost",
-			"https://todo.nathanao.space",
-		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "CONNECT"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Connection"},
+		ExposeHeaders:    []string{"Content-Length", "Connection"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
