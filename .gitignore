@@ -17,7 +17,6 @@
 # Dependency directories
 vendor/
 Godeps/
-go.sum
 
 # Go workspace file
 go.work
