@@ -16,11 +16,8 @@ func InitRouters() *gin.Engine {
 	// 添加 CORS 中间件
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-			"http://172.18.0.1",
-			"http://localhost:5173",
-			"http://localhost:4173",
-			"http://localhost:3302",
-			"https://nao-todo.vercel.app",
+			"http://127.0.0.1",
+			"http://localhost",
 			"https://todo.nathanao.space",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
