@@ -55,6 +55,9 @@ services:
         container_name: naotodo-server
         ports:
             - "3302:3302"
+        volumes:
+            - ./deploy/data/app/uploads:/app/uploads
+            - ./deploy/data/app/logs:/app/logs
         environment:
             - MYSQL_HOST=mysql
             - MYSQL_PORT=${MYSQL_PORT}
