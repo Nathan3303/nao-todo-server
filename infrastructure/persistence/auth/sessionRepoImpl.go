@@ -118,6 +118,17 @@ func (sr *sessionRepoImpl) UpdateToken(ctx context.Context, sessionEntity *entit
 }
 
 /**
+ * Is Session Valid
+ */
+func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId int64, token string) bool {
+	session := &models.Session{}
+	tx := sr.db.WithContext(ctx).Model(&models.Session{}).
+		Where("user_id = ? AND token = ? AND expired_at > ?", userId, token, time.Now()).
+		First(session)
+	return tx.Error == nil && session.ID != 0
+}
+
+/**
  * Ip to Region
  */
 func (sr *sessionRepoImpl) Ip2Region(ip string) (string, error) {

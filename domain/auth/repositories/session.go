@@ -19,6 +19,9 @@ type Session interface {
 	// Delete 删除会话
 	Delete(ctx context.Context, userId int64, token string) error
 
+	// IsSessionValid 检查会话是否有效（userId + token 匹配且未过期）
+	IsSessionValid(ctx context.Context, userId int64, token string) bool
+
 	// Ip2Region IP转区域
 	// @param ip IP地址
 	// @return 区域名称

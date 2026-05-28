@@ -43,9 +43,12 @@ func JWTValidator(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
-	// 2. 写入用户信息到上下文
+	// 2. 写入用户信息和 token 到上下文
 	ctx.Request = ctx.Request.WithContext(
-		iCtx.SetUserId(ctx.Request.Context(), userId),
+		iCtx.SetToken(
+			iCtx.SetUserId(ctx.Request.Context(), userId),
+			jwtString,
+		),
 	)
 	// 3. 检测通过，继续处理请求
 	ctx.Next()

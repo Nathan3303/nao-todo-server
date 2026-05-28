@@ -17,6 +17,7 @@ import (
 	userService "naotodoserver/domain/user/service"
 	"naotodoserver/infrastructure/cron"
 	"naotodoserver/infrastructure/logging"
+	"naotodoserver/infrastructure/sse"
 	authRepo "naotodoserver/infrastructure/persistence/auth"
 	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
@@ -66,6 +67,14 @@ func LoadDomains() {
 	commentApp.RegistDomainImpl(commentService.NewCommentDomain(
 		commentRepo.NewCommentRepo(dbs.DB),
 	))
+}
+
+// WireSSE 装配 SSE Hub 的 SessionValidator
+func WireSSE() {
+	sessionRepo := authRepo.NewSessionRepo(dbs.DB)
+	sse.GetHub().SessionValidator = func(userId int64, token string) bool {
+		return sessionRepo.IsSessionValid(nil, userId, token)
+	}
 }
 
 func LoadCron() {

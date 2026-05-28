@@ -21,6 +21,7 @@ func main() {
 	// @step 3. 加载 Infrastructure 层
 	infrastructure.LoadDBs()
 	infrastructure.LoadDomains()
+	infrastructure.WireSSE()
 	infrastructure.LoadCron()
 
 	// @step 3. 加载路由

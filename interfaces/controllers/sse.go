@@ -12,8 +12,9 @@ import (
 // ReminderStream 提醒事件 SSE 流
 // @code 5000x
 func ReminderStream(ctx *gin.Context) {
-	// 1. 获取用户 ID
+	// 1. 获取用户 ID 和 token
 	userId := context.GetUserId(ctx.Request.Context())
+	token := context.GetToken(ctx.Request.Context())
 	if userId <= 0 {
 		Failure(ctx, types.ResponseData{
 			Code:    50001,
@@ -28,7 +29,7 @@ func ReminderStream(ctx *gin.Context) {
 	ctx.Header("X-Accel-Buffering", "no")
 	// 3. 订阅 Hub
 	hub := sse.GetHub()
-	ch := hub.Subscribe(userId)
+	ch := hub.Subscribe(userId, token)
 	defer hub.Unsubscribe(userId, ch)
 	// 4. 流式写入事件
 	ctx.Stream(func(w io.Writer) bool {
