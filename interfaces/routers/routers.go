@@ -17,9 +17,9 @@ func InitRouters() *gin.Engine {
 	// 处理 SSE 请求
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "CONNECT"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Connection"},
-		ExposeHeaders:    []string{"Content-Length", "Connection"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
