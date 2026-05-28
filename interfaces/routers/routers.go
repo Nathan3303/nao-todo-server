@@ -3,9 +3,7 @@ package routers
 import (
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
-	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,14 +12,14 @@ func InitRouters() *gin.Engine {
 	router := gin.Default()
 
 	// 添加 CORS 中间件
-	router.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	// router.Use(cors.New(cors.Config{
+	// 	AllowAllOrigins:  true,
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+	// 	ExposeHeaders:    []string{"Content-Length"},
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12 * time.Hour,
+	// }))
 
 	// 配置静态文件服务器
 	// 映射 /static/uploads 到本地 uploads 目录
