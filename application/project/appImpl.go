@@ -9,12 +9,11 @@ import (
 	"strconv"
 )
 
-// 注册任务清单应用实现
-func RegistDomainImpl(projectDomain service.ProjectDomain) ProjectApp {
-	once.Do(func() {
-		App = &projectAppImpl{projectDomain: projectDomain}
-	})
-	return App
+// NewProjectApp 创建任务清单应用层实例
+func NewProjectApp(projectDomain service.ProjectDomain) ProjectApp {
+	impl := &projectAppImpl{projectDomain: projectDomain}
+	App = impl
+	return impl
 }
 
 // 获取任务清单
@@ -167,6 +166,12 @@ func (app *projectAppImpl) Restore(
 // @param ctx 上下文
 // @param projectId 任务清单 ID
 // @return error 验证失败返回错误，否则返回 nil
+// DeleteDeactivatedProjects 删除已注销的任务清单（供定时任务调用）
+func (app *projectAppImpl) DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error {
+	_, err := app.projectDomain.DeleteDeactivatedProjects(ctx, dayOffset)
+	return err
+}
+
 func (app *projectAppImpl) HardDelete(
 	ctx context.Context,
 	projectId string,

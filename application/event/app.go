@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/event/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 )
 
 // 检查事项应用接口
@@ -41,7 +40,4 @@ type EventAppImpl struct {
 }
 
 // 检查事项应用实例
-var (
-	App  EventApp
-	once sync.Once
-)
+var App EventApp

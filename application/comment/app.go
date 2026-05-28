@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/comment/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 )
 
 // CommentApp 评论应用接口
@@ -52,7 +51,4 @@ type CommentAppImpl struct {
 }
 
 // App 评论应用实例
-var (
-	App  CommentApp
-	once sync.Once
-)
+var App CommentApp

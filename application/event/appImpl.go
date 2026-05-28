@@ -9,12 +9,11 @@ import (
 	"strconv"
 )
 
-// RegistDomainImpl 注册检查事项领域服务
-func RegistDomainImpl(eventDomain service.EventDomain) EventApp {
-	once.Do(func() {
-		App = &EventAppImpl{eventDomain: eventDomain}
-	})
-	return App
+// NewEventApp 创建检查事项应用层实例
+func NewEventApp(eventDomain service.EventDomain) EventApp {
+	impl := &EventAppImpl{eventDomain: eventDomain}
+	App = impl
+	return impl
 }
 
 // GetEventById 获取检查事项详情

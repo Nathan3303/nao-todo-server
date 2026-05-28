@@ -1,7 +1,6 @@
 package valueobjects
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -15,11 +14,11 @@ type CreateTask struct {
 	Description    string
 	State          int8
 	Priority       int8
-	StartAt        sql.NullTime
-	EndAt          sql.NullTime
+	StartAt        *time.Time
+	EndAt          *time.Time
 	ProjectId      int64
 	Tags           []string
-	RemindAt       sql.NullTime
+	RemindAt       *time.Time
 	RemindRepeat   int8
 	RemindTime     string
 	RemindWeekdays int8
@@ -42,14 +41,15 @@ func (createTask *CreateTask) Validate() error {
 
 // FillStartAt 填充开始时间
 func (createTask *CreateTask) FillStartAt() {
-	if createTask.StartAt.Valid || !createTask.EndAt.Valid {
+	if createTask.StartAt != nil || createTask.EndAt == nil {
 		return
 	}
 	t := time.Now()
-	if createTask.EndAt.Time.Before(t) {
-		createTask.StartAt = sql.NullTime{Time: t.Add(-1 * time.Minute), Valid: true}
+	if createTask.EndAt.Before(t) {
+		before := t.Add(-1 * time.Minute)
+		createTask.StartAt = &before
 	} else {
-		createTask.StartAt = sql.NullTime{Time: t, Valid: true}
+		createTask.StartAt = &t
 	}
 }
 
@@ -75,11 +75,11 @@ func NewCreateTask(
 	description string,
 	state int8,
 	priority int8,
-	startAt sql.NullTime,
-	endAt sql.NullTime,
+	startAt *time.Time,
+	endAt *time.Time,
 	projectId int64,
 	tags []string,
-	remindAt sql.NullTime,
+	remindAt *time.Time,
 	remindRepeat int8,
 	remindTime string,
 	remindWeekdays int8,

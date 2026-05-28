@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
@@ -100,32 +99,18 @@ func (taskDomain *TaskDomainImpl) Copy(
 	if err != nil {
 		return nil, err
 	}
-	// 2. 将 *time.Time 转换为 sql.NullTime
-	var startAt sql.NullTime
-	if existingTask.StartAt != nil {
-		startAt = sql.NullTime{Time: *existingTask.StartAt, Valid: true}
-	}
-	var endAt sql.NullTime
-	if existingTask.EndAt != nil {
-		endAt = sql.NullTime{Time: *existingTask.EndAt, Valid: true}
-	}
-	// 3. 转换提醒时间
-	var remindAt sql.NullTime
-	if existingTask.RemindAt != nil {
-		remindAt = sql.NullTime{Time: *existingTask.RemindAt, Valid: true}
-	}
-	// 4. 构建创建任务值对象
+	// 2. 构建创建任务值对象
 	createTaskVO, err := valueobjects.NewCreateTask(
 		0,
 		existingTask.Name+"的复制",
 		existingTask.Description,
 		existingTask.State,
 		existingTask.Priority,
-		startAt,
-		endAt,
+		existingTask.StartAt,
+		existingTask.EndAt,
 		existingTask.ProjectId,
 		existingTask.Tags,
-		remindAt,
+		existingTask.RemindAt,
 		existingTask.RemindRepeat,
 		existingTask.RemindTime,
 		existingTask.RemindWeekdays,
@@ -133,7 +118,7 @@ func (taskDomain *TaskDomainImpl) Copy(
 	if err != nil {
 		return nil, err
 	}
-	// 5. 创建新任务
+	// 3. 创建新任务
 	return taskDomain.taskRepo.Create(ctx, userId, createTaskVO)
 }
 
@@ -150,21 +135,10 @@ func (taskDomain *TaskDomainImpl) List(
 	query *valueobjects.QueryTask,
 	pagination *valueobjects.Pagination,
 ) ([]*entities.Task, *valueobjects.Pagination, error) {
-	// 1. 补充 query
 	query.UserId = userId
-	// 2. 构建查询句柄
-	tx, err := taskDomain.taskRepo.BuildQueryTx(ctx, query)
-	if err != nil {
-		return nil, nil, err
-	}
-	pagination.Page = query.Page
-	pagination.Limit = query.Limit
-	// 3. 查询任务列表
-	taskEntities, pagination, err := taskDomain.taskRepo.ListWithQueryTx(ctx, tx, pagination)
-	if err != nil {
-		return nil, nil, err
-	}
-	return taskEntities, pagination, nil
+	query.Page = pagination.Page
+	query.Limit = pagination.Limit
+	return taskDomain.taskRepo.List(ctx, userId, query, pagination)
 }
 
 // Snooze 稍后提醒
@@ -195,14 +169,8 @@ func (taskDomain *TaskDomainImpl) Snooze(
 	return newRemindAt, nil
 }
 
-// CalculateNextRemindAt 计算下一次提醒时间
-// @param remindAt 当前提醒时间
-// @param repeat 重复类型
-// @param remindTime 提醒时刻 HH:mm
-// @param remindWeekdays 每周提醒位掩码
-// @param endAt 任务结束时间
-// @return *time.Time 下一次提醒时间，nil 表示无需重复
-func CalculateNextRemindAt(
+// calculateNextRemindAt 计算下一次提醒时间
+func (taskDomain *TaskDomainImpl) calculateNextRemindAt(
 	remindAt time.Time,
 	repeat int8,
 	remindTime string,
@@ -255,9 +223,6 @@ func CalculateNextRemindAt(
 }
 
 // calculateNextWeekly 计算下一个匹配的星期
-// @param from 起始时间
-// @param weekdays 位掩码
-// @return time.Time
 func calculateNextWeekly(from time.Time, weekdays int8) time.Time {
 	for i := 1; i <= 7; i++ {
 		candidate := from.AddDate(0, 0, i)
@@ -267,4 +232,33 @@ func calculateNextWeekly(from time.Time, weekdays int8) time.Time {
 		}
 	}
 	return time.Time{}
+}
+
+// ProcessReminders 处理所有到期提醒
+func (taskDomain *TaskDomainImpl) ProcessReminders(ctx context.Context) ([]*entities.Task, error) {
+	// 1. 查询到期提醒
+	tasks, err := taskDomain.taskRepo.GetDueReminders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// 2. 处理每条到期提醒
+	for _, task := range tasks {
+		if task.RemindRepeat != 0 {
+			next := taskDomain.calculateNextRemindAt(
+				*task.RemindAt,
+				task.RemindRepeat,
+				task.RemindTime,
+				task.RemindWeekdays,
+				task.EndAt,
+			)
+			if next != nil {
+				taskDomain.taskRepo.UpdateRemindAt(ctx, task.Id, next.Format("2006-01-02 15:04:05"))
+			} else {
+				taskDomain.taskRepo.ClearRemindRepeat(ctx, task.Id)
+			}
+		} else {
+			taskDomain.taskRepo.UpdateRemindAt(ctx, task.Id, "")
+		}
+	}
+	return tasks, nil
 }

@@ -6,18 +6,18 @@ import (
 	"naotodoserver/domain/task/service"
 	"naotodoserver/domain/task/valueobjects"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/sse"
 	"naotodoserver/interfaces/types"
 	"strconv"
 )
 
-// RegistDomainImpl 注册任务领域层
-func RegistDomainImpl(taskDomain service.TaskDomain) TaskApp {
-	once.Do(func() {
-		App = &TaskAppImpl{
-			taskDomain: taskDomain,
-		}
-	})
-	return App
+// NewTaskApp 创建任务应用层实例
+func NewTaskApp(taskDomain service.TaskDomain) TaskApp {
+	impl := &TaskAppImpl{
+		taskDomain: taskDomain,
+	}
+	App = impl
+	return impl
 }
 
 // GetTaskById 获取单个任务信息
@@ -255,4 +255,23 @@ func (taskApp *TaskAppImpl) SnoozeTask(
 	return &types.SnoozeTaskRes{
 		RemindAt: newRemindAt,
 	}, nil
+}
+
+// ProcessReminders 处理所有到期提醒（供定时任务调用）
+func (taskApp *TaskAppImpl) ProcessReminders(ctx context.Context) error {
+	tasks, err := taskApp.taskDomain.ProcessReminders(ctx)
+	if err != nil {
+		return err
+	}
+	hub := sse.GetHub()
+	for _, task := range tasks {
+		hub.Publish(task.UserId, sse.ReminderEvent{
+			Type:        "REMINDER",
+			TaskId:      strconv.FormatInt(task.Id, 10),
+			TaskName:    task.Name,
+			Description: task.Description,
+			RemindAt:    formatTimePtr(task.RemindAt),
+		})
+	}
+	return nil
 }

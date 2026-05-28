@@ -62,6 +62,9 @@ type ProjectDomain interface {
 		projectId int64,
 		saveProjectPreference *valueobjects.SaveProjectPreference,
 	) error
+
+	// 删除已注销的任务清单
+	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error)
 }
 
 // 任务清单领域服务实现

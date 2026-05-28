@@ -282,3 +282,12 @@ func (projectRepo *ProjectRepoImpl) GetMaxSortId(
 		Pluck("MAX(sort_id)", &maxSortId)
 	return maxSortId
 }
+
+// DeleteDeactivatedProjects 删除已注销的任务清单
+func (projectRepo *ProjectRepoImpl) DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error) {
+	cutoff := time.Now().AddDate(0, 0, -1*int(dayOffset))
+	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
+		Where("deactived_at < ?", cutoff).
+		Delete(&models.Project{})
+	return tx.RowsAffected, tx.Error
+}

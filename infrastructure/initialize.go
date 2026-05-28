@@ -41,30 +41,30 @@ func LoadDBs() {
 }
 
 func LoadDomains() {
-	authApp.RegistDomainImpl(authService.GetAuthDomainImpl(
+	authApp.NewAuthApp(authService.GetAuthDomainImpl(
 		authRepo.NewJWTRepo(),
 		authRepo.NewUserRepo(dbs.DB, dbs.RdsCli),
 		authRepo.NewSessionRepo(dbs.DB),
 		authRepo.NewRateLimitRepo(dbs.RdsCli),
 	))
-	userApp.RegistDomainImpl(userService.NewUserDomain(
+	userApp.NewUserApp(userService.NewUserDomain(
 		userRepo.NewUserRepo(dbs.DB),
 	))
-	projectApp.RegistDomainImpl(projectService.NewProjectDomain(
+	projectApp.NewProjectApp(projectService.NewProjectDomain(
 		projectRepo.NewProjectRepo(dbs.DB),
 		projectRepo.NewProjectPreferenceRepo(dbs.DB),
 	))
-	tagApp.RegistDomainImpl(tagService.NewTagDomain(
+	tagApp.NewTagApp(tagService.NewTagDomain(
 		tagRepo.NewTagRepo(dbs.DB),
 		tagRepo.NewTagPreferenceRepo(dbs.DB),
 	))
-	taskApp.RegistDomainImpl(taskService.NewTaskDomain(
+	taskApp.NewTaskApp(taskService.NewTaskDomain(
 		taskRepo.NewTaskRepo(dbs.DB),
 	))
-	eventApp.RegistDomainImpl(eventService.NewEventDomain(
+	eventApp.NewEventApp(eventService.NewEventDomain(
 		eventRepo.NewEventRepo(dbs.DB),
 	))
-	commentApp.RegistDomainImpl(commentService.NewCommentDomain(
+	commentApp.NewCommentApp(commentService.NewCommentDomain(
 		commentRepo.NewCommentRepo(dbs.DB),
 	))
 }

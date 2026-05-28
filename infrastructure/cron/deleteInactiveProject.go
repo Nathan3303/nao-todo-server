@@ -1,10 +1,9 @@
 package cron
 
 import (
+	"context"
 	"fmt"
-	"naotodoserver/infrastructure/persistence/dbs"
-	"naotodoserver/infrastructure/persistence/models"
-	"time"
+	"naotodoserver/application/project"
 )
 
 type DeleteDeactivedProjectJob struct {
@@ -16,12 +15,8 @@ func NewDeleteDeactivedProjectJob(dayOffset int8) *DeleteDeactivedProjectJob {
 }
 
 func (ddp *DeleteDeactivedProjectJob) Run() {
-	tx := dbs.DB.Model(&models.Project{}).
-		Where("deactived_at < ?", time.Now().AddDate(0, 0, -1*int(ddp.DayOffset))).
-		Delete(&models.Project{})
-	if tx.Error != nil {
-		fmt.Println("删除软删除项目记录失败：" + tx.Error.Error())
-		return
+	err := project.App.DeleteDeactivatedProjects(context.TODO(), ddp.DayOffset)
+	if err != nil {
+		fmt.Println("删除已注销项目失败：" + err.Error())
 	}
-	fmt.Printf("已删除软删除项目记录 %d 条\n", tx.RowsAffected)
 }

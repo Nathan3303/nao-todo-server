@@ -156,3 +156,8 @@ func (p *ProjectDomainImpl) SavePreference(
 ) error {
 	return p.preferenceRepo.Save(ctx, userId, projectId, saveProjectPreference)
 }
+
+// DeleteDeactivatedProjects 删除已注销的任务清单（供定时任务调用）
+func (p *ProjectDomainImpl) DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error) {
+	return p.repo.DeleteDeactivatedProjects(ctx, dayOffset)
+}

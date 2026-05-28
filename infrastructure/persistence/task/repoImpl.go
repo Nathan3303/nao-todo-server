@@ -140,64 +140,9 @@ func (taskRepo *TaskRepoImpl) List(
 	query *valueobjects.QueryTask,
 	pagination *valueobjects.Pagination,
 ) ([]*entities.Task, *valueobjects.Pagination, error) {
-	// 1. 转换查询实体到模型
-	var whereCond models.Task
-	whereCond.UserId = userId
-	// 2. 查询任务总数
+	// 1. 构建查询
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where(whereCond).
-		Count(&pagination.Total)
-	if tx.Error != nil {
-		return nil, nil, tx.Error
-	}
-	// 2. 查询任务列表
-	taskModels := []*models.Task{}
-	tx = tx.Scopes(PaginationVO2Scopes(pagination)).Find(&taskModels)
-	if tx.Error != nil {
-		return nil, nil, tx.Error
-	}
-	// 3. 转换模型到实体并返回
-	taskEntities := TaskModels2Entities(taskModels)
-	return taskEntities, pagination, nil
-}
-
-/*
- * List task with query TX
- * 通过 数据库操作句柄 获取任务列表
- */
-func (taskRepo *TaskRepoImpl) ListWithQueryTx(
-	ctx context.Context,
-	tx *gorm.DB,
-	pagination *valueobjects.Pagination,
-) ([]*entities.Task, *valueobjects.Pagination, error) {
-	// 1. 查询任务总数
-	tx = tx.WithContext(ctx).Model(&models.Task{}).
-		Count(&pagination.Total)
-	if tx.Error != nil {
-		return nil, nil, tx.Error
-	}
-	// 2. 查询任务列表
-	taskModels := []*models.Task{}
-	tx = tx.Scopes(PaginationVO2Scopes(pagination)).Find(&taskModels)
-	if tx.Error != nil {
-		return nil, nil, tx.Error
-	}
-	// 3. 转换模型到实体并返回
-	taskEntities := TaskModels2Entities(taskModels)
-	return taskEntities, pagination, nil
-}
-
-/*
- * Build query tx
- * 构建查询操作符
- */
-func (taskRepo *TaskRepoImpl) BuildQueryTx(
-	ctx context.Context,
-	query *valueobjects.QueryTask,
-) (*gorm.DB, error) {
-	// 1. 构建指定模型的操作符
-	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where("user_id = ?", query.UserId)
+		Where("user_id = ?", userId)
 	// 2. 处理 Project 或 Tag ID 过滤条件
 	if query.ProjectId > 0 {
 		tx = tx.Where("project_id = ?", query.ProjectId)
@@ -244,7 +189,6 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 	}
 	// 7. 处理所有布尔类型的过滤条件
 	if query.IsDeleted {
-		// 30 天内删除的任务
 		tx = tx.Unscoped().Where(
 			"deleted_at >= ?",
 			time.Now().AddDate(0, 0, -30),
@@ -286,8 +230,20 @@ func (taskRepo *TaskRepoImpl) BuildQueryTx(
 			tx.Order(utils.ToSnakeCase(splited[0]) + " " + splited[1])
 		}
 	}
-	// 10. 返回
-	return tx, nil
+	// 10. 查询任务总数
+	tx.Count(&pagination.Total)
+	if tx.Error != nil {
+		return nil, nil, tx.Error
+	}
+	// 11. 查询任务列表
+	taskModels := []*models.Task{}
+	tx = tx.Scopes(PaginationVO2Scopes(pagination)).Find(&taskModels)
+	if tx.Error != nil {
+		return nil, nil, tx.Error
+	}
+	// 12. 转换模型到实体并返回
+	taskEntities := TaskModels2Entities(taskModels)
+	return taskEntities, pagination, nil
 }
 
 // Snooze 稍后提醒

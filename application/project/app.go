@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/project/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 )
 
 // 任务清单应用接口
@@ -51,6 +50,9 @@ type ProjectApp interface {
 		projectId string,
 		updateProjectPreferenceReq *types.UpdateProjectPreferenceReq,
 	) error
+
+	// 删除已注销的任务清单（供定时任务调用）
+	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error
 }
 
 // 任务清单应用实现
@@ -59,7 +61,4 @@ type projectAppImpl struct {
 }
 
 // 任务清单应用单例
-var (
-	App  *projectAppImpl
-	once sync.Once
-)
+var App ProjectApp

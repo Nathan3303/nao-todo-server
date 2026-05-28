@@ -4,6 +4,8 @@ import (
 	"naotodoserver/domain/user/entities"
 	"naotodoserver/infrastructure/persistence/models"
 	"naotodoserver/infrastructure/utils"
+
+	"gorm.io/gorm"
 )
 
 func UserEntity2Model(e *entities.User) *models.User {
@@ -17,7 +19,7 @@ func UserEntity2Model(e *entities.User) *models.User {
 	u.State = e.State
 	u.CreatedAt = e.CreatedAt
 	u.UpdatedAt = e.UpdatedAt
-	u.DeletedAt = e.DeletedAt
+	u.DeletedAt = gorm.DeletedAt{Time: e.DeletedAt, Valid: !e.DeletedAt.IsZero()}
 	u.DeactivedAt = utils.TimePtr2SqlNullTime(e.DeactivedAt)
 	return u
 }
@@ -35,7 +37,7 @@ func UserModel2Entity(m *models.User) *entities.User {
 	u.CreatedFrom = m.CreatedFrom
 	u.CreatedAt = m.CreatedAt
 	u.UpdatedAt = m.UpdatedAt
-	u.DeletedAt = m.DeletedAt
+	u.DeletedAt = m.DeletedAt.Time
 	u.DeactivedAt = utils.SqlNullTime2TimePtr(m.DeactivedAt)
 	return u
 }
@@ -47,7 +49,7 @@ func UserConfigEntity2Model(e *entities.UserConfig) *models.UserConfig {
 	u.Appearance = e.Appearance
 	u.CreatedAt = e.CreatedAt
 	u.UpdatedAt = e.UpdatedAt
-	u.DeletedAt = e.DeletedAt
+	u.DeletedAt = gorm.DeletedAt{Time: e.DeletedAt, Valid: !e.DeletedAt.IsZero()}
 	return u
 }
 
@@ -58,6 +60,6 @@ func UserConfigModel2Entity(m *models.UserConfig) *entities.UserConfig {
 	u.Appearance = m.Appearance
 	u.CreatedAt = m.CreatedAt
 	u.UpdatedAt = m.UpdatedAt
-	u.DeletedAt = m.DeletedAt
+	u.DeletedAt = m.DeletedAt.Time
 	return u
 }

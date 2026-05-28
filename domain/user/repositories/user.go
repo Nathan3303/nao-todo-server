@@ -15,6 +15,7 @@ type User interface {
 	Deactive(ctx context.Context, userId int64) error
 	Active(ctx context.Context, userId int64) error
 	Delete(ctx context.Context, whereEntity *entities.User) error
+	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error)
 	GetConfig(ctx context.Context, userId int64) (*entities.UserConfig, error)
 	UpdateConfig(ctx context.Context, userId int64, appearance string) error
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/auth/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 )
 
 // AuthApp 认证应用接口
@@ -36,7 +35,4 @@ type authAppImpl struct {
 }
 
 // App 认证应用实例
-var (
-	App  *authAppImpl
-	once sync.Once
-)
+var App AuthApp

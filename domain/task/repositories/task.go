@@ -4,8 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
-
-	"gorm.io/gorm"
 )
 
 // Task 任务仓库接口
@@ -54,16 +52,6 @@ type Task interface {
 		ctx context.Context,
 		userId int64,
 		query *valueobjects.QueryTask,
-		pagination *valueobjects.Pagination,
-	) ([]*entities.Task, *valueobjects.Pagination, error)
-
-	// BuildQueryTx 构建查询事务
-	BuildQueryTx(ctx context.Context, query *valueobjects.QueryTask) (*gorm.DB, error)
-
-	// ListWithQueryTx 获取任务列表（使用事务）
-	ListWithQueryTx(
-		ctx context.Context,
-		tx *gorm.DB,
 		pagination *valueobjects.Pagination,
 	) ([]*entities.Task, *valueobjects.Pagination, error)
 

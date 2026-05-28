@@ -14,14 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 注册 Domain
-func RegistDomainImpl(userDomain service.UserDomain) UserApp {
-	once.Do(func() {
-		App = &userAppImpl{
-			userDomain: userDomain,
-		}
-	})
-	return App
+// NewUserApp 创建用户应用层实例
+func NewUserApp(userDomain service.UserDomain) UserApp {
+	impl := &userAppImpl{
+		userDomain: userDomain,
+	}
+	App = impl
+	return impl
 }
 
 // UpdateNickname 更新用户昵称
@@ -218,12 +217,13 @@ func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConf
 	return u.userDomain.UpdateConfig(ctx, userId, req.Appearance)
 }
 
+// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
+func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error {
+	_, err := u.userDomain.DeleteDeactivatedUsers(ctx, dayOffset)
+	return err
+}
+
 // ActiveUser 激活用户
-// @param ctx 上下文
-// @param req 激活用户请求
-// @param ctx 上下文
-// @param req 激活用户请求
-// @return error 错误
 func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)

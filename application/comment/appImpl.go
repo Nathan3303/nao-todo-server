@@ -9,13 +9,12 @@ import (
 	"strconv"
 )
 
-func RegistDomainImpl(commentDomain service.CommentDomain) CommentApp {
-	once.Do(func() {
-		App = &CommentAppImpl{
-			CommentDomain: commentDomain,
-		}
-	})
-	return App
+func NewCommentApp(commentDomain service.CommentDomain) CommentApp {
+	impl := &CommentAppImpl{
+		CommentDomain: commentDomain,
+	}
+	App = impl
+	return impl
 }
 
 // GetComment 获取评论详情

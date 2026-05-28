@@ -8,12 +8,11 @@ import (
 	"naotodoserver/interfaces/types"
 )
 
-// 注册 Domain
-func RegistDomainImpl(authDomain service.AuthDomain) AuthApp {
-	once.Do(func() {
-		App = &authAppImpl{authDomain: authDomain}
-	})
-	return App
+// NewAuthApp 创建认证应用层实例
+func NewAuthApp(authDomain service.AuthDomain) AuthApp {
+	impl := &authAppImpl{authDomain: authDomain}
+	App = impl
+	return impl
 }
 
 // 处理用户登录

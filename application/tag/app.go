@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/tag/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 )
 
 // 标签应用服务接口
@@ -54,7 +53,4 @@ type TagAppImpl struct {
 }
 
 // 标签应用服务单例
-var (
-	App  TagAppImpl
-	once sync.Once
-)
+var App TagApp

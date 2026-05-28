@@ -49,4 +49,7 @@ type Project interface {
 		userId int64,
 		batchUpdateProjects []*valueobjects.BatchUpdateProject,
 	) ([]*entities.Project, error)
+
+	// 删除已注销的任务清单
+	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error)
 }

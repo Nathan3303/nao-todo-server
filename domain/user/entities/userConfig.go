@@ -2,8 +2,6 @@ package entities
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type UserConfig struct {
@@ -12,5 +10,5 @@ type UserConfig struct {
 	Appearance string         `json:"appearance"`
 	CreatedAt  time.Time      `json:"createdAt"`
 	UpdatedAt  time.Time      `json:"updatedAt"`
-	DeletedAt  gorm.DeletedAt `json:"deletedAt"`
+	DeletedAt  time.Time `json:"deletedAt"`
 }

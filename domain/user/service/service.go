@@ -18,6 +18,7 @@ type UserDomain interface {
 	PasswordCompare(password, encryptedPassword []byte) bool
 	GetConfig(ctx context.Context, userId int64) (*entities.UserConfig, error)
 	UpdateConfig(ctx context.Context, userId int64, appearance string) error
+	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error)
 }
 
 type UserDomainImpl struct {

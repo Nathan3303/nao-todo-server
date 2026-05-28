@@ -225,3 +225,24 @@ func (userRepo *UserRepoImpl) Delete(ctx context.Context, whereEntity *entities.
 		Where(userModel).
 		Delete(&models.User{}).Error
 }
+
+// DeleteDeactivatedUsers 删除已注销用户
+func (userRepo *UserRepoImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error) {
+	cutoff := time.Now().AddDate(0, 0, -1*int(dayOffset))
+	var userIds []int64
+	tx := userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where("deactived_at < ?", cutoff).
+		Pluck("id", &userIds)
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	if len(userIds) > 0 {
+		userRepo.db.WithContext(ctx).Model(&models.UserConfig{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.UserConfig{})
+	}
+	tx = userRepo.db.WithContext(ctx).Model(&models.User{}).
+		Where("id IN ?", userIds).
+		Delete(&models.User{})
+	return tx.RowsAffected, tx.Error
+}

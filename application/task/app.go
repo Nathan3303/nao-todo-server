@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/task/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 )
 
 // TaskApp 任务应用层
@@ -38,23 +37,18 @@ type TaskApp interface {
 	) (types.ListTaskRes, *types.Pagination, error)
 
 	// SnoozeTask 稍后提醒
-	// @param ctx 上下文
-	// @param taskId 任务ID
-	// @param req 稍后提醒请求
-	// @return 稍后提醒响应
-	// @return error 错误
 	SnoozeTask(
 		ctx context.Context,
 		taskId string,
 		req *types.SnoozeTaskReq,
 	) (*types.SnoozeTaskRes, error)
+
+	// ProcessReminders 处理所有到期提醒（供定时任务调用）
+	ProcessReminders(ctx context.Context) error
 }
 
 type TaskAppImpl struct {
 	taskDomain service.TaskDomain
 }
 
-var (
-	App  TaskApp
-	once sync.Once
-)
+var App TaskApp

@@ -7,6 +7,7 @@ import (
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 	"strconv"
+	"time"
 )
 
 // weekdaysToBitmask 星期数组转换位掩码
@@ -38,9 +39,21 @@ func bitmaskToWeekdays(mask int8) []int {
 	return weekdays
 }
 
+func formatTimePtr(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format(time.RFC3339)
+}
+
+func formatTimePtrOk(t *time.Time) (string, bool) {
+	if t == nil {
+		return "", false
+	}
+	return t.Format(time.RFC3339), true
+}
+
 // TaskEntityToGetRes 任务实体转换为获取任务响应
-// @param taskEntity 任务实体
-// @return 任务响应
 func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res := &types.GetTaskRes{}
 	res.Id = strconv.FormatInt(taskEntity.Id, 10)
@@ -49,14 +62,14 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res.Description = taskEntity.Description
 	res.State = consts.TodoStateMapReverse[taskEntity.State]
 	res.Priority = consts.TodoPriorityMapReverse[taskEntity.Priority]
-	res.StartAt = taskEntity.GetFormatedStartAt()
-	res.EndAt = taskEntity.GetFormatedEndAt()
+	res.StartAt = formatTimePtr(taskEntity.StartAt)
+	res.EndAt = formatTimePtr(taskEntity.EndAt)
 	res.ProjectId = strconv.FormatInt(taskEntity.ProjectId, 10)
 	res.Tags = taskEntity.Tags
-	res.ArchivedAt, _ = taskEntity.ParseArchivedAt()
-	res.StarMarkAt, _ = taskEntity.ParseStarMarkAt()
-	res.GivenUpAt, _ = taskEntity.ParseGivenUpAt()
-	res.RemindAt = taskEntity.GetFormatedRemindAt()
+	res.ArchivedAt, _ = formatTimePtrOk(taskEntity.ArchivedAt)
+	res.StarMarkAt, _ = formatTimePtrOk(taskEntity.StarMarkAt)
+	res.GivenUpAt, _ = formatTimePtrOk(taskEntity.GivenUpAt)
+	res.RemindAt = formatTimePtr(taskEntity.RemindAt)
 	res.RemindRepeat = consts.RemindRepeatMapReverse[taskEntity.RemindRepeat]
 	res.RemindTime = taskEntity.RemindTime
 	res.RemindWeekdays = bitmaskToWeekdays(taskEntity.RemindWeekdays)
@@ -94,11 +107,11 @@ func CreateTaskReqToValueObject(
 		req.Description,
 		consts.TodoStateMap[req.State],
 		consts.TodoPriorityMap[req.Priority],
-		utils.String2SqlNullTime(req.StartAt),
-		utils.String2SqlNullTime(req.EndAt),
+		utils.DateString2TimePtr(req.StartAt),
+		utils.DateString2TimePtr(req.EndAt),
 		projectIdInt64,
 		req.Tags,
-		utils.String2SqlNullTime(req.RemindAt),
+		utils.DateString2TimePtr(req.RemindAt),
 		consts.RemindRepeatMap[req.RemindRepeat],
 		req.RemindTime,
 		weekdaysToBitmask(req.RemindWeekdays),

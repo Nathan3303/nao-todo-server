@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 
 	"naotodoserver/infrastructure/utils"
 )
@@ -23,7 +22,7 @@ type User struct {
 	Config      *UserConfig    `json:"config"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
-	DeletedAt   gorm.DeletedAt `json:"deletedAt"`
+	DeletedAt   time.Time `json:"deletedAt"`
 	DeactivedAt *time.Time     `json:"deactivedAt"`
 }
 

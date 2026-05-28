@@ -109,3 +109,8 @@ func (userDomain *UserDomainImpl) PasswordCompare(
 ) bool {
 	return userDomain.repo.PasswordCompare(password, encryptedPassword)
 }
+
+// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
+func (userDomain *UserDomainImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error) {
+	return userDomain.repo.DeleteDeactivatedUsers(ctx, dayOffset)
+}

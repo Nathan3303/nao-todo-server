@@ -9,12 +9,11 @@ import (
 	"strconv"
 )
 
-// 注册函数
-func RegistDomainImpl(tagDomain service.TagDomain) TagApp {
-	once.Do(func() {
-		App.tagDomain = tagDomain
-	})
-	return &App
+// NewTagApp 创建标签应用层实例
+func NewTagApp(tagDomain service.TagDomain) TagApp {
+	impl := &TagAppImpl{tagDomain: tagDomain}
+	App = impl
+	return impl
 }
 
 // 获取标签信息

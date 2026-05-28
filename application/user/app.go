@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/domain/user/service"
 	"naotodoserver/interfaces/types"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,6 +48,9 @@ type UserApp interface {
 
 	// UpdateConfig 更新用户配置
 	UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error
+
+	// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
+	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error
 }
 
 // userAppImpl 用户应用实现
@@ -57,7 +59,4 @@ type userAppImpl struct {
 }
 
 // App 用户应用实例
-var (
-	App  *userAppImpl
-	once sync.Once
-)
+var App UserApp
