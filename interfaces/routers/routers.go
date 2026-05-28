@@ -14,7 +14,6 @@ func InitRouters() *gin.Engine {
 	router := gin.Default()
 
 	// 添加 CORS 中间件
-	// 处理 SSE 请求
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -47,14 +46,14 @@ func InitRouters() *gin.Engine {
 	}
 
 	// 设置可信代理 IP（负载均衡器或 CDN 的 IP 段）
-	err := router.SetTrustedProxies([]string{
-		"192.168.1.0/24",
-		"10.0.0.0/8",
-		"127.0.0.1",
-	})
-	if err != nil {
-		panic(err)
-	}
+	// err := router.SetTrustedProxies([]string{
+	// 	"192.168.1.0/24",
+	// 	"10.0.0.0/8",
+	// 	"127.0.0.1",
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// 返回 Gin 引擎
 	return router
