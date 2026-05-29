@@ -5,13 +5,15 @@ services:
         ports:
             - "3306:${MYSQL_PORT}"
         volumes:
-            - ./deploy/data/mysql:/var/lib/mysql
-            - ./deploy/conf/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
-            - ./deploy/conf/mysql/client.cnf:/etc/mysql/client.cnf:ro
+            - mysql-data:/var/lib/mysql
+            - /opt/nao-todo-server/mysql/conf/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+            - /opt/nao-todo-server/mysql/conf/client.cnf:/etc/mysql/client.cnf:ro
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
             - MYSQL_DATABASE=${MYSQL_DATABASE}
             - TZ=Asia/Shanghai
+        networks:
+            - naotodo-backend
         healthcheck:
             test:
                 [
@@ -36,16 +38,19 @@ services:
         ports:
             - "6379:${REDIS_PORT}"
         volumes:
-            - ./deploy/data/redis:/data
-            - ./deploy/conf/redis/redis.conf:/etc/redis/redis.conf:ro
+            - redis-data:/data
+            - /opt/nao-todo-server/redis/conf/redis.conf:/etc/redis/redis.conf:ro
         environment:
             - TZ=Asia/Shanghai
+        networks:
+            - naotodo-backend
         command: redis-server /etc/redis/redis.conf --appendonly yes
         healthcheck:
             test: ["CMD", "redis-cli", "ping"]
             interval: 30s
             timeout: 10s
             retries: 3
+            start_period: 30s
         restart: unless-stopped
 
     app:
@@ -56,8 +61,8 @@ services:
         ports:
             - "3302:3302"
         volumes:
-            - ./deploy/data/app/uploads:/app/uploads
-            - ./deploy/data/app/logs:/app/logs
+            - app-uploads-data:/app/uploads
+            - app-logs-data:/app/logs
         environment:
             - MYSQL_HOST=mysql
             - MYSQL_PORT=${MYSQL_PORT}
@@ -75,4 +80,40 @@ services:
                 condition: service_healthy
             redis:
                 condition: service_healthy
+        networks:
+            - naotodo-backend
         restart: unless-stopped
+
+volumes:
+    mysql-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: /opt/nao-todo-server/mysql/data
+    redis-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: /opt/nao-todo-server/redis/data
+    app-uploads-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: /opt/nao-todo-server/app/uploads
+    app-logs-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: /opt/nao-todo-server/app/logs
+
+networks:
+    naotodo-backend:
+        driver: bridge
+        # 可选：指定子网以固定 IP 范围，但通常不需要
+        # ipam:
+        #   config:
+        #     - subnet: 172.20.0.0/16
