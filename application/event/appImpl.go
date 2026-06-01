@@ -3,7 +3,7 @@ package event
 import (
 	"context"
 	"errors"
-	"naotodoserver/domain/event/service"
+	"naotodoserver/domain/checkitem/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 	"strconv"
@@ -12,7 +12,6 @@ import (
 // NewEventApp 创建检查事项应用层实例
 func NewEventApp(eventDomain service.EventDomain) EventApp {
 	impl := &EventAppImpl{eventDomain: eventDomain}
-	App = impl
 	return impl
 }
 

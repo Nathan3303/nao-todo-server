@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/project"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +21,7 @@ func GetProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 获取清单
-	res, err := project.App.Get(ctx.Request.Context(), projectId)
+	res, err := application.App.Project.Get(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20002,
@@ -53,7 +53,7 @@ func CreateProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 创建清单
-	res, err := project.App.Create(ctx.Request.Context(), &createProjectReq)
+	res, err := application.App.Project.Create(ctx.Request.Context(), &createProjectReq)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20012,
@@ -95,7 +95,7 @@ func UpdateProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 更新清单
-	err = project.App.Update(
+	err = application.App.Project.Update(
 		ctx.Request.Context(),
 		projectId,
 		&updateProjectReq,
@@ -130,7 +130,7 @@ func DeleteProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 删除清单
-	err := project.App.Delete(ctx.Request.Context(), projectId)
+	err := application.App.Project.Delete(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20032,
@@ -161,7 +161,7 @@ func RestoreProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 恢复清单
-	err := project.App.Restore(ctx.Request.Context(), projectId)
+	err := application.App.Project.Restore(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20042,
@@ -192,7 +192,7 @@ func ArchiveProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 归档清单
-	err := project.App.Archive(ctx.Request.Context(), projectId)
+	err := application.App.Project.Archive(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20052,
@@ -223,7 +223,7 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 取消归档清单
-	err := project.App.Unarchive(ctx.Request.Context(), projectId)
+	err := application.App.Project.Unarchive(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20062,
@@ -244,7 +244,7 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 // @code 2007x
 func ListProjectHandler(ctx *gin.Context) {
 	// 获取清单列表
-	res, err := project.App.List(ctx.Request.Context())
+	res, err := application.App.Project.List(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20071,
@@ -275,7 +275,7 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 获取清单偏好
-	res, err := project.App.GetPreference(ctx.Request.Context(), projectId)
+	res, err := application.App.Project.GetPreference(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20082,
@@ -305,7 +305,7 @@ func BatchUpdateProjectsHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := project.App.BatchUpdate(ctx.Request.Context(), &req)
+	res, err := application.App.Project.BatchUpdate(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20102,
@@ -346,7 +346,7 @@ func SaveProjectPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 保存清单偏好
-	err = project.App.SavePreference(
+	err = application.App.Project.SavePreference(
 		ctx.Request.Context(),
 		projectId,
 		&updatePreferenceReq,

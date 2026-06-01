@@ -1,8 +1,8 @@
 package event
 
 import (
-	"naotodoserver/domain/event/entities"
-	"naotodoserver/domain/event/valueobjects"
+	"naotodoserver/domain/checkitem/entities"
+	"naotodoserver/domain/checkitem/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 )
 

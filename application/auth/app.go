@@ -35,4 +35,3 @@ type authAppImpl struct {
 }
 
 // App 认证应用实例
-var App AuthApp

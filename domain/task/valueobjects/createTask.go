@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // CreateTask 创建任务值对象
@@ -30,10 +30,10 @@ func (createTask *CreateTask) Validate() error {
 	if createTask.Name == "" {
 		return errors.New("任务名称不能为空")
 	}
-	if utils.RuneLength(createTask.Name) > 256 {
+	if textutils.RuneLength(createTask.Name) > 256 {
 		return errors.New("任务名称最多256个字符")
 	}
-	if createTask.Description != "" && utils.RuneLength(createTask.Description) > 512 {
+	if createTask.Description != "" && textutils.RuneLength(createTask.Description) > 512 {
 		return errors.New("任务描述最多512个字符")
 	}
 	return nil

@@ -63,12 +63,12 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.StartAt != nil &&
 		updateTaskValueObject.StartAt.ShouldUpdate() &&
 		!updateTaskValueObject.StartAt.IsSetToNull() {
-		m.StartAt = updateTaskValueObject.StartAt.ToSqlNullTime()
+		m.StartAt = utils.ToSqlNullTime(updateTaskValueObject.StartAt)
 	}
 	if updateTaskValueObject.EndAt != nil &&
 		updateTaskValueObject.EndAt.ShouldUpdate() &&
 		!updateTaskValueObject.EndAt.IsSetToNull() {
-		m.EndAt = updateTaskValueObject.EndAt.ToSqlNullTime()
+		m.EndAt = utils.ToSqlNullTime(updateTaskValueObject.EndAt)
 	}
 	if updateTaskValueObject.ProjectId != nil {
 		m.ProjectId = *updateTaskValueObject.ProjectId
@@ -79,22 +79,22 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.ArchivedAt != nil &&
 		updateTaskValueObject.ArchivedAt.ShouldUpdate() &&
 		!updateTaskValueObject.ArchivedAt.IsSetToNull() {
-		m.ArchivedAt = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
+		m.ArchivedAt = utils.ToSqlNullTime(updateTaskValueObject.ArchivedAt)
 	}
 	if updateTaskValueObject.StarMarkAt != nil &&
 		updateTaskValueObject.StarMarkAt.ShouldUpdate() &&
 		!updateTaskValueObject.StarMarkAt.IsSetToNull() {
-		m.StarMarkAt = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
+		m.StarMarkAt = utils.ToSqlNullTime(updateTaskValueObject.StarMarkAt)
 	}
 	if updateTaskValueObject.GivenUpAt != nil &&
 		updateTaskValueObject.GivenUpAt.ShouldUpdate() &&
 		!updateTaskValueObject.GivenUpAt.IsSetToNull() {
-		m.GivenUpAt = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
+		m.GivenUpAt = utils.ToSqlNullTime(updateTaskValueObject.GivenUpAt)
 	}
 	if updateTaskValueObject.RemindAt != nil &&
 		updateTaskValueObject.RemindAt.ShouldUpdate() &&
 		!updateTaskValueObject.RemindAt.IsSetToNull() {
-		m.RemindAt = updateTaskValueObject.RemindAt.ToSqlNullTime()
+		m.RemindAt = utils.ToSqlNullTime(updateTaskValueObject.RemindAt)
 	}
 	if updateTaskValueObject.RemindRepeat != nil {
 		m.RemindRepeat = *updateTaskValueObject.RemindRepeat
@@ -137,14 +137,14 @@ func UpdateTaskValueObjectToMap(
 		if updateTaskValueObject.StartAt.IsSetToNull() {
 			updateMap["StartAt"] = nil
 		} else {
-			updateMap["StartAt"] = updateTaskValueObject.StartAt.ToSqlNullTime()
+			updateMap["StartAt"] = utils.ToSqlNullTime(updateTaskValueObject.StartAt)
 		}
 	}
 	if updateTaskValueObject.EndAt != nil && updateTaskValueObject.EndAt.ShouldUpdate() {
 		if updateTaskValueObject.EndAt.IsSetToNull() {
 			updateMap["EndAt"] = nil
 		} else {
-			updateMap["EndAt"] = updateTaskValueObject.EndAt.ToSqlNullTime()
+			updateMap["EndAt"] = utils.ToSqlNullTime(updateTaskValueObject.EndAt)
 		}
 	}
 	if updateTaskValueObject.ProjectId != nil {
@@ -160,28 +160,28 @@ func UpdateTaskValueObjectToMap(
 		if updateTaskValueObject.ArchivedAt.IsSetToNull() {
 			updateMap["ArchivedAt"] = nil
 		} else {
-			updateMap["ArchivedAt"] = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
+			updateMap["ArchivedAt"] = utils.ToSqlNullTime(updateTaskValueObject.ArchivedAt)
 		}
 	}
 	if updateTaskValueObject.StarMarkAt != nil && updateTaskValueObject.StarMarkAt.ShouldUpdate() {
 		if updateTaskValueObject.StarMarkAt.IsSetToNull() {
 			updateMap["StarMarkAt"] = nil
 		} else {
-			updateMap["StarMarkAt"] = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
+			updateMap["StarMarkAt"] = utils.ToSqlNullTime(updateTaskValueObject.StarMarkAt)
 		}
 	}
 	if updateTaskValueObject.GivenUpAt != nil && updateTaskValueObject.GivenUpAt.ShouldUpdate() {
 		if updateTaskValueObject.GivenUpAt.IsSetToNull() {
 			updateMap["GivenUpAt"] = nil
 		} else {
-			updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
+			updateMap["GivenUpAt"] = utils.ToSqlNullTime(updateTaskValueObject.GivenUpAt)
 		}
 	}
 	if updateTaskValueObject.RemindAt != nil && updateTaskValueObject.RemindAt.ShouldUpdate() {
 		if updateTaskValueObject.RemindAt.IsSetToNull() {
 			updateMap["RemindAt"] = nil
 		} else {
-			updateMap["RemindAt"] = updateTaskValueObject.RemindAt.ToSqlNullTime()
+			updateMap["RemindAt"] = utils.ToSqlNullTime(updateTaskValueObject.RemindAt)
 		}
 	}
 	if updateTaskValueObject.RemindRepeat != nil {

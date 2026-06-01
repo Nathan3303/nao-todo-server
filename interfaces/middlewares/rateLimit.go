@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"naotodoserver/application/auth"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
 
@@ -15,7 +15,7 @@ func RateLimiter(limit int8, tag string) gin.HandlerFunc {
 		// 1. 构建 Key
 		key := ctx.ClientIP() + ":" + tag
 		// 2. 检查
-		err := auth.App.RateLimit(ctx, key, limit)
+		err := application.App.Auth.RateLimit(ctx, key, limit)
 		if err != nil {
 			controllers.FailureByHttpStatus(ctx, http.StatusTooManyRequests, types.ResponseData{
 				Code:    10051,

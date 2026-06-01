@@ -53,4 +53,3 @@ type TagAppImpl struct {
 }
 
 // 标签应用服务单例
-var App TagApp

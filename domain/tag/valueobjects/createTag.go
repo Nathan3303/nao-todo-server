@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // 创建标签值对象
@@ -20,16 +20,16 @@ func (createTag *CreateTag) Validate() error {
 	if createTag.Name == "" {
 		return errors.New("标签名称不能为空")
 	}
-	if utils.RuneLength(createTag.Name) > 64 {
+	if textutils.RuneLength(createTag.Name) > 64 {
 		return errors.New("标签名称长度不能超过64个字符")
 	}
-	if createTag.Description != "" && utils.RuneLength(createTag.Description) > 512 {
+	if createTag.Description != "" && textutils.RuneLength(createTag.Description) > 512 {
 		return errors.New("标签描述长度不能超过512个字符")
 	}
 	if createTag.Color == "" {
 		return errors.New("标签颜色不能为空")
 	}
-	if utils.RuneLength(createTag.Color) > 16 {
+	if textutils.RuneLength(createTag.Color) > 16 {
 		return errors.New("标签颜色长度不能超过16个字符")
 	}
 	return nil

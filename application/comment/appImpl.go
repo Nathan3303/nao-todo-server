@@ -13,7 +13,6 @@ func NewCommentApp(commentDomain service.CommentDomain) CommentApp {
 	impl := &CommentAppImpl{
 		CommentDomain: commentDomain,
 	}
-	App = impl
 	return impl
 }
 

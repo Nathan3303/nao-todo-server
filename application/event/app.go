@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	"naotodoserver/domain/event/service"
+	"naotodoserver/domain/checkitem/service"
 	"naotodoserver/interfaces/types"
 )
 
@@ -40,4 +40,3 @@ type EventAppImpl struct {
 }
 
 // 检查事项应用实例
-var App EventApp

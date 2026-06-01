@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/tag"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ func GetTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 获取标签信息
-	res, err := tag.App.GetTag(ctx.Request.Context(), tagId)
+	res, err := application.App.Tag.GetTag(ctx.Request.Context(), tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30002,
@@ -51,7 +51,7 @@ func CreateTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 创建标签
-	res, err := tag.App.CreateTag(ctx.Request.Context(), createTagReq)
+	res, err := application.App.Tag.CreateTag(ctx.Request.Context(), createTagReq)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30012,
@@ -91,7 +91,7 @@ func UpdateTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签
-	err := tag.App.UpdateTag(ctx.Request.Context(), tagId, &updateTagReq)
+	err := application.App.Tag.UpdateTag(ctx.Request.Context(), tagId, &updateTagReq)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30023,
@@ -121,7 +121,7 @@ func DeleteTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 删除标签
-	err := tag.App.DeleteTag(ctx.Request.Context(), tagId)
+	err := application.App.Tag.DeleteTag(ctx.Request.Context(), tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30032,
@@ -142,7 +142,7 @@ func DeleteTagHandler(ctx *gin.Context) {
 // @code 3004x
 func ListTagHandler(ctx *gin.Context) {
 	// 1. 获取标签列表
-	res, err := tag.App.ListTag(ctx.Request.Context())
+	res, err := application.App.Tag.ListTag(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30041,
@@ -172,7 +172,7 @@ func GetTagPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 获取标签偏好
-	res, err := tag.App.GetTagPreference(ctx.Request.Context(), tagId)
+	res, err := application.App.Tag.GetTagPreference(ctx.Request.Context(), tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30052,
@@ -202,7 +202,7 @@ func BatchUpdateTagsHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := tag.App.BatchUpdateTags(ctx.Request.Context(), &req)
+	res, err := application.App.Tag.BatchUpdateTags(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30072,
@@ -242,7 +242,7 @@ func UpdateTagPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签偏好
-	err = tag.App.UpdateTagPreference(ctx.Request.Context(), tagId, &req)
+	err = application.App.Tag.UpdateTagPreference(ctx.Request.Context(), tagId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30063,

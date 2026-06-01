@@ -3,6 +3,8 @@ package utils
 import (
 	"database/sql"
 	"time"
+
+	"naotodoserver/domain/types"
 )
 
 func Time2String(t time.Time) string {
@@ -71,40 +73,40 @@ func SqlNullTime2TimePtr(t sql.NullTime) *time.Time {
 	return &t.Time
 }
 
-func StringPtr2NullableTime(s *string) *NullableTime {
+func StringPtr2NullableTime(s *string) *types.NullableTime {
 	if s == nil {
 		return nil
 	}
 	if *s == "" || *s == "null" {
-		return NewNullableTimeNull()
+		return types.NewNullableTimeNull()
 	}
 	t, err := time.Parse(time.RFC3339, *s)
 	if err != nil {
 		return nil
 	}
-	return NewNullableTimeWithTime(t)
+	return types.NewNullableTimeWithTime(t)
 }
 
 type NullableString interface {
 	ToUpdateState() (shouldUpdate bool, isNull bool, value string)
 }
 
-func NullableString2NullableTime(ns NullableString) *NullableTime {
+func NullableString2NullableTime(ns NullableString) *types.NullableTime {
 	shouldUpdate, isNull, value := ns.ToUpdateState()
 	if !shouldUpdate {
 		return nil
 	}
 	if isNull {
-		return NewNullableTimeNull()
+		return types.NewNullableTimeNull()
 	}
 	if value == "" {
-		return NewNullableTimeNull()
+		return types.NewNullableTimeNull()
 	}
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil {
 		return nil
 	}
-	return NewNullableTimeWithTime(t)
+	return types.NewNullableTimeWithTime(t)
 }
 
 // 获取某时间所在周的开始（周一）和结束（周日）

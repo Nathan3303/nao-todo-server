@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // UpdateEvent 更新事件值对象
@@ -17,10 +17,10 @@ type UpdateEvent struct {
 // Validate 验证更新事件值对象是否有效
 // @return error 错误信息
 func (updateEvent *UpdateEvent) Validate() error {
-	if updateEvent.Name != nil && utils.RuneLength(*updateEvent.Name) > 128 {
+	if updateEvent.Name != nil && textutils.RuneLength(*updateEvent.Name) > 128 {
 		return errors.New("事件名称长度不能超过 128 个字符")
 	}
-	if updateEvent.Description != nil && utils.RuneLength(*updateEvent.Description) > 512 {
+	if updateEvent.Description != nil && textutils.RuneLength(*updateEvent.Description) > 512 {
 		return errors.New("事件描述长度不能超过 512 个字符")
 	}
 	if updateEvent.SortId != nil && *updateEvent.SortId == 0 {

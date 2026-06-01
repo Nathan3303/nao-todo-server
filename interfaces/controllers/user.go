@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/user"
+	"naotodoserver/application"
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 
@@ -30,7 +30,7 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户昵称
-	err = user.App.UpdateNickname(ctx.Request.Context(), req)
+	err = application.App.User.UpdateNickname(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10053,
@@ -49,7 +49,7 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 // @code 1006x
 func GetUserProfileHandler(ctx *gin.Context) {
 	// 1. 调用用户服务 - 获取用户详情
-	res, err := user.App.GetProfile(ctx.Request.Context())
+	res, err := application.App.User.GetProfile(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10065,
@@ -87,7 +87,7 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户密码
-	err = user.App.UpdatePassword(ctx.Request.Context(), req)
+	err = application.App.User.UpdatePassword(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10074,
@@ -126,7 +126,7 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 		}
 
 		if req.AvatarURL != "" {
-			res, err = user.App.UpdateAvatar(ctx.Request.Context(), req)
+			res, err = application.App.User.UpdateAvatar(ctx.Request.Context(), req)
 		} else {
 			Failure(ctx, types.ResponseData{
 				Code:    10081,
@@ -136,7 +136,7 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 		}
 	case "multipart/form-data":
 		// 表单请求：通过文件上传更新
-		res, err = user.App.UpdateAvatarByFile(ctx, ctx.Request.Context())
+		res, err = application.App.User.UpdateAvatarByFile(ctx, ctx.Request.Context())
 	default:
 		Failure(ctx, types.ResponseData{
 			Code:    10081,
@@ -176,7 +176,7 @@ func DeactiveUserHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用用户服务 - 禁用用户
-	err = user.App.DeactiveUser(ctx.Request.Context(), &req)
+	err = application.App.User.DeactiveUser(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10092,
@@ -206,7 +206,7 @@ func ActiveUserHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用用户服务 - 启用用户
-	err = user.App.ActiveUser(ctx.Request.Context(), &req)
+	err = application.App.User.ActiveUser(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10102,
@@ -225,7 +225,7 @@ func ActiveUserHandler(ctx *gin.Context) {
 // GetUserConfigHandler 获取用户配置控制器
 // @code 1011x
 func GetUserConfigHandler(ctx *gin.Context) {
-	res, err := user.App.GetConfig(ctx.Request.Context())
+	res, err := application.App.User.GetConfig(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10111,
@@ -259,7 +259,7 @@ func UpdateUserConfigHandler(ctx *gin.Context) {
 	// 	})
 	// 	return
 	// }
-	err = user.App.UpdateConfig(ctx.Request.Context(), req)
+	err = application.App.User.UpdateConfig(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10123,

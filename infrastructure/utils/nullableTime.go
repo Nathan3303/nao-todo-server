@@ -2,42 +2,15 @@ package utils
 
 import (
 	"database/sql"
-	"time"
+
+	"naotodoserver/domain/types"
 )
 
-type NullableTime struct {
-	Valid  bool
-	IsNull bool
-	Time   time.Time
-}
-
-func NewNullableTimeWithTime(t time.Time) *NullableTime {
-	return &NullableTime{
-		Valid:  true,
-		IsNull: false,
-		Time:   t,
-	}
-}
-
-func NewNullableTimeNull() *NullableTime {
-	return &NullableTime{
-		Valid:  true,
-		IsNull: true,
-		Time:   time.Time{},
-	}
-}
-
-func (nt *NullableTime) ToSqlNullTime() sql.NullTime {
-	if nt == nil || !nt.Valid || nt.IsNull {
+// ToSqlNullTime 将领域层 NullableTime 转换为 database/sql 的 NullTime
+func ToSqlNullTime(nt *types.NullableTime) sql.NullTime {
+	if nt == nil || !nt.ShouldUpdate() || nt.IsSetToNull() {
 		return sql.NullTime{Valid: false}
 	}
-	return sql.NullTime{Time: nt.Time, Valid: true}
-}
-
-func (nt *NullableTime) ShouldUpdate() bool {
-	return nt != nil && nt.Valid
-}
-
-func (nt *NullableTime) IsSetToNull() bool {
-	return nt != nil && nt.Valid && nt.IsNull
+	time, _ := nt.Value()
+	return sql.NullTime{Time: time, Valid: true}
 }

@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"context"
-	"naotodoserver/domain/event/entities"
-	"naotodoserver/domain/event/valueobjects"
+	"naotodoserver/domain/checkitem/entities"
+	"naotodoserver/domain/checkitem/valueobjects"
 )
 
 // 检查事项仓库接口

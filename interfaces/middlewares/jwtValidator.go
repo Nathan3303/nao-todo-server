@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"naotodoserver/application/auth"
+	"naotodoserver/application"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
@@ -25,7 +25,7 @@ func getJwtString(ctx *gin.Context) string {
 func JWTValidator(ctx *gin.Context) {
 	// 1. 验证 JWT
 	jwtString := getJwtString(ctx)
-	userId, err := auth.App.Validate(ctx, jwtString)
+	userId, err := application.App.Auth.Validate(ctx, jwtString)
 	if err != nil {
 		controllers.Failure(ctx, types.ResponseData{
 			Code:    10041,

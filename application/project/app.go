@@ -61,4 +61,3 @@ type projectAppImpl struct {
 }
 
 // 任务清单应用单例
-var App ProjectApp

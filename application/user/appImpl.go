@@ -19,7 +19,6 @@ func NewUserApp(userDomain service.UserDomain) UserApp {
 	impl := &userAppImpl{
 		userDomain: userDomain,
 	}
-	App = impl
 	return impl
 }
 

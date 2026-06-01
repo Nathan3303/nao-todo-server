@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // CreateEvent 创建事件值对象
@@ -24,10 +24,10 @@ func (createEvent *CreateEvent) Validate() error {
 	if createEvent.Name == "" {
 		return errors.New("事件名称不能为空")
 	}
-	if utils.RuneLength(createEvent.Name) > 128 {
+	if textutils.RuneLength(createEvent.Name) > 128 {
 		return errors.New("事件名称长度不能超过 128 个字符")
 	}
-	if createEvent.Description != "" && utils.RuneLength(createEvent.Description) > 512 {
+	if createEvent.Description != "" && textutils.RuneLength(createEvent.Description) > 512 {
 		return errors.New("事件描述长度不能超过 512 个字符")
 	}
 	return nil

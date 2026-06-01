@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 type User struct {
@@ -31,7 +31,7 @@ func (u *User) IsIdValid() bool {
 }
 
 func (u *User) IsNicknameValid() bool {
-	return u != nil && utils.RuneLength(u.Nickname) >= 2 && utils.RuneLength(u.Nickname) <= 20
+	return u != nil && textutils.RuneLength(u.Nickname) >= 2 && textutils.RuneLength(u.Nickname) <= 20
 }
 
 func (u *User) IsValid() bool {

@@ -2,9 +2,9 @@ package event
 
 import (
 	"context"
-	"naotodoserver/domain/event/entities"
-	"naotodoserver/domain/event/repositories"
-	"naotodoserver/domain/event/valueobjects"
+	"naotodoserver/domain/checkitem/entities"
+	"naotodoserver/domain/checkitem/repositories"
+	"naotodoserver/domain/checkitem/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"gorm.io/gorm"

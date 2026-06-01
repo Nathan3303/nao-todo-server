@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // 批量更新任务清单值对象
@@ -19,10 +19,10 @@ func (vo *BatchUpdateProject) Validate() error {
 	if vo.Id <= 0 {
 		return errors.New("任务清单 ID 无效")
 	}
-	if vo.Name != nil && utils.RuneLength(*vo.Name) > 128 {
+	if vo.Name != nil && textutils.RuneLength(*vo.Name) > 128 {
 		return errors.New("任务清单名称不能超过128个字符")
 	}
-	if vo.Description != nil && utils.RuneLength(*vo.Description) > 512 {
+	if vo.Description != nil && textutils.RuneLength(*vo.Description) > 512 {
 		return errors.New("任务清单描述不能超过512个字符")
 	}
 	if vo.SortId != nil && *vo.SortId == 0 {

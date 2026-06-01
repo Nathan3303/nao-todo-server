@@ -12,7 +12,6 @@ import (
 // NewTagApp 创建标签应用层实例
 func NewTagApp(tagDomain service.TagDomain) TagApp {
 	impl := &TagAppImpl{tagDomain: tagDomain}
-	App = impl
 	return impl
 }
 

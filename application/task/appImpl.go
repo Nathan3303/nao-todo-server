@@ -16,7 +16,6 @@ func NewTaskApp(taskDomain service.TaskDomain) TaskApp {
 	impl := &TaskAppImpl{
 		taskDomain: taskDomain,
 	}
-	App = impl
 	return impl
 }
 

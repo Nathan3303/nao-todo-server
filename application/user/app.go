@@ -59,4 +59,3 @@ type userAppImpl struct {
 }
 
 // App 用户应用实例
-var App UserApp

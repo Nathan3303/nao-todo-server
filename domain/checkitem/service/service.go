@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"naotodoserver/domain/event/entities"
-	"naotodoserver/domain/event/repositories"
-	"naotodoserver/domain/event/valueobjects"
+	"naotodoserver/domain/checkitem/entities"
+	"naotodoserver/domain/checkitem/repositories"
+	"naotodoserver/domain/checkitem/valueobjects"
 )
 
 // EventDomain 检查事项领域接口

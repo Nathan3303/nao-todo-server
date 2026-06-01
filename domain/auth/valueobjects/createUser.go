@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // CreateUser 创建用户值对象
@@ -29,7 +29,7 @@ func (createUser *CreateUser) Validate() error {
 	if createUser.Email == "" {
 		return errors.New("邮箱不能为空")
 	}
-	if createUser.Nickname != "" && (utils.RuneLength(createUser.Nickname) < 2 || utils.RuneLength(createUser.Nickname) > 20) {
+	if createUser.Nickname != "" && (textutils.RuneLength(createUser.Nickname) < 2 || textutils.RuneLength(createUser.Nickname) > 20) {
 		return errors.New("昵称长度必须在 2-20 个字符之间")
 	}
 	return nil

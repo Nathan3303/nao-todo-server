@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/comment"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ func GetCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论详情
-	comment, err := comment.App.GetComment(ctx.Request.Context(), commentId)
+	comment, err := application.App.Comment.GetComment(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60002,
@@ -51,7 +51,7 @@ func CreateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层新增评论
-	res, err := comment.App.CreateComment(ctx.Request.Context(), &req)
+	res, err := application.App.Comment.CreateComment(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60012,
@@ -91,7 +91,7 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新评论
-	err := comment.App.UpdateComment(ctx.Request.Context(), commentId, &req)
+	err := application.App.Comment.UpdateComment(ctx.Request.Context(), commentId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60023,
@@ -122,7 +122,7 @@ func DeleteCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除评论
-	err := comment.App.DeleteComment(ctx.Request.Context(), commentId)
+	err := application.App.Comment.DeleteComment(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60032,
@@ -152,7 +152,7 @@ func ListCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论列表
-	comments, err := comment.App.ListComment(ctx.Request.Context(), taskId)
+	comments, err := application.App.Comment.ListComment(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60042,

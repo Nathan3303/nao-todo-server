@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/auth"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +22,7 @@ func UserSignInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登录
-	signInRes, err := auth.App.SignIn(ctx.Request.Context(), &req)
+	signInRes, err := application.App.Auth.SignIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10012,
@@ -54,7 +54,7 @@ func UserSignUpHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 注册
-	err = auth.App.SignUp(ctx.Request.Context(), &req)
+	err = application.App.Auth.SignUp(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10002,
@@ -85,7 +85,7 @@ func UserCheckInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 检入
-	checkInRes, err := auth.App.CheckIn(ctx.Request.Context(), &req)
+	checkInRes, err := application.App.Auth.CheckIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10022,
@@ -118,7 +118,7 @@ func UserSignOutHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登出
-	err = auth.App.SignOut(ctx.Request.Context(), &req)
+	err = application.App.Auth.SignOut(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10032,

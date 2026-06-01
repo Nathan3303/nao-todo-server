@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // 更新任务清单值对象
@@ -17,15 +17,15 @@ type UpdateProject struct {
 // @return error 验证失败返回错误，否则返回 nil
 func (updateVO *UpdateProject) Validate() error {
 	if updateVO.Name != nil {
-		if utils.RuneLength(*updateVO.Name) == 0 {
+		if textutils.RuneLength(*updateVO.Name) == 0 {
 			return errors.New("任务清单名称不能为空")
 		}
-		if utils.RuneLength(*updateVO.Name) > 128 {
+		if textutils.RuneLength(*updateVO.Name) > 128 {
 			return errors.New("任务清单名称不能超过128个字符")
 		}
 	}
 	if updateVO.Description != nil {
-		if utils.RuneLength(*updateVO.Description) > 512 {
+		if textutils.RuneLength(*updateVO.Description) > 512 {
 			return errors.New("任务清单描述不能超过512个字符")
 		}
 	}

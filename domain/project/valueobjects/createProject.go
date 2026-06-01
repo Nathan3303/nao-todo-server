@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // 创建任务清单值对象
@@ -26,11 +26,11 @@ func (createVO *CreateProject) Validate() error {
 		return errors.New("任务清单名称不能为空")
 	}
 	// 验证任务清单名称长度是否超过128个字符
-	if utils.RuneLength(createVO.Name) > 128 {
+	if textutils.RuneLength(createVO.Name) > 128 {
 		return errors.New("任务清单名称不能超过128个字符")
 	}
 	// 验证任务清单描述是否超过256个字符
-	if createVO.Description != "" && utils.RuneLength(createVO.Description) > 512 {
+	if createVO.Description != "" && textutils.RuneLength(createVO.Description) > 512 {
 		return errors.New("任务清单描述不能超过512个字符")
 	}
 	return nil

@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/event"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ func GetEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取检查事项
-	res, err := event.App.GetEventById(ctx.Request.Context(), eventId)
+	res, err := application.App.Event.GetEventById(ctx.Request.Context(), eventId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50002,
@@ -52,7 +52,7 @@ func CreateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层创建检查事项
-	res, err := event.App.CreateEvent(ctx.Request.Context(), &req)
+	res, err := application.App.Event.CreateEvent(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50012,
@@ -93,7 +93,7 @@ func UpdateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新检查事项
-	err = event.App.UpdateEvent(ctx.Request.Context(), eventId, &req)
+	err = application.App.Event.UpdateEvent(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50023,
@@ -123,7 +123,7 @@ func DeleteEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除检查事项
-	err := event.App.DeleteEvent(ctx.Request.Context(), eventId)
+	err := application.App.Event.DeleteEvent(ctx.Request.Context(), eventId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50032,
@@ -153,7 +153,7 @@ func ListEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取检查事项列表
-	res, err := event.App.ListEvent(ctx.Request.Context(), taskId)
+	res, err := application.App.Event.ListEvent(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50042,
@@ -185,7 +185,7 @@ func ResortEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取检查事项列表
-	res, err := event.App.ResortEvents(ctx.Request.Context(), &req)
+	res, err := application.App.Event.ResortEvents(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50052,
@@ -217,7 +217,7 @@ func BatchUpdateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层批量更新检查事项
-	res, err := event.App.BatchUpdateEvents(ctx.Request.Context(), &req)
+	res, err := application.App.Event.BatchUpdateEvents(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50062,

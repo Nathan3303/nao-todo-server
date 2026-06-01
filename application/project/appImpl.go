@@ -12,7 +12,6 @@ import (
 // NewProjectApp 创建任务清单应用层实例
 func NewProjectApp(projectDomain service.ProjectDomain) ProjectApp {
 	impl := &projectAppImpl{projectDomain: projectDomain}
-	App = impl
 	return impl
 }
 

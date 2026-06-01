@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application/task"
+	"naotodoserver/application"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ func GetTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层获取任务信息
-	res, err := task.App.GetTaskById(ctx.Request.Context(), taskId)
+	res, err := application.App.Task.GetTaskById(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40002,
@@ -51,7 +51,7 @@ func CreateTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层创建任务
-	res, err := task.App.CreateTask(ctx.Request.Context(), &req)
+	res, err := application.App.Task.CreateTask(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40012,
@@ -91,7 +91,7 @@ func UpdateTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层更新任务
-	err = task.App.UpdateTask(ctx.Request.Context(), taskId, &req)
+	err = application.App.Task.UpdateTask(ctx.Request.Context(), taskId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40023,
@@ -120,7 +120,7 @@ func DeleteTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层删除任务
-	err := task.App.DeleteTask(ctx.Request.Context(), taskId)
+	err := application.App.Task.DeleteTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40032,
@@ -149,7 +149,7 @@ func RestoreTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层恢复任务
-	err := task.App.RestoreTask(ctx.Request.Context(), taskId)
+	err := application.App.Task.RestoreTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40042,
@@ -178,7 +178,7 @@ func CopyTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层复制任务
-	res, err := task.App.CopyTask(ctx.Request.Context(), taskId)
+	res, err := application.App.Task.CopyTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40062,
@@ -208,7 +208,7 @@ func ListTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层获取任务列表
-	tasks, paginationRes, err := task.App.ListTask(ctx.Request.Context(), &req)
+	tasks, paginationRes, err := application.App.Task.ListTask(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40052,
@@ -249,7 +249,7 @@ func SnoozeTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层设置稍后提醒
-	res, err := task.App.SnoozeTask(ctx.Request.Context(), taskId, &req)
+	res, err := application.App.Task.SnoozeTask(ctx.Request.Context(), taskId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40093,

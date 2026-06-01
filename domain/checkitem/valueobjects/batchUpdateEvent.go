@@ -3,7 +3,7 @@ package valueobjects
 import (
 	"errors"
 
-	"naotodoserver/infrastructure/utils"
+	"naotodoserver/domain/textutils"
 )
 
 // BatchUpdateEvent 批量更新事件值对象
@@ -22,10 +22,10 @@ func (batchUpdateEvent *BatchUpdateEvent) Validate() error {
 	if batchUpdateEvent.Id <= 0 {
 		return errors.New("事件 ID 无效")
 	}
-	if batchUpdateEvent.Name != nil && utils.RuneLength(*batchUpdateEvent.Name) > 128 {
+	if batchUpdateEvent.Name != nil && textutils.RuneLength(*batchUpdateEvent.Name) > 128 {
 		return errors.New("事件名称长度不能超过 128 个字符")
 	}
-	if batchUpdateEvent.Description != nil && utils.RuneLength(*batchUpdateEvent.Description) > 512 {
+	if batchUpdateEvent.Description != nil && textutils.RuneLength(*batchUpdateEvent.Description) > 512 {
 		return errors.New("事件描述长度不能超过 512 个字符")
 	}
 	if batchUpdateEvent.SortId != nil && *batchUpdateEvent.SortId == 0 {

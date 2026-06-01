@@ -10,6 +10,7 @@ services:
             - /opt/nao-todo-server/mysql/conf/client.cnf:/etc/mysql/client.cnf:ro
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_ROOT_HOST=%
             - MYSQL_DATABASE=${MYSQL_DATABASE}
             - TZ=Asia/Shanghai
         networks:
@@ -21,7 +22,7 @@ services:
                     "mysqladmin",
                     "ping",
                     "-h",
-                    "localhost",
+                    "127.0.0.1",
                     "-u",
                     "root",
                     "-p${MYSQL_PASSWORD}",

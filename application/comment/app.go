@@ -51,4 +51,3 @@ type CommentAppImpl struct {
 }
 
 // App 评论应用实例
-var App CommentApp

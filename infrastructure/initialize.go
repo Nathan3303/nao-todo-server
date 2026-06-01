@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
 	commentApp "naotodoserver/application/comment"
 	eventApp "naotodoserver/application/event"
@@ -10,7 +11,7 @@ import (
 	userApp "naotodoserver/application/user"
 	authService "naotodoserver/domain/auth/service"
 	commentService "naotodoserver/domain/comment/service"
-	eventService "naotodoserver/domain/event/service"
+	eventService "naotodoserver/domain/checkitem/service"
 	projectService "naotodoserver/domain/project/service"
 	tagService "naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
@@ -41,32 +42,34 @@ func LoadDBs() {
 }
 
 func LoadDomains() {
-	authApp.NewAuthApp(authService.GetAuthDomainImpl(
-		authRepo.NewJWTRepo(),
-		authRepo.NewUserRepo(dbs.DB, dbs.RdsCli),
-		authRepo.NewSessionRepo(dbs.DB),
-		authRepo.NewRateLimitRepo(dbs.RdsCli),
-	))
-	userApp.NewUserApp(userService.NewUserDomain(
-		userRepo.NewUserRepo(dbs.DB),
-	))
-	projectApp.NewProjectApp(projectService.NewProjectDomain(
-		projectRepo.NewProjectRepo(dbs.DB),
-		projectRepo.NewProjectPreferenceRepo(dbs.DB),
-	))
-	tagApp.NewTagApp(tagService.NewTagDomain(
-		tagRepo.NewTagRepo(dbs.DB),
-		tagRepo.NewTagPreferenceRepo(dbs.DB),
-	))
-	taskApp.NewTaskApp(taskService.NewTaskDomain(
-		taskRepo.NewTaskRepo(dbs.DB),
-	))
-	eventApp.NewEventApp(eventService.NewEventDomain(
-		eventRepo.NewEventRepo(dbs.DB),
-	))
-	commentApp.NewCommentApp(commentService.NewCommentDomain(
-		commentRepo.NewCommentRepo(dbs.DB),
-	))
+	application.App = &application.Services{
+		Auth: authApp.NewAuthApp(authService.GetAuthDomainImpl(
+			authRepo.NewJWTRepo(),
+			authRepo.NewUserRepo(dbs.DB, dbs.RdsCli),
+			authRepo.NewSessionRepo(dbs.DB),
+			authRepo.NewRateLimitRepo(dbs.RdsCli),
+		)),
+		User: userApp.NewUserApp(userService.NewUserDomain(
+			userRepo.NewUserRepo(dbs.DB),
+		)),
+		Project: projectApp.NewProjectApp(projectService.NewProjectDomain(
+			projectRepo.NewProjectRepo(dbs.DB),
+			projectRepo.NewProjectPreferenceRepo(dbs.DB),
+		)),
+		Tag: tagApp.NewTagApp(tagService.NewTagDomain(
+			tagRepo.NewTagRepo(dbs.DB),
+			tagRepo.NewTagPreferenceRepo(dbs.DB),
+		)),
+		Task: taskApp.NewTaskApp(taskService.NewTaskDomain(
+			taskRepo.NewTaskRepo(dbs.DB),
+		)),
+		Event: eventApp.NewEventApp(eventService.NewEventDomain(
+			eventRepo.NewEventRepo(dbs.DB),
+		)),
+		Comment: commentApp.NewCommentApp(commentService.NewCommentDomain(
+			commentRepo.NewCommentRepo(dbs.DB),
+		)),
+	}
 }
 
 // WireSSE 装配 SSE Hub 的 SessionValidator

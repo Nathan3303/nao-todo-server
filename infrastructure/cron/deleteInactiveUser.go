@@ -3,7 +3,7 @@ package cron
 import (
 	"context"
 	"fmt"
-	"naotodoserver/application/user"
+	"naotodoserver/application"
 )
 
 type DeleteDeactivedUserJob struct {
@@ -15,7 +15,7 @@ func NewDeleteDeactivedUserJob(dayOffset int8) *DeleteDeactivedUserJob {
 }
 
 func (ddu *DeleteDeactivedUserJob) Run() {
-	err := user.App.DeleteDeactivatedUsers(context.TODO(), ddu.DayOffset)
+	err := application.App.User.DeleteDeactivatedUsers(context.TODO(), ddu.DayOffset)
 	if err != nil {
 		fmt.Println("删除已注销用户失败：" + err.Error())
 	}

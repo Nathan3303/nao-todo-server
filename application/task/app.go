@@ -51,4 +51,3 @@ type TaskAppImpl struct {
 	taskDomain service.TaskDomain
 }
 
-var App TaskApp
