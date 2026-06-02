@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	commentApp "naotodoserver/application/comment"
+	taskApp "naotodoserver/application/task"
 	"naotodoserver/conf"
 	"naotodoserver/domain/identity/service"
 	iCtx "naotodoserver/infrastructure/context"
@@ -17,10 +17,10 @@ import (
 )
 
 // NewUserApp 创建用户应用层实例
-func NewUserApp(identityDomain service.IdentityDomain, commentApp commentApp.CommentApp) UserApp {
+func NewUserApp(identityDomain service.IdentityDomain, taskApp taskApp.TaskApp) UserApp {
 	return &userAppImpl{
 		identityDomain: identityDomain,
-		commentApp:    commentApp,
+		taskApp:       taskApp,
 	}
 }
 
@@ -42,7 +42,7 @@ func (u *userAppImpl) UpdateNickname(
 		return err
 	}
 	// 3. 同步评论中的用户昵称
-	_ = u.commentApp.SyncUserProfile(ctx, userId, req.Nickname, "")
+	_ = u.taskApp.SyncCommentUserProfile(ctx, userId, req.Nickname, "")
 	return nil
 }
 
@@ -105,7 +105,7 @@ func (u *userAppImpl) UpdateAvatar(
 		return nil, err
 	}
 	// 3. 同步评论中的用户头像
-	_ = u.commentApp.SyncUserProfile(ctx, userId, "", req.AvatarURL)
+	_ = u.taskApp.SyncCommentUserProfile(ctx, userId, "", req.AvatarURL)
 	// 4. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: req.AvatarURL}, nil
 }
@@ -167,7 +167,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 		return nil, err
 	}
 	// 9. 同步评论中的用户头像
-	_ = u.commentApp.SyncUserProfile(ctx, userId, "", avatarURL)
+	_ = u.taskApp.SyncCommentUserProfile(ctx, userId, "", avatarURL)
 	// 10. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: avatarURL}, nil
 }

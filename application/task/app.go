@@ -6,48 +6,35 @@ import (
 	"naotodoserver/interfaces/types"
 )
 
-// TaskApp 任务应用层
 type TaskApp interface {
-	// GetTaskById 获取单个任务信息
+	// === Task ===
 	GetTaskById(ctx context.Context, taskId string) (*types.GetTaskRes, error)
-
-	// CreateTask 创建任务
 	CreateTask(ctx context.Context, req *types.CreateTaskReq) (*types.GetTaskRes, error)
-
-	// UpdateTask 更新任务
-	UpdateTask(
-		ctx context.Context,
-		taskId string,
-		req *types.UpdateTaskReq,
-	) error
-
-	// DeleteTask 删除任务
+	UpdateTask(ctx context.Context, taskId string, req *types.UpdateTaskReq) error
 	DeleteTask(ctx context.Context, taskId string) error
-
-	// RestoreTask 恢复任务
 	RestoreTask(ctx context.Context, taskId string) error
-
-	// CopyTask 复制任务
 	CopyTask(ctx context.Context, taskId string) (*types.GetTaskRes, error)
-
-	// ListTask 获取任务列表
-	ListTask(
-		ctx context.Context,
-		req *types.ListTaskReq,
-	) (types.ListTaskRes, *types.Pagination, error)
-
-	// SnoozeTask 稍后提醒
-	SnoozeTask(
-		ctx context.Context,
-		taskId string,
-		req *types.SnoozeTaskReq,
-	) (*types.SnoozeTaskRes, error)
-
-	// ProcessReminders 处理所有到期提醒（供定时任务调用）
+	ListTask(ctx context.Context, req *types.ListTaskReq) (types.ListTaskRes, *types.Pagination, error)
+	SnoozeTask(ctx context.Context, taskId string, req *types.SnoozeTaskReq) (*types.SnoozeTaskRes, error)
 	ProcessReminders(ctx context.Context) error
+
+	// === CheckItem ===
+	GetCheckItemById(ctx context.Context, checkItemId string) (*types.GetCheckItemRes, error)
+	CreateCheckItem(ctx context.Context, req *types.CreateCheckItemReq) (*types.CreateCheckItemRes, error)
+	UpdateCheckItem(ctx context.Context, checkItemId string, req *types.UpdateCheckItemReq) error
+	DeleteCheckItem(ctx context.Context, checkItemId string) error
+	ListCheckItems(ctx context.Context, taskId string) (types.ListCheckItemRes, error)
+	BatchUpdateCheckItems(ctx context.Context, req *types.BatchUpdateCheckItemReq) (*types.BatchUpdateCheckItemRes, error)
+
+	// === Comment ===
+	GetCommentById(ctx context.Context, commentId string) (*types.CommentRes, error)
+	CreateComment(ctx context.Context, req *types.CreateCommentReq) (*types.CommentRes, error)
+	UpdateComment(ctx context.Context, commentId string, req *types.UpdateCommentReq) error
+	DeleteComment(ctx context.Context, commentId string) error
+	ListComments(ctx context.Context, taskId string) ([]*types.CommentRes, error)
+	SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }
 
 type TaskAppImpl struct {
 	taskDomain service.TaskDomain
 }
-

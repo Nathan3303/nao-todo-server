@@ -251,3 +251,122 @@ func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 	}
 	return eList
 }
+
+// === CheckItem converters ===
+
+func EventValueObjectToModel(vo *valueobjects.CreateCheckItem) *models.Event {
+	return &models.Event{
+		UserId:      vo.UserId,
+		TaskId:      vo.TaskId,
+		Name:        vo.Name,
+		Description: vo.Description,
+		SortId:      vo.SortId,
+	}
+}
+
+func UpdateEventValueObjectToMap(vo *valueobjects.UpdateCheckItem) map[string]interface{} {
+	m := make(map[string]interface{})
+	if vo.Name != nil {
+		m["Name"] = *vo.Name
+	}
+	if vo.Description != nil {
+		m["Description"] = *vo.Description
+	}
+	if vo.IsDone != nil {
+		m["IsDone"] = *vo.IsDone
+	}
+	if vo.SortId != nil {
+		m["SortId"] = *vo.SortId
+	}
+	return m
+}
+
+func BatchUpdateEventValueObjectToMap(vo *valueobjects.BatchUpdateCheckItem) map[string]interface{} {
+	m := make(map[string]interface{})
+	if vo.Name != nil {
+		m["Name"] = *vo.Name
+	}
+	if vo.Description != nil {
+		m["Description"] = *vo.Description
+	}
+	if vo.IsDone != nil {
+		m["IsDone"] = *vo.IsDone
+	}
+	if vo.SortId != nil {
+		m["SortId"] = *vo.SortId
+	}
+	return m
+}
+
+func EventModel2Entity(m *models.Event) *entities.CheckItem {
+	return &entities.CheckItem{
+		Id:          m.ID,
+		UserId:      m.UserId,
+		TaskId:      m.TaskId,
+		Name:        m.Name,
+		Description: m.Description,
+		IsDone:      m.IsDone,
+		SortId:      m.SortId,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+	}
+}
+
+func EventModels2Entities(list []*models.Event) []*entities.CheckItem {
+	result := make([]*entities.CheckItem, 0, len(list))
+	for _, m := range list {
+		result = append(result, EventModel2Entity(m))
+	}
+	return result
+}
+
+// === Comment converters ===
+
+func CreateCommentValueObjectToModel(vo *valueobjects.CreateComment) *models.Comment {
+	return &models.Comment{
+		UserId:      vo.UserId,
+		TaskId:      vo.TaskId,
+		Content:     vo.Content,
+		Attachments: vo.Attachments,
+		IsTopUp:     vo.IsTopUp,
+	}
+}
+
+func UpdateCommentValueObjectToMap(vo *valueobjects.UpdateComment) map[string]interface{} {
+	m := make(map[string]interface{})
+	if vo.Content != nil {
+		m["Content"] = *vo.Content
+	}
+	if vo.Attachments != nil {
+		if data, err := json.Marshal(vo.Attachments); err == nil {
+			m["Attachments"] = string(data)
+		}
+	}
+	if vo.IsTopUp != nil {
+		m["IsTopUp"] = *vo.IsTopUp
+	}
+	return m
+}
+
+func CommentModel2Entity(m *models.Comment) *entities.Comment {
+	return &entities.Comment{
+		Id:          m.ID,
+		UserId:      m.UserId,
+		TaskId:      m.TaskId,
+		Content:     m.Content,
+		Attachments: m.Attachments,
+		IsTopUp:     m.IsTopUp,
+		Nickname:    m.Nickname,
+		Avatar:      m.Avatar,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+	}
+}
+
+func CommentModels2Entities(list []*models.Comment) []*entities.Comment {
+	result := make([]*entities.Comment, 0, len(list))
+	for _, m := range list {
+		result = append(result, CommentModel2Entity(m))
+	}
+	return result
+}

@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	commentApp "naotodoserver/application/comment"
+	taskApp "naotodoserver/application/task"
 	"naotodoserver/domain/identity/service"
 	"naotodoserver/interfaces/types"
 
@@ -58,5 +58,5 @@ type UserApp interface {
 // userAppImpl 用户应用实现
 type userAppImpl struct {
 	identityDomain service.IdentityDomain
-	commentApp commentApp.CommentApp
+	taskApp taskApp.TaskApp
 }

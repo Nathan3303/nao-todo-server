@@ -248,3 +248,103 @@ func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) 
 		MaxPage: paginationValueObject.MaxPage,
 	}
 }
+
+// === CheckItem converters ===
+
+func CheckItemEntityToGetRes(e *entities.CheckItem) *types.GetCheckItemRes {
+	return &types.GetCheckItemRes{
+		Id:          strconv.FormatInt(e.Id, 10),
+		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		Name:        e.Name,
+		Description: e.Description,
+		IsDone:      e.IsDone,
+		SortId:      e.SortId,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
+	}
+}
+
+func CreateCheckItemReqToVO(userId int64, req *types.CreateCheckItemReq) (*valueobjects.CreateCheckItem, error) {
+	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return valueobjects.NewCreateCheckItem(userId, taskId, req.Name, req.Description)
+}
+
+func CheckItemEntityToCreateRes(e *entities.CheckItem) *types.CreateCheckItemRes {
+	return &types.CreateCheckItemRes{
+		Id:          strconv.FormatInt(e.Id, 10),
+		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		Name:        e.Name,
+		Description: e.Description,
+		IsDone:      e.IsDone,
+		SortId:      e.SortId,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
+	}
+}
+
+func UpdateCheckItemReqToVO(req *types.UpdateCheckItemReq) (*valueobjects.UpdateCheckItem, error) {
+	return valueobjects.NewUpdateCheckItem(req.Name, req.Description, req.IsDone, req.SortId)
+}
+
+func CheckItemEntitiesToReses(items []*entities.CheckItem) types.ListCheckItemRes {
+	res := make([]*types.GetCheckItemRes, 0, len(items))
+	for _, e := range items {
+		res = append(res, CheckItemEntityToGetRes(e))
+	}
+	return res
+}
+
+func BatchUpdateCheckItemReqToVOs(req *types.BatchUpdateCheckItemReq) ([]*valueobjects.BatchUpdateCheckItem, error) {
+	vos := make([]*valueobjects.BatchUpdateCheckItem, 0, len(req.Events))
+	for _, e := range req.Events {
+		id, err := strconv.ParseInt(e.Id, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		vo, err := valueobjects.NewBatchUpdateCheckItem(id, e.Name, e.Description, e.IsDone, e.SortId)
+		if err != nil {
+			return nil, err
+		}
+		vos = append(vos, vo)
+	}
+	return vos, nil
+}
+
+// === Comment converters ===
+
+func CommentEntityToRes(e *entities.Comment) *types.CommentRes {
+	return &types.CommentRes{
+		Id:          strconv.FormatInt(e.Id, 10),
+		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		Content:     e.Content,
+		Attachments: e.Attachments,
+		IsTopUp:     e.IsTopUp,
+		Nickname:    e.Nickname,
+		Avatar:      e.Avatar,
+		CreatedAt:   utils.TimePtr2DateString(&e.CreatedAt),
+		UpdatedAt:   utils.TimePtr2DateString(&e.UpdatedAt),
+	}
+}
+
+func CreateCommentReqToVO(userId int64, req *types.CreateCommentReq) (*valueobjects.CreateComment, error) {
+	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return valueobjects.NewCreateComment(userId, taskId, req.Content, nil, false)
+}
+
+func UpdateCommentReqToVO(req *types.UpdateCommentReq) (*valueobjects.UpdateComment, error) {
+	return valueobjects.NewUpdateComment(req.Content, req.Attachments, req.IsTopUp)
+}
+
+func CommentEntitiesToListRes(list []*entities.Comment) []*types.CommentRes {
+	res := make([]*types.CommentRes, 0, len(list))
+	for _, e := range list {
+		res = append(res, CommentEntityToRes(e))
+	}
+	return res
+}

@@ -2,24 +2,18 @@ package application
 
 import (
 	authApp "naotodoserver/application/auth"
-	commentApp "naotodoserver/application/comment"
-	checkitemApp "naotodoserver/application/checkitem"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	userApp "naotodoserver/application/user"
 )
 
-// Services 应用层服务容器，统一管理所有应用服务的单例
 type Services struct {
 	Auth    authApp.AuthApp
-	CheckItem checkitemApp.CheckItemApp
-	Comment commentApp.CommentApp
+	User    userApp.UserApp
+	Task    taskApp.TaskApp
 	Project projectApp.ProjectApp
 	Tag     tagApp.TagApp
-	Task    taskApp.TaskApp
-	User    userApp.UserApp
 }
 
-// App 全局应用服务实例
 var App *Services

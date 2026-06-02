@@ -344,3 +344,132 @@ func (taskRepo *TaskRepoImpl) UpdateRemindAt(
 		Update("remind_at", remindAt)
 	return tx.Error
 }
+
+// === CheckItem methods ===
+
+func (repo *TaskRepoImpl) GetCheckItemById(ctx context.Context, userId, checkItemId int64) (*entities.CheckItem, error) {
+	var m models.Event
+	tx := repo.db.WithContext(ctx).Model(&models.Event{}).Where("id = ? AND user_id = ?", checkItemId, userId).First(&m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return EventModel2Entity(&m), nil
+}
+
+func (repo *TaskRepoImpl) CreateCheckItem(ctx context.Context, userId int64, vo *valueobjects.CreateCheckItem) (*entities.CheckItem, error) {
+	m := EventValueObjectToModel(vo)
+	tx := repo.db.WithContext(ctx).Model(&models.Event{}).Create(m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return EventModel2Entity(m), nil
+}
+
+func (repo *TaskRepoImpl) UpdateCheckItem(ctx context.Context, userId, checkItemId int64, vo *valueobjects.UpdateCheckItem) error {
+	return repo.db.WithContext(ctx).Model(&models.Event{}).
+		Where("id = ? AND user_id = ?", checkItemId, userId).
+		Updates(UpdateEventValueObjectToMap(vo)).Error
+}
+
+func (repo *TaskRepoImpl) DeleteCheckItem(ctx context.Context, userId, checkItemId int64) error {
+	return repo.db.WithContext(ctx).Model(&models.Event{}).
+		Where("id = ? AND user_id = ?", checkItemId, userId).
+		Delete(&models.Event{}).Error
+}
+
+func (repo *TaskRepoImpl) ListCheckItems(ctx context.Context, userId, taskId int64) ([]*entities.CheckItem, error) {
+	var list []*models.Event
+	tx := repo.db.WithContext(ctx).Model(&models.Event{}).Where("user_id = ? AND task_id = ?", userId, taskId).Find(&list)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return EventModels2Entities(list), nil
+}
+
+func (repo *TaskRepoImpl) GetMaxCheckItemSortId(ctx context.Context, userId, taskId int64) uint16 {
+	var maxSortId uint16 = 255
+	repo.db.WithContext(ctx).Model(&models.Event{}).Where("user_id = ? AND task_id = ?", userId, taskId).Pluck("MAX(sort_id)", &maxSortId)
+	return maxSortId
+}
+
+func (repo *TaskRepoImpl) BatchUpdateCheckItems(ctx context.Context, userId int64, vos []*valueobjects.BatchUpdateCheckItem) ([]*entities.CheckItem, error) {
+	tx := repo.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	var ids []int64
+	for _, vo := range vos {
+		if err := tx.Model(&models.Event{}).Where("id = ? AND user_id = ?", vo.Id, userId).Updates(BatchUpdateEventValueObjectToMap(vo)).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		ids = append(ids, vo.Id)
+	}
+	var updated []*models.Event
+	if err := tx.Model(&models.Event{}).Where("id IN ? AND user_id = ?", ids, userId).Find(&updated).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	tx.Commit()
+	return EventModels2Entities(updated), nil
+}
+
+// === Comment methods ===
+
+func (repo *TaskRepoImpl) GetCommentById(ctx context.Context, userId, commentId int64) (*entities.Comment, error) {
+	var m models.Comment
+	tx := repo.db.WithContext(ctx).Model(&models.Comment{}).Where("user_id = ? AND id = ?", userId, commentId).First(&m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return CommentModel2Entity(&m), nil
+}
+
+func (repo *TaskRepoImpl) CreateComment(ctx context.Context, userId int64, vo *valueobjects.CreateComment) (*entities.Comment, error) {
+	var user models.User
+	if tx := repo.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", userId).First(&user); tx.Error != nil {
+		return nil, tx.Error
+	}
+	m := CreateCommentValueObjectToModel(vo)
+	m.Nickname = user.Nickname
+	m.Avatar = user.Avatar
+	if err := repo.db.WithContext(ctx).Create(m).Error; err != nil {
+		return nil, err
+	}
+	return CommentModel2Entity(m), nil
+}
+
+func (repo *TaskRepoImpl) UpdateComment(ctx context.Context, userId, commentId int64, vo *valueobjects.UpdateComment) error {
+	return repo.db.WithContext(ctx).Model(&models.Comment{}).
+		Where("user_id = ? AND id = ?", userId, commentId).
+		Updates(UpdateCommentValueObjectToMap(vo)).Error
+}
+
+func (repo *TaskRepoImpl) DeleteComment(ctx context.Context, userId, commentId int64) error {
+	return repo.db.WithContext(ctx).Model(&models.Comment{}).
+		Where("user_id = ? AND id = ?", userId, commentId).
+		Delete(&models.Comment{}).Error
+}
+
+func (repo *TaskRepoImpl) ListComments(ctx context.Context, userId, taskId int64) ([]*entities.Comment, error) {
+	var list []*models.Comment
+	tx := repo.db.WithContext(ctx).Model(&models.Comment{}).Where("user_id = ? AND task_id = ?", userId, taskId).Find(&list)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return CommentModels2Entities(list), nil
+}
+
+func (repo *TaskRepoImpl) SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error {
+	updates := map[string]interface{}{}
+	if nickname != "" {
+		updates["nickname"] = nickname
+	}
+	if avatar != "" {
+		updates["avatar"] = avatar
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	return repo.db.WithContext(ctx).Model(&models.Comment{}).Where("user_id = ?", userId).Updates(updates).Error
+}

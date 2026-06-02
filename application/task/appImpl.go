@@ -274,3 +274,180 @@ func (taskApp *TaskAppImpl) ProcessReminders(ctx context.Context) error {
 	}
 	return nil
 }
+
+// === CheckItem ===
+
+func (impl *TaskAppImpl) GetCheckItemById(ctx context.Context, itemId string) (*types.GetCheckItemRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	id64, err := strconv.ParseInt(itemId, 10, 64)
+	if err != nil {
+		return nil, errors.New("检查事项 ID 格式错误")
+	}
+	e, err := impl.taskDomain.GetCheckItemById(ctx, userId, id64)
+	if err != nil {
+		return nil, err
+	}
+	return CheckItemEntityToGetRes(e), nil
+}
+
+func (impl *TaskAppImpl) CreateCheckItem(ctx context.Context, req *types.CreateCheckItemReq) (*types.CreateCheckItemRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	vo, err := CreateCheckItemReqToVO(userId, req)
+	if err != nil {
+		return nil, err
+	}
+	e, err := impl.taskDomain.CreateCheckItem(ctx, userId, vo)
+	if err != nil {
+		return nil, err
+	}
+	return CheckItemEntityToCreateRes(e), nil
+}
+
+func (impl *TaskAppImpl) UpdateCheckItem(ctx context.Context, itemId string, req *types.UpdateCheckItemReq) error {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("用户 ID 无效")
+	}
+	id64, err := strconv.ParseInt(itemId, 10, 64)
+	if err != nil {
+		return errors.New("检查事项 ID 格式错误")
+	}
+	vo, err := UpdateCheckItemReqToVO(req)
+	if err != nil {
+		return err
+	}
+	return impl.taskDomain.UpdateCheckItem(ctx, userId, id64, vo)
+}
+
+func (impl *TaskAppImpl) DeleteCheckItem(ctx context.Context, itemId string) error {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("用户 ID 无效")
+	}
+	id64, err := strconv.ParseInt(itemId, 10, 64)
+	if err != nil {
+		return errors.New("检查事项 ID 格式错误")
+	}
+	return impl.taskDomain.DeleteCheckItem(ctx, userId, id64)
+}
+
+func (impl *TaskAppImpl) ListCheckItems(ctx context.Context, taskId string) (types.ListCheckItemRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	if err != nil {
+		return nil, errors.New("待办任务 ID 格式错误")
+	}
+	items, err := impl.taskDomain.ListCheckItems(ctx, userId, taskId64)
+	if err != nil {
+		return nil, err
+	}
+	return CheckItemEntitiesToReses(items), nil
+}
+
+func (impl *TaskAppImpl) BatchUpdateCheckItems(ctx context.Context, req *types.BatchUpdateCheckItemReq) (*types.BatchUpdateCheckItemRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	vos, err := BatchUpdateCheckItemReqToVOs(req)
+	if err != nil {
+		return nil, err
+	}
+	items, err := impl.taskDomain.BatchUpdateCheckItems(ctx, userId, vos)
+	if err != nil {
+		return nil, err
+	}
+	resList := CheckItemEntitiesToReses(items)
+	return &types.BatchUpdateCheckItemRes{UpdatedCount: int64(len(resList)), Events: resList}, nil
+}
+
+// === Comment ===
+
+func (impl *TaskAppImpl) GetCommentById(ctx context.Context, commentId string) (*types.CommentRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	id64, err := strconv.ParseInt(commentId, 10, 64)
+	if err != nil {
+		return nil, errors.New("评论 ID 无效")
+	}
+	e, err := impl.taskDomain.GetCommentById(ctx, userId, id64)
+	if err != nil {
+		return nil, err
+	}
+	return CommentEntityToRes(e), nil
+}
+
+func (impl *TaskAppImpl) CreateComment(ctx context.Context, req *types.CreateCommentReq) (*types.CommentRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	vo, err := CreateCommentReqToVO(userId, req)
+	if err != nil {
+		return nil, err
+	}
+	e, err := impl.taskDomain.CreateComment(ctx, userId, vo)
+	if err != nil {
+		return nil, err
+	}
+	return CommentEntityToRes(e), nil
+}
+
+func (impl *TaskAppImpl) UpdateComment(ctx context.Context, commentId string, req *types.UpdateCommentReq) error {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("用户 ID 无效")
+	}
+	id64, err := strconv.ParseInt(commentId, 10, 64)
+	if err != nil {
+		return errors.New("评论 ID 无效")
+	}
+	vo, err := UpdateCommentReqToVO(req)
+	if err != nil {
+		return err
+	}
+	return impl.taskDomain.UpdateComment(ctx, userId, id64, vo)
+}
+
+func (impl *TaskAppImpl) DeleteComment(ctx context.Context, commentId string) error {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return errors.New("用户 ID 无效")
+	}
+	id64, err := strconv.ParseInt(commentId, 10, 64)
+	if err != nil {
+		return errors.New("评论 ID 无效")
+	}
+	return impl.taskDomain.DeleteComment(ctx, userId, id64)
+}
+
+func (impl *TaskAppImpl) ListComments(ctx context.Context, taskId string) ([]*types.CommentRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, errors.New("用户 ID 无效")
+	}
+	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	if err != nil {
+		return nil, errors.New("待办任务 ID 无效")
+	}
+	entities, err := impl.taskDomain.ListComments(ctx, userId, taskId64)
+	if err != nil {
+		return nil, err
+	}
+	return CommentEntitiesToListRes(entities), nil
+}
+
+func (impl *TaskAppImpl) SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error {
+	return impl.taskDomain.SyncCommentUserProfile(ctx, userId, nickname, avatar)
+}

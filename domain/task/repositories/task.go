@@ -81,4 +81,21 @@ type Task interface {
 	// @param remindAt 新提醒时间
 	// @return error 错误
 	UpdateRemindAt(ctx context.Context, taskId int64, remindAt string) error
+
+	// === CheckItem ===
+	GetCheckItemById(ctx context.Context, userId, checkItemId int64) (*entities.CheckItem, error)
+	CreateCheckItem(ctx context.Context, userId int64, vo *valueobjects.CreateCheckItem) (*entities.CheckItem, error)
+	UpdateCheckItem(ctx context.Context, userId, checkItemId int64, vo *valueobjects.UpdateCheckItem) error
+	DeleteCheckItem(ctx context.Context, userId, checkItemId int64) error
+	ListCheckItems(ctx context.Context, userId, taskId int64) ([]*entities.CheckItem, error)
+	GetMaxCheckItemSortId(ctx context.Context, userId, taskId int64) uint16
+	BatchUpdateCheckItems(ctx context.Context, userId int64, vos []*valueobjects.BatchUpdateCheckItem) ([]*entities.CheckItem, error)
+
+	// === Comment ===
+	GetCommentById(ctx context.Context, userId, commentId int64) (*entities.Comment, error)
+	CreateComment(ctx context.Context, userId int64, vo *valueobjects.CreateComment) (*entities.Comment, error)
+	UpdateComment(ctx context.Context, userId, commentId int64, vo *valueobjects.UpdateComment) error
+	DeleteComment(ctx context.Context, userId, commentId int64) error
+	ListComments(ctx context.Context, userId, taskId int64) ([]*entities.Comment, error)
+	SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }

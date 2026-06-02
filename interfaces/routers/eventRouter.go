@@ -31,7 +31,6 @@ func UseEventRouter(router *gin.RouterGroup) {
 		eventGroup.DELETE("/:eventId", controllers.DeleteEventHandler)
 
 		// 重新排序检查事项
-		eventGroup.PUT("/resort", controllers.ResortEventHandler)
 
 		// 批量更新检查事项
 		eventGroup.PUT("/", controllers.BatchUpdateEventHandler)
