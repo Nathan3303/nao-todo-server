@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	commentApp "naotodoserver/application/comment"
 	"naotodoserver/conf"
 	"naotodoserver/domain/user/service"
 	iCtx "naotodoserver/infrastructure/context"
@@ -15,11 +17,11 @@ import (
 )
 
 // NewUserApp 创建用户应用层实例
-func NewUserApp(userDomain service.UserDomain) UserApp {
-	impl := &userAppImpl{
+func NewUserApp(userDomain service.UserDomain, commentApp commentApp.CommentApp) UserApp {
+	return &userAppImpl{
 		userDomain: userDomain,
+		commentApp: commentApp,
 	}
-	return impl
 }
 
 // UpdateNickname 更新用户昵称
@@ -36,7 +38,12 @@ func (u *userAppImpl) UpdateNickname(
 		return errors.New("用户 ID 无效")
 	}
 	// 2. 更新用户昵称
-	return u.userDomain.UpdateNickname(ctx, userId, req.Nickname)
+	if err := u.userDomain.UpdateNickname(ctx, userId, req.Nickname); err != nil {
+		return err
+	}
+	// 3. 同步评论中的用户昵称
+	_ = u.commentApp.SyncUserProfile(ctx, userId, req.Nickname, "")
+	return nil
 }
 
 // GetProfile 获取用户个人信息
@@ -94,11 +101,12 @@ func (u *userAppImpl) UpdateAvatar(
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 2. 更新用户头像
-	err := u.userDomain.UpdateAvatar(ctx, userId, req.AvatarURL)
-	if err != nil {
+	if err := u.userDomain.UpdateAvatar(ctx, userId, req.AvatarURL); err != nil {
 		return nil, err
 	}
-	// 3. 返回结果
+	// 3. 同步评论中的用户头像
+	_ = u.commentApp.SyncUserProfile(ctx, userId, "", req.AvatarURL)
+	// 4. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: req.AvatarURL}, nil
 }
 
@@ -153,13 +161,14 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	}
 	avatarURL := fmt.Sprintf("%s/%s/%s", staticPath, conf.Conf.Uploads.AvatarDir, uniqueFilename)
 	// 8. 更新用户头像
-	err = u.userDomain.UpdateAvatar(ctx, userId, avatarURL)
-	if err != nil {
+	if err = u.userDomain.UpdateAvatar(ctx, userId, avatarURL); err != nil {
 		// 更新失败时删除已上传的文件
 		os.Remove(savePath)
 		return nil, err
 	}
-	// 9. 返回结果
+	// 9. 同步评论中的用户头像
+	_ = u.commentApp.SyncUserProfile(ctx, userId, "", avatarURL)
+	// 10. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: avatarURL}, nil
 }
 

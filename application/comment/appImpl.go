@@ -150,3 +150,13 @@ func (commentApp *CommentAppImpl) ListComment(
 	commentListRes := CommentEntitiesToListRes(commentEntities)
 	return commentListRes, nil
 }
+
+// SyncUserProfile 同步用户资料到该用户所有历史评论
+func (commentApp *CommentAppImpl) SyncUserProfile(
+	ctx context.Context,
+	userId int64,
+	nickname string,
+	avatar string,
+) error {
+	return commentApp.CommentDomain.SyncUserProfile(ctx, userId, nickname, avatar)
+}

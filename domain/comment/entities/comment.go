@@ -11,14 +11,8 @@ type Comment struct {
 	Content     string
 	Attachments []string
 	IsTopUp     bool
-	CommentUser *CommentUser
+	Nickname    string
+	Avatar      string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-}
-
-type CommentUser struct {
-	Id        int64
-	CommentId int64
-	Nickname  string
-	Avatar    string
 }

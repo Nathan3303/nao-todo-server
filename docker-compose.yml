@@ -9,8 +9,7 @@ services:
             - /opt/nao-todo-server/mysql/conf/my.cnf:/etc/mysql/conf.d/my.cnf:ro
             - /opt/nao-todo-server/mysql/conf/client.cnf:/etc/mysql/client.cnf:ro
         environment:
-            - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
-            - MYSQL_ROOT_HOST=%
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
             - MYSQL_DATABASE=${MYSQL_DATABASE}
             - TZ=Asia/Shanghai
         networks:
@@ -22,10 +21,10 @@ services:
                     "mysqladmin",
                     "ping",
                     "-h",
-                    "127.0.0.1",
+                    "localhost",
                     "-u",
                     "root",
-                    "-p${MYSQL_PASSWORD}",
+                    "-p${MYSQL_ROOT_PASSWORD}",
                 ]
             interval: 30s
             timeout: 10s
@@ -67,8 +66,8 @@ services:
         environment:
             - MYSQL_HOST=mysql
             - MYSQL_PORT=${MYSQL_PORT}
-            - MYSQL_USER=${MYSQL_USER}
-            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_USER=root
+            - MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD}
             - MYSQL_DATABASE=${MYSQL_DATABASE}
             - REDIS_HOST=redis
             - REDIS_PORT=${REDIS_PORT}
@@ -114,7 +113,3 @@ volumes:
 networks:
     naotodo-backend:
         driver: bridge
-        # 可选：指定子网以固定 IP 范围，但通常不需要
-        # ipam:
-        #   config:
-        #     - subnet: 172.20.0.0/16

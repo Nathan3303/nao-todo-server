@@ -47,10 +47,8 @@ type Comment interface {
 	Delete(ctx context.Context, userId, commentId int64) error
 
 	// Get 获取评论列表
-	// @param ctx 用户 ID
-	// @param userId 用户 ID
-	// @param taskId 待办任务 ID
-	// @return []*entities.Comment 评论实体列表
-	// @return error 错误信息
 	Get(ctx context.Context, userId, taskId int64) ([]*entities.Comment, error)
+
+	// SyncUserProfile 同步用户资料到该用户所有历史评论
+	SyncUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }

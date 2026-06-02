@@ -81,3 +81,13 @@ func (commentDomain *CommentDomainImpl) List(
 ) ([]*entities.Comment, error) {
 	return commentDomain.CommentRepo.Get(ctx, userId, taskId)
 }
+
+// SyncUserProfile 同步用户资料到该用户所有历史评论
+func (commentDomain *CommentDomainImpl) SyncUserProfile(
+	ctx context.Context,
+	userId int64,
+	nickname string,
+	avatar string,
+) error {
+	return commentDomain.CommentRepo.SyncUserProfile(ctx, userId, nickname, avatar)
+}

@@ -42,6 +42,10 @@ func LoadDBs() {
 }
 
 func LoadDomains() {
+	commentAppInst := commentApp.NewCommentApp(commentService.NewCommentDomain(
+		commentRepo.NewCommentRepo(dbs.DB),
+	))
+
 	application.App = &application.Services{
 		Auth: authApp.NewAuthApp(authService.GetAuthDomainImpl(
 			authRepo.NewJWTRepo(),
@@ -51,7 +55,7 @@ func LoadDomains() {
 		)),
 		User: userApp.NewUserApp(userService.NewUserDomain(
 			userRepo.NewUserRepo(dbs.DB),
-		)),
+		), commentAppInst),
 		Project: projectApp.NewProjectApp(projectService.NewProjectDomain(
 			projectRepo.NewProjectRepo(dbs.DB),
 			projectRepo.NewProjectPreferenceRepo(dbs.DB),
@@ -66,9 +70,7 @@ func LoadDomains() {
 		Event: eventApp.NewEventApp(eventService.NewEventDomain(
 			eventRepo.NewEventRepo(dbs.DB),
 		)),
-		Comment: commentApp.NewCommentApp(commentService.NewCommentDomain(
-			commentRepo.NewCommentRepo(dbs.DB),
-		)),
+		Comment: commentAppInst,
 	}
 }
 

@@ -8,30 +8,19 @@ import (
 	"strconv"
 )
 
-// CommentEntityToRes 评论响应
-// @param e 评论实体
-// @return 评论响应
+// CommentEntityToRes 评论实体转换为评论响应
 func CommentEntityToRes(e *entities.Comment) *types.CommentRes {
-	res := &types.CommentRes{}
-	res.Id = strconv.FormatInt(e.Id, 10)
-	res.TaskId = strconv.FormatInt(e.TaskId, 10)
-	res.Content = e.Content
-	res.Attachments = e.Attachments
-	res.IsTopUp = e.IsTopUp
-	res.CommentUser = CommentUserEntityToRes(e.CommentUser)
-	res.CreatedAt = utils.TimePtr2DateString(&e.CreatedAt)
-	res.UpdatedAt = utils.TimePtr2DateString(&e.UpdatedAt)
-	return res
-}
-
-// CommentUserEntityToRes 评论用户实体转换为评论用户响应
-// @param e 评论用户实体
-// @return 评论用户响应
-func CommentUserEntityToRes(e *entities.CommentUser) *types.CommentUserRes {
-	res := &types.CommentUserRes{}
-	res.Avatar = e.Avatar
-	res.Nickname = e.Nickname
-	return res
+	return &types.CommentRes{
+		Id:          strconv.FormatInt(e.Id, 10),
+		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		Content:     e.Content,
+		Attachments: e.Attachments,
+		IsTopUp:     e.IsTopUp,
+		Nickname:    e.Nickname,
+		Avatar:      e.Avatar,
+		CreatedAt:   utils.TimePtr2DateString(&e.CreatedAt),
+		UpdatedAt:   utils.TimePtr2DateString(&e.UpdatedAt),
+	}
 }
 
 // CreateCommentReqToValueObject 创建评论请求体转换为评论值对象

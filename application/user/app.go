@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+
+	commentApp "naotodoserver/application/comment"
 	"naotodoserver/domain/user/service"
 	"naotodoserver/interfaces/types"
 
@@ -56,6 +58,5 @@ type UserApp interface {
 // userAppImpl 用户应用实现
 type userAppImpl struct {
 	userDomain service.UserDomain
+	commentApp commentApp.CommentApp
 }
-
-// App 用户应用实例

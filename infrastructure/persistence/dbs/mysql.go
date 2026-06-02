@@ -66,7 +66,6 @@ func DoMigration() {
 		models.Task{},
 		models.Event{},
 		models.Comment{},
-		models.CommentUser{},
 	)
 
 	if err != nil {

@@ -52,6 +52,9 @@ type CommentDomain interface {
 	// @return []*entities.Comment 评论实体列表
 	// @return error 错误信息
 	List(ctx context.Context, userId, taskId int64) ([]*entities.Comment, error)
+
+	// SyncUserProfile 同步用户资料到该用户所有历史评论
+	SyncUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }
 
 // CommentDomainImpl 评论域服务实现

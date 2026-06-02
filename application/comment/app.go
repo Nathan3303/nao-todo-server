@@ -43,11 +43,12 @@ type CommentApp interface {
 	// @return comments 评论列表
 	// @return err 错误
 	ListComment(ctx context.Context, taskId string) ([]*types.CommentRes, error)
+
+	// SyncUserProfile 同步用户资料到该用户所有历史评论
+	SyncUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }
 
 // CommentAppImpl 评论应用实现
 type CommentAppImpl struct {
 	CommentDomain service.CommentDomain
 }
-
-// App 评论应用实例
