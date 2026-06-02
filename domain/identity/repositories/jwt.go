@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"naotodoserver/domain/auth/valueobjects"
+	"naotodoserver/domain/identity/valueobjects"
 )
 
 type JWT interface {

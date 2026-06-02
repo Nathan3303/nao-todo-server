@@ -4,7 +4,7 @@ import (
 	"context"
 
 	commentApp "naotodoserver/application/comment"
-	"naotodoserver/domain/user/service"
+	"naotodoserver/domain/identity/service"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -57,6 +57,6 @@ type UserApp interface {
 
 // userAppImpl 用户应用实现
 type userAppImpl struct {
-	userDomain service.UserDomain
+	identityDomain service.IdentityDomain
 	commentApp commentApp.CommentApp
 }

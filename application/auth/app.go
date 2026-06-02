@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"naotodoserver/domain/auth/service"
+	"naotodoserver/domain/identity/service"
 	"naotodoserver/interfaces/types"
 )
 
@@ -29,9 +29,6 @@ type AuthApp interface {
 }
 
 // authAppImpl 认证应用实现
-// @description 提供认证相关的应用服务实现
 type authAppImpl struct {
-	authDomain service.AuthDomain
+	identityDomain service.IdentityDomain
 }
-
-// App 认证应用实例

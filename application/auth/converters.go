@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"naotodoserver/domain/auth/valueobjects"
+	"naotodoserver/domain/identity/valueobjects"
 	"naotodoserver/interfaces/types"
 )
 

@@ -9,25 +9,24 @@ import (
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	userApp "naotodoserver/application/user"
-	authService "naotodoserver/domain/auth/service"
+	identityService "naotodoserver/domain/identity/service"
 	commentService "naotodoserver/domain/comment/service"
 	checkitemService "naotodoserver/domain/checkitem/service"
 	projectService "naotodoserver/domain/project/service"
 	tagService "naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
-	userService "naotodoserver/domain/user/service"
 	"naotodoserver/infrastructure/cron"
 	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/sse"
-	authRepo "naotodoserver/infrastructure/persistence/auth"
+	authPkg "naotodoserver/infrastructure/persistence/auth"
 	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
 	checkitemRepo "naotodoserver/infrastructure/persistence/checkitem"
+	identityRepo "naotodoserver/infrastructure/persistence/identity"
 	"naotodoserver/infrastructure/persistence/models"
 	projectRepo "naotodoserver/infrastructure/persistence/project"
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
 	taskRepo "naotodoserver/infrastructure/persistence/task"
-	userRepo "naotodoserver/infrastructure/persistence/user"
 )
 
 // LoadLogger 初始化日志系统
@@ -46,16 +45,16 @@ func LoadDomains() {
 		commentRepo.NewCommentRepo(dbs.DB),
 	))
 
+	identityDomain := identityService.NewIdentityDomain(
+		authPkg.NewJWTRepo(),
+		identityRepo.NewUserRepo(dbs.DB),
+		authPkg.NewSessionRepo(dbs.DB),
+		authPkg.NewRateLimitRepo(dbs.RdsCli),
+	)
+
 	application.App = &application.Services{
-		Auth: authApp.NewAuthApp(authService.GetAuthDomainImpl(
-			authRepo.NewJWTRepo(),
-			authRepo.NewUserRepo(dbs.DB, dbs.RdsCli),
-			authRepo.NewSessionRepo(dbs.DB),
-			authRepo.NewRateLimitRepo(dbs.RdsCli),
-		)),
-		User: userApp.NewUserApp(userService.NewUserDomain(
-			userRepo.NewUserRepo(dbs.DB),
-		), commentAppInst),
+		Auth:    authApp.NewAuthApp(identityDomain),
+		User:    userApp.NewUserApp(identityDomain, commentAppInst),
 		Project: projectApp.NewProjectApp(projectService.NewProjectDomain(
 			projectRepo.NewProjectRepo(dbs.DB),
 			projectRepo.NewProjectPreferenceRepo(dbs.DB),
@@ -76,7 +75,7 @@ func LoadDomains() {
 
 // WireSSE 装配 SSE Hub 的 SessionValidator
 func WireSSE() {
-	sessionRepo := authRepo.NewSessionRepo(dbs.DB)
+	sessionRepo := authPkg.NewSessionRepo(dbs.DB)
 	sse.GetHub().SessionValidator = func(userId int64, token string) bool {
 		return sessionRepo.IsSessionValid(nil, userId, token)
 	}

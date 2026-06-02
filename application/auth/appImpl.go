@@ -3,15 +3,14 @@ package auth
 import (
 	"context"
 	"errors"
-	"naotodoserver/domain/auth/entities"
-	"naotodoserver/domain/auth/service"
+	"naotodoserver/domain/identity/entities"
+	"naotodoserver/domain/identity/service"
 	"naotodoserver/interfaces/types"
 )
 
 // NewAuthApp 创建认证应用层实例
-func NewAuthApp(authDomain service.AuthDomain) AuthApp {
-	impl := &authAppImpl{authDomain: authDomain}
-	return impl
+func NewAuthApp(identityDomain service.IdentityDomain) AuthApp {
+	return &authAppImpl{identityDomain: identityDomain}
 }
 
 // 处理用户登录
@@ -25,13 +24,12 @@ func (as *authAppImpl) SignIn(
 	signInReq *types.SignInReq,
 ) (*types.SignInRes, error) {
 	// 1. 通过 Email 查找用户记录
-	userEntity, err := as.authDomain.FindUserByEmail(ctx, signInReq.Email)
+	userEntity, err := as.identityDomain.FindByEmail(ctx, signInReq.Email)
 	if err != nil {
 		return nil, err
 	}
 	// 2. 比对密码
-	isMatched := as.authDomain.PasswordCompare(
-		ctx,
+	isMatched := as.identityDomain.PasswordCompare(
 		[]byte(signInReq.Password),
 		[]byte(userEntity.Password),
 	)
@@ -39,12 +37,12 @@ func (as *authAppImpl) SignIn(
 		return nil, errors.New("用户名或密码错误")
 	}
 	// 2. 创建 JWT 令牌
-	jwtString, err := as.authDomain.GenerateJWT(ctx, userEntity)
+	jwtString, err := as.identityDomain.GenerateJWT(ctx, userEntity)
 	if err != nil {
 		return nil, errors.New("用户凭证签发失败")
 	}
 	// 3. 创建 Session
-	err = as.authDomain.CreateSession(ctx, userEntity.Id, jwtString)
+	err = as.identityDomain.CreateSession(ctx, userEntity.Id, jwtString)
 	if err != nil {
 		return nil, errors.New("用户 Session 创建失败 - " + err.Error())
 	}
@@ -61,7 +59,7 @@ func (as *authAppImpl) SignUp(
 	signUpReq *types.SignUpReq,
 ) error {
 	// 通过 Email 查找用户记录
-	_, err := as.authDomain.FindUserByEmail(ctx, signUpReq.Email)
+	_, err := as.identityDomain.FindByEmail(ctx, signUpReq.Email)
 	if err == nil {
 		return errors.New("邮箱已存在")
 	}
@@ -71,7 +69,7 @@ func (as *authAppImpl) SignUp(
 		return err
 	}
 	// 创建
-	_, err = as.authDomain.CreateUser(ctx, createUserValueObject)
+	_, err = as.identityDomain.CreateUser(ctx, createUserValueObject)
 	if err != nil {
 		return errors.New("注册用户失败")
 	}
@@ -89,12 +87,12 @@ func (as *authAppImpl) CheckIn(
 	checkInReq *types.CheckInReq,
 ) (*types.CheckInRes, error) {
 	// 1. 解析 JWT 令牌
-	userId, err := as.authDomain.ParseJWT(ctx, checkInReq.Token)
+	userId, err := as.identityDomain.ParseJWT(ctx, checkInReq.Token)
 	if err != nil {
 		return nil, errors.New("用户凭证验证失败 - " + err.Error())
 	}
 	// 2. 通过 JWT 令牌和用户 ID 查找会话
-	sessionEntity, err := as.authDomain.FindSessionByUserIdAndToken(ctx, userId, checkInReq.Token)
+	sessionEntity, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, checkInReq.Token)
 	// 会话不存在：
 	if err != nil {
 		return nil, errors.New("用户会话验证失败 - " + err.Error())
@@ -104,18 +102,18 @@ func (as *authAppImpl) CheckIn(
 	}
 	// 会话存在：
 	// 3. 查找最新的用户信息
-	userEntity, err := as.authDomain.FindUserById(ctx, userId)
+	userEntity, err := as.identityDomain.FindById(ctx, userId)
 	if err != nil {
 		return nil, errors.New("用户信息查询失败 - " + err.Error())
 	}
 	// 4. 构建新的 JWT 令牌
-	newJWT, err := as.authDomain.GenerateJWT(ctx, userEntity)
+	newJWT, err := as.identityDomain.GenerateJWT(ctx, userEntity)
 	if err != nil {
 		return nil, errors.New("用户凭证签发失败 - " + err.Error())
 	}
 	// 5. 更新会话中的 Token 字段
 	sessionEntity.Token = newJWT
-	err = as.authDomain.UpdateSessionToken(ctx, sessionEntity)
+	err = as.identityDomain.UpdateSessionToken(ctx, sessionEntity)
 	if err != nil {
 		return nil, errors.New("用户 Session 更新失败 - " + err.Error())
 	}
@@ -132,12 +130,12 @@ func (as *authAppImpl) SignOut(
 	signOutReq *types.SignOutReq,
 ) error {
 	// 1. 解析 JWT 令牌
-	userId, err := as.authDomain.ParseJWT(ctx, signOutReq.Token)
+	userId, err := as.identityDomain.ParseJWT(ctx, signOutReq.Token)
 	if err != nil {
 		return err
 	}
 	// 2. 通过 JWT 令牌和用户 ID 删除会话
-	err = as.authDomain.DeleteSession(ctx, &entities.Session{
+	err = as.identityDomain.DeleteSession(ctx, &entities.Session{
 		UserId: userId,
 		Token:  signOutReq.Token,
 	})
@@ -157,12 +155,12 @@ func (as *authAppImpl) Validate(
 	token string,
 ) (int64, error) {
 	// 1. 解析 JWT
-	userId, err := as.authDomain.ParseJWT(ctx, token)
+	userId, err := as.identityDomain.ParseJWT(ctx, token)
 	if err != nil {
 		return 0, err
 	}
 	// 2. 检查会话
-	session, err := as.authDomain.FindSessionByUserIdAndToken(ctx, userId, token)
+	session, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, token)
 	if err != nil {
 		return 0, err
 	}
@@ -185,7 +183,7 @@ func (as *authAppImpl) RateLimit(
 	// 1. 构造限流 key
 	key := "rate_limit:" + clientIP
 	// 2. 检查是否超过限流阈值
-	err := as.authDomain.CheckRateLimit(ctx, key, limit)
+	err := as.identityDomain.CheckRateLimit(ctx, key, limit)
 	// 3. 返回结果
 	return err
 }

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"naotodoserver/domain/user/entities"
+	"naotodoserver/domain/identity/entities"
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 )
