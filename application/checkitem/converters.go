@@ -1,4 +1,4 @@
-package event
+package checkitem
 
 import (
 	"naotodoserver/domain/checkitem/entities"
@@ -10,8 +10,8 @@ import (
 // EventEntityToGetRes 将检查事项实体转换为获取检查事项详情响应
 // @param eventEntity 检查事项实体
 // @return 获取检查事项详情响应
-func EventEntityToGetRes(eventEntity *entities.Event) *types.GetEventRes {
-	return &types.GetEventRes{
+func EventEntityToGetRes(eventEntity *entities.CheckItem) *types.GetCheckItemRes {
+	return &types.GetCheckItemRes{
 		Id:          strconv.FormatInt(eventEntity.Id, 10),
 		TaskId:      strconv.FormatInt(eventEntity.TaskId, 10),
 		Name:        eventEntity.Name,
@@ -30,13 +30,13 @@ func EventEntityToGetRes(eventEntity *entities.Event) *types.GetEventRes {
 // @return error 错误信息
 func CreateEventReqToValueObject(
 	userId int64,
-	createEventReq *types.CreateEventReq,
-) (*valueobjects.CreateEvent, error) {
+	createEventReq *types.CreateCheckItemReq,
+) (*valueobjects.CreateCheckItem, error) {
 	taskId, err := strconv.ParseInt(createEventReq.TaskId, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	return valueobjects.NewCreateEvent(
+	return valueobjects.NewCreateCheckItem(
 		userId,
 		taskId,
 		createEventReq.Name,
@@ -47,8 +47,8 @@ func CreateEventReqToValueObject(
 // EventEntityToCreateRes 将检查事项实体转换为创建检查事项响应
 // @param eventEntity 检查事项实体
 // @return 创建检查事项响应
-func EventEntityToCreateRes(eventEntity *entities.Event) *types.CreateEventRes {
-	return &types.CreateEventRes{
+func EventEntityToCreateRes(eventEntity *entities.CheckItem) *types.CreateCheckItemRes {
+	return &types.CreateCheckItemRes{
 		Id:          strconv.FormatInt(eventEntity.Id, 10),
 		TaskId:      strconv.FormatInt(eventEntity.TaskId, 10),
 		Name:        eventEntity.Name,
@@ -65,9 +65,9 @@ func EventEntityToCreateRes(eventEntity *entities.Event) *types.CreateEventRes {
 // @return 更新检查事项值对象
 // @return error 错误信息
 func UpdateEventReqToValueObject(
-	updateEventReq *types.UpdateEventReq,
-) (*valueobjects.UpdateEvent, error) {
-	return valueobjects.NewUpdateEvent(
+	updateEventReq *types.UpdateCheckItemReq,
+) (*valueobjects.UpdateCheckItem, error) {
+	return valueobjects.NewUpdateCheckItem(
 		updateEventReq.Name,
 		updateEventReq.Description,
 		updateEventReq.IsDone,
@@ -78,8 +78,8 @@ func UpdateEventReqToValueObject(
 // EventEntities2Reses 将检查事项实体列表转换为获取检查事项详情响应列表
 // @param eList 检查事项实体列表
 // @return 获取检查事项详情响应列表
-func EventEntities2Reses(eventEntities []*entities.Event) types.ListEventRes {
-	listRes := make([]*types.GetEventRes, 0, len(eventEntities))
+func EventEntities2Reses(eventEntities []*entities.CheckItem) types.ListCheckItemRes {
+	listRes := make([]*types.GetCheckItemRes, 0, len(eventEntities))
 	for _, e := range eventEntities {
 		listRes = append(listRes, EventEntityToGetRes(e))
 	}
@@ -91,15 +91,15 @@ func EventEntities2Reses(eventEntities []*entities.Event) types.ListEventRes {
 // @return 批量更新检查事项值对象集合
 // @return error 错误信息
 func BatchUpdateEventReqToValueObjects(
-	batchUpdateEventReq *types.BatchUpdateEventReq,
-) ([]*valueobjects.BatchUpdateEvent, error) {
-	batchVOs := make([]*valueobjects.BatchUpdateEvent, 0, len(batchUpdateEventReq.Events))
+	batchUpdateEventReq *types.BatchUpdateCheckItemReq,
+) ([]*valueobjects.BatchUpdateCheckItem, error) {
+	batchVOs := make([]*valueobjects.BatchUpdateCheckItem, 0, len(batchUpdateEventReq.Events))
 	for _, event := range batchUpdateEventReq.Events {
 		id, err := strconv.ParseInt(event.Id, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		batchVO, err := valueobjects.NewBatchUpdateEvent(
+		batchVO, err := valueobjects.NewBatchUpdateCheckItem(
 			id,
 			event.Name,
 			event.Description,

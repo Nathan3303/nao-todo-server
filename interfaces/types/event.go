@@ -2,7 +2,7 @@ package types
 
 import "time"
 
-type GetEventRes struct {
+type GetCheckItemRes struct {
 	Id          string    `json:"id"`
 	TaskId      string    `json:"taskId"`
 	Name        string    `json:"name"`
@@ -13,13 +13,13 @@ type GetEventRes struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-type CreateEventReq struct {
+type CreateCheckItemReq struct {
 	TaskId      string `json:"taskId" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 }
 
-type CreateEventRes struct {
+type CreateCheckItemRes struct {
 	Id          string    `json:"id"`
 	TaskId      string    `json:"taskId"`
 	Name        string    `json:"name"`
@@ -30,28 +30,28 @@ type CreateEventRes struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-type UpdateEventReq struct {
+type UpdateCheckItemReq struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	IsDone      *bool   `json:"isDone"`
 	SortId      *uint16 `json:"sortId"`
 }
 
-type ListEventRes []*GetEventRes
+type ListCheckItemRes []*GetCheckItemRes
 
-type ResortEventsReq struct {
+type ResortCheckItemsReq struct {
 	OriginalId string `json:"originalId"`
 	BoundId    string `json:"boundId"`
 	Flag       int    `json:"flag"`
 }
 
-type ResortEventsRes struct {
+type ResortCheckItemsRes struct {
 	OriginalSortId uint16 `json:"originalSortId"`
 	BoundSortId    uint16 `json:"boundSortId"`
 }
 
-// BatchUpdateEventReq 批量更新事件请求
-type BatchUpdateEventReq struct {
+// BatchUpdateCheckItemReq 批量更新事件请求
+type BatchUpdateCheckItemReq struct {
 	Events []*struct {
 		Id          string  `json:"id" binding:"required"`
 		Name        *string `json:"name"`
@@ -61,8 +61,8 @@ type BatchUpdateEventReq struct {
 	} `json:"events" binding:"required,min=1"`
 }
 
-// BatchUpdateEventRes 批量更新事件响应
-type BatchUpdateEventRes struct {
+// BatchUpdateCheckItemRes 批量更新事件响应
+type BatchUpdateCheckItemRes struct {
 	UpdatedCount int64          `json:"updatedCount"`
-	Events       []*GetEventRes `json:"events"`
+	Events       []*GetCheckItemRes `json:"events"`
 }

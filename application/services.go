@@ -3,7 +3,7 @@ package application
 import (
 	authApp "naotodoserver/application/auth"
 	commentApp "naotodoserver/application/comment"
-	eventApp "naotodoserver/application/event"
+	checkitemApp "naotodoserver/application/checkitem"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
@@ -13,7 +13,7 @@ import (
 // Services 应用层服务容器，统一管理所有应用服务的单例
 type Services struct {
 	Auth    authApp.AuthApp
-	Event   eventApp.EventApp
+	CheckItem checkitemApp.CheckItemApp
 	Comment commentApp.CommentApp
 	Project projectApp.ProjectApp
 	Tag     tagApp.TagApp

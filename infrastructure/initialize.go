@@ -4,14 +4,14 @@ import (
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
 	commentApp "naotodoserver/application/comment"
-	eventApp "naotodoserver/application/event"
+	checkitemApp "naotodoserver/application/checkitem"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	userApp "naotodoserver/application/user"
 	authService "naotodoserver/domain/auth/service"
 	commentService "naotodoserver/domain/comment/service"
-	eventService "naotodoserver/domain/checkitem/service"
+	checkitemService "naotodoserver/domain/checkitem/service"
 	projectService "naotodoserver/domain/project/service"
 	tagService "naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
@@ -22,7 +22,7 @@ import (
 	authRepo "naotodoserver/infrastructure/persistence/auth"
 	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
-	eventRepo "naotodoserver/infrastructure/persistence/event"
+	checkitemRepo "naotodoserver/infrastructure/persistence/event"
 	"naotodoserver/infrastructure/persistence/models"
 	projectRepo "naotodoserver/infrastructure/persistence/project"
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
@@ -67,8 +67,8 @@ func LoadDomains() {
 		Task: taskApp.NewTaskApp(taskService.NewTaskDomain(
 			taskRepo.NewTaskRepo(dbs.DB),
 		)),
-		Event: eventApp.NewEventApp(eventService.NewEventDomain(
-			eventRepo.NewEventRepo(dbs.DB),
+		CheckItem: checkitemApp.NewCheckItemApp(checkitemService.NewCheckItemDomain(
+			checkitemRepo.NewCheckItemRepo(dbs.DB),
 		)),
 		Comment: commentAppInst,
 	}

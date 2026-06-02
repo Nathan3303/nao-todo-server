@@ -6,8 +6,8 @@ import (
 	"naotodoserver/domain/textutils"
 )
 
-// BatchUpdateEvent 批量更新事件值对象
-type BatchUpdateEvent struct {
+// BatchUpdateCheckItem 批量更新事件值对象
+type BatchUpdateCheckItem struct {
 	Id          int64
 	Name        *string
 	Description *string
@@ -18,7 +18,7 @@ type BatchUpdateEvent struct {
 // Validate 验证批量更新事件值对象是否有效
 // @param batchUpdateEvent 批量更新事件值对象
 // @return error 错误信息
-func (batchUpdateEvent *BatchUpdateEvent) Validate() error {
+func (batchUpdateEvent *BatchUpdateCheckItem) Validate() error {
 	if batchUpdateEvent.Id <= 0 {
 		return errors.New("事件 ID 无效")
 	}
@@ -34,22 +34,22 @@ func (batchUpdateEvent *BatchUpdateEvent) Validate() error {
 	return nil
 }
 
-// NewBatchUpdateEvent 创建批量更新事件值对象
+// NewBatchUpdateCheckItem 创建批量更新事件值对象
 // @param id 事件 ID
 // @param name 事件名称
 // @param description 事件描述
 // @param isDone 是否完成
 // @param sortId 排序 ID
-// @return *BatchUpdateEvent 批量更新事件值对象
+// @return *BatchUpdateCheckItem 批量更新事件值对象
 // @return error 错误信息
-func NewBatchUpdateEvent(
+func NewBatchUpdateCheckItem(
 	id int64,
 	name *string,
 	description *string,
 	isDone *bool,
 	sortId *uint16,
-) (*BatchUpdateEvent, error) {
-	vo := &BatchUpdateEvent{
+) (*BatchUpdateCheckItem, error) {
+	vo := &BatchUpdateCheckItem{
 		Id:          id,
 		Name:        name,
 		Description: description,
@@ -63,12 +63,12 @@ func NewBatchUpdateEvent(
 	return vo, nil
 }
 
-// BatchUpdateEvents 批量更新事件集合
-type BatchUpdateEvents []*BatchUpdateEvent
+// BatchUpdateCheckItems 批量更新事件集合
+type BatchUpdateCheckItems []*BatchUpdateCheckItem
 
 // Validate 验证批量更新事件集合是否有效
 // @return error 错误信息
-func (batchUpdateEvents BatchUpdateEvents) Validate() error {
+func (batchUpdateEvents BatchUpdateCheckItems) Validate() error {
 	if len(batchUpdateEvents) == 0 {
 		return errors.New("事件列表不能为空")
 	}

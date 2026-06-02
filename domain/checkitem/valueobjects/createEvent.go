@@ -6,8 +6,8 @@ import (
 	"naotodoserver/domain/textutils"
 )
 
-// CreateEvent 创建事件值对象
-type CreateEvent struct {
+// CreateCheckItem 创建事件值对象
+type CreateCheckItem struct {
 	UserId      int64
 	TaskId      int64
 	Name        string
@@ -17,7 +17,7 @@ type CreateEvent struct {
 
 // Validate 验证创建事件值对象是否有效
 // @return error 错误信息
-func (createEvent *CreateEvent) Validate() error {
+func (createEvent *CreateCheckItem) Validate() error {
 	if createEvent.TaskId <= 0 {
 		return errors.New("任务 ID 不能为空")
 	}
@@ -33,20 +33,20 @@ func (createEvent *CreateEvent) Validate() error {
 	return nil
 }
 
-// NewCreateEvent 创建创建事件值对象
+// NewCreateCheckItem 创建创建事件值对象
 // @param userId 用户ID
 // @param taskId 任务 ID
 // @param name 事件名称
 // @param description 事件描述
-// @return *CreateEvent 创建事件值对象
+// @return *CreateCheckItem 创建事件值对象
 // @return error 错误信息
-func NewCreateEvent(
+func NewCreateCheckItem(
 	userId int64,
 	taskId int64,
 	name string,
 	description string,
-) (*CreateEvent, error) {
-	vo := &CreateEvent{
+) (*CreateCheckItem, error) {
+	vo := &CreateCheckItem{
 		UserId:      userId,
 		TaskId:      taskId,
 		Name:        name,

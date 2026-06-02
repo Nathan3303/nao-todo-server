@@ -1,4 +1,4 @@
-package event
+package checkitem
 
 import (
 	"context"
@@ -9,21 +9,21 @@ import (
 	"strconv"
 )
 
-// NewEventApp 创建检查事项应用层实例
-func NewEventApp(eventDomain service.EventDomain) EventApp {
-	impl := &EventAppImpl{eventDomain: eventDomain}
+// NewCheckItemApp 创建检查事项应用层实例
+func NewCheckItemApp(eventDomain service.CheckItemDomain) CheckItemApp {
+	impl := &CheckItemAppImpl{eventDomain: eventDomain}
 	return impl
 }
 
-// GetEventById 获取检查事项详情
+// GetCheckItemById 获取检查事项详情
 // @param ctx 上下文
 // @param eventId 检查事项 ID
 // @return 检查事项详情
 // @return error 错误信息
-func (eventApp *EventAppImpl) GetEventById(
+func (eventApp *CheckItemAppImpl) GetCheckItemById(
 	ctx context.Context,
 	eventId string,
-) (*types.GetEventRes, error) {
+) (*types.GetCheckItemRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -43,15 +43,15 @@ func (eventApp *EventAppImpl) GetEventById(
 	return EventEntityToGetRes(eventEntity), nil
 }
 
-// CreateEvent 创建检查事项
+// CreateCheckItem 创建检查事项
 // @param ctx 上下文
 // @param createEventReq 创建检查事项请求体
 // @return 创建检查事项详情
 // @return error 错误信息
-func (eventApp *EventAppImpl) CreateEvent(
+func (eventApp *CheckItemAppImpl) CreateCheckItem(
 	ctx context.Context,
-	createEventReq *types.CreateEventReq,
-) (*types.CreateEventRes, error) {
+	createEventReq *types.CreateCheckItemReq,
+) (*types.CreateCheckItemRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -75,16 +75,16 @@ func (eventApp *EventAppImpl) CreateEvent(
 	return EventEntityToCreateRes(eventEntity), nil
 }
 
-// UpdateEvent 更新检查事项
+// UpdateCheckItem 更新检查事项
 // @param ctx 上下文
 // @param eventId 检查事项 ID
 // @param updateEventReq 更新检查事项请求体
 // @return 更新检查事项详情
 // @return error 错误信息
-func (eventApp *EventAppImpl) UpdateEvent(
+func (eventApp *CheckItemAppImpl) UpdateCheckItem(
 	ctx context.Context,
 	eventId string,
-	updateEventReq *types.UpdateEventReq,
+	updateEventReq *types.UpdateCheckItemReq,
 ) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -110,12 +110,12 @@ func (eventApp *EventAppImpl) UpdateEvent(
 	)
 }
 
-// DeleteEvent 删除检查事项
+// DeleteCheckItem 删除检查事项
 // @param ctx 上下文
 // @param eventId 检查事项 ID
 // @return 删除检查事项详情
 // @return error 错误信息
-func (eventApp *EventAppImpl) DeleteEvent(
+func (eventApp *CheckItemAppImpl) DeleteCheckItem(
 	ctx context.Context,
 	eventId string,
 ) error {
@@ -133,15 +133,15 @@ func (eventApp *EventAppImpl) DeleteEvent(
 	return eventApp.eventDomain.Delete(ctx, userId, eventId64)
 }
 
-// ListEvent 获取检查事项列表
+// ListCheckItem 获取检查事项列表
 // @param ctx 上下文
 // @param taskId 待办任务 ID
 // @return 检查事项列表
 // @return error 错误信息
-func (eventApp *EventAppImpl) ListEvent(
+func (eventApp *CheckItemAppImpl) ListCheckItem(
 	ctx context.Context,
 	taskId string,
-) (types.ListEventRes, error) {
+) (types.ListCheckItemRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -166,22 +166,22 @@ func (eventApp *EventAppImpl) ListEvent(
 // @param resortEventsReq 排序检查事项请求体
 // @return 排序检查事项详情
 // @return error 错误信息
-func (eventApp *EventAppImpl) ResortEvents(
+func (eventApp *CheckItemAppImpl) ResortCheckItems(
 	ctx context.Context,
-	resortEventsReq *types.ResortEventsReq,
-) (*types.ResortEventsRes, error) {
+	resortEventsReq *types.ResortCheckItemsReq,
+) (*types.ResortCheckItemsRes, error) {
 	panic("unimplement")
 }
 
-// BatchUpdateEvents 批量更新检查事项
+// BatchUpdateCheckItems 批量更新检查事项
 // @param ctx 上下文
 // @param batchUpdateEventReq 批量更新检查事项请求体
 // @return 批量更新检查事项响应
 // @return error 错误信息
-func (eventApp *EventAppImpl) BatchUpdateEvents(
+func (eventApp *CheckItemAppImpl) BatchUpdateCheckItems(
 	ctx context.Context,
-	batchUpdateEventReq *types.BatchUpdateEventReq,
-) (*types.BatchUpdateEventRes, error) {
+	batchUpdateEventReq *types.BatchUpdateCheckItemReq,
+) (*types.BatchUpdateCheckItemRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -200,7 +200,7 @@ func (eventApp *EventAppImpl) BatchUpdateEvents(
 	// 4. 转换实体为响应
 	eventResList := EventEntities2Reses(updatedEntities)
 	// 返回结果
-	return &types.BatchUpdateEventRes{
+	return &types.BatchUpdateCheckItemRes{
 		UpdatedCount: int64(len(eventResList)),
 		Events:       eventResList,
 	}, nil

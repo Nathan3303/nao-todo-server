@@ -6,8 +6,8 @@ import (
 	"naotodoserver/domain/textutils"
 )
 
-// UpdateEvent 更新事件值对象
-type UpdateEvent struct {
+// UpdateCheckItem 更新事件值对象
+type UpdateCheckItem struct {
 	Name        *string
 	Description *string
 	IsDone      *bool
@@ -16,7 +16,7 @@ type UpdateEvent struct {
 
 // Validate 验证更新事件值对象是否有效
 // @return error 错误信息
-func (updateEvent *UpdateEvent) Validate() error {
+func (updateEvent *UpdateCheckItem) Validate() error {
 	if updateEvent.Name != nil && textutils.RuneLength(*updateEvent.Name) > 128 {
 		return errors.New("事件名称长度不能超过 128 个字符")
 	}
@@ -29,20 +29,20 @@ func (updateEvent *UpdateEvent) Validate() error {
 	return nil
 }
 
-// NewUpdateEvent 创建更新事件值对象
+// NewUpdateCheckItem 创建更新事件值对象
 // @param name 事件名称
 // @param description 事件描述
 // @param isDone 是否完成
 // @param sortId 排序 ID
-// @return *UpdateEvent 更新事件值对象
+// @return *UpdateCheckItem 更新事件值对象
 // @return error 错误信息
-func NewUpdateEvent(
+func NewUpdateCheckItem(
 	name *string,
 	description *string,
 	isDone *bool,
 	sortId *uint16,
-) (*UpdateEvent, error) {
-	vo := &UpdateEvent{
+) (*UpdateCheckItem, error) {
+	vo := &UpdateCheckItem{
 		Name:        name,
 		Description: description,
 		IsDone:      isDone,
