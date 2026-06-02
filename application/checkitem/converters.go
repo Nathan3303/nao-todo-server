@@ -8,93 +8,93 @@ import (
 )
 
 // EventEntityToGetRes 将检查事项实体转换为获取检查事项详情响应
-// @param eventEntity 检查事项实体
+// @param e 检查事项实体
 // @return 获取检查事项详情响应
-func EventEntityToGetRes(eventEntity *entities.CheckItem) *types.GetCheckItemRes {
+func EventEntityToGetRes(e *entities.CheckItem) *types.GetCheckItemRes {
 	return &types.GetCheckItemRes{
-		Id:          strconv.FormatInt(eventEntity.Id, 10),
-		TaskId:      strconv.FormatInt(eventEntity.TaskId, 10),
-		Name:        eventEntity.Name,
-		Description: eventEntity.Description,
-		IsDone:      eventEntity.IsDone,
-		SortId:      eventEntity.SortId,
-		CreatedAt:   eventEntity.CreatedAt,
-		UpdatedAt:   eventEntity.UpdatedAt,
+		Id:          strconv.FormatInt(e.Id, 10),
+		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		Name:        e.Name,
+		Description: e.Description,
+		IsDone:      e.IsDone,
+		SortId:      e.SortId,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
 	}
 }
 
 // CreateEventReqToValueObject 将创建检查事项请求体转换为创建检查事项值对象
 // @param userId 用户ID
-// @param createEventReq 创建检查事项请求体
+// @param createReq 创建检查事项请求体
 // @return 创建检查事项值对象
 // @return error 错误信息
 func CreateEventReqToValueObject(
 	userId int64,
-	createEventReq *types.CreateCheckItemReq,
+	createReq *types.CreateCheckItemReq,
 ) (*valueobjects.CreateCheckItem, error) {
-	taskId, err := strconv.ParseInt(createEventReq.TaskId, 10, 64)
+	taskId, err := strconv.ParseInt(createReq.TaskId, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 	return valueobjects.NewCreateCheckItem(
 		userId,
 		taskId,
-		createEventReq.Name,
-		createEventReq.Description,
+		createReq.Name,
+		createReq.Description,
 	)
 }
 
 // EventEntityToCreateRes 将检查事项实体转换为创建检查事项响应
-// @param eventEntity 检查事项实体
+// @param e 检查事项实体
 // @return 创建检查事项响应
-func EventEntityToCreateRes(eventEntity *entities.CheckItem) *types.CreateCheckItemRes {
+func EventEntityToCreateRes(e *entities.CheckItem) *types.CreateCheckItemRes {
 	return &types.CreateCheckItemRes{
-		Id:          strconv.FormatInt(eventEntity.Id, 10),
-		TaskId:      strconv.FormatInt(eventEntity.TaskId, 10),
-		Name:        eventEntity.Name,
-		Description: eventEntity.Description,
-		IsDone:      eventEntity.IsDone,
-		SortId:      eventEntity.SortId,
-		CreatedAt:   eventEntity.CreatedAt,
-		UpdatedAt:   eventEntity.UpdatedAt,
+		Id:          strconv.FormatInt(e.Id, 10),
+		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		Name:        e.Name,
+		Description: e.Description,
+		IsDone:      e.IsDone,
+		SortId:      e.SortId,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
 	}
 }
 
 // UpdateEventReqToValueObject 将更新检查事项请求体转换为更新检查事项值对象
-// @param updateEventReq 更新检查事项请求体
+// @param updateReq 更新检查事项请求体
 // @return 更新检查事项值对象
 // @return error 错误信息
 func UpdateEventReqToValueObject(
-	updateEventReq *types.UpdateCheckItemReq,
+	updateReq *types.UpdateCheckItemReq,
 ) (*valueobjects.UpdateCheckItem, error) {
 	return valueobjects.NewUpdateCheckItem(
-		updateEventReq.Name,
-		updateEventReq.Description,
-		updateEventReq.IsDone,
-		updateEventReq.SortId,
+		updateReq.Name,
+		updateReq.Description,
+		updateReq.IsDone,
+		updateReq.SortId,
 	)
 }
 
 // EventEntities2Reses 将检查事项实体列表转换为获取检查事项详情响应列表
 // @param eList 检查事项实体列表
 // @return 获取检查事项详情响应列表
-func EventEntities2Reses(eventEntities []*entities.CheckItem) types.ListCheckItemRes {
-	listRes := make([]*types.GetCheckItemRes, 0, len(eventEntities))
-	for _, e := range eventEntities {
+func EventEntities2Reses(items []*entities.CheckItem) types.ListCheckItemRes {
+	listRes := make([]*types.GetCheckItemRes, 0, len(items))
+	for _, e := range items {
 		listRes = append(listRes, EventEntityToGetRes(e))
 	}
 	return listRes
 }
 
 // BatchUpdateEventReqToValueObjects 将批量更新检查事项请求体转换为批量更新检查事项值对象集合
-// @param batchUpdateEventReq 批量更新检查事项请求体
+// @param batchReq 批量更新检查事项请求体
 // @return 批量更新检查事项值对象集合
 // @return error 错误信息
 func BatchUpdateEventReqToValueObjects(
-	batchUpdateEventReq *types.BatchUpdateCheckItemReq,
+	batchReq *types.BatchUpdateCheckItemReq,
 ) ([]*valueobjects.BatchUpdateCheckItem, error) {
-	batchVOs := make([]*valueobjects.BatchUpdateCheckItem, 0, len(batchUpdateEventReq.Events))
-	for _, event := range batchUpdateEventReq.Events {
+	batchVOs := make([]*valueobjects.BatchUpdateCheckItem, 0, len(batchReq.Events))
+	for _, event := range batchReq.Events {
 		id, err := strconv.ParseInt(event.Id, 10, 64)
 		if err != nil {
 			return nil, err

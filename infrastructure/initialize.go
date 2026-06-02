@@ -22,7 +22,7 @@ import (
 	authRepo "naotodoserver/infrastructure/persistence/auth"
 	commentRepo "naotodoserver/infrastructure/persistence/comment"
 	"naotodoserver/infrastructure/persistence/dbs"
-	checkitemRepo "naotodoserver/infrastructure/persistence/event"
+	checkitemRepo "naotodoserver/infrastructure/persistence/checkitem"
 	"naotodoserver/infrastructure/persistence/models"
 	projectRepo "naotodoserver/infrastructure/persistence/project"
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
