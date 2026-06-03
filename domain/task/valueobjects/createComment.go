@@ -7,7 +7,7 @@ import (
 )
 
 // CreateComment 创建评论 Value Object
-// 评论内容最多 512 个字符
+// 评论内容最多 1000 个字符
 // 最多拥有 8 个附件
 type CreateComment struct {
 	UserId      int64
@@ -29,8 +29,8 @@ func (createComment *CreateComment) Validate() error {
 	if createComment.Content == "" {
 		return errors.New("评论内容不能为空")
 	}
-	if textutils.RuneLength(createComment.Content) > 512 {
-		return errors.New("评论内容最多 512 个字符")
+	if textutils.RuneLength(createComment.Content) > 1000 {
+		return errors.New("评论内容最多 1000 个字符")
 	}
 	if len(createComment.Attachments) > 8 {
 		return errors.New("最多拥有 8 个附件")

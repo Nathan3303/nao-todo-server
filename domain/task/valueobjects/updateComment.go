@@ -19,8 +19,8 @@ func (updateComment *UpdateComment) Validate() error {
 	if updateComment.Content != nil && textutils.RuneLength(*updateComment.Content) == 0 {
 		return errors.New("评论内容不能为空")
 	}
-	if updateComment.Content != nil && textutils.RuneLength(*updateComment.Content) > 512 {
-		return errors.New("评论内容最多 512 个字符")
+	if updateComment.Content != nil && textutils.RuneLength(*updateComment.Content) > 1000 {
+		return errors.New("评论内容最多 1000 个字符")
 	}
 	if updateComment.Attachments != nil && len(*updateComment.Attachments) > 8 {
 		return errors.New("最多拥有 8 个附件")
