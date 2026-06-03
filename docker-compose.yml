@@ -12,6 +12,9 @@ services:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
             - MYSQL_DATABASE=${MYSQL_DATABASE}
             - TZ=Asia/Shanghai
+        mem_limit: 512m
+        memswap_limit: 512m # 数据库禁用 swap，保证性能一致性
+        cpus: 0.75
         networks:
             - naotodo-backend
         healthcheck:
@@ -42,9 +45,12 @@ services:
             - /opt/nao-todo-server/redis/conf/redis.conf:/etc/redis/redis.conf:ro
         environment:
             - TZ=Asia/Shanghai
+        command: redis-server /etc/redis/redis.conf --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+        mem_limit: 128m
+        memswap_limit: 128m # 禁用 swap
+        cpus: 0.25
         networks:
             - naotodo-backend
-        command: redis-server /etc/redis/redis.conf --appendonly yes
         healthcheck:
             test: ["CMD", "redis-cli", "ping"]
             interval: 30s
@@ -75,11 +81,16 @@ services:
             - REDIS_DB=${REDIS_DB}
             - JWT_SECRET=${JWT_SECRET}
             - TZ=Asia/Shanghai
+            - GOMAXPROCS=1
+            - GOMEMLIMIT=400MiB # Go 1.19+ 的内存软限制，防止 OOM
         depends_on:
             mysql:
                 condition: service_healthy
             redis:
                 condition: service_healthy
+        mem_limit: 256m
+        memswap_limit: 256m # 禁用 swap，避免性能抖动
+        cpus: 0.75
         networks:
             - naotodo-backend
         restart: unless-stopped

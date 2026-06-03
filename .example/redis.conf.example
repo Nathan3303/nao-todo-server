@@ -1,12 +1,46 @@
-# 基础安全
-# 必须设置强密码
-requirepass YOUR_REDIS_PASSWORD_HERE
-bind * -::*
+# --- 基础安全与网络 ---
+
+# 允许所有网络接口访问
+bind 0.0.0.0
+
+# 默认端口
+port 6379
+
+# 开启保护模式
 protected-mode yes
 
-# 持久化
-appendonly yes
-appendfsync everysec
+# 强密码认证
+requirepass YOUR_REDIS_PASSWORD_HERE
 
-# 数据持久化目录
+# --- 运行模式与日志 (Docker 适配) ---
+
+# 容器内必须关闭后台运行模式
+daemonize no
+
+# 生产环境日志级别
+loglevel notice
+
+# 日志输出到控制台，便于 docker logs 查看
+logfile stdout
+
+# 客户端闲置 60 秒后断开连接
+timeout 60
+
+# --- 核心内存控制 (防止 OOM) ---
+
+# 限制最大内存为 200MB (容器限制为 256MB)
+maxmemory 200mb
+
+# 内存满时，自动淘汰最近最少使用的键
+maxmemory-policy allkeys-lru
+
+# --- 持久化策略 ---
+
+# 数据目录
 dir /data
+
+# 启用 AOF 持久化
+appendonly yes
+
+# 每秒同步一次，平衡性能与数据安全
+appendfsync everysec
