@@ -8,6 +8,7 @@ import (
 	"naotodoserver/infrastructure/persistence/models"
 	"naotodoserver/infrastructure/utils"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -54,12 +55,28 @@ func (r *PomodoroRepoImpl) List(
 	if sessionId != "" {
 		tx = tx.Where("session_id = ?", sessionId)
 	}
-	if startTime != "" && endTime != "" {
-		tx = tx.Where("start_at BETWEEN ? AND ?", startTime, endTime)
-	} else if startTime != "" {
-		tx = tx.Where("start_at >= ?", startTime)
-	} else if endTime != "" {
-		tx = tx.Where("start_at <= ?", endTime)
+
+	// 解析 RFC3339 时间字符串为 time.Time，让 GORM 处理正确的 SQL 格式化
+	var startTimeParsed, endTimeParsed time.Time
+	var hasStartTime, hasEndTime bool
+	if startTime != "" {
+		if t, err := time.Parse(time.RFC3339, startTime); err == nil {
+			startTimeParsed = t
+			hasStartTime = true
+		}
+	}
+	if endTime != "" {
+		if t, err := time.Parse(time.RFC3339, endTime); err == nil {
+			endTimeParsed = t
+			hasEndTime = true
+		}
+	}
+	if hasStartTime && hasEndTime {
+		tx = tx.Where("start_at BETWEEN ? AND ?", startTimeParsed, endTimeParsed)
+	} else if hasStartTime {
+		tx = tx.Where("start_at >= ?", startTimeParsed)
+	} else if hasEndTime {
+		tx = tx.Where("start_at <= ?", endTimeParsed)
 	}
 	if taskId > 0 {
 		tx = tx.Where("task_id = ?", taskId)

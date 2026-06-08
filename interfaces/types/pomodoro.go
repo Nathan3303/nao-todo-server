@@ -63,3 +63,6 @@ type ListPomodoroReq struct {
 	Limit     int    `form:"limit"`
 	Sort      string `form:"sort"` // Like: 'field:order'
 }
+
+// ListPomodoroRes 获取番茄列表响应
+type ListPomodoroRes []GetPomodoroRes
