@@ -3,11 +3,13 @@ package infrastructure
 import (
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
+	pomodoroApp "naotodoserver/application/pomodoro"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	userApp "naotodoserver/application/user"
 	identityService "naotodoserver/domain/identity/service"
+	pomodoroService "naotodoserver/domain/pomodoro/service"
 	projectService "naotodoserver/domain/project/service"
 	tagService "naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
@@ -18,6 +20,7 @@ import (
 	"naotodoserver/infrastructure/persistence/dbs"
 	identityRepo "naotodoserver/infrastructure/persistence/identity"
 	"naotodoserver/infrastructure/persistence/models"
+	pomodoroRepo "naotodoserver/infrastructure/persistence/pomodoro"
 	projectRepo "naotodoserver/infrastructure/persistence/project"
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
 	taskRepo "naotodoserver/infrastructure/persistence/task"
@@ -45,6 +48,10 @@ func LoadDomains() {
 		taskRepo.NewTaskRepo(dbs.DB),
 	))
 
+	pomodoroAppInst := pomodoroApp.NewPomodoroApp(pomodoroService.NewPomodoroDomain(
+		pomodoroRepo.NewPomodoroRepo(dbs.DB),
+	))
+
 	application.App = &application.Services{
 		Auth:    authApp.NewAuthApp(identityDomain),
 		User:    userApp.NewUserApp(identityDomain, taskAppInst),
@@ -57,6 +64,7 @@ func LoadDomains() {
 			tagRepo.NewTagRepo(dbs.DB),
 			tagRepo.NewTagPreferenceRepo(dbs.DB),
 		)),
+		Pomodoro: pomodoroAppInst,
 	}
 }
 

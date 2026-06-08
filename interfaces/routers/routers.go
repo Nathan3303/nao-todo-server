@@ -42,6 +42,7 @@ func InitRouters() *gin.Engine {
 		UseTaskRouter(v1)
 		UseEventRouter(v1)
 		UseCommentRouter(v1)
+		UsePomodoroRouter(v1)
 		UseSSERouter(v1)
 	}
 

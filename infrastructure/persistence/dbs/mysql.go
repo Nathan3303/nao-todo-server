@@ -66,6 +66,7 @@ func DoMigration() {
 		models.Task{},
 		models.Event{},
 		models.Comment{},
+		models.Pomodoro{},
 	)
 
 	if err != nil {
