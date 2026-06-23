@@ -16,6 +16,7 @@ type CreatePomodoroReq struct {
 // CreatePomodoroRes 创建番茄响应
 type CreatePomodoroRes struct {
 	Id          string `json:"id"`
+	UserId      string `json:"userId"`
 	SessionId   string `json:"sessionId"` // Like uuidv4
 	Type        uint8  `json:"type"`
 	TaskId      string `json:"taskId"`
@@ -37,6 +38,7 @@ type GetPomodoroReq struct {
 // GetPomodoroRes 获取番茄响应
 type GetPomodoroRes struct {
 	Id          string `json:"id"`
+	UserId      string `json:"userId"`
 	SessionId   string `json:"sessionId"` // Like uuidv4
 	Type        uint8  `json:"type"`
 	TaskId      string `json:"taskId"`

@@ -33,6 +33,7 @@ func CreateProjectReqToValueObject(
 func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProjectRes {
 	return &types.CreateProjectRes{
 		Id:          strconv.FormatInt(projectEntity.Id, 10),
+		UserId:      strconv.FormatInt(projectEntity.UserId, 10),
 		Name:        projectEntity.Name,
 		Description: projectEntity.Description,
 		ArchivedAt:  projectEntity.ArchivedAt,
@@ -49,6 +50,7 @@ func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProj
 func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes {
 	return &types.GetProjectRes{
 		Id:          strconv.FormatInt(projectEntity.Id, 10),
+		UserId:      strconv.FormatInt(projectEntity.UserId, 10),
 		Name:        projectEntity.Name,
 		Description: projectEntity.Description,
 		ArchivedAt:  projectEntity.ArchivedAt,
@@ -118,6 +120,7 @@ func ProjectPreferenceEntityToGetRes(
 ) *types.GetProjectPreferenceRes {
 	return &types.GetProjectPreferenceRes{
 		Id:         strconv.FormatInt(projectPreferenceEntity.Id, 10),
+		UserId:     strconv.FormatInt(projectPreferenceEntity.UserId, 10),
 		ProjectId:  strconv.FormatInt(projectPreferenceEntity.ProjectId, 10),
 		ViewType:   projectPreferenceEntity.ViewType,
 		GetOptions: projectPreferenceEntity.GetOptions,

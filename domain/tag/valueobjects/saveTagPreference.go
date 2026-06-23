@@ -6,6 +6,7 @@ import (
 
 // 保存标签偏好值对象
 type SaveTagPreference struct {
+	UserId     int64
 	ViewType   string
 	GetOptions string
 	Columns    string

@@ -8,6 +8,7 @@ import (
 
 // 更新标签值对象
 type UpdateTag struct {
+	UserId      int64
 	Name        *string
 	Description *string
 	Color       *string

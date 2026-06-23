@@ -9,6 +9,7 @@ type CreateProjectReq struct {
 
 type CreateProjectRes struct {
 	Id          string     `json:"id"`
+	UserId      string     `json:"userId"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	ArchivedAt  *time.Time `json:"archivedAt"`
@@ -20,6 +21,7 @@ type CreateProjectRes struct {
 
 type GetProjectRes struct {
 	Id          string     `json:"id"`
+	UserId      string     `json:"userId"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	ArchivedAt  *time.Time `json:"archivedAt"`
@@ -53,6 +55,7 @@ type ListProjectRes []*GetProjectRes
 
 type GetProjectPreferenceRes struct {
 	Id         string    `json:"id"`
+	UserId     string    `json:"userId"`
 	ProjectId  string    `json:"projectId"`
 	ViewType   string    `json:"viewType"`
 	GetOptions string    `json:"getTasksOptions"`

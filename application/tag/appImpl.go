@@ -61,7 +61,7 @@ func (tagApp *TagAppImpl) CreateTag(
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 转换请求体
-	createTagValueObject, err := CreateTagReqToValueObject(createTagReq)
+	createTagValueObject, err := CreateTagReqToValueObject(userId, createTagReq)
 	if err != nil {
 		return nil, err
 	}

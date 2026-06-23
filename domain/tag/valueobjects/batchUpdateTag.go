@@ -9,6 +9,7 @@ import (
 // 批量更新标签值对象
 type BatchUpdateTag struct {
 	Id          int64
+	UserId      int64
 	Name        *string
 	Description *string
 	Color       *string

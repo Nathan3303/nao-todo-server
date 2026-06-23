@@ -4,6 +4,7 @@ import "errors"
 
 // 保存任务清单偏好值对象
 type SaveProjectPreference struct {
+	UserId     int64  `json:"-"`
 	ViewType   string `json:"viewType"`
 	GetOptions string `json:"getTasksOptions"`
 	Columns    string `json:"columns"`

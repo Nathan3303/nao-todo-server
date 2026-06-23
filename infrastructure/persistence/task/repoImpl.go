@@ -59,7 +59,7 @@ func (taskRepo *TaskRepoImpl) Create(
 	createTaskValueObject *valueobjects.CreateTask,
 ) (*entities.Task, error) {
 	// 1. 转换创建实体到模型
-	createModel := CreateTaskValueObjectToModel(userId, createTaskValueObject)
+	createModel := CreateTaskValueObjectToModel(createTaskValueObject)
 	// 2. 创建
 	tx := taskRepo.db.WithContext(ctx).Create(createModel)
 	if tx.Error != nil {

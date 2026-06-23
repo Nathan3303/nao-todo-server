@@ -8,6 +8,7 @@ import (
 
 // 更新任务清单值对象
 type UpdateProject struct {
+	UserId      int64
 	Name        *string
 	Description *string
 	SortId      *uint16

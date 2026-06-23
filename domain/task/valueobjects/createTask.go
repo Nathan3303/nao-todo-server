@@ -9,6 +9,7 @@ import (
 
 // CreateTask 创建任务值对象
 type CreateTask struct {
+	UserId         int64
 	ParentTaskId   int64
 	Name           string
 	Description    string
@@ -70,6 +71,7 @@ func (createTask *CreateTask) FillStartAt() {
 // @return *CreateTask 创建任务值对象
 // @return error 创建失败返回错误
 func NewCreateTask(
+	userId int64,
 	parentTaskId int64,
 	name string,
 	description string,
@@ -85,6 +87,7 @@ func NewCreateTask(
 	remindWeekdays int8,
 ) (*CreateTask, error) {
 	createTask := &CreateTask{
+		UserId:         userId,
 		ParentTaskId:   parentTaskId,
 		Name:           name,
 		Description:    description,

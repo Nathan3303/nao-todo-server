@@ -57,6 +57,7 @@ func formatTimePtrOk(t *time.Time) (string, bool) {
 func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res := &types.GetTaskRes{}
 	res.Id = strconv.FormatInt(taskEntity.Id, 10)
+	res.UserId = strconv.FormatInt(taskEntity.UserId, 10)
 	res.ParentTaskId = strconv.FormatInt(taskEntity.ParentTaskId, 10)
 	res.Name = taskEntity.Name
 	res.Description = taskEntity.Description
@@ -102,6 +103,7 @@ func CreateTaskReqToValueObject(
 		}
 	}
 	return valueobjects.NewCreateTask(
+		userId,
 		parentTaskIdInt64,
 		req.Name,
 		req.Description,
@@ -255,6 +257,7 @@ func CheckItemEntityToGetRes(e *entities.CheckItem) *types.GetCheckItemRes {
 	return &types.GetCheckItemRes{
 		Id:          strconv.FormatInt(e.Id, 10),
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		UserId:      strconv.FormatInt(e.UserId, 10),
 		Name:        e.Name,
 		Description: e.Description,
 		IsDone:      e.IsDone,
@@ -276,6 +279,7 @@ func CheckItemEntityToCreateRes(e *entities.CheckItem) *types.CreateCheckItemRes
 	return &types.CreateCheckItemRes{
 		Id:          strconv.FormatInt(e.Id, 10),
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		UserId:      strconv.FormatInt(e.UserId, 10),
 		Name:        e.Name,
 		Description: e.Description,
 		IsDone:      e.IsDone,
@@ -319,6 +323,7 @@ func CommentEntityToRes(e *entities.Comment) *types.CommentRes {
 	return &types.CommentRes{
 		Id:          strconv.FormatInt(e.Id, 10),
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
+		UserId:      strconv.FormatInt(e.UserId, 10),
 		Content:     e.Content,
 		Attachments: e.Attachments,
 		IsTopUp:     e.IsTopUp,

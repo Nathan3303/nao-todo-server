@@ -7,15 +7,13 @@ import (
 )
 
 // CreateTagValueObjectToModel 创建标签值对象转换为标签模型
-// @param userId 用户ID
 // @param createTagValueObject 创建标签值对象
 // @return models.Tag 标签模型
 func CreateTagValueObjectToModel(
-	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
 ) *models.Tag {
 	return &models.Tag{
-		UserId:      userId,
+		UserId:      createTagValueObject.UserId,
 		Name:        createTagValueObject.Name,
 		Description: createTagValueObject.Description,
 		Color:       createTagValueObject.Color,
@@ -24,15 +22,13 @@ func CreateTagValueObjectToModel(
 }
 
 // UpdateTagValueObjectToModel 更新标签值对象转换为标签模型
-// @param userId 用户ID
 // @param updateTagValueObject 更新标签值对象
 // @return models.Tag 标签模型
 func UpdateTagValueObjectToModel(
-	userId int64,
 	updateTagValueObject *valueobjects.UpdateTag,
 ) *models.Tag {
 	m := &models.Tag{}
-	m.UserId = userId
+	m.UserId = updateTagValueObject.UserId
 	if updateTagValueObject.Name != nil {
 		m.Name = *updateTagValueObject.Name
 	}

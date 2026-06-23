@@ -8,6 +8,7 @@ import (
 
 // 创建标签值对象
 type CreateTag struct {
+	UserId      int64
 	Name        string
 	Description string
 	Color       string
@@ -41,8 +42,9 @@ func (createTag *CreateTag) Validate() error {
 // @param color 标签颜色
 // @return *CreateTag 创建标签值对象
 // @return error 校验失败返回错误，否则返回 nil
-func NewCreateTag(name, description, color string) (*CreateTag, error) {
+func NewCreateTag(userId int64, name, description, color string) (*CreateTag, error) {
 	vo := &CreateTag{
+		UserId:      userId,
 		Name:        name,
 		Description: description,
 		Color:       color,

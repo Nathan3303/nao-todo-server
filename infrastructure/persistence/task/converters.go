@@ -11,15 +11,13 @@ import (
 )
 
 // 创建任务值对象转换为任务模型
-// @param userId 用户ID
 // @param createTaskValueObject 创建任务值对象
 // @return 任务模型
 func CreateTaskValueObjectToModel(
-	userId int64,
 	createTaskValueObject *valueobjects.CreateTask,
 ) *models.Task {
 	return &models.Task{
-		UserId:         userId,
+		UserId:         createTaskValueObject.UserId,
 		ProjectId:      createTaskValueObject.ProjectId,
 		Name:           createTaskValueObject.Name,
 		Description:    createTaskValueObject.Description,

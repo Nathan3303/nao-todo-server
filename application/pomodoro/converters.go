@@ -35,6 +35,7 @@ func CreatePomodoroReqToVO(userId int64, req *types.CreatePomodoroReq) (*valueob
 func PomodoroEntityToCreateRes(e *entities.Pomodoro) *types.CreatePomodoroRes {
 	return &types.CreatePomodoroRes{
 		Id:          strconv.FormatInt(e.Id, 10),
+		UserId:      strconv.FormatInt(e.UserId, 10),
 		SessionId:   e.SessionId,
 		Type:        e.Type,
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
@@ -52,6 +53,7 @@ func PomodoroEntityToCreateRes(e *entities.Pomodoro) *types.CreatePomodoroRes {
 func PomodoroEntityToGetRes(e *entities.Pomodoro) *types.GetPomodoroRes {
 	return &types.GetPomodoroRes{
 		Id:          strconv.FormatInt(e.Id, 10),
+		UserId:      strconv.FormatInt(e.UserId, 10),
 		SessionId:   e.SessionId,
 		Type:        e.Type,
 		TaskId:      strconv.FormatInt(e.TaskId, 10),

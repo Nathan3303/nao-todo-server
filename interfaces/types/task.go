@@ -3,6 +3,7 @@ package types
 // GetTaskRes 获取任务响应
 type GetTaskRes struct {
 	Id             string   `json:"id"`
+	UserId         string   `json:"userId"`
 	ParentTaskId   string   `json:"parentTaskId"`
 	Name           string   `json:"name"`
 	Description    string   `json:"description"`

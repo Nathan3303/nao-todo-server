@@ -59,7 +59,7 @@ func (tagRepo *TagRepositoryImpl) Create(
 	createTagValueObject *valueobjects.CreateTag,
 ) (*entities.Tag, error) {
 	// 1. 转换标签实体为模型
-	createValue := CreateTagValueObjectToModel(userId, createTagValueObject)
+	createValue := CreateTagValueObjectToModel(createTagValueObject)
 	// 2. 插入数据库
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).Create(createValue)
 	if tx.Error != nil {

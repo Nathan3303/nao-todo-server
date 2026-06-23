@@ -8,6 +8,7 @@ import (
 
 // UpdateComment 更新评论 Value Object
 type UpdateComment struct {
+	UserId      int64
 	Content     *string
 	Attachments *[]string
 	IsTopUp     *bool

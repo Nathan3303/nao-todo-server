@@ -13,6 +13,7 @@ import (
 func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 	res := &types.GetTagRes{}
 	res.Id = strconv.FormatInt(tagEntity.Id, 10)
+	res.UserId = strconv.FormatInt(tagEntity.UserId, 10)
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
 	res.Color = tagEntity.Color
@@ -25,8 +26,9 @@ func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 // 创建标签请求体转换值对象
 // @param createTagReq 创建标签请求体
 // @return 创建标签值对象
-func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.CreateTag, error) {
+func CreateTagReqToValueObject(userId int64, createTagReq *types.CreateTagReq) (*valueobjects.CreateTag, error) {
 	return valueobjects.NewCreateTag(
+		userId,
 		createTagReq.Name,
 		createTagReq.Description,
 		createTagReq.Color,
@@ -39,6 +41,7 @@ func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.
 func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
 	res := &types.CreateTagRes{}
 	res.Id = strconv.FormatInt(tagEntity.Id, 10)
+	res.UserId = strconv.FormatInt(tagEntity.UserId, 10)
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
 	res.Color = tagEntity.Color
@@ -79,6 +82,7 @@ func TagPreferenceEntityToGetRes(
 ) *types.GetTagPreferenceRes {
 	return &types.GetTagPreferenceRes{
 		Id:         strconv.FormatInt(tagPreferenceEntity.Id, 10),
+		UserId:     strconv.FormatInt(tagPreferenceEntity.UserId, 10),
 		TagId:      strconv.FormatInt(tagPreferenceEntity.TagId, 10),
 		ViewType:   tagPreferenceEntity.ViewType,
 		GetOptions: tagPreferenceEntity.GetOptions,

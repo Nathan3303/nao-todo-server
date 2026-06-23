@@ -8,6 +8,7 @@ import (
 
 // UpdateCheckItem 更新事件值对象
 type UpdateCheckItem struct {
+	UserId      int64
 	Name        *string
 	Description *string
 	IsDone      *bool

@@ -9,6 +9,7 @@ import (
 // 批量更新任务清单值对象
 type BatchUpdateProject struct {
 	Id          int64
+	UserId      int64
 	Name        *string
 	Description *string
 	SortId      *uint16

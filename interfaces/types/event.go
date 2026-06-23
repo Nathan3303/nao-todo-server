@@ -5,6 +5,7 @@ import "time"
 type GetCheckItemRes struct {
 	Id          string    `json:"id"`
 	TaskId      string    `json:"taskId"`
+	UserId      string    `json:"userId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	IsDone      bool      `json:"isDone"`
@@ -22,6 +23,7 @@ type CreateCheckItemReq struct {
 type CreateCheckItemRes struct {
 	Id          string    `json:"id"`
 	TaskId      string    `json:"taskId"`
+	UserId      string    `json:"userId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	IsDone      bool      `json:"isDone"`

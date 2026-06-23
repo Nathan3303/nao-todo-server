@@ -9,6 +9,7 @@ import (
 // BatchUpdateCheckItem 批量更新事件值对象
 type BatchUpdateCheckItem struct {
 	Id          int64
+	UserId      int64
 	Name        *string
 	Description *string
 	IsDone      *bool

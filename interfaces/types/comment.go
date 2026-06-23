@@ -3,6 +3,7 @@ package types
 type CommentRes struct {
 	Id          string   `json:"id"`
 	TaskId      string   `json:"taskId"`
+	UserId      string   `json:"userId"`
 	Content     string   `json:"content"`
 	Attachments []string `json:"attachments"`
 	IsTopUp     bool     `json:"isTopUp"`

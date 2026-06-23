@@ -4,6 +4,7 @@ import "time"
 
 type GetTagRes struct {
 	Id          string    `json:"id"`
+	UserId      string    `json:"userId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Color       string    `json:"color"`
@@ -14,6 +15,7 @@ type GetTagRes struct {
 
 type GetTagPreferenceRes struct {
 	Id         string    `json:"id"`
+	UserId     string    `json:"userId"`
 	TagId      string    `json:"tagId"`
 	ViewType   string    `json:"viewType"`
 	GetOptions string    `json:"getTasksOptions"`
@@ -30,6 +32,7 @@ type CreateTagReq struct {
 
 type CreateTagRes struct {
 	Id          string    `json:"id"`
+	UserId      string    `json:"userId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Color       string    `json:"color"`

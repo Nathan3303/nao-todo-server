@@ -43,6 +43,7 @@ func (d *TaskDomainImpl) Copy(ctx context.Context, userId int64, taskId int64) (
 		return nil, err
 	}
 	createTaskVO, err := valueobjects.NewCreateTask(
+		userId,
 		0,
 		existingTask.Name+"的复制",
 		existingTask.Description,
