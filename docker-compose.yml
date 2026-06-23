@@ -95,6 +95,25 @@ services:
             - naotodo-backend
         restart: unless-stopped
 
+    nginx:
+        image: nginx:stable-alpine
+        container_name: naotodo-nginx
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /opt/nao-todo-server/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:ro
+            - /opt/nao-todo-server/nginx/ssl:/etc/nginx/ssl:ro
+            - /opt/nao-todo-server/nginx/logs:/var/log/nginx
+        depends_on:
+            - app
+        mem_limit: 64m
+        memswap_limit: 64m
+        cpus: 0.25
+        networks:
+            - naotodo-backend
+        restart: unless-stopped
+
 volumes:
     mysql-data:
         driver: local

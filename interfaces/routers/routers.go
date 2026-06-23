@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"naotodoserver/infrastructure/logging"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 	"time"
@@ -25,6 +26,12 @@ func InitRouters() *gin.Engine {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
+		AllowOriginFunc: func(origin string) bool {
+			logging.Logger.
+				WithFields(map[string]any{"origin": origin}).
+				Info("CORS 允许来源")
+			return true
+		},
 	}))
 
 	// 配置静态文件服务器

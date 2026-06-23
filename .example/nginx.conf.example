@@ -1,0 +1,57 @@
+##
+# Docker 部署方式：
+#   1. mkdir -p /opt/nao-todo-server/nginx/{conf,ssl,logs}
+#   2. cp .example/nginx.conf.example /opt/nao-todo-server/nginx/conf/nginx.conf
+#   3. 编辑替换 your-domain.com 为实际域名
+#   4. 放置 SSL 证书到 /opt/nao-todo-server/nginx/ssl/
+#   5. docker compose up -d nginx
+#
+# 宿主机部署方式（不使用 Docker nginx 服务时）：
+#   sudo mkdir -p /etc/nginx/ssl
+#   cp -r your-key-and-pem-files /etc/nginx/ssl
+#   sudo chmod 600 /etc/nginx/ssl/*.key
+#   sudo cp nginx.conf.example /etc/nginx/sites-available/xxx
+#   sudo ln -s /etc/nginx/sites-available/xxx /etc/nginx/sites-enabled/
+#   sudo nginx -t && systemctl reload nginx
+
+
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name your-domain.com;
+
+    ssl_certificate     /etc/nginx/ssl/your-domain.com.pem;
+    ssl_certificate_key /etc/nginx/ssl/your-domain.com.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    location ^~ /api {
+        proxy_pass http://app:3302;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ^~ /static/uploads {
+        proxy_pass http://app:3302;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+
+##
+# Docker 部署验证：
+#   docker compose up -d nginx && docker compose logs nginx
+#
+# 宿主机部署验证：
+#   sudo nginx -t && systemctl reload nginx
