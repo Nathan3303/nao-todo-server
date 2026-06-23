@@ -1,10 +1,14 @@
 ##
-# Docker 部署方式：
+# Docker 部署方式（生产环境，启用 HTTPS）：
 #   1. mkdir -p /opt/nao-todo-server/nginx/{conf,ssl,logs}
 #   2. cp .example/nginx.conf.example /opt/nao-todo-server/nginx/conf/nginx.conf
 #   3. 编辑替换 your-domain.com 为实际域名
 #   4. 放置 SSL 证书到 /opt/nao-todo-server/nginx/ssl/
-#   5. docker compose up -d nginx
+#   5. docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# 开发环境（不部署 Nginx，直接访问 app 端口）：
+#   docker compose up -d
+#   访问 http://localhost:3302
 #
 # 宿主机部署方式（不使用 Docker nginx 服务时）：
 #   sudo mkdir -p /etc/nginx/ssl
@@ -50,8 +54,9 @@ server {
 
 
 ##
-# Docker 部署验证：
-#   docker compose up -d nginx && docker compose logs nginx
+# Docker 部署验证（生产环境）：
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs nginx
 #
 # 宿主机部署验证：
 #   sudo nginx -t && systemctl reload nginx
