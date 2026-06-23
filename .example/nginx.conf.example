@@ -1,62 +1,140 @@
-##
-# Docker 部署方式（生产环境，启用 HTTPS）：
-#   1. mkdir -p /opt/nao-todo-server/nginx/{conf,ssl,logs}
-#   2. cp .example/nginx.conf.example /opt/nao-todo-server/nginx/conf/naotodo.conf
-#   3. 编辑替换 your-domain.com 为实际域名
-#   4. 放置 SSL 证书到 /opt/nao-todo-server/nginx/ssl/
-#   5. docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# =============================================================================
+# Nao Todo Server - nginx.conf
+# 替换镜像内原有 nginx.conf，适用于 nginx:stable-alpine 容器
 #
-# 开发环境（不部署 Nginx，直接访问 app 端口）：
-#   docker compose up -d
-#   访问 http://localhost:3302
+# 前置条件（docker-compose volumes 挂载）:
+#   /etc/nginx/conf.d/*.sub.conf  <- 具体 server 块
+#   /etc/nginx/ssl                <- 证书文件
+#   /var/log/nginx                <- 日志目录
 #
-# 宿主机部署方式（不使用 Docker nginx 服务时）：
-#   sudo mkdir -p /etc/nginx/ssl
-#   cp -r your-key-and-pem-files /etc/nginx/ssl
-#   sudo chmod 600 /etc/nginx/ssl/*.key
-#   sudo cp nginx.conf.example /etc/nginx/sites-available/xxx
-#   sudo ln -s /etc/nginx/sites-available/xxx /etc/nginx/sites-enabled/
-#   sudo nginx -t && systemctl reload nginx
+# 注意: 编译镜像时替换本文件，或通过 docker-compose volumes 挂载到
+#       /etc/nginx/nginx.conf 覆盖默认配置。
+#       server 块在单独的 .sub.conf 文件中配置，通过 include 引入。
+# =============================================================================
 
+# ─── 运行用户 ───
+user nginx;
 
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$host$request_uri;
+# ─── Worker 进程 ───
+# auto: 自动检测 CPU 核心数（受 cpuset / cpus 限制约束）
+worker_processes auto;
+
+# ─── 错误日志 ───
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+# ─── 事件模块 ───
+events {
+    # 每个 worker 最大并发连接数
+    worker_connections 2048;
+
+    # Linux 高性能 I/O 模型（容器内也是 Linux 内核）
+    use epoll;
+
+    # 允许 worker 同时接受多个新连接
+    multi_accept on;
 }
 
-server {
-    listen 443 ssl;
-    server_name your-domain.com;
+# ─── HTTP 模块 ───
+http {
+    # ── 基础配置 ──
+    include      /etc/nginx/mime.types;
+    default_type application/octet-stream;
 
-    ssl_certificate     /etc/nginx/ssl/your-domain.com.pem;
-    ssl_certificate_key /etc/nginx/ssl/your-domain.com.key;
+    # ── 日志格式 ──
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for" '
+                    'rt=$request_time uct=$upstream_connect_time '
+                    'uht=$upstream_header_time urt=$upstream_response_time';
 
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
+    access_log /var/log/nginx/access.log main buffer=32k flush=5s;
 
-    location ^~ /api {
-        proxy_pass http://app:3302;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    # ═══════════════════════════════════════════════════════════════
+    # 性能优化
+    # ═══════════════════════════════════════════════════════════════
 
-    location ^~ /static/uploads {
-        proxy_pass http://app:3302;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    # sendfile: 零拷贝文件传输，避免内核态/用户态切换
+    sendfile on;
+
+    # tcp_nopush: 配合 sendfile，在数据包达到最大前不发送，减少碎片
+    tcp_nopush on;
+
+    # tcp_nodelay: 禁用 Nagle 算法，小数据包即时发送（对 API 响应关键）
+    tcp_nodelay on;
+
+    # ── 连接超时 ──
+    keepalive_timeout  65;
+    keepalive_requests 1000;
+
+    # 客户端超时
+    client_header_timeout  15s;
+    client_body_timeout    15s;
+    send_timeout           15s;
+
+    # 上游（后端 Go 服务）超时
+    proxy_connect_timeout   10s;
+    proxy_send_timeout      10s;
+    proxy_read_timeout      10s;
+
+    # 超时连接立即复位，释放资源
+    reset_timedout_connection on;
+
+    # ── 缓冲区优化 ──
+    client_body_buffer_size       128k;
+    client_max_body_size           20m;   # 上传文件上限，与 Go 服务保持一致
+    client_header_buffer_size       1k;
+    large_client_header_buffers     4 8k;
+
+    # 代理缓冲区
+    proxy_buffer_size          4k;
+    proxy_buffers             16 16k;
+    proxy_busy_buffers_size    64k;
+    proxy_temp_file_write_size 64k;
+    proxy_temp_path  /var/cache/nginx/proxy_temp;
+
+    # ── 文件打开缓存 ──
+    open_file_cache          max=2000 inactive=30s;
+    open_file_cache_valid    60s;
+    open_file_cache_min_uses 3;
+    open_file_cache_errors   off;
+
+    # ═══════════════════════════════════════════════════════════════
+    # Gzip 压缩
+    # ═══════════════════════════════════════════════════════════════
+    gzip on;
+    gzip_vary on;                    # 响应头 Vary: Accept-Encoding
+    gzip_proxied any;                # 所有代理请求均压缩
+    gzip_comp_level 6;               # 默认级别（1-9），性价比最优
+    gzip_min_length 256;             # 小于 256 字节不压缩（收益为负）
+    gzip_disable "msie6";            # 兼容旧浏览器
+    gzip_http_version 1.1;
+
+    # 压缩的 MIME 类型（只压缩文本类，图片/视频本身已压缩）
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/x-javascript
+        application/xml
+        application/xml+rss
+        application/protobuf
+        image/svg+xml
+        image/x-icon
+        font/ttf
+        font/otf
+        font/x-woff;
+
+    # ═══════════════════════════════════════════════════════════════
+    # 安全相关
+    # ═══════════════════════════════════════════════════════════════
+
+    # 隐藏 nginx 版本号
+    server_tokens off;
+
+    # ── 子配置引入（server 块等具体配置在单独的 .sub.conf 中） ──
+    include /etc/nginx/conf.d/*.sub.conf;
 }
-
-
-##
-# Docker 部署验证（生产环境）：
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs nginx
-#
-# 宿主机部署验证：
-#   sudo nginx -t && systemctl reload nginx

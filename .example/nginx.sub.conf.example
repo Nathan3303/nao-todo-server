@@ -1,0 +1,146 @@
+##
+# Docker 部署方式（生产环境，启用 HTTPS）：
+#   1. mkdir -p /opt/nao-todo-server/nginx/{conf,ssl,logs}
+#   2. cp .example/nginx.sub.conf.example /opt/nao-todo-server/nginx/conf/naotodo.sub.conf
+#   3. 编辑替换 your-domain.com 为实际域名
+#   4. 放置 SSL 证书到 /opt/nao-todo-server/nginx/ssl/
+#   5. docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# 开发环境（不部署 Nginx，直接访问 app 端口）：
+#   docker compose up -d
+#   访问 http://localhost:3302
+#
+# 宿主机部署方式（不使用 Docker nginx 服务时）：
+#   sudo mkdir -p /etc/nginx/ssl
+#   cp -r your-key-and-pem-files /etc/nginx/ssl
+#   sudo chmod 600 /etc/nginx/ssl/*.key
+#   sudo cp nginx.sub.conf.example /etc/nginx/sites-available/xxx
+#   sudo ln -s /etc/nginx/sites-available/xxx /etc/nginx/sites-enabled/
+#   sudo nginx -t && systemctl reload nginx
+
+
+# ─── HTTP → HTTPS 强制跳转 ───
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Let's Encrypt ACME 证书验证（可不配，但预留无妨）
+    location /.well-known/acme-challenge/ {
+        root /var/www/acme;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+
+# ─── HTTPS 服务 ───
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    # ═══════════════════════════════════════════════════════════
+    # SSL 证书
+    # ═══════════════════════════════════════════════════════════
+    ssl_certificate     /etc/nginx/ssl/your-domain.com.pem;
+    ssl_certificate_key /etc/nginx/ssl/your-domain.com.key;
+
+    # ── 协议与加密套件 ──
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    # ── Session 缓存（复用握手，减少延迟） ──
+    ssl_session_timeout 1d;
+    ssl_session_cache   shared:SSL:50m;
+    ssl_session_tickets off;
+
+    # ── 安全响应头 ──
+    add_header X-Frame-Options          SAMEORIGIN                          always;
+    add_header X-Content-Type-Options   nosniff                             always;
+    add_header X-XSS-Protection        "1; mode=block"                     always;
+    add_header Referrer-Policy         "strict-origin-when-cross-origin"    always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # ═══════════════════════════════════════════════════════════
+    # API 反向代理
+    # ═══════════════════════════════════════════════════════════
+    location ^~ /api {
+        proxy_pass http://app:3302;
+
+        # 长连接 + WebSocket 支持
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+
+        # 透传客户端信息
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Port  $server_port;
+
+        # API 响应不缓存
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # ── 健康检查（独立 location，关闭 access_log 减少噪音） ──
+    location = /api/ping {
+        access_log off;
+        proxy_pass http://app:3302;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ═══════════════════════════════════════════════════════════
+    # 静态资源（用户上传文件）
+    # ═══════════════════════════════════════════════════════════
+    # 当前配置：通过 Go 服务代理（nginx 容器未挂载 uploads 卷）
+    #
+    # 若想 nginx 直接服务静态文件（性能更优），在 docker-compose 中
+    # 为 nginx 服务添加 volumes:
+    #   - app-uploads-data:/app/uploads:ro
+    # 然后取消下方 alias 段的注释，注释掉 proxy 段。
+    location ^~ /static/uploads {
+        proxy_pass http://app:3302;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 直接服务静态文件（需挂载 uploads 卷）：
+        # alias /app/uploads/;
+        # expires 30d;
+        # add_header Cache-Control "public, immutable";
+        # access_log off;
+
+        # 禁止访问隐藏文件和目录遍历
+        location ~ /\. {
+            deny all;
+            return 404;
+        }
+    }
+
+    # ── 错误页面 ──
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+
+
+##
+# Docker 部署验证（生产环境）：
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs nginx
+#
+# 宿主机部署验证：
+#   sudo nginx -t && systemctl reload nginx
