@@ -17,6 +17,6 @@ COPY --from=builder /app/naotodoserver .
 COPY --from=builder /app/conf ./conf
 COPY --from=builder /app/infrastructure/ip2region ./infrastructure/ip2region
 
-EXPOSE 3302
+EXPOSE 443
 
 CMD ["./naotodoserver"]

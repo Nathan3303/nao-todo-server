@@ -1,11 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"naotodoserver/conf"
 	"naotodoserver/infrastructure"
 	"naotodoserver/interfaces/routers"
+	"net/http"
 	"runtime"
+	"time"
 )
 
 func main() {
@@ -26,10 +29,37 @@ func main() {
 
 	// @step 3. 加载路由
 	router := routers.InitRouters()
-	err := router.Run(
-		fmt.Sprintf("%s:%s", conf.Conf.Server.Ip, conf.Conf.Server.Port),
-	)
-	if err != nil {
-		panic("服务器启动失败 - " + err.Error())
+
+	addr := fmt.Sprintf("%s:%s", conf.Conf.Server.Ip, conf.Conf.Server.Port)
+
+	// @step 4. 根据是否配置 TLS 证书，选择 HTTPS 或 HTTP 启动
+	if conf.Conf.Server.CertFile != "" && conf.Conf.Server.KeyFile != "" {
+		tlsConfig := &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			},
+		}
+		srv := &http.Server{
+			Addr:         addr,
+			Handler:      router,
+			TLSConfig:    tlsConfig,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		}
+		if err := srv.ListenAndServeTLS(conf.Conf.Server.CertFile, conf.Conf.Server.KeyFile); err != nil {
+			panic("HTTPS 服务器启动失败 - " + err.Error())
+		}
+	} else {
+		// 开发环境：纯 HTTP
+		if err := router.Run(addr); err != nil {
+			panic("HTTP 服务器启动失败 - " + err.Error())
+		}
 	}
 }

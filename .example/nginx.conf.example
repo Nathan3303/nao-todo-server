@@ -1,5 +1,8 @@
 # =============================================================================
 # Nao Todo Server - nginx.conf
+# 注意：当前项目已默认不启用 Nginx，Go 直接处理 HTTPS（使用 ListenAndServeTLS）。
+#       本配置文件仅作为需要在 Nginx 前再加一层反向代理时的参考。
+#
 # 替换镜像内原有 nginx.conf，适用于 nginx:stable-alpine 容器
 #
 # 前置条件（docker-compose volumes 挂载）:

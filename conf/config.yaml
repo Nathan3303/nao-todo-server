@@ -1,9 +1,11 @@
 server:
     ip:
-    port: 3302
+    port: 443
     version: 1.0
     jwtSecret: jwt@naotodo-test.secret
-    goMaxProc: 1
+    goMaxProc: 2
+    certFile: /etc/nginx/ssl/server.crt
+    keyFile: /etc/nginx/ssl/server.key
 
 mysql:
     host: localhost

@@ -55,10 +55,11 @@ services:
             dockerfile: Dockerfile
         container_name: naotodo-server
         ports:
-            - "3302:3302"
+            - "443:443"
         volumes:
             - app-uploads-data:/app/uploads
             - app-logs-data:/app/logs
+            - app-ssl-certs:/app/ssl:ro
         environment:
             - MYSQL_HOST=mysql
             - MYSQL_PORT=${MYSQL_PORT}
@@ -73,6 +74,8 @@ services:
             - TZ=Asia/Shanghai
             - GOMAXPROCS=2
             - GOMEMLIMIT=400MiB # Go 1.19+ 的内存软限制，防止 OOM
+            - TLS_CERT_FILE=/etc/nginx/ssl/server.crt
+            - TLS_KEY_FILE=/etc/nginx/ssl/server.key
         depends_on:
             mysql:
                 condition: service_healthy
@@ -81,26 +84,6 @@ services:
         mem_limit: 512m
         memswap_limit: 512m # 禁用 swap，避免性能抖动
         cpus: 0.75
-        networks:
-            - naotodo-backend
-        restart: unless-stopped
-
-    nginx:
-        image: nginx:stable-alpine
-        container_name: naotodo-nginx
-        ports:
-            - "80:80"
-            - "443:443"
-        volumes:
-            - nginx-conf:/etc/nginx/conf.d:ro
-            - /opt/nao-todo-server/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:ro
-            - nginx-ssl:/etc/nginx/ssl:ro
-            - nginx-logs:/var/log/nginx
-        depends_on:
-            - app
-        mem_limit: 64m
-        memswap_limit: 64m
-        cpus: 0.25
         networks:
             - naotodo-backend
         restart: unless-stopped
@@ -130,24 +113,12 @@ volumes:
             type: none
             o: bind
             device: /opt/nao-todo-server/app/logs
-    nginx-conf:
+    app-ssl-certs:
         driver: local
         driver_opts:
             type: none
             o: bind
-            device: /opt/nao-todo-server/nginx/conf
-    nginx-ssl:
-        driver: local
-        driver_opts:
-            type: none
-            o: bind
-            device: /opt/nao-todo-server/nginx/ssl
-    nginx-logs:
-        driver: local
-        driver_opts:
-            type: none
-            o: bind
-            device: /opt/nao-todo-server/nginx/logs
+            device: /opt/nao-todo-server/app/ssl
 
 networks:
     naotodo-backend:

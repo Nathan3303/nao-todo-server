@@ -40,6 +40,8 @@ type Server struct {
 	Version   string `yaml:"version"`
 	JwtSecret string `yaml:"jwtSecret"`
 	GoMaxProc int    `yaml:"goMaxProc"`
+	CertFile  string `yaml:"certFile"`  // TLS 证书路径（空=HTTP）
+	KeyFile   string `yaml:"keyFile"`   // TLS 私钥路径（空=HTTP）
 }
 
 type MySQL struct {
@@ -118,5 +120,11 @@ func overrideWithEnv() {
 
 	if env := os.Getenv("JWT_SECRET"); env != "" {
 		Conf.Server.JwtSecret = env
+	}
+	if env := os.Getenv("TLS_CERT_FILE"); env != "" {
+		Conf.Server.CertFile = env
+	}
+	if env := os.Getenv("TLS_KEY_FILE"); env != "" {
+		Conf.Server.KeyFile = env
 	}
 }

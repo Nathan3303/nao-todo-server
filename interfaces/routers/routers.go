@@ -7,12 +7,32 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
+
+// securityHeaders 设置安全响应头（替代 nginx add_header）
+func securityHeaders() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Header("X-Frame-Options", "SAMEORIGIN")
+		ctx.Header("X-Content-Type-Options", "nosniff")
+		ctx.Header("X-XSS-Protection", "1; mode=block")
+		ctx.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		ctx.Next()
+	}
+}
 
 func InitRouters() *gin.Engine {
 	// 创建 Gin 默认配置引擎
 	router := gin.Default()
+
+	// 安全响应头（替代 nginx add_header）
+	router.Use(securityHeaders())
+
+	// 添加 Gzip 压缩（排除 SSE 路径，避免缓冲破坏实时推送）
+	router.Use(gzip.Gzip(gzip.DefaultCompression,
+		gzip.WithExcludedPaths([]string{"/api/sse/"}),
+	))
 
 	// 添加 CORS 中间件
 	router.Use(cors.New(cors.Config{

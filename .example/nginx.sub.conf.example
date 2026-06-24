@@ -1,14 +1,15 @@
 ##
+# 注意：当前项目已默认不启用 Nginx，Go 直接处理 HTTPS。
+#       本文件仅作为需要在 Nginx 前再加一层反向代理时的参考。
+#
 # Docker 部署方式（生产环境，启用 HTTPS）：
 #   1. mkdir -p /opt/nao-todo-server/nginx/{conf,ssl,logs}
 #   2. cp .example/nginx.sub.conf.example /opt/nao-todo-server/nginx/conf/naotodo.sub.conf
 #   3. 编辑替换 your-domain.com 为实际域名
 #   4. 放置 SSL 证书到 /opt/nao-todo-server/nginx/ssl/
-#   5. docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   5. 启动 docker compose（需自行添加 nginx 服务）
 #
-# 开发环境（不部署 Nginx，直接访问 app 端口）：
-#   docker compose up -d
-#   访问 http://localhost:3302
+# 开发环境：直接访问 app 端口，无需 Nginx
 #
 # 宿主机部署方式（不使用 Docker nginx 服务时）：
 #   sudo mkdir -p /etc/nginx/ssl

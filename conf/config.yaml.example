@@ -3,6 +3,10 @@ server:
     port: 3000
     version: 1.0
     jwtSecret: "todolist-dddd"
+    goMaxProc: 2
+    # TLS 证书路径。留空时使用 HTTP（开发环境），填路径时自动启用 HTTPS
+    certFile: ""
+    keyFile: ""
 
 mysql:
     host: 127.0.0.1
