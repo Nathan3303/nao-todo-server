@@ -74,8 +74,8 @@ services:
             - TZ=Asia/Shanghai
             - GOMAXPROCS=2
             - GOMEMLIMIT=400MiB # Go 1.19+ 的内存软限制，防止 OOM
-            - TLS_CERT_FILE=/etc/nginx/ssl/server.crt
-            - TLS_KEY_FILE=/etc/nginx/ssl/server.key
+            - TLS_CERT_FILE=/app/ssl/server.crt
+            - TLS_KEY_FILE=/app/ssl/server.key
         depends_on:
             mysql:
                 condition: service_healthy

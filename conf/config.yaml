@@ -4,8 +4,8 @@ server:
     version: 1.0
     jwtSecret: jwt@naotodo-test.secret
     goMaxProc: 2
-    certFile: /etc/nginx/ssl/server.crt
-    keyFile: /etc/nginx/ssl/server.key
+    certFile: /app/ssl/server.crt
+    keyFile: /app/ssl/server.key
 
 mysql:
     host: localhost
