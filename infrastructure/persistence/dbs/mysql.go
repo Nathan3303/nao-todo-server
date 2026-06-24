@@ -41,7 +41,7 @@ func InitMySQL() {
 
 	// @step 4. 设置链接属性
 	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetMaxOpenConns(30)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	// @step 5. 赋值数据库引用

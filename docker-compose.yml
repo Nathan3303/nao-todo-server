@@ -12,8 +12,8 @@ services:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
             - MYSQL_DATABASE=${MYSQL_DATABASE}
             - TZ=Asia/Shanghai
-        mem_limit: 512m
-        memswap_limit: 512m # 数据库禁用 swap，保证性能一致性
+        mem_limit: 768m
+        memswap_limit: 768m # 数据库禁用 swap，保证性能一致性
         cpus: 0.75
         networks:
             - naotodo-backend
@@ -71,15 +71,15 @@ services:
             - REDIS_DB=${REDIS_DB}
             - JWT_SECRET=${JWT_SECRET}
             - TZ=Asia/Shanghai
-            - GOMAXPROCS=1
+            - GOMAXPROCS=2
             - GOMEMLIMIT=400MiB # Go 1.19+ 的内存软限制，防止 OOM
         depends_on:
             mysql:
                 condition: service_healthy
             redis:
                 condition: service_healthy
-        mem_limit: 256m
-        memswap_limit: 256m # 禁用 swap，避免性能抖动
+        mem_limit: 512m
+        memswap_limit: 512m # 禁用 swap，避免性能抖动
         cpus: 0.75
         networks:
             - naotodo-backend

@@ -1,14 +1,16 @@
 [mysqld]
+performance_schema = OFF            # MySQL 8.x 默认开，关掉可省 70~100MB 内存
+
 # --- 基础与字符集 ---
 character-set-server=utf8mb4
 collation-server=utf8mb4_0900_ai_ci # 使用 MySQL 8.0+ 默认的高效排序规则
 init_connect='SET NAMES utf8mb4'
 
-# --- 核心内存控制 (适配 512MB 容器) ---
-innodb_buffer_pool_size = 200M      # 预留约 300MB 给线程、OS 及其他开销，防止 OOM
-innodb_buffer_pool_instances = 1    # 小内存环境保持 1 个实例即可
-max_connections = 50                # 严格控制最大连接数，防止内存被连接吃光
-thread_cache_size = 16              # 适当减小线程缓存，节省内存
+# --- 核心内存控制 (适配 768MB 容器) ---
+innodb_buffer_pool_size = 400M      # 2C2G 环境下提至 400M，缓存更多数据页降低查询延迟
+innodb_buffer_pool_instances = 2    # 400M 可分 2 个实例，提升并发
+max_connections = 30                # 与 Go 连接池 (MaxOpenConns=30) 对齐，防止连接超限
+thread_cache_size = 16
 
 # --- 写入与IO性能优化 ---
 innodb_flush_log_at_trx_commit = 2  # 每秒刷盘，大幅提升写入吞吐量

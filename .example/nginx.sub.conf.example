@@ -37,7 +37,8 @@ server {
 
 # ─── HTTPS 服务 ───
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name your-domain.com;
 
     # ═══════════════════════════════════════════════════════════
@@ -62,6 +63,34 @@ server {
     add_header X-XSS-Protection        "1; mode=block"                     always;
     add_header Referrer-Policy         "strict-origin-when-cross-origin"    always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # ═══════════════════════════════════════════════════════════
+    # SSE 长连接（必须放在 /api 之前，nginx 取最长前缀匹配）
+    # ═══════════════════════════════════════════════════════════
+    location ^~ /api/sse/ {
+        proxy_pass http://app:3302;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+
+        # 透传客户端信息
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Port  $server_port;
+
+        # SSE 长连接：禁用超时、禁用缓冲、禁用缓存
+        proxy_read_timeout 0;
+        proxy_buffering    off;
+        proxy_cache        off;
+        send_timeout       0;
+
+        # SSE 响应不缓存
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
 
     # ═══════════════════════════════════════════════════════════
     # API 反向代理

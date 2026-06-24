@@ -26,7 +26,13 @@ pid /var/run/nginx.pid;
 # ─── 事件模块 ───
 events {
     # 每个 worker 最大并发连接数
-    worker_connections 2048;
+    # Docker 默认 ulimit -n = 1024，超出会触发 warning。
+    # 若需更高并发，在 docker-compose.yml nginx 服务下添加：
+    #   ulimits:
+    #     nofile:
+    #       soft: 4096
+    #       hard: 4096
+    worker_connections 1024;
 
     # Linux 高性能 I/O 模型（容器内也是 Linux 内核）
     use epoll;
