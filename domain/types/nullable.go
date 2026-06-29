@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 // NullableTime 可空时间类型，用于 PATCH 语义：
 // - nil: 未提供（不更新）
@@ -46,4 +49,24 @@ func (nt *NullableTime) Value() (time.Time, bool) {
 		return time.Time{}, false
 	}
 	return nt.Time, true
+}
+
+// ToSqlNullTime 转换为 sql.NullTime
+func (nt *NullableTime) ToSqlNullTime() sql.NullTime {
+	if nt == nil || !nt.ShouldUpdate() || nt.IsSetToNull() {
+		return sql.NullTime{Valid: false}
+	}
+	time, _ := nt.Value()
+	return sql.NullTime{Time: time, Valid: true}
+}
+
+// ToString 转换为字符串
+func (nt *NullableTime) ToString(fmt string) string {
+	if nt == nil || !nt.ShouldUpdate() || nt.IsSetToNull() {
+		return ""
+	}
+	if fmt == "" {
+		fmt = time.RFC3339
+	}
+	return nt.Time.Format(fmt)
 }

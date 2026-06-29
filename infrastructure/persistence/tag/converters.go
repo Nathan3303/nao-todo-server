@@ -14,13 +14,13 @@ func CreateTagValueObjectToModel(
 	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
 ) *models.Tag {
-	return &models.Tag{
-		UserId:      userId,
-		Name:        createTagValueObject.Name,
-		Description: createTagValueObject.Description,
-		Color:       createTagValueObject.Color,
-		SortId:      createTagValueObject.SortId,
-	}
+	var m models.Tag
+	m.UserId = userId
+	m.Name = createTagValueObject.Name
+	m.Description = createTagValueObject.Description
+	m.Color = createTagValueObject.Color
+	m.SortId = createTagValueObject.SortId
+	return &m
 }
 
 // UpdateTagValueObjectToModel 更新标签值对象转换为标签模型
@@ -51,8 +51,8 @@ func UpdateTagValueObjectToModel(
 // @return map[string]any 标签更新值对象 map
 func UpdateTagValueObjectToMap(
 	updateTagValueObject *valueobjects.UpdateTag,
-) map[string]interface{} {
-	updateMap := make(map[string]interface{})
+) map[string]any {
+	updateMap := make(map[string]any)
 	if updateTagValueObject.Name != nil {
 		updateMap["Name"] = *updateTagValueObject.Name
 	}
@@ -74,12 +74,12 @@ func UpdateTagValueObjectToMap(
 func TagEntity2Model(e *entities.Tag) *models.Tag {
 	m := &models.Tag{}
 	m.ID = e.Id
+	m.CreatedAt = e.CreatedAt
+	m.UpdatedAt = e.UpdatedAt
 	m.Name = e.Name
 	m.Description = e.Description
 	m.Color = e.Color
 	m.SortId = e.SortId
-	m.CreatedAt = e.CreatedAt
-	m.UpdatedAt = e.UpdatedAt
 	return m
 }
 
@@ -120,7 +120,7 @@ func TagModel2Entity(m *models.Tag) *entities.Tag {
 	return e
 }
 
-// TagPreferenceModel2VO 标签偏好模型转换为标签偏好值对象
+// TagPreferenceModel2Entity 标签偏好模型转换为标签偏好实体
 // @param m 标签偏好模型
 // @return entities.TagPreference 标签偏好实体
 func TagPreferenceModel2Entity(m *models.TagPreference) *entities.TagPreference {

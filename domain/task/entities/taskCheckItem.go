@@ -2,45 +2,46 @@ package entities
 
 import (
 	"errors"
-	"time"
 
 	"naotodoserver/domain/textutils"
+	"naotodoserver/domain/types"
 )
 
-type CheckItem struct {
-	Id          int64
+// TaskCheckItem 检查项实体
+// 用于表示用户在系统中的检查项记录
+// 包含用户 ID、任务 ID、名称、描述、是否完成、排序 ID等属性
+type TaskCheckItem struct {
+	types.EntityBase
 	UserId      int64
 	TaskId      int64
 	Name        string
 	Description string
 	IsDone      bool
 	SortId      uint16
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
 }
 
 // MarkDone 标记为已完成
-func (ci *CheckItem) MarkDone() {
+func (ci *TaskCheckItem) MarkDone() {
 	ci.IsDone = true
 }
 
 // MarkUndone 标记为未完成
-func (ci *CheckItem) MarkUndone() {
+func (ci *TaskCheckItem) MarkUndone() {
 	ci.IsDone = false
 }
 
 // IsCompleted 是否已完成
-func (ci *CheckItem) IsCompleted() bool {
+func (ci *TaskCheckItem) IsCompleted() bool {
 	return ci.IsDone
 }
 
 // ToggleDone 切换完成状态
-func (ci *CheckItem) ToggleDone() {
+func (ci *TaskCheckItem) ToggleDone() {
 	ci.IsDone = !ci.IsDone
 }
 
 // Validate 校验实体自身不变性
-func (ci *CheckItem) Validate() error {
+func (ci *TaskCheckItem) Validate() error {
 	if ci.Id <= 0 {
 		return errors.New("ID 无效")
 	}

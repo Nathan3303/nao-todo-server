@@ -5,9 +5,10 @@ import (
 	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/interfaces/types"
 	"strconv"
+	"time"
 )
 
-// 创建任务清单请求体转换值对象
+// CreateProjectReqToValueObject 创建任务清单请求体转换值对象
 // @param userId 用户 ID
 // @param req 创建任务清单请求体
 // @return *valueobjects.CreateProject 创建任务清单值对象
@@ -27,23 +28,23 @@ func CreateProjectReqToValueObject(
 	return createProjectValueObject, nil
 }
 
-// 任务清单实体转换响应体
+// ProjectEntityToCreateRes 任务清单实体转换响应体
 // @param projectEntity 任务清单实体
 // @return *types.CreateProjectRes 创建任务清单响应体
 func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProjectRes {
-	return &types.CreateProjectRes{
-		Id:          strconv.FormatInt(projectEntity.Id, 10),
-		Name:        projectEntity.Name,
-		Description: projectEntity.Description,
-		ArchivedAt:  projectEntity.ArchivedAt,
-		CreatedAt:   projectEntity.CreatedAt,
-		UpdatedAt:   projectEntity.UpdatedAt,
-		DeactivedAt: projectEntity.DeactivedAt,
-		SortId:      projectEntity.SortId,
-	}
+	var res types.CreateProjectRes
+	res.Id = strconv.FormatInt(projectEntity.Id, 10)
+	res.Name = projectEntity.Name
+	res.Description = projectEntity.Description
+	res.ArchivedAt = projectEntity.ArchivedAt.ToString(time.RFC3339)
+	res.CreatedAt = projectEntity.CreatedAt
+	res.UpdatedAt = projectEntity.UpdatedAt
+	res.DeactivedAt = projectEntity.DeactivedAt.ToString(time.RFC3339)
+	res.SortId = projectEntity.SortId
+	return &res
 }
 
-// 任务清单实体转换响应体
+// ProjectEntityToGetRes 任务清单实体转换响应体
 // @param projectEntity 任务清单实体
 // @return *types.GetProjectRes 获取任务清单响应体
 func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes {
@@ -51,15 +52,15 @@ func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes
 		Id:          strconv.FormatInt(projectEntity.Id, 10),
 		Name:        projectEntity.Name,
 		Description: projectEntity.Description,
-		ArchivedAt:  projectEntity.ArchivedAt,
+		ArchivedAt:  projectEntity.ArchivedAt.ToString(time.RFC3339),
 		CreatedAt:   projectEntity.CreatedAt,
 		UpdatedAt:   projectEntity.UpdatedAt,
-		DeactivedAt: projectEntity.DeactivedAt,
+		DeactivedAt: projectEntity.DeactivedAt.ToString(time.RFC3339),
 		SortId:      projectEntity.SortId,
 	}
 }
 
-// 更新任务清单请求体转换值对象
+// UpdateProjectReqToValueObject 更新任务清单请求体转换值对象
 // @param updateProjectReq 更新任务清单请求体
 // @return *valueobjects.UpdateProject 更新任务清单值对象
 // @return error 验证失败返回错误，否则返回 nil
@@ -77,7 +78,7 @@ func UpdateProjectReqToValueObject(
 	return updateProjectValueObject, nil
 }
 
-// 任务清单实体列表转换响应体列表
+// EntitiesToGetResList 任务清单实体列表转换响应体列表
 // @param projectEntities 任务清单实体列表
 // @return []*types.GetProjectRes 任务清单响应体列表
 func EntitiesToGetResList(projectEntities []*entities.Project) []*types.GetProjectRes {
@@ -88,7 +89,7 @@ func EntitiesToGetResList(projectEntities []*entities.Project) []*types.GetProje
 	return getResList
 }
 
-// 批量更新任务清单请求体转换值对象
+// BatchUpdateProjectReqToValueObjects 批量更新任务清单请求体转换值对象
 // @param req 批量更新任务清单请求体
 // @return []*valueobjects.BatchUpdateProject 批量更新任务清单值对象列表
 // @return error 验证失败返回错误，否则返回 nil
@@ -110,7 +111,7 @@ func BatchUpdateProjectReqToValueObjects(
 	return batchVOs, nil
 }
 
-// 任务清单偏好实体转换响应体
+// ProjectPreferenceEntityToGetRes 任务清单偏好实体转换响应体
 // @param projectPreferenceEntity 任务清单偏好实体
 // @return *types.GetProjectPreferenceRes 获取任务清单偏好响应体
 func ProjectPreferenceEntityToGetRes(
@@ -127,7 +128,7 @@ func ProjectPreferenceEntityToGetRes(
 	}
 }
 
-// 更新任务清单偏好请求体转换值对象
+// UpdateProjectPreferenceReqToValueObject 更新任务清单偏好请求体转换值对象
 // @param updateProjectPreferenceReq 更新任务清单偏好请求体
 // @return *valueobjects.SaveProjectPreference 更新任务清单偏好值对象
 // @return error 验证失败返回错误，否则返回 nil

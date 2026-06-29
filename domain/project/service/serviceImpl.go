@@ -8,7 +8,7 @@ import (
 	"naotodoserver/domain/project/valueobjects"
 )
 
-// 创建任务清单领域服务实现
+// NewProjectDomain 创建任务清单领域服务实现
 func NewProjectDomain(
 	repo repositories.Project,
 	preferenceRepo repositories.ProjectPreference,
@@ -19,7 +19,7 @@ func NewProjectDomain(
 	}
 }
 
-// 创建任务清单
+// Create 创建任务清单
 func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
 	createProjectValueObject *valueobjects.CreateProject,
@@ -54,7 +54,7 @@ func (p *ProjectDomainImpl) Create(
 	return projectEntity, nil
 }
 
-// 根据用户ID和任务清单ID获取任务清单
+// GetById 根据用户ID和任务清单ID获取任务清单
 func (p *ProjectDomainImpl) GetById(
 	ctx context.Context,
 	userId int64,
@@ -63,7 +63,7 @@ func (p *ProjectDomainImpl) GetById(
 	return p.repo.GetById(ctx, userId, projectId)
 }
 
-// 更新任务清单
+// Update 更新任务清单
 func (p *ProjectDomainImpl) Update(
 	ctx context.Context,
 	userId int64,
@@ -73,7 +73,7 @@ func (p *ProjectDomainImpl) Update(
 	return p.repo.Update(ctx, userId, projectId, updateProjectValueObject)
 }
 
-// 删除任务清单
+// Delete 删除任务清单
 func (p *ProjectDomainImpl) Delete(
 	ctx context.Context,
 	userId int64,
@@ -88,7 +88,7 @@ func (p *ProjectDomainImpl) Delete(
 	return p.preferenceRepo.Delete(ctx, userId, projectId)
 }
 
-// 恢复任务清单
+// Restore 恢复任务清单
 func (p *ProjectDomainImpl) Restore(
 	ctx context.Context,
 	userId int64,
@@ -103,7 +103,7 @@ func (p *ProjectDomainImpl) Restore(
 	return p.preferenceRepo.Restore(ctx, userId, projectId)
 }
 
-// 归档任务清单
+// Archive 归档任务清单
 func (p *ProjectDomainImpl) Archive(
 	ctx context.Context,
 	userId int64,
@@ -112,7 +112,7 @@ func (p *ProjectDomainImpl) Archive(
 	return p.repo.Archive(ctx, userId, projectId)
 }
 
-// 取消归档任务清单
+// Unarchive 取消归档任务清单
 func (p *ProjectDomainImpl) Unarchive(
 	ctx context.Context,
 	userId int64,
@@ -121,7 +121,7 @@ func (p *ProjectDomainImpl) Unarchive(
 	return p.repo.Unarchive(ctx, userId, projectId)
 }
 
-// 根据用户ID获取任务清单列表
+// GetByUserId 根据用户ID获取任务清单列表
 func (p *ProjectDomainImpl) GetByUserId(
 	ctx context.Context,
 	userId int64,
@@ -129,7 +129,7 @@ func (p *ProjectDomainImpl) GetByUserId(
 	return p.repo.GetByUserId(ctx, userId)
 }
 
-// 批量更新任务清单
+// BatchUpdate 批量更新任务清单
 func (p *ProjectDomainImpl) BatchUpdate(
 	ctx context.Context,
 	userId int64,
@@ -138,7 +138,7 @@ func (p *ProjectDomainImpl) BatchUpdate(
 	return p.repo.BatchUpdate(ctx, userId, batchUpdateProjects)
 }
 
-// 根据用户ID和任务清单ID获取任务清单偏好
+// GetPreference 根据用户ID和任务清单ID获取任务清单偏好
 func (p *ProjectDomainImpl) GetPreference(
 	ctx context.Context,
 	userId int64,
@@ -147,7 +147,7 @@ func (p *ProjectDomainImpl) GetPreference(
 	return p.preferenceRepo.Get(ctx, userId, projectId)
 }
 
-// 保存任务清单偏好
+// SavePreference 保存任务清单偏好
 func (p *ProjectDomainImpl) SavePreference(
 	ctx context.Context,
 	userId int64,
@@ -158,6 +158,9 @@ func (p *ProjectDomainImpl) SavePreference(
 }
 
 // DeleteDeactivatedProjects 删除已注销的任务清单（供定时任务调用）
-func (p *ProjectDomainImpl) DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error) {
+func (p *ProjectDomainImpl) DeleteDeactivatedProjects(
+	ctx context.Context,
+	dayOffset int8,
+) (int64, error) {
 	return p.repo.DeleteDeactivatedProjects(ctx, dayOffset)
 }

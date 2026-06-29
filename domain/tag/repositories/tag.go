@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 )
 
-// 标签仓库接口
+// TagRepository 标签仓库接口
 type TagRepository interface {
 	// 根据用户获取标签
 	// @param ctx 上下文

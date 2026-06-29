@@ -1,4 +1,22 @@
 {
     "files.eol": "\n",
-    "files.trimTrailingWhitespace": true
+    "files.trimTrailingWhitespace": true,
+    // 指定 lint 工具为 golangci-lint
+    "go.lintTool": "golangci-lint",
+    // 添加 --fast 参数可以防止占用过多资源，提升编辑器的响应速度
+    "go.lintFlags": [
+        "-c",
+        "./.golangci.yml",
+        "--fast"
+    ],
+    // 设置在保存文件时自动运行 lint 检查（可选 "package" 或 "workspace"）
+    "go.lintOnSave": "workspace",
+    "gopls": {
+        // 开启 gopls 的实时 staticcheck 诊断
+        "ui.diagnostic.staticcheck": true,
+        "ui.diagnostic.analyses": {
+            "ST1000": false,
+            "ST1003": false
+        }
+    }
 }

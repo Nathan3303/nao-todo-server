@@ -26,7 +26,8 @@ func (vo *CreateUser) Validate() error {
 	if vo.Email == "" {
 		return errors.New("邮箱不能为空")
 	}
-	if vo.Nickname != "" && (textutils.RuneLength(vo.Nickname) < 2 || textutils.RuneLength(vo.Nickname) > 20) {
+	if vo.Nickname != "" &&
+		(textutils.RuneLength(vo.Nickname) < 2 || textutils.RuneLength(vo.Nickname) > 20) {
 		return errors.New("昵称长度必须在 2-20 个字符之间")
 	}
 	return nil

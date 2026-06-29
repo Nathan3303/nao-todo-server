@@ -9,17 +9,21 @@ import (
 
 // IdentityDomain 身份认证与用户管理领域接口
 type IdentityDomain interface {
-	// === 认证相关 ===
+	// --- 认证相关 ---
 	CreateUser(ctx context.Context, vo *valueobjects.CreateUser) (*entities.User, error)
 	CreateSession(ctx context.Context, userId int64, token string) error
-	FindSessionByUserIdAndToken(ctx context.Context, userId int64, token string) (*entities.Session, error)
-	UpdateSessionToken(ctx context.Context, sessionEntity *entities.Session) error
-	DeleteSession(ctx context.Context, sessionEntity *entities.Session) error
+	FindSessionByUserIdAndToken(
+		ctx context.Context,
+		userId int64,
+		token string,
+	) (*entities.UserSession, error)
+	UpdateSessionToken(ctx context.Context, sessionEntity *entities.UserSession) error
+	DeleteSession(ctx context.Context, sessionEntity *entities.UserSession) error
 	GenerateJWT(ctx context.Context, userEntity *entities.User) (string, error)
 	ParseJWT(ctx context.Context, token string) (int64, error)
 	CheckRateLimit(ctx context.Context, key string, limit int8) error
 
-	// === 用户管理 ===
+	// --- 用户管理 ---
 	FindByEmail(ctx context.Context, email string) (*entities.User, error)
 	FindById(ctx context.Context, id int64) (*entities.User, error)
 	UpdateNickname(ctx context.Context, userId int64, nickname string) error
@@ -34,8 +38,8 @@ type IdentityDomain interface {
 }
 
 type identityDomainImpl struct {
-	jwtRepo       repositories.JWT
-	userRepo      repositories.User
-	sessionRepo   repositories.Session
-	rateLimitRepo repositories.RateLimit
+	jwtRepo         repositories.JWT
+	userRepo        repositories.User
+	userSessionRepo repositories.UserSession
+	rateLimitRepo   repositories.RateLimit
 }

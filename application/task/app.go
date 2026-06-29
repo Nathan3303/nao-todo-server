@@ -7,7 +7,8 @@ import (
 )
 
 type TaskApp interface {
-	// === Task ===
+	// --- Task ---
+
 	GetTaskById(ctx context.Context, taskId string) (*types.GetTaskRes, error)
 	CreateTask(ctx context.Context, req *types.CreateTaskReq) (*types.GetTaskRes, error)
 	UpdateTask(ctx context.Context, taskId string, req *types.UpdateTaskReq) error
@@ -18,21 +19,23 @@ type TaskApp interface {
 	SnoozeTask(ctx context.Context, taskId string, req *types.SnoozeTaskReq) (*types.SnoozeTaskRes, error)
 	ProcessReminders(ctx context.Context) error
 
-	// === CheckItem ===
-	GetCheckItemById(ctx context.Context, checkItemId string) (*types.GetCheckItemRes, error)
-	CreateCheckItem(ctx context.Context, req *types.CreateCheckItemReq) (*types.CreateCheckItemRes, error)
-	UpdateCheckItem(ctx context.Context, checkItemId string, req *types.UpdateCheckItemReq) error
-	DeleteCheckItem(ctx context.Context, checkItemId string) error
-	ListCheckItems(ctx context.Context, taskId string) (types.ListCheckItemRes, error)
-	BatchUpdateCheckItems(ctx context.Context, req *types.BatchUpdateCheckItemReq) (*types.BatchUpdateCheckItemRes, error)
+	// --- TaskCheckItem ---
 
-	// === Comment ===
-	GetCommentById(ctx context.Context, commentId string) (*types.CommentRes, error)
-	CreateComment(ctx context.Context, req *types.CreateCommentReq) (*types.CommentRes, error)
-	UpdateComment(ctx context.Context, commentId string, req *types.UpdateCommentReq) error
-	DeleteComment(ctx context.Context, commentId string) error
-	ListComments(ctx context.Context, taskId string) ([]*types.CommentRes, error)
-	SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
+	GetTaskCheckItemById(ctx context.Context, checkItemId string) (*types.GetTaskCheckItemRes, error)
+	CreateTaskCheckItem(ctx context.Context, req *types.CreateTaskCheckItemReq) (*types.CreateTaskCheckItemRes, error)
+	UpdateTaskCheckItem(ctx context.Context, checkItemId string, req *types.UpdateTaskCheckItemReq) error
+	DeleteTaskCheckItem(ctx context.Context, checkItemId string) error
+	ListTaskCheckItems(ctx context.Context, taskId string) (types.ListTaskCheckItemRes, error)
+	BatchUpdateTaskCheckItems(ctx context.Context, req *types.BatchUpdateTaskCheckItemReq) (*types.BatchUpdateTaskCheckItemRes, error)
+
+	// --- TaskComment ---
+
+	GetTaskCommentById(ctx context.Context, commentId string) (*types.TaskCommentRes, error)
+	CreateTaskComment(ctx context.Context, req *types.CreateTaskCommentReq) (*types.TaskCommentRes, error)
+	UpdateTaskComment(ctx context.Context, commentId string, req *types.UpdateTaskCommentReq) error
+	DeleteTaskComment(ctx context.Context, commentId string) error
+	ListTaskComments(ctx context.Context, taskId string) ([]*types.TaskCommentRes, error)
+	SyncTaskCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }
 
 type TaskAppImpl struct {

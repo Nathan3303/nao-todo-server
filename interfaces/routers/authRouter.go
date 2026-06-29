@@ -7,26 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/* 认证路由 */
 func UseAuthRouter(router *gin.RouterGroup) {
 	authGroup := router.Group(
 		"/auth",
 		middlewares.RateLimiter(8, "auth"),
 	)
 	{
-		/* 登录路由 */
 		authGroup.POST("/signin", controllers.UserSignInHandler)
-
-		/* 注册路由 */
 		authGroup.POST("/signup", controllers.UserSignUpHandler)
-
-		/* 检查登录路由 */
 		authGroup.PUT("/checkin", controllers.UserCheckInHandler)
-
-		/* 退出登录路由 */
 		authGroup.DELETE("/signout", controllers.UserSignOutHandler)
-
-		/* 验证路由 */
 		authGroup.GET(
 			"/validate",
 			middlewares.JWTValidator,

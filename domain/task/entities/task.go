@@ -2,73 +2,80 @@ package entities
 
 import (
 	"errors"
-	"time"
+	"naotodoserver/domain/types"
 )
 
+// Task 任务实体
+// 用于表示用户在系统中的任务记录
+// 包含用户 ID、父任务 ID、名称、描述、状态、优先级、开始时间、结束时间、归档时间、收藏时间、放弃时间、
+// 项目 ID、标签、提醒时间、提醒重复、提醒时间、提醒周几等属性
 type Task struct {
-	Id             int64
+	types.EntityBase
 	UserId         int64
 	ParentTaskId   int64
 	Name           string
 	Description    string
-	State          int8
-	Priority       int8
-	StartAt        *time.Time
-	EndAt          *time.Time
-	ArchivedAt     *time.Time
-	StarMarkAt     *time.Time
-	GivenUpAt      *time.Time
+	State          uint8
+	Priority       uint8
+	StartAt        types.NullableTime
+	EndAt          types.NullableTime
 	ProjectId      int64
 	Tags           []string
-	RemindAt       *time.Time
-	RemindRepeat   int8
+	ArchivedAt     types.NullableTime
+	StarMarkAt     types.NullableTime
+	GivenUpAt      types.NullableTime
+	CompletedAt    types.NullableTime
+	RemindAt       types.NullableTime
+	RemindRepeat   uint8
 	RemindTime     string
-	RemindWeekdays int8
-	UpdatedAt      time.Time
-	CreatedAt      time.Time
-	DeletedAt      time.Time
+	RemindWeekdays uint8
 }
 
+// IsEndAtValid 检查结束时间是否有效
 func (task *Task) IsEndAtValid() bool {
-	if task.EndAt == nil {
+	if task.EndAt.IsNull {
 		return false
 	}
-	if task.StartAt == nil {
+	if task.StartAt.IsNull {
 		return true
 	}
-	return task.EndAt.After(*task.StartAt)
+	return task.EndAt.Time.After(task.StartAt.Time)
 }
 
+// IsArchivedAtValid 检查归档时间是否有效
 func (task *Task) IsArchivedAtValid() bool {
-	if task.ArchivedAt == nil {
+	if task.ArchivedAt.IsNull {
 		return true
 	}
-	if task.StartAt == nil {
+	if task.StartAt.IsNull {
 		return true
 	}
-	return task.ArchivedAt.After(*task.StartAt)
+	return task.ArchivedAt.Time.After(task.StartAt.Time)
 }
 
+// IsStarMarkAtValid 检查收藏时间是否有效
 func (task *Task) IsStarMarkAtValid() bool {
-	if task.StarMarkAt == nil {
+	if task.StarMarkAt.IsNull {
 		return true
 	}
-	if task.StartAt == nil {
+	if task.StartAt.IsNull {
 		return true
 	}
-	return task.StarMarkAt.After(*task.StartAt)
+	return task.StarMarkAt.Time.After(task.StartAt.Time)
 }
 
+// IsGivenUpAtValid 检查放弃时间是否有效
 func (task *Task) IsGivenUpAtValid() bool {
-	if task.GivenUpAt == nil {
+	if task.GivenUpAt.IsNull {
 		return true
 	}
-	if task.StartAt == nil {
+	if task.StartAt.IsNull {
 		return true
 	}
-	return task.GivenUpAt.After(*task.StartAt)
+	return task.GivenUpAt.Time.After(task.StartAt.Time)
 }
 
+// IsDatesValid 检查时间参数是否有效
 func (task *Task) IsDatesValid() error {
 	if !task.IsEndAtValid() {
 		return errors.New("时间参数无效 - 结束时间必须晚于开始时间")

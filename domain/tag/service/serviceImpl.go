@@ -8,7 +8,7 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 )
 
-// 标签域注册函数
+// NewTagDomain 标签域注册函数
 func NewTagDomain(
 	tagRepo repositories.TagRepository,
 	preferenceRepo repositories.TagPreference,
@@ -19,7 +19,7 @@ func NewTagDomain(
 	}
 }
 
-// 根据标签ID获取标签信息
+// GetById 根据标签ID获取标签信息
 // @param ctx 上下文
 // @param userId 用户ID
 // @param tagId 标签ID
@@ -33,7 +33,7 @@ func (tagDomain *TagDomainImpl) GetById(
 	return tagDomain.tagRepo.GetById(ctx, userId, tagId)
 }
 
-// 创建标签
+// Create 创建标签
 // @param ctx 上下文
 // @param userId 用户ID
 // @param createTagValueObject 创建标签值对象
@@ -74,7 +74,7 @@ func (tagDomain *TagDomainImpl) Create(
 	return tagEntity, nil
 }
 
-// 更新标签
+// Update 更新标签
 // @param ctx 上下文
 // @param userId 用户ID
 // @param tagId 标签ID
@@ -89,7 +89,7 @@ func (tagDomain *TagDomainImpl) Update(
 	return tagDomain.tagRepo.Update(ctx, userId, tagId, updateTagValueObject)
 }
 
-// 删除标签
+// Delete 删除标签
 // @param ctx 上下文
 // @param userId 用户ID
 // @param tagId 标签ID
@@ -108,7 +108,7 @@ func (tagDomain *TagDomainImpl) Delete(
 	return tagDomain.preferenceRepo.Delete(ctx, userId, tagId)
 }
 
-// 获取标签列表
+// List 获取标签列表
 // @param ctx 上下文
 // @param userId 用户ID
 // @return []*entities.Tag 标签列表
@@ -120,7 +120,7 @@ func (tagDomain *TagDomainImpl) List(
 	return tagDomain.tagRepo.Get(ctx, userId)
 }
 
-// 批量更新标签
+// BatchUpdate 批量更新标签
 func (tagDomain *TagDomainImpl) BatchUpdate(
 	ctx context.Context,
 	userId int64,
@@ -129,7 +129,7 @@ func (tagDomain *TagDomainImpl) BatchUpdate(
 	return tagDomain.tagRepo.BatchUpdate(ctx, userId, batchUpdateTags)
 }
 
-// 获取标签偏好
+// GetPreference 获取标签偏好
 // @param ctx 上下文
 // @param userId 用户ID
 // @param tagId 标签ID
@@ -143,7 +143,7 @@ func (tagDomain *TagDomainImpl) GetPreference(
 	return tagDomain.preferenceRepo.Get(ctx, userId, tagId)
 }
 
-// 更新标签偏好
+// UpdatePreference 更新标签偏好
 // @param ctx 上下文
 // @param userId 用户ID
 // @param tagId 标签ID

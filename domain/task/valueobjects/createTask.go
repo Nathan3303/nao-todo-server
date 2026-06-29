@@ -12,16 +12,16 @@ type CreateTask struct {
 	ParentTaskId   int64
 	Name           string
 	Description    string
-	State          int8
-	Priority       int8
+	State          uint8
+	Priority       uint8
 	StartAt        *time.Time
 	EndAt          *time.Time
 	ProjectId      int64
 	Tags           []string
 	RemindAt       *time.Time
-	RemindRepeat   int8
+	RemindRepeat   uint8
 	RemindTime     string
-	RemindWeekdays int8
+	RemindWeekdays uint8
 }
 
 // Validate 验证创建任务值对象
@@ -73,16 +73,16 @@ func NewCreateTask(
 	parentTaskId int64,
 	name string,
 	description string,
-	state int8,
-	priority int8,
+	state uint8,
+	priority uint8,
 	startAt *time.Time,
 	endAt *time.Time,
 	projectId int64,
 	tags []string,
 	remindAt *time.Time,
-	remindRepeat int8,
+	remindRepeat uint8,
 	remindTime string,
-	remindWeekdays int8,
+	remindWeekdays uint8,
 ) (*CreateTask, error) {
 	createTask := &CreateTask{
 		ParentTaskId:   parentTaskId,

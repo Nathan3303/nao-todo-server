@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/project/valueobjects"
 )
 
-// 任务清单偏好仓库接口
+// ProjectPreference 任务清单偏好仓库接口
 type ProjectPreference interface {
 	// Get 获取任务清单偏好
 	Get(ctx context.Context, userId int64, projectId int64) (*entities.ProjectPreference, error)

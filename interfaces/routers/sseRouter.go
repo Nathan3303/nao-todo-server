@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SSE 路由组
 func UseSSERouter(router *gin.RouterGroup) {
 	sseGroup := router.Group(
 		"/sse",
@@ -15,7 +14,6 @@ func UseSSERouter(router *gin.RouterGroup) {
 		middlewares.JWTValidator,
 	)
 	{
-		// 提醒事件 SSE 流
 		sseGroup.GET("/reminders", controllers.ReminderStream)
 	}
 }

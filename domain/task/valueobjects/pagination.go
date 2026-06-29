@@ -4,10 +4,10 @@ import "math"
 
 // Pagination 分页值对象
 type Pagination struct {
-	Total   int64 `json:"total"`
-	Page    int   `json:"page"`
-	Limit   int   `json:"limit"`
-	MaxPage int   `json:"maxPage"`
+	Total   int64
+	Page    int
+	Limit   int
+	MaxPage int
 }
 
 // CalcMaxPage 计算最大页数

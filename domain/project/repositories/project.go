@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/project/valueobjects"
 )
 
-// 任务清单仓库接口
+// Project 任务清单仓库接口
 type Project interface {
 	// 创建任务清单
 	Create(

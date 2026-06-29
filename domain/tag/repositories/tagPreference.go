@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 )
 
-// 标签偏好接口
+// TagPreference 标签偏好接口
 type TagPreference interface {
 	// 根据用户和标签ID获取标签偏好
 	// @param ctx 上下文

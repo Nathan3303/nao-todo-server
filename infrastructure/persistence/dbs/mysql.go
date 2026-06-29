@@ -58,14 +58,14 @@ func DoMigration() {
 	err := DB.AutoMigrate(
 		models.User{},
 		models.UserConfig{},
-		models.Session{},
+		models.UserSession{},
 		models.Project{},
 		models.ProjectPreference{},
 		models.Tag{},
 		models.TagPreference{},
 		models.Task{},
-		models.Event{},
-		models.Comment{},
+		models.TaskCheckItem{},
+		models.TaskComment{},
 		models.Pomodoro{},
 	)
 

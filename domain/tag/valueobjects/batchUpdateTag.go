@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/textutils"
 )
 
-// 批量更新标签值对象
+// BatchUpdateTag 批量更新标签值对象
 type BatchUpdateTag struct {
 	Id          int64
 	Name        *string
@@ -15,7 +15,7 @@ type BatchUpdateTag struct {
 	SortId      *uint16
 }
 
-// 验证批量更新标签值对象
+// Validate 验证批量更新标签值对象是否符合要求
 func (vo *BatchUpdateTag) Validate() error {
 	if vo.Id <= 0 {
 		return errors.New("标签 ID 无效")
@@ -35,8 +35,14 @@ func (vo *BatchUpdateTag) Validate() error {
 	return nil
 }
 
-// 创建批量更新标签值对象
-func NewBatchUpdateTag(id int64, name, description, color *string, sortId *uint16) (*BatchUpdateTag, error) {
+// NewBatchUpdateTag 创建批量更新标签值对象
+func NewBatchUpdateTag(
+	id int64,
+	name *string,
+	description *string,
+	color *string,
+	sortId *uint16,
+) (*BatchUpdateTag, error) {
 	vo := &BatchUpdateTag{
 		Id:          id,
 		Name:        name,

@@ -15,7 +15,7 @@ func NewTagApp(tagDomain service.TagDomain) TagApp {
 	return impl
 }
 
-// 获取标签信息
+// GetTag 获取标签信息
 // @param ctx 上下文
 // @param tagId 标签 ID
 // @return 标签响应体
@@ -45,7 +45,7 @@ func (tagApp *TagAppImpl) GetTag(
 	return getRes, nil
 }
 
-// 创建标签
+// CreateTag 创建标签
 // @param ctx 上下文
 // @param tagId 标签 ID
 // @param req 创建标签请求体
@@ -74,7 +74,7 @@ func (tagApp *TagAppImpl) CreateTag(
 	return TagEntityToCreateRes(tagEntity), nil
 }
 
-// 更新标签信息
+// UpdateTag 更新标签信息
 // @param ctx 上下文
 // @param tagId 标签 ID
 // @param updateTagReq 更新标签请求体
@@ -108,7 +108,7 @@ func (tagApp *TagAppImpl) UpdateTag(
 	return nil
 }
 
-// 删除标签
+// DeleteTag 删除标签
 // @param ctx 上下文
 // @param tagId 标签 ID
 // @return error
@@ -135,7 +135,7 @@ func (tagApp *TagAppImpl) DeleteTag(
 	return nil
 }
 
-// 获取所有标签信息
+// ListTag 获取所有标签信息
 // @param ctx 上下文
 // @return 标签响应体
 // @return error
@@ -156,7 +156,11 @@ func (tagApp *TagAppImpl) ListTag(
 	return TagEntitiesToGetResList(tagEntities), nil
 }
 
-// 批量更新标签
+// BatchUpdateTags 批量更新标签
+// @param ctx 上下文
+// @param req 批量更新标签请求体
+// @return 批量更新标签响应体
+// @return error
 func (tagApp *TagAppImpl) BatchUpdateTags(
 	ctx context.Context,
 	req *types.BatchUpdateTagReq,
@@ -185,7 +189,7 @@ func (tagApp *TagAppImpl) BatchUpdateTags(
 	}, nil
 }
 
-// 获取标签偏好设置
+// GetTagPreference 获取标签偏好设置
 // @param ctx 上下文
 // @param tagId 标签 ID
 // @return 标签偏好设置响应体
@@ -214,7 +218,7 @@ func (tagApp *TagAppImpl) GetTagPreference(
 
 }
 
-// 更新标签偏好设置
+// UpdateTagPreference 更新标签偏好设置
 // @param ctx 上下文
 // @param tagId 标签 ID
 // @param req 更新标签偏好设置请求体

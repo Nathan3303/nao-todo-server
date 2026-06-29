@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"naotodoserver/infrastructure/logging"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 	"time"
@@ -36,16 +35,22 @@ func InitRouters() *gin.Engine {
 
 	// 添加 CORS 中间件
 	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:5173",
+			"http://localhost:4173",
+			"https://todo.nathanao.space",
+			"https://todobe.nathanao.space",
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
-			logging.Logger.
-				WithFields(map[string]any{"origin": origin}).
-				Info("CORS 允许来源")
-			return true
-		},
+		// AllowOriginFunc: func(origin string) bool {
+		// 	logging.Logger.
+		// 		WithFields(map[string]any{"origin": origin}).
+		// 		Info("CORS 允许来源")
+		// 	return true
+		// },
 		MaxAge: 12 * time.Hour,
 	}))
 
@@ -71,16 +76,6 @@ func InitRouters() *gin.Engine {
 		UsePomodoroRouter(v1)
 		UseSSERouter(v1)
 	}
-
-	// 设置可信代理 IP（负载均衡器或 CDN 的 IP 段）
-	// err := router.SetTrustedProxies([]string{
-	// 	"192.168.1.0/24",
-	// 	"10.0.0.0/8",
-	// 	"127.0.0.1",
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 	// 返回 Gin 引擎
 	return router

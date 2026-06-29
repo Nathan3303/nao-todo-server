@@ -1,8 +1,13 @@
 package types
 
+import "time"
+
 // GetTaskRes 获取任务响应
 type GetTaskRes struct {
 	Id             string   `json:"id"`
+	CreatedAt      string   `json:"createdAt"`
+	UpdatedAt      string   `json:"updatedAt"`
+	DeletedAt      string   `json:"deletedAt"`
 	ParentTaskId   string   `json:"parentTaskId"`
 	Name           string   `json:"name"`
 	Description    string   `json:"description"`
@@ -18,10 +23,7 @@ type GetTaskRes struct {
 	RemindAt       string   `json:"remindAt"`
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
-	RemindWeekdays []int    `json:"remindWeekdays"`
-	CreatedAt      string   `json:"createdAt"`
-	UpdatedAt      string   `json:"updatedAt"`
-	DeletedAt      string   `json:"deletedAt"`
+	RemindWeekdays []uint8  `json:"remindWeekdays"`
 }
 
 // CreateTaskReq 创建任务请求
@@ -38,7 +40,7 @@ type CreateTaskReq struct {
 	RemindAt       string   `json:"remindAt"`
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
-	RemindWeekdays []int    `json:"remindWeekdays"`
+	RemindWeekdays []uint8  `json:"remindWeekdays"`
 }
 
 // UpdateTaskReq 更新任务请求
@@ -58,7 +60,7 @@ type UpdateTaskReq struct {
 	RemindAt       NullableString `json:"remindAt"`
 	RemindRepeat   *string        `json:"remindRepeat"`
 	RemindTime     *string        `json:"remindTime"`
-	RemindWeekdays []int          `json:"remindWeekdays"`
+	RemindWeekdays []uint8        `json:"remindWeekdays"`
 }
 
 // ListTaskReq 列表任务请求
@@ -87,3 +89,120 @@ type ListTaskReq struct {
 
 // ListTaskRes 列表任务响应
 type ListTaskRes []*GetTaskRes
+
+// --- TaskCheckItem ---
+
+// GetTaskCheckItemRes 获取任务检查项响应
+type GetTaskCheckItemRes struct {
+	Id          string    `json:"id"`
+	TaskId      string    `json:"taskId"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsDone      bool      `json:"isDone"`
+	SortId      uint16    `json:"sortId"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// CreateTaskCheckItemReq 创建任务检查项请求
+type CreateTaskCheckItemReq struct {
+	TaskId      string `json:"taskId" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+}
+
+// CreateTaskCheckItemRes 创建任务检查项响应
+type CreateTaskCheckItemRes struct {
+	Id          string    `json:"id"`
+	TaskId      string    `json:"taskId"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsDone      bool      `json:"isDone"`
+	SortId      uint16    `json:"sortId"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// UpdateTaskCheckItemReq 更新任务检查项请求
+type UpdateTaskCheckItemReq struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	IsDone      *bool   `json:"isDone"`
+	SortId      *uint16 `json:"sortId"`
+}
+
+// ListTaskCheckItemRes 列表任务检查项响应
+type ListTaskCheckItemRes []*GetTaskCheckItemRes
+
+// ResortTaskCheckItemsReq 排序任务检查项请求
+type ResortTaskCheckItemsReq struct {
+	OriginalId string `json:"originalId"`
+	BoundId    string `json:"boundId"`
+	Flag       int    `json:"flag"`
+}
+
+// ResortTaskCheckItemsRes 排序任务检查项响应
+type ResortTaskCheckItemsRes struct {
+	OriginalSortId uint16 `json:"originalSortId"`
+	BoundSortId    uint16 `json:"boundSortId"`
+}
+
+// BatchUpdateTaskCheckItemReq 批量更新任务检查项请求
+type BatchUpdateTaskCheckItemReq struct {
+	Events []*struct {
+		Id          string  `json:"id" binding:"required"`
+		Name        *string `json:"name"`
+		Description *string `json:"description"`
+		IsDone      *bool   `json:"isDone"`
+		SortId      *uint16 `json:"sortId"`
+	} `json:"events" binding:"required,min=1"`
+}
+
+// BatchUpdateTaskCheckItemRes 批量更新任务检查项响应
+type BatchUpdateTaskCheckItemRes struct {
+	UpdatedCount int64                  `json:"updatedCount"`
+	Events       []*GetTaskCheckItemRes `json:"events"`
+}
+
+// --- TaskComment ---
+
+// TaskCommentRes 任务评论响应
+type TaskCommentRes struct {
+	Id          string   `json:"id"`
+	TaskId      string   `json:"taskId"`
+	Content     string   `json:"content"`
+	Attachments []string `json:"attachments"`
+	IsTopUp     bool     `json:"isTopUp"`
+	Nickname    string   `json:"nickname"`
+	Avatar      string   `json:"avatar"`
+	CreatedAt   string   `json:"createdAt"`
+	UpdatedAt   string   `json:"updatedAt"`
+}
+
+// CreateTaskCommentReq 创建任务评论请求
+type CreateTaskCommentReq struct {
+	TaskId  string `json:"taskId" binding:"required"`
+	Content string `json:"content" binding:"required"`
+}
+
+// UpdateTaskCommentReq 更新任务评论请求
+type UpdateTaskCommentReq struct {
+	Content     *string   `json:"content"`
+	Attachments *[]string `json:"attachments"`
+	IsTopUp     *bool     `json:"isTopUp"`
+}
+
+// ListTaskCommentRes 列表任务评论响应
+type ListTaskCommentRes []*TaskCommentRes
+
+// --- TaskReminder ---
+
+// SnoozeTaskReq 稍后提醒请求
+type SnoozeTaskReq struct {
+	DurationMinutes int `json:"durationMinutes" binding:"required,min=1,max=1440"`
+}
+
+// SnoozeTaskRes 稍后提醒响应
+type SnoozeTaskRes struct {
+	RemindAt string `json:"remindAt"`
+}

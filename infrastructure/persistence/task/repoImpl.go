@@ -158,7 +158,7 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 	// 4. 处理状态过滤条件
 	if query.State != "" {
-		var stateIDs []int8
+		var stateIDs []uint8
 		for s := range strings.SplitSeq(query.State, ",") {
 			if val, exists := consts.TodoStateMap[s]; exists {
 				stateIDs = append(stateIDs, val)
@@ -170,7 +170,7 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 	// 5. 处理优先级过滤条件
 	if query.Priority != "" {
-		var priorityIDs []int8
+		var priorityIDs []uint8
 		for s := range strings.SplitSeq(query.Priority, ",") {
 			if val, exists := consts.TodoPriorityMap[s]; exists {
 				priorityIDs = append(priorityIDs, val)
@@ -211,14 +211,26 @@ func (taskRepo *TaskRepoImpl) List(
 		case "today":
 			tx.Where("end_at >= ?", time.Now().Format("2006-01-02"))
 		case "tomorrow":
-			tx.Where("end_at >= ?", time.Now().AddDate(0, 0, 1).Format("2006-01-02"))
+			tx.Where(
+				"end_at >= ?",
+				time.
+					Now().
+					AddDate(0, 0, 1).
+					Format("2006-01-02"),
+			)
 		case "week":
 			{
 				start, end := utils.GetWeekRange(time.Now())
 				tx.Where("end_at >= ? and end_at <= ?", start, end)
 			}
 		case "month":
-			tx.Where("end_at >= ?", time.Now().AddDate(0, 0, 7).Format("2006-01-02"))
+			tx.Where(
+				"end_at >= ?",
+				time.
+					Now().
+					AddDate(0, 0, 7).
+					Format("2006-01-02"),
+			)
 		case "-today":
 			tx.Where("end_at < ?", time.Now().Format("2006-01-02"))
 		}
@@ -245,6 +257,8 @@ func (taskRepo *TaskRepoImpl) List(
 	taskEntities := TaskModels2Entities(taskModels)
 	return taskEntities, pagination, nil
 }
+
+// --- 任务提醒相关 ---
 
 // Snooze 稍后提醒
 // @param ctx 上下文
@@ -345,122 +359,288 @@ func (taskRepo *TaskRepoImpl) UpdateRemindAt(
 	return tx.Error
 }
 
-// === CheckItem methods ===
+// --- 任务检查项相关 ---
 
-func (repo *TaskRepoImpl) GetCheckItemById(ctx context.Context, userId, checkItemId int64) (*entities.CheckItem, error) {
-	var m models.Event
-	tx := repo.db.WithContext(ctx).Model(&models.Event{}).Where("id = ? AND user_id = ?", checkItemId, userId).First(&m)
+// GetCheckItemById 获取任务检查项
+// @param ctx 上下文
+// @param userId 用户ID
+// @param checkItemId 检查项ID
+// @return 任务检查项实体
+// @return error 错误
+func (repo *TaskRepoImpl) GetCheckItemById(
+	ctx context.Context,
+	userId int64,
+	checkItemId int64,
+) (*entities.TaskCheckItem, error) {
+	var m models.TaskCheckItem
+	tx := repo.db.
+		WithContext(ctx).
+		Model(&models.TaskCheckItem{}).
+		Where("id = ? AND user_id = ?", checkItemId, userId).First(&m)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return EventModel2Entity(&m), nil
+	return TaskCheckItemModel2Entity(&m), nil
 }
 
-func (repo *TaskRepoImpl) CreateCheckItem(ctx context.Context, userId int64, vo *valueobjects.CreateCheckItem) (*entities.CheckItem, error) {
-	m := EventValueObjectToModel(vo)
-	tx := repo.db.WithContext(ctx).Model(&models.Event{}).Create(m)
+// CreateCheckItem 创建任务检查项
+// @param ctx 上下文
+// @param userId 用户ID
+// @param vo 创建任务检查项值对象
+// @return 任务检查项实体
+// @return error 错误
+func (repo *TaskRepoImpl) CreateCheckItem(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTaskCheckItem,
+) (*entities.TaskCheckItem, error) {
+	m := TaskCheckItemValueObjectToModel(vo)
+	tx := repo.db.WithContext(ctx).Model(&models.TaskCheckItem{}).Create(m)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return EventModel2Entity(m), nil
+	return TaskCheckItemModel2Entity(m), nil
 }
 
-func (repo *TaskRepoImpl) UpdateCheckItem(ctx context.Context, userId, checkItemId int64, vo *valueobjects.UpdateCheckItem) error {
-	return repo.db.WithContext(ctx).Model(&models.Event{}).
+// UpdateCheckItem 更新任务检查项
+// @param ctx 上下文
+// @param userId 用户ID
+// @param checkItemId 检查项ID
+// @param vo 更新任务检查项值对象
+// @return error 错误
+func (repo *TaskRepoImpl) UpdateCheckItem(
+	ctx context.Context,
+	userId int64,
+	checkItemId int64,
+	vo *valueobjects.UpdateTaskCheckItem,
+) error {
+	return repo.db.
+		WithContext(ctx).
+		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", checkItemId, userId).
-		Updates(UpdateEventValueObjectToMap(vo)).Error
+		Updates(UpdateTaskCheckItemValueObjectToMap(vo)).
+		Error
 }
 
+// DeleteCheckItem 删除任务检查项
+// @param ctx 上下文
+// @param userId 用户ID
+// @param checkItemId 检查项ID
+// @return error 错误
 func (repo *TaskRepoImpl) DeleteCheckItem(ctx context.Context, userId, checkItemId int64) error {
-	return repo.db.WithContext(ctx).Model(&models.Event{}).
+	return repo.db.
+		WithContext(ctx).
+		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", checkItemId, userId).
-		Delete(&models.Event{}).Error
+		Delete(&models.TaskCheckItem{}).
+		Error
 }
 
-func (repo *TaskRepoImpl) ListCheckItems(ctx context.Context, userId, taskId int64) ([]*entities.CheckItem, error) {
-	var list []*models.Event
-	tx := repo.db.WithContext(ctx).Model(&models.Event{}).Where("user_id = ? AND task_id = ?", userId, taskId).Find(&list)
+// ListCheckItems 获取任务检查项列表
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 待办任务任务ID
+// @return 任务检查项实体列表
+// @return error 错误
+func (repo *TaskRepoImpl) ListCheckItems(
+	ctx context.Context,
+	userId int64,
+	taskId int64,
+) ([]*entities.TaskCheckItem, error) {
+	var list []*models.TaskCheckItem
+	tx := repo.db.
+		WithContext(ctx).
+		Model(&models.TaskCheckItem{}).
+		Where("user_id = ? AND task_id = ?", userId, taskId).
+		Find(&list)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return EventModels2Entities(list), nil
+	return TaskCheckItemModels2Entities(list), nil
 }
 
+// GetMaxCheckItemSortId 获取任务检查项最大排序ID
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 待办任务任务ID
+// @return 最大排序ID
+// @return error 错误
 func (repo *TaskRepoImpl) GetMaxCheckItemSortId(ctx context.Context, userId, taskId int64) uint16 {
 	var maxSortId uint16 = 255
-	repo.db.WithContext(ctx).Model(&models.Event{}).Where("user_id = ? AND task_id = ?", userId, taskId).Pluck("MAX(sort_id)", &maxSortId)
+	repo.db.
+		WithContext(ctx).
+		Model(&models.TaskCheckItem{}).
+		Where("user_id = ? AND task_id = ?", userId, taskId).
+		Pluck("MAX(sort_id)", &maxSortId)
 	return maxSortId
 }
 
-func (repo *TaskRepoImpl) BatchUpdateCheckItems(ctx context.Context, userId int64, vos []*valueobjects.BatchUpdateCheckItem) ([]*entities.CheckItem, error) {
+// BatchUpdateCheckItems 批量更新任务检查项
+// @param ctx 上下文
+// @param userId 用户ID
+// @param vos 批量更新任务检查项值对象列表
+// @return 任务检查项实体列表
+// @return error 错误
+func (repo *TaskRepoImpl) BatchUpdateCheckItems(
+	ctx context.Context,
+	userId int64,
+	vos []*valueobjects.BatchUpdateTaskCheckItem,
+) ([]*entities.TaskCheckItem, error) {
 	tx := repo.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 	var ids []int64
+	var err error
 	for _, vo := range vos {
-		if err := tx.Model(&models.Event{}).Where("id = ? AND user_id = ?", vo.Id, userId).Updates(BatchUpdateEventValueObjectToMap(vo)).Error; err != nil {
+		err = tx.
+			Model(&models.TaskCheckItem{}).
+			Where("id = ? AND user_id = ?", vo.Id, userId).
+			Updates(BatchUpdateTaskCheckItemValueObjectToMap(vo)).Error
+		if err != nil {
 			tx.Rollback()
 			return nil, err
 		}
 		ids = append(ids, vo.Id)
 	}
-	var updated []*models.Event
-	if err := tx.Model(&models.Event{}).Where("id IN ? AND user_id = ?", ids, userId).Find(&updated).Error; err != nil {
+	var updated []*models.TaskCheckItem
+	err = tx.
+		Model(&models.TaskCheckItem{}).
+		Where("id IN ? AND user_id = ?", ids, userId).
+		Find(&updated).Error
+	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 	tx.Commit()
-	return EventModels2Entities(updated), nil
+	return TaskCheckItemModels2Entities(updated), nil
 }
 
-// === Comment methods ===
+// --- 任务评论相关 ---
 
-func (repo *TaskRepoImpl) GetCommentById(ctx context.Context, userId, commentId int64) (*entities.Comment, error) {
-	var m models.Comment
-	tx := repo.db.WithContext(ctx).Model(&models.Comment{}).Where("user_id = ? AND id = ?", userId, commentId).First(&m)
+// GetCommentById 获取任务评论
+// @param ctx 上下文
+// @param userId 用户ID
+// @param commentId 评论ID
+// @return 任务实体
+// @return error 错误
+func (repo *TaskRepoImpl) GetCommentById(
+	ctx context.Context,
+	userId int64,
+	commentId int64,
+) (*entities.TaskComment, error) {
+	var m models.TaskComment
+	tx := repo.db.
+		WithContext(ctx).
+		Model(&models.TaskComment{}).
+		Where("user_id = ? AND id = ?", userId, commentId).
+		First(&m)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return CommentModel2Entity(&m), nil
+	return TaskCommentModel2Entity(&m), nil
 }
 
-func (repo *TaskRepoImpl) CreateComment(ctx context.Context, userId int64, vo *valueobjects.CreateComment) (*entities.Comment, error) {
+// CreateComment 创建任务评论
+// @param ctx 上下文
+// @param userId 用户ID
+// @param vo 创建任务评论值对象
+// @return 任务实体
+// @return error 错误
+func (repo *TaskRepoImpl) CreateComment(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTaskComment,
+) (*entities.TaskComment, error) {
 	var user models.User
-	if tx := repo.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", userId).First(&user); tx.Error != nil {
-		return nil, tx.Error
-	}
-	m := CreateCommentValueObjectToModel(vo)
-	m.Nickname = user.Nickname
-	m.Avatar = user.Avatar
-	if err := repo.db.WithContext(ctx).Create(m).Error; err != nil {
+	var err error
+	err = repo.db.
+		WithContext(ctx).
+		Model(&models.User{}).
+		Where("id = ?", userId).
+		First(&user).
+		Error
+	if err != nil {
 		return nil, err
 	}
-	return CommentModel2Entity(m), nil
+	m := CreateTaskCommentValueObjectToModel(vo)
+	m.Nickname = user.Nickname
+	m.Avatar = user.Avatar
+	err = repo.db.WithContext(ctx).Create(m).Error
+	if err != nil {
+		return nil, err
+	}
+	return TaskCommentModel2Entity(m), nil
 }
 
-func (repo *TaskRepoImpl) UpdateComment(ctx context.Context, userId, commentId int64, vo *valueobjects.UpdateComment) error {
-	return repo.db.WithContext(ctx).Model(&models.Comment{}).
+// UpdateComment 更新任务评论
+// @param ctx 上下文
+// @param userId 用户ID
+// @param commentId 评论ID
+// @param vo 更新任务评论值对象
+// @return error 错误
+func (repo *TaskRepoImpl) UpdateComment(
+	ctx context.Context,
+	userId int64,
+	commentId int64,
+	vo *valueobjects.UpdateTaskComment,
+) error {
+	return repo.db.
+		WithContext(ctx).
+		Model(&models.TaskComment{}).
 		Where("user_id = ? AND id = ?", userId, commentId).
-		Updates(UpdateCommentValueObjectToMap(vo)).Error
+		Updates(UpdateTaskCommentValueObjectToMap(vo)).
+		Error
 }
 
+// DeleteComment 删除任务评论
+// @param ctx 上下文
+// @param userId 用户ID
+// @param commentId 评论ID
+// @return error 错误
 func (repo *TaskRepoImpl) DeleteComment(ctx context.Context, userId, commentId int64) error {
-	return repo.db.WithContext(ctx).Model(&models.Comment{}).
+	return repo.db.
+		WithContext(ctx).
+		Model(&models.TaskComment{}).
 		Where("user_id = ? AND id = ?", userId, commentId).
-		Delete(&models.Comment{}).Error
+		Delete(&models.TaskComment{}).
+		Error
 }
 
-func (repo *TaskRepoImpl) ListComments(ctx context.Context, userId, taskId int64) ([]*entities.Comment, error) {
-	var list []*models.Comment
-	tx := repo.db.WithContext(ctx).Model(&models.Comment{}).Where("user_id = ? AND task_id = ?", userId, taskId).Find(&list)
+// ListComments 获取任务评论列表
+// @param ctx 上下文
+// @param userId 用户ID
+// @param taskId 待办任务任务ID
+// @return 任务评论实体列表
+// @return error 错误
+func (repo *TaskRepoImpl) ListComments(
+	ctx context.Context,
+	userId int64,
+	taskId int64,
+) ([]*entities.TaskComment, error) {
+	var list []*models.TaskComment
+	tx := repo.db.
+		WithContext(ctx).
+		Model(&models.TaskComment{}).
+		Where("user_id = ? AND task_id = ?", userId, taskId).
+		Find(&list)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return CommentModels2Entities(list), nil
+	return TaskCommentModels2Entities(list), nil
 }
 
-func (repo *TaskRepoImpl) SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error {
+// SyncCommentUserProfile 同步任务评论用户属性
+// @param ctx 上下文
+// @param userId 用户ID
+// @param nickname 昵称
+// @param avatar 头像
+// @return error 错误
+func (repo *TaskRepoImpl) SyncCommentUserProfile(
+	ctx context.Context,
+	userId int64,
+	nickname, avatar string,
+) error {
 	updates := map[string]interface{}{}
 	if nickname != "" {
 		updates["nickname"] = nickname
@@ -471,5 +651,10 @@ func (repo *TaskRepoImpl) SyncCommentUserProfile(ctx context.Context, userId int
 	if len(updates) == 0 {
 		return nil
 	}
-	return repo.db.WithContext(ctx).Model(&models.Comment{}).Where("user_id = ?", userId).Updates(updates).Error
+	return repo.db.
+		WithContext(ctx).
+		Model(&models.TaskComment{}).
+		Where("user_id = ?", userId).
+		Updates(updates).
+		Error
 }

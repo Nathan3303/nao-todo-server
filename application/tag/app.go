@@ -6,7 +6,7 @@ import (
 	"naotodoserver/interfaces/types"
 )
 
-// 标签应用服务接口
+// TagApp 标签应用服务接口
 type TagApp interface {
 	// 获取标签信息
 	GetTag(ctx context.Context, tagId string) (*types.GetTagRes, error)
@@ -47,9 +47,7 @@ type TagApp interface {
 	) error
 }
 
-// 标签应用服务实现
+// TagAppImpl 标签应用服务实现
 type TagAppImpl struct {
 	tagDomain service.TagDomain
 }
-
-// 标签应用服务单例

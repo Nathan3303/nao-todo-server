@@ -14,7 +14,7 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res.Email = e.Email
 	res.Nickname = e.Nickname
 	res.Avatar = e.Avatar
-	res.Role = e.Role
+	res.Role = ""
 	res.CreatedFrom = e.CreatedFrom
 	res.State = e.State
 	res.Config = e.Config

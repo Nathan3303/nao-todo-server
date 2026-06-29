@@ -6,7 +6,7 @@ type GetUserProfileRes struct {
 	Avatar      string `json:"avatar"`
 	CreatedFrom string `json:"createdFrom"`
 	Role        string `json:"role"`
-	State       int8   `json:"state"`
+	State       uint8  `json:"state"`
 	Config      any    `json:"config"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`

@@ -5,7 +5,7 @@ import (
 	"naotodoserver/interfaces/types"
 )
 
-// 将 SignUpReq 转换为 CreateUserValueObject
+// SignUpReqToCreateUserValueObject 将 SignUpReq 转换为 CreateUserValueObject
 // @param signUpReq 注册请求
 // @return CreateUserValueObject 创建用户值对象
 // @error 错误信息

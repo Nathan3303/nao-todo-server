@@ -16,7 +16,7 @@ type sessionRepoImpl struct {
 	db *gorm.DB
 }
 
-func NewSessionRepo(db *gorm.DB) repositories.Session {
+func NewSessionRepo(db *gorm.DB) repositories.UserSession {
 	return &sessionRepoImpl{
 		db: db,
 	}
@@ -25,18 +25,22 @@ func NewSessionRepo(db *gorm.DB) repositories.Session {
 /**
  * Create Session
  */
-func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.Session) error {
+func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.UserSession) error {
 	// 1. 查找现存记录
-	currentSession := &models.Session{}
-	findCond := &models.Session{UserId: sessionEntity.UserId}
-	sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).First(currentSession)
+	currentSession := &models.UserSession{}
+	findCond := &models.UserSession{UserId: sessionEntity.UserId}
+	sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where(findCond).
+		First(currentSession)
 	// 2. 获取上下文 ClientInfo
 	clientInfo := iCtx.GetClientInfo(ctx)
 	// 2. 执行结果存在逻辑 - 更新记录
 	if currentSession.ID != 0 {
-		tx := sr.db.WithContext(ctx).Model(&models.Session{}).
+		tx := sr.db.WithContext(ctx).Model(&models.UserSession{}).
 			Where(findCond).
-			UpdateColumns(&models.Session{
+			UpdateColumns(&models.UserSession{
 				Token:      sessionEntity.Token,
 				ExpiredAt:  time.Now().Add(time.Hour * 24 * 7),
 				IP4:        clientInfo.IP4,
@@ -54,7 +58,7 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.S
 	createCond.Region = clientInfo.IPRegion
 	createCond.DeviceType = clientInfo.DeviceType
 	createCond.ExpiredAt = time.Now().Add(time.Hour * 24 * 7)
-	tx := sr.db.WithContext(ctx).Model(&models.Session{}).
+	tx := sr.db.WithContext(ctx).Model(&models.UserSession{}).
 		Create(createCond)
 	if tx.Error != nil {
 		return tx.Error
@@ -67,11 +71,13 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.S
  */
 func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token string) error {
 	// 1. 创建删除模型
-	deleteCond := &models.Session{Token: token}
+	deleteCond := &models.UserSession{Token: token}
 	// 2. 执行删除
-	tx := sr.db.WithContext(ctx).Model(&models.Session{}).Where(&deleteCond).Delete(
-		&models.Session{},
-	)
+	tx := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where(&deleteCond).
+		Delete(&models.UserSession{})
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -86,17 +92,21 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	ctx context.Context,
 	userId int64,
 	token string,
-) *entities.Session {
+) *entities.UserSession {
 	// 1. 创建结果模型
-	session := &models.Session{}
+	session := &models.UserSession{}
 	// 2. 创建查找模型（携带区域信息）
-	findCond := &models.Session{UserId: userId, Token: token}
+	findCond := &models.UserSession{UserId: userId, Token: token}
 	// 3. 填充 区域信息和设备类型
 	clientInfo := iCtx.GetClientInfo(ctx)
 	findCond.Region = clientInfo.IPRegion
 	findCond.DeviceType = clientInfo.DeviceType
 	// 4. 执行查找
-	sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).First(&session)
+	sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where(findCond).
+		First(&session)
 	// 5. 模型转换并返回
 	return SessionModel2Entity(session)
 }
@@ -104,12 +114,19 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 /**
  * Update Session Token
  */
-func (sr *sessionRepoImpl) UpdateToken(ctx context.Context, sessionEntity *entities.Session) error {
+func (sr *sessionRepoImpl) UpdateToken(
+	ctx context.Context,
+	sessionEntity *entities.UserSession,
+) error {
 	// 1. 创建模型
-	updateCond := &models.Session{Token: sessionEntity.Token}
-	findCond := &models.Session{UserId: sessionEntity.UserId}
+	updateCond := &models.UserSession{Token: sessionEntity.Token}
+	findCond := &models.UserSession{UserId: sessionEntity.UserId}
 	// 2. 执行更新
-	tx := sr.db.WithContext(ctx).Model(&models.Session{}).Where(findCond).Updates(updateCond)
+	tx := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where(findCond).
+		Updates(updateCond)
 	if tx.Error != nil {
 		return tx.Error
 	}
@@ -121,9 +138,16 @@ func (sr *sessionRepoImpl) UpdateToken(ctx context.Context, sessionEntity *entit
  * Is Session Valid
  */
 func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId int64, token string) bool {
-	session := &models.Session{}
-	tx := sr.db.WithContext(ctx).Model(&models.Session{}).
-		Where("user_id = ? AND token = ? AND expired_at > ?", userId, token, time.Now()).
+	session := &models.UserSession{}
+	tx := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where(
+			"user_id = ? AND token = ? AND expired_at > ?",
+			userId,
+			token,
+			time.Now(),
+		).
 		First(session)
 	return tx.Error == nil && session.ID != 0
 }

@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// 标签实体转换响应体
+// TagEntityToGetRes 标签实体转换响应体
 // @param tagEntity 标签实体
 // @return 标签响应体
 func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
@@ -22,7 +22,7 @@ func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 	return res
 }
 
-// 创建标签请求体转换值对象
+// CreateTagReqToValueObject 创建标签请求体转换值对象
 // @param createTagReq 创建标签请求体
 // @return 创建标签值对象
 func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.CreateTag, error) {
@@ -33,7 +33,7 @@ func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.
 	)
 }
 
-// 标签实体转换创建响应体
+// TagEntityToCreateRes 标签实体转换创建响应体
 // @param tagEntity 标签实体
 // @return 创建标签响应体
 func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
@@ -48,7 +48,7 @@ func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
 	return res
 }
 
-// 更新标签请求体转换值对象
+// UpdateTagReqToValueObject 更新标签请求体转换值对象
 // @param updateTagReq 更新标签请求体
 // @return 更新标签值对象
 func UpdateTagReqToValueObject(updateTagReq *types.UpdateTagReq) (*valueobjects.UpdateTag, error) {
@@ -60,7 +60,7 @@ func UpdateTagReqToValueObject(updateTagReq *types.UpdateTagReq) (*valueobjects.
 	)
 }
 
-// 标签实体列表转换响应体列表
+// TagEntitiesToGetResList 标签实体列表转换响应体列表
 // @param tagEntities 标签实体列表
 // @return 标签响应体列表
 func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*types.GetTagRes {
@@ -71,7 +71,7 @@ func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*types.GetTagRes {
 	return getResList
 }
 
-// 标签偏好设置实体转换响应体
+// TagPreferenceEntityToGetRes 标签偏好设置实体转换响应体
 // @param tagPreferenceEntity 标签偏好设置实体
 // @return 标签偏好设置响应体
 func TagPreferenceEntityToGetRes(
@@ -88,7 +88,7 @@ func TagPreferenceEntityToGetRes(
 	}
 }
 
-// 更新标签偏好设置请求体转换值对象
+// UpdateTagPreferenceReqToValueObject 更新标签偏好设置请求体转换值对象
 // @param updateTagPreferenceReq 更新标签偏好设置请求体
 // @return 更新标签偏好设置值对象
 func UpdateTagPreferenceReqToValueObject(
@@ -101,7 +101,10 @@ func UpdateTagPreferenceReqToValueObject(
 	)
 }
 
-// 批量更新标签请求体转换值对象
+// BatchUpdateTagReqToValueObjects 批量更新标签请求体转换值对象列表
+// @param req 批量更新标签请求体
+// @return 批量更新标签值对象列表
+// @return error 错误信息
 func BatchUpdateTagReqToValueObjects(
 	req *types.BatchUpdateTagReq,
 ) ([]*valueobjects.BatchUpdateTag, error) {
@@ -111,7 +114,13 @@ func BatchUpdateTagReqToValueObjects(
 		if err != nil {
 			return nil, err
 		}
-		vo, err := valueobjects.NewBatchUpdateTag(id, tag.Name, tag.Description, tag.Color, tag.SortId)
+		vo, err := valueobjects.NewBatchUpdateTag(
+			id,
+			tag.Name,
+			tag.Description,
+			tag.Color,
+			tag.SortId,
+		)
 		if err != nil {
 			return nil, err
 		}

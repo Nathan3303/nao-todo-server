@@ -12,8 +12,8 @@ type UpdateTask struct {
 	ParentTaskId   *int64
 	Name           *string
 	Description    *string
-	State          *int8
-	Priority       *int8
+	State          *uint8
+	Priority       *uint8
 	StartAt        *types.NullableTime
 	EndAt          *types.NullableTime
 	ProjectId      *int64
@@ -22,9 +22,9 @@ type UpdateTask struct {
 	StarMarkAt     *types.NullableTime
 	GivenUpAt      *types.NullableTime
 	RemindAt       *types.NullableTime
-	RemindRepeat   *int8
+	RemindRepeat   *uint8
 	RemindTime     *string
-	RemindWeekdays *int8
+	RemindWeekdays *uint8
 }
 
 func (updateTask *UpdateTask) Validate() error {
@@ -37,8 +37,12 @@ func (updateTask *UpdateTask) Validate() error {
 	if updateTask.Description != nil && textutils.RuneLength(*updateTask.Description) > 512 {
 		return errors.New("任务描述最多512个字符")
 	}
-	if updateTask.EndAt != nil && updateTask.EndAt.ShouldUpdate() && !updateTask.EndAt.IsSetToNull() &&
-		updateTask.StartAt != nil && updateTask.StartAt.ShouldUpdate() && !updateTask.StartAt.IsSetToNull() {
+	if updateTask.EndAt != nil &&
+		updateTask.EndAt.ShouldUpdate() &&
+		!updateTask.EndAt.IsSetToNull() &&
+		updateTask.StartAt != nil &&
+		updateTask.StartAt.ShouldUpdate() &&
+		!updateTask.StartAt.IsSetToNull() {
 		endTime, endOk := updateTask.EndAt.Value()
 		startTime, startOk := updateTask.StartAt.Value()
 		if endOk && startOk && endTime.Before(startTime) {
@@ -53,8 +57,8 @@ func NewUpdateTask(
 	parentTaskId *int64,
 	name *string,
 	description *string,
-	state *int8,
-	priority *int8,
+	state *uint8,
+	priority *uint8,
 	startAt *types.NullableTime,
 	endAt *types.NullableTime,
 	projectId *int64,
@@ -63,9 +67,9 @@ func NewUpdateTask(
 	starMarkAt *types.NullableTime,
 	givenUpAt *types.NullableTime,
 	remindAt *types.NullableTime,
-	remindRepeat *int8,
+	remindRepeat *uint8,
 	remindTime *string,
-	remindWeekdays *int8,
+	remindWeekdays *uint8,
 ) (*UpdateTask, error) {
 	updateTask := &UpdateTask{
 		UserId:         userId,

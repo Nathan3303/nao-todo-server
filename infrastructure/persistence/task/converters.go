@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
 	"naotodoserver/infrastructure/utils"
 
@@ -202,6 +203,9 @@ func UpdateTaskValueObjectToMap(
 func TaskModel2Entity(m *models.Task) *entities.Task {
 	e := &entities.Task{}
 	e.Id = m.ID
+	e.UpdatedAt = m.UpdatedAt
+	e.CreatedAt = m.CreatedAt
+	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.ParentTaskId = m.ParentTaskId
 	e.ProjectId = m.ProjectId
@@ -209,19 +213,16 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.Description = m.Description
 	e.State = m.State
 	e.Priority = m.Priority
-	e.StartAt = utils.SqlNullTime2TimePtr(m.StartAt)
-	e.EndAt = utils.SqlNullTime2TimePtr(m.EndAt)
-	e.ArchivedAt = utils.SqlNullTime2TimePtr(m.ArchivedAt)
-	e.StarMarkAt = utils.SqlNullTime2TimePtr(m.StarMarkAt)
-	e.GivenUpAt = utils.SqlNullTime2TimePtr(m.GivenUpAt)
-	e.RemindAt = utils.SqlNullTime2TimePtr(m.RemindAt)
+	e.StartAt = *types.NewNullableTimeWithTime(m.StartAt.Time)
+	e.EndAt = *types.NewNullableTimeWithTime(m.EndAt.Time)
+	e.ArchivedAt = *types.NewNullableTimeWithTime(m.ArchivedAt.Time)
+	e.StarMarkAt = *types.NewNullableTimeWithTime(m.StarMarkAt.Time)
+	e.GivenUpAt = *types.NewNullableTimeWithTime(m.GivenUpAt.Time)
+	e.RemindAt = *types.NewNullableTimeWithTime(m.RemindAt.Time)
 	e.RemindRepeat = m.RemindRepeat
 	e.RemindTime = m.RemindTime
 	e.RemindWeekdays = m.RemindWeekdays
 	e.Tags = m.Tags
-	e.UpdatedAt = m.UpdatedAt
-	e.CreatedAt = m.CreatedAt
-	e.DeletedAt = m.DeletedAt.Time
 	return e
 }
 
@@ -252,10 +253,11 @@ func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 	return eList
 }
 
-// === CheckItem converters ===
+// --- 检查项相关 ---
 
-func EventValueObjectToModel(vo *valueobjects.CreateCheckItem) *models.Event {
-	return &models.Event{
+// 创建检查项值对象转换为检查项模型
+func TaskCheckItemValueObjectToModel(vo *valueobjects.CreateTaskCheckItem) *models.TaskCheckItem {
+	return &models.TaskCheckItem{
 		UserId:      vo.UserId,
 		TaskId:      vo.TaskId,
 		Name:        vo.Name,
@@ -264,7 +266,10 @@ func EventValueObjectToModel(vo *valueobjects.CreateCheckItem) *models.Event {
 	}
 }
 
-func UpdateEventValueObjectToMap(vo *valueobjects.UpdateCheckItem) map[string]interface{} {
+// UpdateTaskCheckItemValueObjectToMap 更新检查项值对象转换为更新映射
+func UpdateTaskCheckItemValueObjectToMap(
+	vo *valueobjects.UpdateTaskCheckItem,
+) map[string]interface{} {
 	m := make(map[string]interface{})
 	if vo.Name != nil {
 		m["Name"] = *vo.Name
@@ -281,7 +286,10 @@ func UpdateEventValueObjectToMap(vo *valueobjects.UpdateCheckItem) map[string]in
 	return m
 }
 
-func BatchUpdateEventValueObjectToMap(vo *valueobjects.BatchUpdateCheckItem) map[string]interface{} {
+// BatchUpdateTaskCheckItemValueObjectToMap 批量更新检查项值对象转换为批量更新映射
+func BatchUpdateTaskCheckItemValueObjectToMap(
+	vo *valueobjects.BatchUpdateTaskCheckItem,
+) map[string]interface{} {
 	m := make(map[string]interface{})
 	if vo.Name != nil {
 		m["Name"] = *vo.Name
@@ -298,32 +306,40 @@ func BatchUpdateEventValueObjectToMap(vo *valueobjects.BatchUpdateCheckItem) map
 	return m
 }
 
-func EventModel2Entity(m *models.Event) *entities.CheckItem {
-	return &entities.CheckItem{
-		Id:          m.ID,
-		UserId:      m.UserId,
-		TaskId:      m.TaskId,
-		Name:        m.Name,
-		Description: m.Description,
-		IsDone:      m.IsDone,
-		SortId:      m.SortId,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-	}
+// TaskCheckItemModel2Entity 转换为任务检查项实体
+// @param m 任务检查项模型
+// @return 任务检查项实体
+func TaskCheckItemModel2Entity(m *models.TaskCheckItem) *entities.TaskCheckItem {
+	var e entities.TaskCheckItem
+	e.Id = m.ID
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.UserId = m.UserId
+	e.TaskId = m.TaskId
+	e.Name = m.Name
+	e.Description = m.Description
+	e.IsDone = m.IsDone
+	e.SortId = m.SortId
+	return &e
 }
 
-func EventModels2Entities(list []*models.Event) []*entities.CheckItem {
-	result := make([]*entities.CheckItem, 0, len(list))
+// TaskCheckItemModels2Entities 转换为任务检查项实体列表
+// @param list 任务检查项模型列表
+// @return 任务检查项实体列表
+func TaskCheckItemModels2Entities(list []*models.TaskCheckItem) []*entities.TaskCheckItem {
+	result := make([]*entities.TaskCheckItem, 0, len(list))
 	for _, m := range list {
-		result = append(result, EventModel2Entity(m))
+		result = append(result, TaskCheckItemModel2Entity(m))
 	}
 	return result
 }
 
-// === Comment converters ===
+// --- Task Comment相关 ---
 
-func CreateCommentValueObjectToModel(vo *valueobjects.CreateComment) *models.Comment {
-	return &models.Comment{
+// 创建任务评论值对象转换为任务评论模型
+func CreateTaskCommentValueObjectToModel(vo *valueobjects.CreateTaskComment) *models.TaskComment {
+	return &models.TaskComment{
 		UserId:      vo.UserId,
 		TaskId:      vo.TaskId,
 		Content:     vo.Content,
@@ -332,7 +348,8 @@ func CreateCommentValueObjectToModel(vo *valueobjects.CreateComment) *models.Com
 	}
 }
 
-func UpdateCommentValueObjectToMap(vo *valueobjects.UpdateComment) map[string]interface{} {
+// UpdateTaskCommentValueObjectToMap 更新任务评论值对象转换为更新映射
+func UpdateTaskCommentValueObjectToMap(vo *valueobjects.UpdateTaskComment) map[string]interface{} {
 	m := make(map[string]interface{})
 	if vo.Content != nil {
 		m["Content"] = *vo.Content
@@ -348,25 +365,32 @@ func UpdateCommentValueObjectToMap(vo *valueobjects.UpdateComment) map[string]in
 	return m
 }
 
-func CommentModel2Entity(m *models.Comment) *entities.Comment {
-	return &entities.Comment{
-		Id:          m.ID,
-		UserId:      m.UserId,
-		TaskId:      m.TaskId,
-		Content:     m.Content,
-		Attachments: m.Attachments,
-		IsTopUp:     m.IsTopUp,
-		Nickname:    m.Nickname,
-		Avatar:      m.Avatar,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-	}
+// TaskCommentModel2Entity 转换为任务评论实体
+// @param m 任务评论模型
+// @return 任务评论实体
+func TaskCommentModel2Entity(m *models.TaskComment) *entities.TaskComment {
+	var e entities.TaskComment
+	e.Id = m.ID
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.UserId = m.UserId
+	e.TaskId = m.TaskId
+	e.Content = m.Content
+	e.Attachments = m.Attachments
+	e.IsTopUp = m.IsTopUp
+	e.Nickname = m.Nickname
+	e.Avatar = m.Avatar
+	return &e
 }
 
-func CommentModels2Entities(list []*models.Comment) []*entities.Comment {
-	result := make([]*entities.Comment, 0, len(list))
+// TaskCommentModels2Entities 转换为任务评论实体列表
+// @param list 任务评论模型列表
+// @return 任务评论实体列表
+func TaskCommentModels2Entities(list []*models.TaskComment) []*entities.TaskComment {
+	result := make([]*entities.TaskComment, 0, len(list))
 	for _, m := range list {
-		result = append(result, CommentModel2Entity(m))
+		result = append(result, TaskCommentModel2Entity(m))
 	}
 	return result
 }

@@ -12,11 +12,11 @@ import (
 
 // weekdaysToBitmask 星期数组转换位掩码
 // @param weekdays 星期数组
-// @return int8 位掩码
-func weekdaysToBitmask(weekdays []int) int8 {
-	var mask int8
+// @return uint8 位掩码
+func weekdaysToBitmask(weekdays []uint8) uint8 {
+	var mask uint8
 	for _, d := range weekdays {
-		if v, ok := consts.WeekdayBitmask[d]; ok {
+		if v, ok := consts.WeekdayBitmask[int(d)]; ok {
 			mask |= v
 		}
 	}
@@ -25,57 +25,43 @@ func weekdaysToBitmask(weekdays []int) int8 {
 
 // bitmaskToWeekdays 位掩码转换星期数组
 // @param mask 位掩码
-// @return []int 星期数组
-func bitmaskToWeekdays(mask int8) []int {
-	var weekdays []int
+// @return []uint8 星期数组
+func bitmaskToWeekdays(mask uint8) []uint8 {
+	var weekdays []uint8
 	for bit, day := range consts.WeekdayBitmaskReverse {
 		if mask&bit != 0 {
 			weekdays = append(weekdays, day)
 		}
 	}
 	if weekdays == nil {
-		weekdays = []int{}
+		weekdays = []uint8{}
 	}
 	return weekdays
-}
-
-func formatTimePtr(t *time.Time) string {
-	if t == nil {
-		return ""
-	}
-	return t.Format(time.RFC3339)
-}
-
-func formatTimePtrOk(t *time.Time) (string, bool) {
-	if t == nil {
-		return "", false
-	}
-	return t.Format(time.RFC3339), true
 }
 
 // TaskEntityToGetRes 任务实体转换为获取任务响应
 func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res := &types.GetTaskRes{}
 	res.Id = strconv.FormatInt(taskEntity.Id, 10)
+	res.UpdatedAt = taskEntity.UpdatedAt.Format(time.RFC3339)
+	res.CreatedAt = taskEntity.CreatedAt.Format(time.RFC3339)
+	res.DeletedAt = taskEntity.DeletedAt.ToString(time.RFC3339)
 	res.ParentTaskId = strconv.FormatInt(taskEntity.ParentTaskId, 10)
 	res.Name = taskEntity.Name
 	res.Description = taskEntity.Description
 	res.State = consts.TodoStateMapReverse[taskEntity.State]
 	res.Priority = consts.TodoPriorityMapReverse[taskEntity.Priority]
-	res.StartAt = formatTimePtr(taskEntity.StartAt)
-	res.EndAt = formatTimePtr(taskEntity.EndAt)
+	res.StartAt = taskEntity.StartAt.ToString(time.RFC3339)
+	res.EndAt = taskEntity.EndAt.ToString(time.RFC3339)
 	res.ProjectId = strconv.FormatInt(taskEntity.ProjectId, 10)
 	res.Tags = taskEntity.Tags
-	res.ArchivedAt, _ = formatTimePtrOk(taskEntity.ArchivedAt)
-	res.StarMarkAt, _ = formatTimePtrOk(taskEntity.StarMarkAt)
-	res.GivenUpAt, _ = formatTimePtrOk(taskEntity.GivenUpAt)
-	res.RemindAt = formatTimePtr(taskEntity.RemindAt)
+	res.ArchivedAt = taskEntity.ArchivedAt.ToString(time.RFC3339)
+	res.StarMarkAt = taskEntity.StarMarkAt.ToString(time.RFC3339)
+	res.GivenUpAt = taskEntity.GivenUpAt.ToString(time.RFC3339)
+	res.RemindAt = taskEntity.RemindAt.ToString(time.RFC3339)
 	res.RemindRepeat = consts.RemindRepeatMapReverse[taskEntity.RemindRepeat]
 	res.RemindTime = taskEntity.RemindTime
 	res.RemindWeekdays = bitmaskToWeekdays(taskEntity.RemindWeekdays)
-	res.UpdatedAt = utils.Time2String(taskEntity.UpdatedAt)
-	res.CreatedAt = utils.Time2String(taskEntity.CreatedAt)
-	res.DeletedAt = utils.Time2String(taskEntity.DeletedAt)
 	return res
 }
 
@@ -128,9 +114,9 @@ func UpdateTaskReqToValueObject(
 	req *types.UpdateTaskReq,
 ) (*valueobjects.UpdateTask, error) {
 	var iParentId, iProjectId *int64
-	var iState, iPriority *int8
-	var iRemindRepeat *int8
-	var iRemindWeekdays *int8
+	var iState, iPriority *uint8
+	var iRemindRepeat *uint8
+	var iRemindWeekdays *uint8
 	if req.ParentTaskId != nil {
 		iParentIdValue, _ := strconv.ParseInt(*req.ParentTaskId, 10, 64)
 		iParentId = &iParentIdValue
@@ -249,10 +235,13 @@ func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) 
 	}
 }
 
-// === CheckItem converters ===
+// --- TaskCheckItem converters ---
 
-func CheckItemEntityToGetRes(e *entities.CheckItem) *types.GetCheckItemRes {
-	return &types.GetCheckItemRes{
+// TaskCheckItemEntityToGetRes 任务检查项实体转换为获取任务检查项响应
+// @param e 任务检查项实体
+// @return 任务检查项响应
+func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *types.GetTaskCheckItemRes {
+	return &types.GetTaskCheckItemRes{
 		Id:          strconv.FormatInt(e.Id, 10),
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
 		Name:        e.Name,
@@ -264,16 +253,32 @@ func CheckItemEntityToGetRes(e *entities.CheckItem) *types.GetCheckItemRes {
 	}
 }
 
-func CreateCheckItemReqToVO(userId int64, req *types.CreateCheckItemReq) (*valueobjects.CreateCheckItem, error) {
+// CreateTaskCheckItemReqToVO 创建任务检查项请求转换为创建任务检查项值对象
+// @param userId 用户 ID
+// @param req 创建任务检查项请求
+// @return 创建任务检查项值对象
+// @error 错误
+func CreateTaskCheckItemReqToVO(
+	userId int64,
+	req *types.CreateTaskCheckItemReq,
+) (*valueobjects.CreateTaskCheckItem, error) {
 	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	return valueobjects.NewCreateCheckItem(userId, taskId, req.Name, req.Description)
+	return valueobjects.NewCreateTaskCheckItem(
+		userId,
+		taskId,
+		req.Name,
+		req.Description,
+	)
 }
 
-func CheckItemEntityToCreateRes(e *entities.CheckItem) *types.CreateCheckItemRes {
-	return &types.CreateCheckItemRes{
+// TaskCheckItemEntityToCreateRes 任务检查项实体转换为创建任务检查项响应
+// @param e 任务检查项实体
+// @return 创建任务检查项响应
+func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *types.CreateTaskCheckItemRes {
+	return &types.CreateTaskCheckItemRes{
 		Id:          strconv.FormatInt(e.Id, 10),
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
 		Name:        e.Name,
@@ -285,26 +290,52 @@ func CheckItemEntityToCreateRes(e *entities.CheckItem) *types.CreateCheckItemRes
 	}
 }
 
-func UpdateCheckItemReqToVO(req *types.UpdateCheckItemReq) (*valueobjects.UpdateCheckItem, error) {
-	return valueobjects.NewUpdateCheckItem(req.Name, req.Description, req.IsDone, req.SortId)
+// UpdateTaskCheckItemReqToVO 更新任务检查项请求转换为更新任务检查项值对象
+// @param req 更新任务检查项请求
+// @return 更新任务检查项值对象
+// @error 错误
+func UpdateTaskCheckItemReqToVO(
+	req *types.UpdateTaskCheckItemReq,
+) (*valueobjects.UpdateTaskCheckItem, error) {
+	return valueobjects.NewUpdateTaskCheckItem(
+		req.Name,
+		req.Description,
+		req.IsDone,
+		req.SortId,
+	)
 }
 
-func CheckItemEntitiesToReses(items []*entities.CheckItem) types.ListCheckItemRes {
-	res := make([]*types.GetCheckItemRes, 0, len(items))
+// TaskCheckItemEntitiesToReses 任务检查项实体转换为获取任务检查项响应列表
+// @param items 任务检查项实体列表
+// @return 任务检查项响应列表
+func TaskCheckItemEntitiesToReses(items []*entities.TaskCheckItem) types.ListTaskCheckItemRes {
+	res := make([]*types.GetTaskCheckItemRes, 0, len(items))
 	for _, e := range items {
-		res = append(res, CheckItemEntityToGetRes(e))
+		res = append(res, TaskCheckItemEntityToGetRes(e))
 	}
 	return res
 }
 
-func BatchUpdateCheckItemReqToVOs(req *types.BatchUpdateCheckItemReq) ([]*valueobjects.BatchUpdateCheckItem, error) {
-	vos := make([]*valueobjects.BatchUpdateCheckItem, 0, len(req.Events))
+// BatchUpdateTaskCheckItemReqToVOs 批量更新任务检查项请求转换为批量更新任务检查项值对象列表
+// @param req 批量更新任务检查项请求
+// @return 批量更新任务检查项值对象列表
+// @error 错误
+func BatchUpdateTaskCheckItemReqToVOs(
+	req *types.BatchUpdateTaskCheckItemReq,
+) ([]*valueobjects.BatchUpdateTaskCheckItem, error) {
+	vos := make([]*valueobjects.BatchUpdateTaskCheckItem, 0, len(req.Events))
 	for _, e := range req.Events {
 		id, err := strconv.ParseInt(e.Id, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		vo, err := valueobjects.NewBatchUpdateCheckItem(id, e.Name, e.Description, e.IsDone, e.SortId)
+		vo, err := valueobjects.NewBatchUpdateTaskCheckItem(
+			id,
+			e.Name,
+			e.Description,
+			e.IsDone,
+			e.SortId,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -313,10 +344,13 @@ func BatchUpdateCheckItemReqToVOs(req *types.BatchUpdateCheckItemReq) ([]*valueo
 	return vos, nil
 }
 
-// === Comment converters ===
+// --- TaskComment converters ---
 
-func CommentEntityToRes(e *entities.Comment) *types.CommentRes {
-	return &types.CommentRes{
+// TaskCommentEntityToRes 任务评论实体转换为获取任务评论响应
+// @param e 任务评论实体
+// @return 任务评论响应
+func TaskCommentEntityToRes(e *entities.TaskComment) *types.TaskCommentRes {
+	return &types.TaskCommentRes{
 		Id:          strconv.FormatInt(e.Id, 10),
 		TaskId:      strconv.FormatInt(e.TaskId, 10),
 		Content:     e.Content,
@@ -329,22 +363,49 @@ func CommentEntityToRes(e *entities.Comment) *types.CommentRes {
 	}
 }
 
-func CreateCommentReqToVO(userId int64, req *types.CreateCommentReq) (*valueobjects.CreateComment, error) {
+// CreateTaskCommentReqToVO 创建任务评论请求转换为创建任务评论值对象
+// @param userId 用户 ID
+// @param req 创建任务评论请求
+// @return 创建任务评论值对象
+// @error 错误
+func CreateTaskCommentReqToVO(
+	userId int64,
+	req *types.CreateTaskCommentReq,
+) (*valueobjects.CreateTaskComment, error) {
 	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	return valueobjects.NewCreateComment(userId, taskId, req.Content, nil, false)
+	return valueobjects.NewCreateTaskComment(
+		userId,
+		taskId,
+		req.Content,
+		nil,
+		false,
+	)
 }
 
-func UpdateCommentReqToVO(req *types.UpdateCommentReq) (*valueobjects.UpdateComment, error) {
-	return valueobjects.NewUpdateComment(req.Content, req.Attachments, req.IsTopUp)
+// UpdateTaskCommentReqToVO 更新任务评论请求转换为更新任务评论值对象
+// @param req 更新任务评论请求
+// @return 更新任务评论值对象
+// @error 错误
+func UpdateTaskCommentReqToVO(
+	req *types.UpdateTaskCommentReq,
+) (*valueobjects.UpdateTaskComment, error) {
+	return valueobjects.NewUpdateTaskComment(
+		req.Content,
+		req.Attachments,
+		req.IsTopUp,
+	)
 }
 
-func CommentEntitiesToListRes(list []*entities.Comment) []*types.CommentRes {
-	res := make([]*types.CommentRes, 0, len(list))
+// TaskCommentEntitiesToListRes 任务评论实体列表转换为获取任务评论响应列表
+// @param list 任务评论实体列表
+// @return 任务评论响应列表
+func TaskCommentEntitiesToListRes(list []*entities.TaskComment) []*types.TaskCommentRes {
+	res := make([]*types.TaskCommentRes, 0, len(list))
 	for _, e := range list {
-		res = append(res, CommentEntityToRes(e))
+		res = append(res, TaskCommentEntityToRes(e))
 	}
 	return res
 }

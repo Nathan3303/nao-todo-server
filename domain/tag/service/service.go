@@ -7,7 +7,7 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 )
 
-// 标签领域服务接口
+// TagDomain 标签领域服务接口
 type TagDomain interface {
 	// 根据 ID 获取标签
 	GetById(ctx context.Context, userId int64, tagId int64) (*entities.Tag, error)
@@ -52,7 +52,7 @@ type TagDomain interface {
 	) error
 }
 
-// 标签领域服务实现
+// TagDomainImpl 标签领域服务实现
 type TagDomainImpl struct {
 	tagRepo        repositories.TagRepository
 	preferenceRepo repositories.TagPreference

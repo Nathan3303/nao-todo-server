@@ -3,100 +3,113 @@ package identity
 import (
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/auth"
 	"naotodoserver/infrastructure/persistence/models"
-	"naotodoserver/infrastructure/utils"
 
 	"gorm.io/gorm"
 )
 
-// === User converters ===
-
+// UserEntity2Model 用户实体转换为数据库模型
 func UserEntity2Model(e *entities.User) *models.User {
-	u := &models.User{
-		Account:     e.Account,
-		Email:       e.Email,
-		Password:    e.Password,
-		Nickname:    e.Nickname,
-		Avatar:      e.Avatar,
-		CreatedFrom: e.CreatedFrom,
-		Role:        e.Role,
-		State:       e.State,
-		DeactivedAt: utils.TimePtr2SqlNullTime(e.DeactivedAt),
-	}
-	u.ID = e.Id
-	u.CreatedAt = e.CreatedAt
-	u.UpdatedAt = e.UpdatedAt
-	u.DeletedAt = gorm.DeletedAt{Time: e.DeletedAt, Valid: !e.DeletedAt.IsZero()}
-	return u
+	var m models.User
+	m.ID = e.Id
+	m.CreatedAt = e.CreatedAt
+	m.UpdatedAt = e.UpdatedAt
+	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
+	m.Account = e.Account
+	m.Email = e.Email
+	m.Password = e.Password
+	m.Nickname = e.Nickname
+	m.Avatar = e.Avatar
+	m.CreatedFrom = e.CreatedFrom
+	m.Role = e.Role
+	m.State = e.State
+	m.DeactivedAt = e.DeactivedAt.ToSqlNullTime()
+	return &m
 }
 
+// UserModel2Entity 数据库模型转换为用户实体
 func UserModel2Entity(m *models.User) *entities.User {
-	return &entities.User{
-		Id:          m.ID,
-		Account:     m.Account,
-		Email:       m.Email,
-		Password:    m.Password,
-		Nickname:    m.Nickname,
-		Avatar:      m.Avatar,
-		CreatedFrom: m.CreatedFrom,
-		Role:        m.Role,
-		State:       m.State,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-		DeletedAt:   m.DeletedAt.Time,
-		DeactivedAt: utils.SqlNullTime2TimePtr(m.DeactivedAt),
-	}
+	var e entities.User
+	e.Id = m.ID
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.Account = m.Account
+	e.Email = m.Email
+	e.Password = m.Password
+	e.Nickname = m.Nickname
+	e.Avatar = m.Avatar
+	e.CreatedFrom = m.CreatedFrom
+	e.Role = m.Role
+	e.State = m.State
+	e.DeactivedAt = *types.NewNullableTimeWithTime(m.DeactivedAt.Time)
+	return &e
 }
 
-// === UserConfig converters ===
-
+// UserConfigEntity2Model 用户配置实体转换为数据库模型
 func UserConfigEntity2Model(e *entities.UserConfig) *models.UserConfig {
-	return &models.UserConfig{
-		UserId:     e.UserId,
-		Appearance: e.Appearance,
-	}
+	var m models.UserConfig
+	m.ID = e.Id
+	m.CreatedAt = e.CreatedAt
+	m.UpdatedAt = e.UpdatedAt
+	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
+	m.UserId = e.UserId
+	m.Appearance = e.Appearance
+	return &m
 }
 
+// UserConfigModel2Entity 数据库模型转换为用户配置实体
 func UserConfigModel2Entity(m *models.UserConfig) *entities.UserConfig {
-	return &entities.UserConfig{
-		Id:         m.ID,
-		UserId:     m.UserId,
-		Appearance: m.Appearance,
-		CreatedAt:  m.CreatedAt,
-		UpdatedAt:  m.UpdatedAt,
-		DeletedAt:  m.DeletedAt.Time,
-	}
+	var e entities.UserConfig
+	e.Id = m.ID
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.UserId = m.UserId
+	e.Appearance = m.Appearance
+	return &e
 }
 
-// === Session converters ===
-
-func SessionModel2Entity(m *models.Session) *entities.Session {
-	return &entities.Session{
-		Id:         m.ID,
-		UserId:     m.UserId,
-		Token:      m.Token,
-		ExpiredAt:  m.ExpiredAt,
-		DeviceType: m.DeviceType,
-	}
+// SessionModel2Entity 数据库模型转换为会话实体
+func SessionModel2Entity(m *models.UserSession) *entities.UserSession {
+	var e entities.UserSession
+	e.Id = m.ID
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.UserId = m.UserId
+	e.Token = m.Token
+	e.ExpiredAt = m.ExpiredAt
+	e.DeviceType = m.DeviceType
+	e.IP4 = m.IP4
+	e.Region = m.Region
+	return &e
 }
 
-func SessionEntity2Model(e *entities.Session) *models.Session {
-	return &models.Session{
-		UserId:     e.UserId,
-		Token:      e.Token,
-		ExpiredAt:  e.ExpiredAt,
-		DeviceType: e.DeviceType,
-	}
+// SessionEntity2Model 会话实体转换为数据库模型
+func SessionEntity2Model(e *entities.UserSession) *models.UserSession {
+	var m models.UserSession
+	m.ID = e.Id
+	m.CreatedAt = e.CreatedAt
+	m.UpdatedAt = e.UpdatedAt
+	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
+	m.UserId = e.UserId
+	m.Token = e.Token
+	m.ExpiredAt = e.ExpiredAt
+	m.DeviceType = e.DeviceType
+	m.IP4 = e.IP4
+	m.Region = e.Region
+	return &m
 }
 
-// === JWT converters ===
-
+// Claims2JWTClaimsVO 转换 JWT 断言为 JWT 令牌对象
 func Claims2JWTClaimsVO(c *auth.Claims) *valueobjects.JWTClaims {
-	return &valueobjects.JWTClaims{
-		UserId:    c.Id,
-		Email:     c.Payload,
-		IssuedAt:  c.IssuedAt.Time,
-		Issuer:    c.Issuer,
-	}
+	var vo valueobjects.JWTClaims
+	vo.UserId = c.Id
+	vo.Email = c.Payload
+	vo.IssuedAt = c.IssuedAt.Time
+	vo.Issuer = c.Issuer
+	return &vo
 }

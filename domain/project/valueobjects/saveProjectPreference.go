@@ -2,14 +2,14 @@ package valueobjects
 
 import "errors"
 
-// 保存任务清单偏好值对象
+// SaveProjectPreference 保存项目偏好值对象
 type SaveProjectPreference struct {
-	ViewType   string `json:"viewType"`
-	GetOptions string `json:"getTasksOptions"`
-	Columns    string `json:"columns"`
+	ViewType   string
+	GetOptions string
+	Columns    string
 }
 
-// 验证保存任务清单偏好值对象是否符合要求
+// Validate 验证保存项目偏好值对象是否符合要求
 // @return error 验证失败返回错误，否则返回 nil
 func (saveProjectPreference *SaveProjectPreference) Validate() error {
 	if saveProjectPreference.ViewType == "" {
@@ -29,11 +29,11 @@ func (saveProjectPreference *SaveProjectPreference) Validate() error {
 	return nil
 }
 
-// 创建保存任务清单偏好值对象
+// NewSaveProjectPreference 创建保存项目偏好值对象
 // @param viewType 视图类型
 // @param getOptions 获取任务选项
 // @param columns 列选项
-// @return *SaveProjectPreference 保存任务清单偏好值对象
+// @return *SaveProjectPreference 保存项目偏好值对象
 // @return error 验证失败返回错误，否则返回 nil
 func NewSaveProjectPreference(
 	viewType string,

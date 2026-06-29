@@ -1,19 +1,18 @@
 package entities
 
 import (
-	"time"
+	"naotodoserver/domain/types"
 )
 
-// 任务清单实体
+// Project 任务清单实体
+// 用于表示用户在系统中的任务清单记录
+// 包含用户 ID、名称、描述、归档时间、创建时间、更新时间、删除时间、停用时间、排序 ID等属性
 type Project struct {
-	Id          int64
+	types.EntityBase
 	UserId      int64
 	Name        string
 	Description string
-	ArchivedAt  *time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   *time.Time
-	DeactivedAt *time.Time
+	ArchivedAt  types.NullableTime
+	DeactivedAt types.NullableTime
 	SortId      uint16
 }

@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/textutils"
 )
 
-// 创建标签值对象
+// CreateTag 创建标签值对象
 type CreateTag struct {
 	Name        string
 	Description string
@@ -14,7 +14,7 @@ type CreateTag struct {
 	SortId      uint16
 }
 
-// 校验创建标签值对象
+// Validate 校验创建标签值对象
 // @return error 校验失败返回错误，否则返回 nil
 func (createTag *CreateTag) Validate() error {
 	if createTag.Name == "" {
@@ -35,7 +35,7 @@ func (createTag *CreateTag) Validate() error {
 	return nil
 }
 
-// 创建标签值对象
+// NewCreateTag 创建标签值对象
 // @param name 标签名称
 // @param description 标签描述
 // @param color 标签颜色

@@ -135,7 +135,7 @@ func (as *authAppImpl) SignOut(
 		return err
 	}
 	// 2. 通过 JWT 令牌和用户 ID 删除会话
-	err = as.identityDomain.DeleteSession(ctx, &entities.Session{
+	err = as.identityDomain.DeleteSession(ctx, &entities.UserSession{
 		UserId: userId,
 		Token:  signOutReq.Token,
 	})

@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 )
 
+// NullableString 可空字符串
 type NullableString struct {
 	Present bool
 	IsNull  bool
 	Value   string
 }
 
+// UnmarshalJSON 反序列化 JSON 数据
 func (ns *NullableString) UnmarshalJSON(data []byte) error {
 	ns.Present = true
 	if bytes.Equal(data, []byte("null")) {
@@ -25,6 +27,10 @@ func (ns *NullableString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToUpdateState 将 NullableString 转换为更新状态
+// @return shouldUpdate 是否需要更新
+// @return isNull 是否设置为 NULL
+// @return value 值
 func (ns NullableString) ToUpdateState() (shouldUpdate bool, isNull bool, value string) {
 	if !ns.Present {
 		return false, false, ""

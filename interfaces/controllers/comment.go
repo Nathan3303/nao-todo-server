@@ -20,7 +20,7 @@ func GetCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论详情
-	comment, err := application.App.Task.GetCommentById(ctx.Request.Context(), commentId)
+	comment, err := application.App.Task.GetTaskCommentById(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60002,
@@ -41,7 +41,7 @@ func GetCommentHandler(ctx *gin.Context) {
 // @code 6001x
 func CreateCommentHandler(ctx *gin.Context) {
 	// 1. 绑定请求参数
-	var req types.CreateCommentReq
+	var req types.CreateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60011,
@@ -51,7 +51,7 @@ func CreateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层新增评论
-	res, err := application.App.Task.CreateComment(ctx.Request.Context(), &req)
+	res, err := application.App.Task.CreateTaskComment(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60012,
@@ -81,7 +81,7 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 绑定请求参数
-	var req types.UpdateCommentReq
+	var req types.UpdateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60022,
@@ -91,7 +91,7 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新评论
-	err := application.App.Task.UpdateComment(ctx.Request.Context(), commentId, &req)
+	err := application.App.Task.UpdateTaskComment(ctx.Request.Context(), commentId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60023,
@@ -122,7 +122,7 @@ func DeleteCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除评论
-	err := application.App.Task.DeleteComment(ctx.Request.Context(), commentId)
+	err := application.App.Task.DeleteTaskComment(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60032,
@@ -152,7 +152,7 @@ func ListCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论列表
-	comments, err := application.App.Task.ListComments(ctx.Request.Context(), taskId)
+	comments, err := application.App.Task.ListTaskComments(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60042,

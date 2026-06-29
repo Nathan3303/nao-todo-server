@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/* 用户路由 */
 func UseUserRouter(router *gin.RouterGroup) {
 	userGroup := router.Group(
 		"/user",
@@ -15,28 +14,13 @@ func UseUserRouter(router *gin.RouterGroup) {
 		middlewares.JWTValidator,
 	)
 	{
-		/* 获取用户信息路由 */
 		userGroup.GET("/profile", controllers.GetUserProfileHandler)
-
-		/* 更新用户信息路由 */
 		userGroup.PUT("/nickname", controllers.UpdateUserNicknameHandler)
-
-		/* 更新用户密码路由 */
 		userGroup.PUT("/password", controllers.UpdateUserPasswordHandler)
-
-		/* 更新用户头像路由 */
 		userGroup.PUT("/avatar", controllers.UpdateUserAvatarHandler)
-
-		/* 激活用户路由 */
 		userGroup.PUT("/active", controllers.ActiveUserHandler)
-
-		/* 禁用用户路由 */
 		userGroup.PUT("/deactive", controllers.DeactiveUserHandler)
-
-		/* 获取用户配置路由 */
 		userGroup.GET("/config", controllers.GetUserConfigHandler)
-
-		/* 更新用户配置路由 */
 		userGroup.PUT("/config", controllers.UpdateUserConfigHandler)
 	}
 }

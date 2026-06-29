@@ -20,7 +20,7 @@ import (
 func NewUserApp(identityDomain service.IdentityDomain, taskApp taskApp.TaskApp) UserApp {
 	return &userAppImpl{
 		identityDomain: identityDomain,
-		taskApp:       taskApp,
+		taskApp:        taskApp,
 	}
 }
 
@@ -42,7 +42,7 @@ func (u *userAppImpl) UpdateNickname(
 		return err
 	}
 	// 3. 同步评论中的用户昵称
-	_ = u.taskApp.SyncCommentUserProfile(ctx, userId, req.Nickname, "")
+	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, req.Nickname, "")
 	return nil
 }
 
@@ -105,7 +105,7 @@ func (u *userAppImpl) UpdateAvatar(
 		return nil, err
 	}
 	// 3. 同步评论中的用户头像
-	_ = u.taskApp.SyncCommentUserProfile(ctx, userId, "", req.AvatarURL)
+	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", req.AvatarURL)
 	// 4. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: req.AvatarURL}, nil
 }
@@ -167,7 +167,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 		return nil, err
 	}
 	// 9. 同步评论中的用户头像
-	_ = u.taskApp.SyncCommentUserProfile(ctx, userId, "", avatarURL)
+	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", avatarURL)
 	// 10. 返回结果
 	return &types.UpdateUserAvatarRes{AvatarURL: avatarURL}, nil
 }

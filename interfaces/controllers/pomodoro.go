@@ -21,7 +21,7 @@ func CreatePomodoroHandler(ctx *gin.Context) {
 		return
 	}
 
-	res, err := application.App.Pomodoro.CreatePomodoro(ctx.Request.Context(), &req)
+	res, err := application.App.Pomodoro.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70012,
@@ -50,7 +50,10 @@ func GetPomodoroHandler(ctx *gin.Context) {
 		return
 	}
 
-	res, err := application.App.Pomodoro.GetPomodoro(ctx.Request.Context(), &types.GetPomodoroReq{Id: id})
+	res, err := application.App.Pomodoro.Get(
+		ctx.Request.Context(),
+		&types.GetPomodoroReq{Id: id},
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70022,
@@ -79,7 +82,7 @@ func ListPomodoroHandler(ctx *gin.Context) {
 		return
 	}
 
-	res, total, err := application.App.Pomodoro.ListPomodoro(ctx.Request.Context(), &req)
+	res, total, err := application.App.Pomodoro.List(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70032,

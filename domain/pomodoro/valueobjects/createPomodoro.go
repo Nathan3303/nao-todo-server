@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// CreatePomodoro 创建待办任务番茄工作请求
 type CreatePomodoro struct {
 	UserId      int64
 	SessionId   string
@@ -14,10 +15,11 @@ type CreatePomodoro struct {
 	Description string
 	StartAt     *time.Time
 	EndAt       *time.Time
-	Duration    int
+	Duration    uint8
 	Note        string
 }
 
+// Validate 验证创建待办任务番茄工作请求是否有效
 func (vo *CreatePomodoro) Validate() error {
 	if vo.SessionId == "" {
 		return errors.New("会话 ID 不能为空")
@@ -43,6 +45,7 @@ func (vo *CreatePomodoro) Validate() error {
 	return nil
 }
 
+// NewCreatePomodoro 创建待办任务番茄工作请求
 func NewCreatePomodoro(
 	userId int64,
 	sessionId string,
@@ -52,7 +55,7 @@ func NewCreatePomodoro(
 	description string,
 	startAt *time.Time,
 	endAt *time.Time,
-	duration int,
+	duration uint8,
 	note string,
 ) (*CreatePomodoro, error) {
 	vo := &CreatePomodoro{

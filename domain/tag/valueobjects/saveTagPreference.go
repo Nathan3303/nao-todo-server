@@ -4,14 +4,14 @@ import (
 	"errors"
 )
 
-// 保存标签偏好值对象
+// SaveTagPreference 保存标签偏好值对象
 type SaveTagPreference struct {
 	ViewType   string
 	GetOptions string
 	Columns    string
 }
 
-// 验证保存标签偏好值对象是否符合要求
+// Validate 验证保存标签偏好值对象是否符合要求
 // @return error 验证失败返回错误，否则返回 nil
 func (saveTagPreference *SaveTagPreference) Validate() error {
 	if saveTagPreference.ViewType == "" {
@@ -31,7 +31,7 @@ func (saveTagPreference *SaveTagPreference) Validate() error {
 	return nil
 }
 
-// 创建保存标签偏好值对象
+// NewSaveTagPreference 创建保存标签偏好值对象
 // @param viewType 视图类型
 // @param getOptions 获取任务选项
 // @param columns 列选项

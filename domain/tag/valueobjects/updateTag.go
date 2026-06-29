@@ -6,7 +6,7 @@ import (
 	"naotodoserver/domain/textutils"
 )
 
-// 更新标签值对象
+// UpdateTag 更新标签值对象
 type UpdateTag struct {
 	Name        *string
 	Description *string
@@ -14,7 +14,7 @@ type UpdateTag struct {
 	SortId      *uint16
 }
 
-// 校验更新标签值对象
+// Validate 校验更新标签值对象
 // @return error 校验失败返回错误，否则返回 nil
 func (updateTag *UpdateTag) Validate() error {
 	if updateTag.Name != nil && textutils.RuneLength(*updateTag.Name) > 64 {
@@ -32,7 +32,7 @@ func (updateTag *UpdateTag) Validate() error {
 	return nil
 }
 
-// 更新标签值对象
+// NewUpdateTag 更新标签值对象
 // @param name 标签名称
 // @param description 标签描述
 // @param color 标签颜色

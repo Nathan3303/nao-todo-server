@@ -6,7 +6,7 @@ import (
 	"naotodoserver/interfaces/types"
 )
 
-// 任务清单应用接口
+// ProjectApp 任务清单应用接口
 type ProjectApp interface {
 	// 获取任务清单
 	Get(ctx context.Context, projectId string) (*types.GetProjectRes, error)
@@ -55,9 +55,7 @@ type ProjectApp interface {
 	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error
 }
 
-// 任务清单应用实现
+// projectAppImpl 任务清单应用实现
 type projectAppImpl struct {
 	projectDomain service.ProjectDomain
 }
-
-// 任务清单应用单例
