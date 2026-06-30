@@ -21,13 +21,13 @@ func NewPomodoroApp(pomodoroDomain service.PomodoroDomain) PomodoroApp {
 // @return error 错误
 func (app *PomodoroAppImpl) Create(
 	ctx context.Context,
-	req *types.CreatePomodoroReq,
-) (*types.CreatePomodoroRes, error) {
+	req *types.CreatePomodoroRecordReq,
+) (*types.CreatePomodoroRecordRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, errors.New("用户 ID 无效")
 	}
-	vo, err := CreatePomodoroReqToVO(userId, req)
+	vo, err := CreatePomodoroRecordReqToVO(userId, req)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (app *PomodoroAppImpl) Create(
 	if err != nil {
 		return nil, err
 	}
-	return PomodoroEntityToCreateRes(entity), nil
+	return PomodoroRecordEntityToCreateRes(entity), nil
 }
 
 // Get 获取专注记录
@@ -45,8 +45,8 @@ func (app *PomodoroAppImpl) Create(
 // @return error 错误
 func (app *PomodoroAppImpl) Get(
 	ctx context.Context,
-	req *types.GetPomodoroReq,
-) (*types.GetPomodoroRes, error) {
+	req *types.GetPomodoroRecordReq,
+) (*types.GetPomodoroRecordRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, errors.New("用户 ID 无效")
@@ -59,7 +59,7 @@ func (app *PomodoroAppImpl) Get(
 	if err != nil {
 		return nil, err
 	}
-	return PomodoroEntityToGetRes(entity), nil
+	return PomodoroRecordEntityToGetRes(entity), nil
 }
 
 // List 获取专注记录列表
@@ -69,8 +69,8 @@ func (app *PomodoroAppImpl) Get(
 // @return error 错误
 func (app *PomodoroAppImpl) List(
 	ctx context.Context,
-	req *types.ListPomodoroReq,
-) ([]*types.GetPomodoroRes, int64, error) {
+	req *types.ListPomodoroRecordReq,
+) ([]*types.GetPomodoroRecordRes, int64, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, 0, errors.New("用户 ID 无效")
@@ -107,6 +107,6 @@ func (app *PomodoroAppImpl) List(
 	if err != nil {
 		return nil, 0, err
 	}
-	resList := PomodoroEntitiesToGetReses(entities)
+	resList := PomodoroRecordEntitiesToGetReses(entities)
 	return resList, total, nil
 }

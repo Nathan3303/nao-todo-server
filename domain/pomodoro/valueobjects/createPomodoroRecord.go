@@ -5,8 +5,8 @@ import (
 	"naotodoserver/domain/types"
 )
 
-// CreatePomodoro 创建待办任务番茄工作请求
-type CreatePomodoro struct {
+// CreatePomodoroRecord 创建待办任务番茄工作记录值对象
+type CreatePomodoroRecord struct {
 	UserId      int64
 	SessionId   string
 	Type        uint8
@@ -19,8 +19,8 @@ type CreatePomodoro struct {
 	Note        string
 }
 
-// Validate 验证创建待办任务番茄工作请求是否有效
-func (vo *CreatePomodoro) Validate() error {
+// Validate 验证创建待办任务番茄工作记录值对象是否有效
+func (vo *CreatePomodoroRecord) Validate() error {
 	if vo.SessionId == "" {
 		return errors.New("会话 ID 不能为空")
 	}
@@ -45,8 +45,8 @@ func (vo *CreatePomodoro) Validate() error {
 	return nil
 }
 
-// NewCreatePomodoro 创建待办任务番茄工作请求
-func NewCreatePomodoro(
+// NewCreatePomodoroRecord 创建待办任务番茄工作记录值对象
+func NewCreatePomodoroRecord(
 	userId int64,
 	sessionId string,
 	pomodoroType uint8,
@@ -57,8 +57,8 @@ func NewCreatePomodoro(
 	endAt string,
 	duration uint16,
 	note string,
-) (*CreatePomodoro, error) {
-	vo := &CreatePomodoro{
+) (*CreatePomodoroRecord, error) {
+	vo := &CreatePomodoroRecord{
 		UserId:      userId,
 		SessionId:   sessionId,
 		Type:        pomodoroType,

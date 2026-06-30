@@ -53,7 +53,7 @@ func LoadDomains() {
 	))
 	// 初始化番茄领域模型
 	pomodoroAppInst := pomodoroApp.NewPomodoroApp(pomodoroService.NewPomodoroDomain(
-		pomodoroRepo.NewPomodoroRepo(dbs.DB),
+		pomodoroRepo.NewPomodoroRecordRepo(dbs.DB),
 	))
 	// 初始化项目领域模型
 	projectAppInst := projectApp.NewProjectApp(projectService.NewProjectDomain(

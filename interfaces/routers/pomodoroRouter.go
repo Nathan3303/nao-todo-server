@@ -7,15 +7,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UsePomodoroRouter 配置 Pomodoro 路由
 func UsePomodoroRouter(router *gin.RouterGroup) {
-	pomodoroGroup := router.Group(
-		"/pomodoros",
-		middlewares.RateLimiter(48, "pomodoros"),
+	// Pomodoro 路由
+	// pomodoroGroup := router.Group(
+	// 	"/pomodoros",
+	// 	middlewares.RateLimiter(48, "pomodoros"),
+	// 	middlewares.JWTValidator,
+	// )
+	// {
+	// }
+
+	// Pomodoro Record 路由
+	pomodoroRecordsGroup := router.Group(
+		"/pomodoro-records",
+		middlewares.RateLimiter(48, "pomodoro-records"),
 		middlewares.JWTValidator,
 	)
 	{
-		pomodoroGroup.POST("/", controllers.CreatePomodoroHandler)
-		pomodoroGroup.GET("/:id", controllers.GetPomodoroHandler)
-		pomodoroGroup.GET("/", controllers.ListPomodoroHandler)
+		pomodoroRecordsGroup.POST(
+			"/",
+			controllers.CreatePomodoroRecordHandler,
+		)
+		pomodoroRecordsGroup.GET(
+			"/:id",
+			controllers.GetPomodoroRecordHandler,
+		)
+		pomodoroRecordsGroup.GET(
+			"/",
+			controllers.ListPomodoroRecordHandler,
+		)
 	}
 }

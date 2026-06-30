@@ -2,8 +2,8 @@ package models
 
 import "time"
 
-// Pomodoro 待办任务番茄工作模型
-type Pomodoro struct {
+// PomodoroRecord 待办任务番茄工作记录模型
+type PomodoroRecord struct {
 	// 基础属性
 	ModelBase
 

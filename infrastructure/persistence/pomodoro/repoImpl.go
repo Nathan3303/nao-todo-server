@@ -13,32 +13,36 @@ import (
 	"gorm.io/gorm"
 )
 
-type PomodoroRepoImpl struct {
+// PomodoroRecordRepoImpl 实现 PomodoroRecordRepository 接口
+type PomodoroRecordRepoImpl struct {
 	db *gorm.DB
 }
 
-func NewPomodoroRepo(db *gorm.DB) repositories.Pomodoro {
-	return &PomodoroRepoImpl{db: db}
+// NewPomodoroRecordRepo 创建 PomodoroRecordRepository 实例
+func NewPomodoroRecordRepo(db *gorm.DB) repositories.PomodoroRecord {
+	return &PomodoroRecordRepoImpl{db: db}
 }
 
-func (r *PomodoroRepoImpl) Create(
+// Create 创建 PomodoroRecord
+func (r *PomodoroRecordRepoImpl) Create(
 	ctx context.Context,
-	vo *valueobjects.CreatePomodoro,
-) (*entities.Pomodoro, error) {
-	m := CreatePomodoroVOToModel(vo)
+	vo *valueobjects.CreatePomodoroRecord,
+) (*entities.PomodoroRecord, error) {
+	m := CreatePomodoroRecordVOToModel(vo)
 	tx := r.db.WithContext(ctx).Create(m)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return PomodoroModel2Entity(m), nil
+	return PomodoroRecordModel2Entity(m), nil
 }
 
-func (r *PomodoroRepoImpl) GetById(
+// GetById 获取 PomodoroRecord
+func (r *PomodoroRecordRepoImpl) GetById(
 	ctx context.Context,
 	userId int64,
 	id int64,
-) (*entities.Pomodoro, error) {
-	var m models.Pomodoro
+) (*entities.PomodoroRecord, error) {
+	var m models.PomodoroRecord
 	tx := r.db.
 		WithContext(ctx).
 		Where("id = ? AND user_id = ?", id, userId).
@@ -46,10 +50,11 @@ func (r *PomodoroRepoImpl) GetById(
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return PomodoroModel2Entity(&m), nil
+	return PomodoroRecordModel2Entity(&m), nil
 }
 
-func (r *PomodoroRepoImpl) List(
+// List 获取 PomodoroRecord 列表
+func (r *PomodoroRecordRepoImpl) List(
 	ctx context.Context,
 	userId int64,
 	sessionId, startTime, endTime string,
@@ -58,8 +63,8 @@ func (r *PomodoroRepoImpl) List(
 	pomodoroType uint8,
 	page, limit int,
 	sort string,
-) ([]*entities.Pomodoro, int64, error) {
-	tx := r.db.WithContext(ctx).Model(&models.Pomodoro{}).
+) ([]*entities.PomodoroRecord, int64, error) {
+	tx := r.db.WithContext(ctx).Model(&models.PomodoroRecord{}).
 		Where("user_id = ?", userId)
 
 	if sessionId != "" {
@@ -120,11 +125,11 @@ func (r *PomodoroRepoImpl) List(
 	}
 	offset := (page - 1) * limit
 
-	var modelsList []*models.Pomodoro
+	var modelsList []*models.PomodoroRecord
 	tx = tx.Offset(offset).Limit(limit).Find(&modelsList)
 	if tx.Error != nil {
 		return nil, 0, tx.Error
 	}
 
-	return PomodoroModels2Entities(modelsList), total, nil
+	return PomodoroRecordModels2Entities(modelsList), total, nil
 }

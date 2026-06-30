@@ -7,9 +7,9 @@ import (
 	"naotodoserver/infrastructure/persistence/models"
 )
 
-// CreatePomodoroVOToModel 转换创建待办任务番茄工作请求为数据库模型
-func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
-	var m models.Pomodoro
+// CreatePomodoroRecordVOToModel 转换创建待办任务番茄工作记录为数据库模型
+func CreatePomodoroRecordVOToModel(vo *valueobjects.CreatePomodoroRecord) *models.PomodoroRecord {
+	var m models.PomodoroRecord
 	m.UserId = vo.UserId
 	m.SessionId = vo.SessionId
 	m.Type = vo.Type
@@ -24,9 +24,9 @@ func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 	return &m
 }
 
-// PomodoroModel2Entity 转换待办任务番茄工作模型为实体
-func PomodoroModel2Entity(m *models.Pomodoro) *entities.Pomodoro {
-	var e entities.Pomodoro
+// PomodoroRecordModel2Entity 转换待办任务番茄工作记录模型为实体
+func PomodoroRecordModel2Entity(m *models.PomodoroRecord) *entities.PomodoroRecord {
+	var e entities.PomodoroRecord
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
@@ -44,11 +44,11 @@ func PomodoroModel2Entity(m *models.Pomodoro) *entities.Pomodoro {
 	return &e
 }
 
-// PomodoroModels2Entities 转换待办任务番茄工作模型列表为实体列表
-func PomodoroModels2Entities(list []*models.Pomodoro) []*entities.Pomodoro {
-	result := make([]*entities.Pomodoro, 0, len(list))
+// PomodoroRecordModels2Entities 转换待办任务番茄工作记录模型列表为实体列表
+func PomodoroRecordModels2Entities(list []*models.PomodoroRecord) []*entities.PomodoroRecord {
+	result := make([]*entities.PomodoroRecord, 0, len(list))
 	for _, m := range list {
-		result = append(result, PomodoroModel2Entity(m))
+		result = append(result, PomodoroRecordModel2Entity(m))
 	}
 	return result
 }

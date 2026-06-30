@@ -1,7 +1,13 @@
 package types
 
-// CreatePomodoroReq 创建番茄请求
-type CreatePomodoroReq struct {
+// --- Pomodoro ---
+
+// ...
+
+// --- PomodoroRecord ---
+
+// CreatePomodoroRecordReq 创建番茄工作记录请求
+type CreatePomodoroRecordReq struct {
 	SessionId   string `json:"sessionId" binding:"required"` // Like uuidv4
 	Type        uint8  `json:"type"`
 	TaskId      string `json:"taskId" binding:"required"`
@@ -13,8 +19,8 @@ type CreatePomodoroReq struct {
 	Note        string `json:"note"`
 }
 
-// CreatePomodoroRes 创建番茄响应
-type CreatePomodoroRes struct {
+// CreatePomodoroRecordRes 创建番茄工作记录响应
+type CreatePomodoroRecordRes struct {
 	ResBase
 	SessionId   string `json:"sessionId"` // Like uuidv4
 	Type        uint8  `json:"type"`
@@ -27,16 +33,16 @@ type CreatePomodoroRes struct {
 	Note        string `json:"note"`
 }
 
-// GetPomodoroReq 获取番茄请求
-type GetPomodoroReq struct {
+// GetPomodoroRecordReq 获取番茄工作记录请求
+type GetPomodoroRecordReq struct {
 	Id string `json:"id" binding:"required"`
 }
 
-// GetPomodoroRes 获取番茄响应
-type GetPomodoroRes CreatePomodoroRes
+// GetPomodoroRecordRes 获取番茄工作记录响应
+type GetPomodoroRecordRes CreatePomodoroRecordRes
 
-// ListPomodoroReq 获取番茄列表请求
-type ListPomodoroReq struct {
+// ListPomodoroRecordReq 获取番茄工作记录列表请求
+type ListPomodoroRecordReq struct {
 	SessionId string `form:"sessionId"` // Like uuidv4
 	StartTime string `form:"startTime"`
 	EndTime   string `form:"endTime"`
@@ -48,5 +54,5 @@ type ListPomodoroReq struct {
 	Sort      string `form:"sort"` // Like: 'field:order'
 }
 
-// ListPomodoroRes 获取番茄列表响应
-type ListPomodoroRes []GetPomodoroRes
+// ListPomodoroRecordRes 获取番茄工作记录列表响应
+type ListPomodoroRecordRes []GetPomodoroRecordRes

@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-// CreatePomodoroReqToVO 将 CreatePomodoroReq 转换为 CreatePomodoroValueObject
-func CreatePomodoroReqToVO(
+// CreatePomodoroRecordReqToVO 将 CreatePomodoroRecordReq 转换为 CreatePomodoroValueObject
+func CreatePomodoroRecordReqToVO(
 	userId int64,
-	req *types.CreatePomodoroReq,
-) (*valueobjects.CreatePomodoro, error) {
+	req *types.CreatePomodoroRecordReq,
+) (*valueobjects.CreatePomodoroRecord, error) {
 	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	return valueobjects.NewCreatePomodoro(
+	return valueobjects.NewCreatePomodoroRecord(
 		userId,
 		req.SessionId,
 		req.Type,
@@ -31,9 +31,9 @@ func CreatePomodoroReqToVO(
 	)
 }
 
-// PomodoroEntityToCreateRes 将 PomodoroEntity 转换为 CreatePomodoroRes
-func PomodoroEntityToCreateRes(e *entities.Pomodoro) *types.CreatePomodoroRes {
-	var res types.CreatePomodoroRes
+// PomodoroRecordEntityToCreateRes 将 PomodoroRecordEntity 转换为 CreatePomodoroRecordRes
+func PomodoroRecordEntityToCreateRes(e *entities.PomodoroRecord) *types.CreatePomodoroRecordRes {
+	var res types.CreatePomodoroRecordRes
 	res.Id = strconv.FormatInt(e.Id, 10)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
@@ -49,9 +49,9 @@ func PomodoroEntityToCreateRes(e *entities.Pomodoro) *types.CreatePomodoroRes {
 	return &res
 }
 
-// PomodoroEntityToGetRes 将 PomodoroEntity 转换为 GetPomodoroRes
-func PomodoroEntityToGetRes(e *entities.Pomodoro) *types.GetPomodoroRes {
-	var res types.GetPomodoroRes
+// PomodoroRecordEntityToGetRes 将 PomodoroRecordEntity 转换为 GetPomodoroRecordRes
+func PomodoroRecordEntityToGetRes(e *entities.PomodoroRecord) *types.GetPomodoroRecordRes {
+	var res types.GetPomodoroRecordRes
 	res.Id = strconv.FormatInt(e.Id, 10)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
@@ -67,11 +67,13 @@ func PomodoroEntityToGetRes(e *entities.Pomodoro) *types.GetPomodoroRes {
 	return &res
 }
 
-// PomodoroEntitiesToGetReses 将 PomodoroEntity 列表转换为 GetPomodoroRes 列表
-func PomodoroEntitiesToGetReses(list []*entities.Pomodoro) []*types.GetPomodoroRes {
-	res := make([]*types.GetPomodoroRes, 0, len(list))
+// PomodoroRecordEntitiesToGetReses 将 PomodoroRecordEntity 列表转换为 GetPomodoroRecordRes 列表
+func PomodoroRecordEntitiesToGetReses(
+	list []*entities.PomodoroRecord,
+) []*types.GetPomodoroRecordRes {
+	res := make([]*types.GetPomodoroRecordRes, 0, len(list))
 	for _, e := range list {
-		res = append(res, PomodoroEntityToGetRes(e))
+		res = append(res, PomodoroRecordEntityToGetRes(e))
 	}
 	return res
 }
