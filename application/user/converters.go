@@ -2,8 +2,8 @@ package user
 
 import (
 	"naotodoserver/domain/identity/entities"
-	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
+	"time"
 )
 
 // UserEntity2Res 用户实体转换为获取用户响应
@@ -18,8 +18,8 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res.CreatedFrom = e.CreatedFrom
 	res.State = e.State
 	res.Config = e.Config
-	res.CreatedAt = utils.Time2String(e.CreatedAt)
-	res.UpdatedAt = utils.Time2String(e.UpdatedAt)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
 	return res
 }
 

@@ -18,6 +18,6 @@ type Pomodoro struct {
 	Description string
 	StartAt     time.Time
 	EndAt       time.Time
-	Duration    uint8
+	Duration    uint16
 	Note        string
 }

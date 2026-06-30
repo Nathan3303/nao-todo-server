@@ -61,30 +61,30 @@ func (d *TaskDomainImpl) Copy(
 	taskId int64,
 ) (*entities.Task, error) {
 	// 检查任务是否存在
-	existingTask, err := d.taskRepo.GetById(ctx, userId, taskId)
+	task, err := d.taskRepo.GetById(ctx, userId, taskId)
 	if err != nil {
 		return nil, err
 	}
 	// 创建新任务VO
-	createTaskVO, err := valueobjects.NewCreateTask(
-		0,
-		existingTask.Name+"的复制",
-		existingTask.Description,
-		existingTask.State,
-		existingTask.Priority,
-		&existingTask.StartAt.Time,
-		&existingTask.EndAt.Time,
-		existingTask.ProjectId,
-		existingTask.Tags,
-		&existingTask.RemindAt.Time,
-		existingTask.RemindRepeat,
-		existingTask.RemindTime,
-		existingTask.RemindWeekdays,
-	)
-	if err != nil {
+	var vo valueobjects.CreateTask
+	vo.ParentTaskId = task.ParentTaskId
+	vo.Name = task.Name + "的复制"
+	vo.Description = task.Description
+	vo.State = task.State
+	vo.Priority = task.Priority
+	vo.StartAt = task.StartAt
+	vo.EndAt = task.EndAt
+	vo.ProjectId = task.ProjectId
+	vo.Tags = task.Tags
+	// vo.RemindAt = task.RemindAt
+	// vo.RemindRepeat = task.RemindRepeat
+	// vo.RemindTime = task.RemindTime
+	// vo.RemindWeekdays = task.RemindWeekdays
+	if vo.Validate() != nil {
 		return nil, err
 	}
-	return d.taskRepo.Create(ctx, userId, createTaskVO)
+	// 创建新任务并返回新任务实体
+	return d.taskRepo.Create(ctx, userId, &vo)
 }
 
 // List 获取任务列表
@@ -248,16 +248,25 @@ func (d *TaskDomainImpl) ProcessReminders(ctx context.Context) ([]*entities.Task
 				&task.EndAt.Time,
 			)
 			if next != nil {
-				d.taskRepo.UpdateRemindAt(
+				err := d.taskRepo.UpdateRemindAt(
 					ctx,
 					task.Id,
 					next.Format(time.RFC3339),
 				)
+				if err != nil {
+					return nil, err
+				}
 			} else {
-				d.taskRepo.ClearRemindRepeat(ctx, task.Id)
+				err := d.taskRepo.ClearRemindRepeat(ctx, task.Id)
+				if err != nil {
+					return nil, err
+				}
 			}
 		} else {
-			d.taskRepo.UpdateRemindAt(ctx, task.Id, "")
+			err := d.taskRepo.UpdateRemindAt(ctx, task.Id, "")
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return tasks, nil
@@ -317,7 +326,7 @@ func (d *TaskDomainImpl) calculateNextRemindAt(
 func calculateNextWeekly(from time.Time, weekdays uint8) time.Time {
 	for i := 1; i <= 7; i++ {
 		candidate := from.AddDate(0, 0, i)
-		bit := uint8(1 << uint(candidate.Weekday()))
+		bit := uint8(1 << candidate.Weekday())
 		if weekdays&bit != 0 {
 			return candidate
 		}

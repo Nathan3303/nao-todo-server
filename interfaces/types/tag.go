@@ -1,43 +1,27 @@
 package types
 
-import "time"
+// --- Tag ---
 
-type GetTagRes struct {
-	Id          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Color       string    `json:"color"`
-	SortId      uint16    `json:"sortId"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-}
-
-type GetTagPreferenceRes struct {
-	Id         string    `json:"id"`
-	TagId      string    `json:"tagId"`
-	ViewType   string    `json:"viewType"`
-	GetOptions string    `json:"getTasksOptions"`
-	Columns    string    `json:"columns"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-}
-
+// CreateTagReq 创建标签请求
 type CreateTagReq struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	Color       string `json:"color" binding:"required"`
 }
 
+// CreateTagRes 创建标签响应
 type CreateTagRes struct {
-	Id          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Color       string    `json:"color"`
-	SortId      uint16    `json:"sortId"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ResBase
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+	SortId      uint16 `json:"sortId"`
 }
 
+// GetTagRes 获取标签响应
+type GetTagRes CreateTagRes
+
+// UpdateTagReq 更新标签请求
 type UpdateTagReq struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
@@ -45,6 +29,7 @@ type UpdateTagReq struct {
 	SortId      *uint16 `json:"sortId"`
 }
 
+// BatchUpdateTagReq 批量更新标签请求
 type BatchUpdateTagReq struct {
 	Tags []*struct {
 		Id          string  `json:"id" binding:"required"`
@@ -55,13 +40,27 @@ type BatchUpdateTagReq struct {
 	} `json:"tags" binding:"required,min=1"`
 }
 
+// BatchUpdateTagRes 批量更新标签响应
 type BatchUpdateTagRes struct {
 	UpdatedCount int64        `json:"updatedCount"`
 	Tags         []*GetTagRes `json:"tags"`
 }
 
+// ListTagRes 获取标签列表响应
 type ListTagRes []*GetTagRes
 
+// --- Tag Preference ---
+
+// GetTagPreferenceRes 获取标签偏好响应
+type GetTagPreferenceRes struct {
+	ResBase
+	TagId      string `json:"tagId"`
+	ViewType   string `json:"viewType"`
+	GetOptions string `json:"getTasksOptions"`
+	Columns    string `json:"columns"`
+}
+
+// UpdateTagPreferenceReq 更新标签偏好请求
 type UpdateTagPreferenceReq struct {
 	ViewType   string `json:"viewType"`
 	GetOptions string `json:"getTasksOptions"`

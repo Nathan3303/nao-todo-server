@@ -1,5 +1,6 @@
 package types
 
+// GetUserProfileRes 获取用户个人信息响应
 type GetUserProfileRes struct {
 	Email       string `json:"email"`
 	Nickname    string `json:"nickname"`
@@ -12,35 +13,43 @@ type GetUserProfileRes struct {
 	UpdatedAt   string `json:"updatedAt"`
 }
 
+// UpdateUserNicknameReq 更新用户昵称请求
 type UpdateUserNicknameReq struct {
 	Nickname string `json:"nickname" form:"nickname" binding:"required"`
 }
 
+// UpdateUserPasswordReq 更新用户密码请求
 type UpdateUserPasswordReq struct {
 	OldPassword string `json:"oldPassword" form:"oldPassword" binding:"required"`
 	NewPassword string `json:"newPassword" form:"newPassword" binding:"required"`
 }
 
+// UpdateUserAvatarReq 更新用户头像请求
 type UpdateUserAvatarReq struct {
 	AvatarURL string `json:"avatarURL" form:"avatarURL"`
 }
 
+// UpdateUserAvatarRes 更新用户头像响应
 type UpdateUserAvatarRes struct {
 	AvatarURL string `json:"avatarURL"`
 }
 
+// DeactiveUserReq 退出登录请求
 type DeactiveUserReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
+// ActiveUserReq 登录请求
 type ActiveUserReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
+// GetUserConfigRes 获取用户配置响应
 type GetUserConfigRes struct {
 	Appearance string `json:"appearance"`
 }
 
+// UpdateUserConfigReq 更新用户配置请求
 type UpdateUserConfigReq struct {
 	Appearance string `json:"appearance" form:"appearance" binding:"required"`
 }

@@ -17,8 +17,8 @@ func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 	m.TaskName = vo.TaskName
 	m.Description = vo.Description
 	// vo.StartAt 和 vo.EndAt 经过校验，确保了非空指针
-	m.StartAt = *vo.StartAt
-	m.EndAt = *vo.EndAt
+	m.StartAt = vo.StartAt.Time
+	m.EndAt = vo.EndAt.Time
 	m.Duration = vo.Duration
 	m.Note = vo.Note
 	return &m
@@ -30,7 +30,7 @@ func PomodoroModel2Entity(m *models.Pomodoro) *entities.Pomodoro {
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.SessionId = m.SessionId
 	e.Type = m.Type

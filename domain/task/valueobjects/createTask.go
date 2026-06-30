@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"naotodoserver/domain/textutils"
+	"naotodoserver/domain/types"
 )
 
 // CreateTask 创建任务值对象
@@ -14,11 +15,11 @@ type CreateTask struct {
 	Description    string
 	State          uint8
 	Priority       uint8
-	StartAt        *time.Time
-	EndAt          *time.Time
+	StartAt        types.NullableTime
+	EndAt          types.NullableTime
 	ProjectId      int64
 	Tags           []string
-	RemindAt       *time.Time
+	RemindAt       types.NullableTime
 	RemindRepeat   uint8
 	RemindTime     string
 	RemindWeekdays uint8
@@ -41,15 +42,15 @@ func (createTask *CreateTask) Validate() error {
 
 // FillStartAt 填充开始时间
 func (createTask *CreateTask) FillStartAt() {
-	if createTask.StartAt != nil || createTask.EndAt == nil {
+	if createTask.StartAt.IsNull || createTask.EndAt.IsNull {
 		return
 	}
 	t := time.Now()
-	if createTask.EndAt.Before(t) {
+	if createTask.EndAt.Time.Before(t) {
 		before := t.Add(-1 * time.Minute)
-		createTask.StartAt = &before
+		createTask.StartAt.SetTime(before)
 	} else {
-		createTask.StartAt = &t
+		createTask.StartAt.SetTime(t)
 	}
 }
 
@@ -75,11 +76,11 @@ func NewCreateTask(
 	description string,
 	state uint8,
 	priority uint8,
-	startAt *time.Time,
-	endAt *time.Time,
+	startAt string,
+	endAt string,
 	projectId int64,
 	tags []string,
-	remindAt *time.Time,
+	remindAt string,
 	remindRepeat uint8,
 	remindTime string,
 	remindWeekdays uint8,
@@ -90,11 +91,11 @@ func NewCreateTask(
 		Description:    description,
 		State:          state,
 		Priority:       priority,
-		StartAt:        startAt,
-		EndAt:          endAt,
+		StartAt:        types.NewNullableTimeByTimeStr(startAt),
+		EndAt:          types.NewNullableTimeByTimeStr(endAt),
 		ProjectId:      projectId,
 		Tags:           tags,
-		RemindAt:       remindAt,
+		RemindAt:       types.NewNullableTimeByTimeStr(remindAt),
 		RemindRepeat:   remindRepeat,
 		RemindTime:     remindTime,
 		RemindWeekdays: remindWeekdays,

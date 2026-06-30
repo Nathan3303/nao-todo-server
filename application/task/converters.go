@@ -4,7 +4,6 @@ import (
 	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
-	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 	"strconv"
 	"time"
@@ -93,11 +92,11 @@ func CreateTaskReqToValueObject(
 		req.Description,
 		consts.TodoStateMap[req.State],
 		consts.TodoPriorityMap[req.Priority],
-		utils.DateString2TimePtr(req.StartAt),
-		utils.DateString2TimePtr(req.EndAt),
+		req.StartAt,
+		req.EndAt,
 		projectIdInt64,
 		req.Tags,
-		utils.DateString2TimePtr(req.RemindAt),
+		req.RemindAt,
 		consts.RemindRepeatMap[req.RemindRepeat],
 		req.RemindTime,
 		weekdaysToBitmask(req.RemindWeekdays),
@@ -152,14 +151,14 @@ func UpdateTaskReqToValueObject(
 		req.Description,
 		iState,
 		iPriority,
-		utils.NullableString2NullableTime(req.StartAt),
-		utils.NullableString2NullableTime(req.EndAt),
+		req.StartAt,
+		req.EndAt,
 		iProjectId,
 		req.Tags,
-		utils.NullableString2NullableTime(req.ArchivedAt),
-		utils.NullableString2NullableTime(req.StarMarkAt),
-		utils.NullableString2NullableTime(req.GivenUpAt),
-		utils.NullableString2NullableTime(req.RemindAt),
+		req.ArchivedAt,
+		req.StarMarkAt,
+		req.GivenUpAt,
+		req.RemindAt,
 		iRemindRepeat,
 		req.RemindTime,
 		iRemindWeekdays,
@@ -241,16 +240,17 @@ func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) 
 // @param e 任务检查项实体
 // @return 任务检查项响应
 func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *types.GetTaskCheckItemRes {
-	return &types.GetTaskCheckItemRes{
-		Id:          strconv.FormatInt(e.Id, 10),
-		TaskId:      strconv.FormatInt(e.TaskId, 10),
-		Name:        e.Name,
-		Description: e.Description,
-		IsDone:      e.IsDone,
-		SortId:      e.SortId,
-		CreatedAt:   e.CreatedAt,
-		UpdatedAt:   e.UpdatedAt,
-	}
+	var res types.GetTaskCheckItemRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.Name = e.Name
+	res.Description = e.Description
+	res.IsDone = e.IsDone
+	res.SortId = e.SortId
+	return &res
 }
 
 // CreateTaskCheckItemReqToVO 创建任务检查项请求转换为创建任务检查项值对象
@@ -278,16 +278,17 @@ func CreateTaskCheckItemReqToVO(
 // @param e 任务检查项实体
 // @return 创建任务检查项响应
 func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *types.CreateTaskCheckItemRes {
-	return &types.CreateTaskCheckItemRes{
-		Id:          strconv.FormatInt(e.Id, 10),
-		TaskId:      strconv.FormatInt(e.TaskId, 10),
-		Name:        e.Name,
-		Description: e.Description,
-		IsDone:      e.IsDone,
-		SortId:      e.SortId,
-		CreatedAt:   e.CreatedAt,
-		UpdatedAt:   e.UpdatedAt,
-	}
+	var res types.CreateTaskCheckItemRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.Name = e.Name
+	res.Description = e.Description
+	res.IsDone = e.IsDone
+	res.SortId = e.SortId
+	return &res
 }
 
 // UpdateTaskCheckItemReqToVO 更新任务检查项请求转换为更新任务检查项值对象
@@ -350,17 +351,18 @@ func BatchUpdateTaskCheckItemReqToVOs(
 // @param e 任务评论实体
 // @return 任务评论响应
 func TaskCommentEntityToRes(e *entities.TaskComment) *types.TaskCommentRes {
-	return &types.TaskCommentRes{
-		Id:          strconv.FormatInt(e.Id, 10),
-		TaskId:      strconv.FormatInt(e.TaskId, 10),
-		Content:     e.Content,
-		Attachments: e.Attachments,
-		IsTopUp:     e.IsTopUp,
-		Nickname:    e.Nickname,
-		Avatar:      e.Avatar,
-		CreatedAt:   utils.TimePtr2DateString(&e.CreatedAt),
-		UpdatedAt:   utils.TimePtr2DateString(&e.UpdatedAt),
-	}
+	var res types.TaskCommentRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.Content = e.Content
+	res.Attachments = e.Attachments
+	res.IsTopUp = e.IsTopUp
+	res.Nickname = e.Nickname
+	res.Avatar = e.Avatar
+	return &res
 }
 
 // CreateTaskCommentReqToVO 创建任务评论请求转换为创建任务评论值对象

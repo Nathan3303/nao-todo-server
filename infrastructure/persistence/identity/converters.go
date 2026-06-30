@@ -35,7 +35,7 @@ func UserModel2Entity(m *models.User) *entities.User {
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.Account = m.Account
 	e.Email = m.Email
 	e.Password = m.Password
@@ -44,7 +44,7 @@ func UserModel2Entity(m *models.User) *entities.User {
 	e.CreatedFrom = m.CreatedFrom
 	e.Role = m.Role
 	e.State = m.State
-	e.DeactivedAt = *types.NewNullableTimeWithTime(m.DeactivedAt.Time)
+	e.DeactivedAt = types.NewNullableTimeByTime(m.DeactivedAt.Time)
 	return &e
 }
 
@@ -66,7 +66,7 @@ func UserConfigModel2Entity(m *models.UserConfig) *entities.UserConfig {
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.Appearance = m.Appearance
 	return &e
@@ -78,7 +78,7 @@ func SessionModel2Entity(m *models.UserSession) *entities.UserSession {
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.Token = m.Token
 	e.ExpiredAt = m.ExpiredAt

@@ -18,7 +18,17 @@ services:
         networks:
             - naotodo-backend
         healthcheck:
-            test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-u",
+                    "root",
+                    "-p${MYSQL_ROOT_PASSWORD}",
+                ]
             interval: 30s
             timeout: 10s
             retries: 3
@@ -42,7 +52,7 @@ services:
         networks:
             - naotodo-backend
         healthcheck:
-            test: [ "CMD", "redis-cli", "ping" ]
+            test: ["CMD", "redis-cli", "ping"]
             interval: 30s
             timeout: 10s
             retries: 3
@@ -55,7 +65,7 @@ services:
             dockerfile: Dockerfile
         container_name: naotodo-server
         ports:
-            - "443:443"
+            - "${APP_PORT}:${APP_PORT}" # 应用端口映射 - 根据 APP_PORT 环境变量配置
         volumes:
             - app-uploads-data:/app/uploads
             - app-logs-data:/app/logs
@@ -72,10 +82,11 @@ services:
             - REDIS_DB=${REDIS_DB}
             - JWT_SECRET=${JWT_SECRET}
             - TZ=Asia/Shanghai
-            - GOMAXPROCS=2
-            - GOMEMLIMIT=400MiB # Go 1.19+ 的内存软限制，防止 OOM
-            - TLS_CERT_FILE=/app/ssl/server.crt
-            - TLS_KEY_FILE=/app/ssl/server.key
+            - APP_DEBUG=${APP_DEBUG:-false} # 是否启用 Debug 模式
+            - GOMAXPROCS=${GOMAXPROCS} # Go 并发数，根据 CPU 核心数调整
+            - GOMEMLIMIT=${GOMEMLIMIT} # Go 1.19+ 的内存软限制，防止 OOM
+            - TLS_CERT_FILE=${TLS_CERT_FILE} # TLS 证书文件路径
+            - TLS_KEY_FILE=${TLS_KEY_FILE} # TLS 私钥文件路径
         depends_on:
             mysql:
                 condition: service_healthy

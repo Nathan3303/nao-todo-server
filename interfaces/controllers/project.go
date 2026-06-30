@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 根据清单 ID 获取清单接入点
+// GetProjectHandler 根据清单 ID 获取清单接入点
 // @code 2000x
 func GetProjectHandler(ctx *gin.Context) {
 	// 获取清单 ID
@@ -38,7 +38,7 @@ func GetProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 创建清单接入点
+// CreateProjectHandler 创建清单接入点
 // @code 2001x
 func CreateProjectHandler(ctx *gin.Context) {
 	// 获取参数
@@ -70,7 +70,7 @@ func CreateProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 更新清单接入点
+// UpdateProjectHandler 更新清单接入点
 // @code 2002x
 func UpdateProjectHandler(ctx *gin.Context) {
 	// 获取清单 ID
@@ -116,7 +116,7 @@ func UpdateProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 删除清单接入点
+// DeleteProjectHandler 删除清单接入点
 // @code 2003x
 func DeleteProjectHandler(ctx *gin.Context) {
 	// 获取清单 ID
@@ -147,7 +147,7 @@ func DeleteProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 恢复清单接入点
+// RestoreProjectHandler 恢复清单接入点
 // @code 2004x
 func RestoreProjectHandler(ctx *gin.Context) {
 	// 获取清单 ID
@@ -178,10 +178,10 @@ func RestoreProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 归档清单接入点
+// ArchiveProjectHandler 归档清单接入点
 // @code 2005x
 func ArchiveProjectHandler(ctx *gin.Context) {
-	// 清单 ID
+	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
 		Failure(ctx, types.ResponseData{
@@ -209,7 +209,7 @@ func ArchiveProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 取消归档清单接入点
+// UnarchiveProjectHandler 取消归档清单接入点
 // @code 2006x
 func UnarchiveProjectHandler(ctx *gin.Context) {
 	// 获取清单 ID
@@ -240,7 +240,7 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 获取清单列表接入点
+// ListProjectHandler 获取清单列表接入点
 // @code 2007x
 func ListProjectHandler(ctx *gin.Context) {
 	// 获取清单列表
@@ -261,10 +261,10 @@ func ListProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// 获取清单偏好接入点
+// GetProjectPreferenceHandler 获取清单偏好接入点
 // @code 2008x
 func GetProjectPreferenceHandler(ctx *gin.Context) {
-	//. 获取清单 ID
+	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
 		Failure(ctx, types.ResponseData{
@@ -292,7 +292,7 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 	})
 }
 
-// 批量更新清单接入点
+// BatchUpdateProjectsHandler 批量更新清单接入点
 // @code 2010x
 func BatchUpdateProjectsHandler(ctx *gin.Context) {
 	var req types.BatchUpdateProjectReq
@@ -321,10 +321,10 @@ func BatchUpdateProjectsHandler(ctx *gin.Context) {
 	})
 }
 
-// 保存清单偏好接入点
+// SaveProjectPreferenceHandler 保存清单偏好接入点
 // @code 2009x
 func SaveProjectPreferenceHandler(ctx *gin.Context) {
-	//. 获取清单 ID
+	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
 		Failure(ctx, types.ResponseData{

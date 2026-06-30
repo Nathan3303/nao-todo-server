@@ -29,7 +29,7 @@ type LogConfig struct {
 	FilePath      string `yaml:"filePath"`      // 日志文件路径
 	MaxSize       int    `yaml:"maxSize"`       // 单个日志文件最大大小（MB）
 	MaxAge        int    `yaml:"maxAge"`        // 日志文件保留天数
-	MaxBackups    int    `yaml:"maxBackups"`    // 保留的日志文件副本数量
+	MaxBackups    uint   `yaml:"maxBackups"`    // 保留的日志文件副本数量
 	Compress      bool   `yaml:"compress"`      // 是否压缩日志文件
 	OutputConsole bool   `yaml:"outputConsole"` // 是否同时输出到控制台
 }
@@ -40,8 +40,9 @@ type Server struct {
 	Version   string `yaml:"version"`
 	JwtSecret string `yaml:"jwtSecret"`
 	GoMaxProc int    `yaml:"goMaxProc"`
-	CertFile  string `yaml:"certFile"`  // TLS 证书路径（空=HTTP）
-	KeyFile   string `yaml:"keyFile"`   // TLS 私钥路径（空=HTTP）
+	CertFile  string `yaml:"certFile"` // TLS 证书路径（空=HTTP）
+	KeyFile   string `yaml:"keyFile"`  // TLS 私钥路径（空=HTTP）
+	Debug     bool   `yaml:"debug"`    // 是否开启调试模式
 }
 
 type MySQL struct {
@@ -87,44 +88,57 @@ func InitConfig() {
 }
 
 func overrideWithEnv() {
-	if env := os.Getenv("MYSQL_HOST"); env != "" {
+	var env string
+	if env = os.Getenv("JWT_SECRET"); env != "" {
+		Conf.Server.JwtSecret = env
+	}
+	if env = os.Getenv("MYSQL_HOST"); env != "" {
 		Conf.MySQL.Host = env
 	}
-	if env := os.Getenv("MYSQL_PORT"); env != "" {
+	if env = os.Getenv("MYSQL_PORT"); env != "" {
 		Conf.MySQL.Port = env
 	}
-	if env := os.Getenv("MYSQL_USER"); env != "" {
+	if env = os.Getenv("MYSQL_USER"); env != "" {
 		Conf.MySQL.Username = env
 	}
-	if env := os.Getenv("MYSQL_PASSWORD"); env != "" {
+	if env = os.Getenv("MYSQL_PASSWORD"); env != "" {
 		Conf.MySQL.Password = env
 	}
-	if env := os.Getenv("MYSQL_DATABASE"); env != "" {
+	if env = os.Getenv("MYSQL_DATABASE"); env != "" {
 		Conf.MySQL.Database = env
 	}
-
-	if env := os.Getenv("REDIS_HOST"); env != "" {
+	if env = os.Getenv("REDIS_HOST"); env != "" {
 		Conf.Redis.Host = env
 	}
-	if env := os.Getenv("REDIS_PORT"); env != "" {
+	if env = os.Getenv("REDIS_PORT"); env != "" {
 		Conf.Redis.Port = env
 	}
-	if env := os.Getenv("REDIS_PASSWORD"); env != "" {
+	if env = os.Getenv("REDIS_PASSWORD"); env != "" {
 		Conf.Redis.Password = env
 	}
-	if env := os.Getenv("REDIS_DB"); env != "" {
+	if env = os.Getenv("REDIS_DB"); env != "" {
 		if db, err := strconv.Atoi(env); err == nil {
 			Conf.Redis.DB = db
 		}
 	}
-
-	if env := os.Getenv("JWT_SECRET"); env != "" {
-		Conf.Server.JwtSecret = env
+	if env = os.Getenv("APP_PORT"); env != "" {
+		Conf.Server.Port = env
 	}
-	if env := os.Getenv("TLS_CERT_FILE"); env != "" {
-		Conf.Server.CertFile = env
+	Conf.Server.Debug = os.Getenv("APP_DEBUG") == "true"
+	if env = os.Getenv("GOMAXPROCS"); env != "" {
+		if maxProc, err := strconv.Atoi(env); err == nil {
+			Conf.Server.GoMaxProc = maxProc
+		}
 	}
-	if env := os.Getenv("TLS_KEY_FILE"); env != "" {
-		Conf.Server.KeyFile = env
+	if Conf.Server.Debug {
+		Conf.Server.CertFile = ""
+		Conf.Server.KeyFile = ""
+	} else {
+		if env = os.Getenv("TLS_CERT_FILE"); env != "" {
+			Conf.Server.CertFile = env
+		}
+		if env = os.Getenv("TLS_KEY_FILE"); env != "" {
+			Conf.Server.KeyFile = env
+		}
 	}
 }

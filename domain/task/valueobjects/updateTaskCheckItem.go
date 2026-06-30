@@ -20,7 +20,8 @@ func (updateCheckItem *UpdateTaskCheckItem) Validate() error {
 	if updateCheckItem.Name != nil && textutils.RuneLength(*updateCheckItem.Name) > 128 {
 		return errors.New("检查项名称长度不能超过 128 个字符")
 	}
-	if updateCheckItem.Description != nil && textutils.RuneLength(*updateCheckItem.Description) > 512 {
+	if updateCheckItem.Description != nil &&
+		textutils.RuneLength(*updateCheckItem.Description) > 512 {
 		return errors.New("检查项描述长度不能超过 512 个字符")
 	}
 	if updateCheckItem.SortId != nil && *updateCheckItem.SortId == 0 {

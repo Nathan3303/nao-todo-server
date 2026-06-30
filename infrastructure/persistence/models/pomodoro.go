@@ -36,7 +36,7 @@ type Pomodoro struct {
 	// 番茄工作持续时间（秒）
 	// 最大值为 3 小时，即 10800 秒
 	// 最小值为 5 分钟，即 900 秒
-	Duration uint8 `gorm:"not null;default:0;type:tinyint(3)"`
+	Duration uint16 `gorm:"not null;default:0;type:smallint"`
 
 	// 番茄工作笔记
 	Note string `gorm:"null;type:text"`

@@ -127,6 +127,31 @@ func (taskRepo *TaskRepoImpl) Restore(ctx context.Context, userId int64, taskId 
 	return tx.Error
 }
 
+// GetWeekRange 获取某时间所在周的开始（周一）和结束（周日）
+// @param t 时间值
+// @return start 周一时间
+// @return end 周日时间
+func GetWeekRange(t time.Time) (start, end time.Time) {
+	// 将时间调整到 UTC 或本地时区（根据你的数据库时区设置）
+	loc := time.Local // 或 time.UTC
+	t = t.In(loc)
+	// 计算距离周一的天数（Go 中 Weekday() 返回 0=Sunday, 1=Monday, ..., 6=Saturday）
+	offset := int(t.Weekday())
+	if offset == 0 {
+		offset = 7 // 如果是周日，则往前推 6 天到周一
+	}
+	start = t.AddDate(0, 0, -offset+1) // 周一
+	end = start.AddDate(0, 0, 6)       // 周日
+	// 设置时间为当天的 00:00:00 到 23:59:59
+	start = time.Date(
+		start.Year(),
+		start.Month(),
+		start.Day(), 0, 0, 0, 0, start.Location())
+	end = time.Date(end.Year(),
+		end.Month(), end.Day(), 23, 59, 59, 0, end.Location())
+	return
+}
+
 // List 获取任务列表
 // @param ctx 上下文
 // @param userId 用户ID
@@ -158,10 +183,10 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 	// 4. 处理状态过滤条件
 	if query.State != "" {
-		var stateIDs []uint8
+		var stateIDs []int
 		for s := range strings.SplitSeq(query.State, ",") {
 			if val, exists := consts.TodoStateMap[s]; exists {
-				stateIDs = append(stateIDs, val)
+				stateIDs = append(stateIDs, int(val))
 			}
 		}
 		if len(stateIDs) > 0 {
@@ -170,10 +195,10 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 	// 5. 处理优先级过滤条件
 	if query.Priority != "" {
-		var priorityIDs []uint8
+		var priorityIDs []int
 		for s := range strings.SplitSeq(query.Priority, ",") {
 			if val, exists := consts.TodoPriorityMap[s]; exists {
-				priorityIDs = append(priorityIDs, val)
+				priorityIDs = append(priorityIDs, int(val))
 			}
 		}
 		if len(priorityIDs) > 0 {
@@ -189,10 +214,7 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 	// 7. 处理所有布尔类型的过滤条件
 	if query.IsDeleted {
-		tx = tx.Unscoped().Where(
-			"deleted_at >= ?",
-			time.Now().AddDate(0, 0, -30),
-		)
+		tx = tx.Unscoped().Where("deleted_at IS NOT NULL")
 	}
 	if query.IsArchived {
 		tx = tx.Where("archived_at IS NOT NULL")
@@ -220,7 +242,7 @@ func (taskRepo *TaskRepoImpl) List(
 			)
 		case "week":
 			{
-				start, end := utils.GetWeekRange(time.Now())
+				start, end := GetWeekRange(time.Now())
 				tx.Where("end_at >= ? and end_at <= ?", start, end)
 			}
 		case "month":
@@ -490,7 +512,7 @@ func (repo *TaskRepoImpl) BatchUpdateCheckItems(
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	var ids []int64
+	IDs := make([]int64, 0, len(vos))
 	var err error
 	for _, vo := range vos {
 		err = tx.
@@ -501,12 +523,12 @@ func (repo *TaskRepoImpl) BatchUpdateCheckItems(
 			tx.Rollback()
 			return nil, err
 		}
-		ids = append(ids, vo.Id)
+		IDs = append(IDs, vo.Id)
 	}
 	var updated []*models.TaskCheckItem
 	err = tx.
 		Model(&models.TaskCheckItem{}).
-		Where("id IN ? AND user_id = ?", ids, userId).
+		Where("id IN ? AND user_id = ?", IDs, userId).
 		Find(&updated).Error
 	if err != nil {
 		tx.Rollback()

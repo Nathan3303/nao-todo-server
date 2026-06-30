@@ -106,7 +106,6 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		Message: "更新评论成功",
 		Data:    commentId,
 	})
-
 }
 
 // DeleteCommentHandler 删除评论控制器

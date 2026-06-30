@@ -58,5 +58,5 @@ type UserApp interface {
 // userAppImpl 用户应用实现
 type userAppImpl struct {
 	identityDomain service.IdentityDomain
-	taskApp taskApp.TaskApp
+	taskApp        taskApp.TaskApp
 }

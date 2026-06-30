@@ -21,7 +21,10 @@ func NewPomodoroRepo(db *gorm.DB) repositories.Pomodoro {
 	return &PomodoroRepoImpl{db: db}
 }
 
-func (r *PomodoroRepoImpl) Create(ctx context.Context, vo *valueobjects.CreatePomodoro) (*entities.Pomodoro, error) {
+func (r *PomodoroRepoImpl) Create(
+	ctx context.Context,
+	vo *valueobjects.CreatePomodoro,
+) (*entities.Pomodoro, error) {
 	m := CreatePomodoroVOToModel(vo)
 	tx := r.db.WithContext(ctx).Create(m)
 	if tx.Error != nil {
@@ -30,9 +33,16 @@ func (r *PomodoroRepoImpl) Create(ctx context.Context, vo *valueobjects.CreatePo
 	return PomodoroModel2Entity(m), nil
 }
 
-func (r *PomodoroRepoImpl) GetById(ctx context.Context, userId int64, id int64) (*entities.Pomodoro, error) {
+func (r *PomodoroRepoImpl) GetById(
+	ctx context.Context,
+	userId int64,
+	id int64,
+) (*entities.Pomodoro, error) {
 	var m models.Pomodoro
-	tx := r.db.WithContext(ctx).Where("id = ? AND user_id = ?", id, userId).First(&m)
+	tx := r.db.
+		WithContext(ctx).
+		Where("id = ? AND user_id = ?", id, userId).
+		First(&m)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -71,11 +81,12 @@ func (r *PomodoroRepoImpl) List(
 			hasEndTime = true
 		}
 	}
-	if hasStartTime && hasEndTime {
+	switch {
+	case hasStartTime && hasEndTime:
 		tx = tx.Where("start_at BETWEEN ? AND ?", startTimeParsed, endTimeParsed)
-	} else if hasStartTime {
+	case hasStartTime:
 		tx = tx.Where("start_at >= ?", startTimeParsed)
-	} else if hasEndTime {
+	case hasEndTime:
 		tx = tx.Where("start_at <= ?", endTimeParsed)
 	}
 	if taskId > 0 {

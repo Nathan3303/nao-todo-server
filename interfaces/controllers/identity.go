@@ -100,7 +100,6 @@ func UserCheckInHandler(ctx *gin.Context) {
 		Message: "检入成功",
 		Data:    checkInRes,
 	})
-
 }
 
 // UserSignOutHandler 用户登出控制器

@@ -99,12 +99,12 @@ func Model2Entity(m *models.Project) *entities.Project {
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.Name = m.Name
 	e.Description = m.Description
-	e.ArchivedAt = *types.NewNullableTimeWithTime(m.ArchivedAt.Time)
-	e.DeactivedAt = *types.NewNullableTimeWithTime(m.DeactivedAt.Time)
+	e.ArchivedAt = types.NewNullableTimeByTime(m.ArchivedAt.Time)
+	e.DeactivedAt = types.NewNullableTimeByTime(m.DeactivedAt.Time)
 	e.SortId = m.SortId
 	return e
 }
@@ -117,7 +117,7 @@ func PreferenceModel2Entity(m *models.ProjectPreference) *entities.ProjectPrefer
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.ProjectId = m.ProjectId
 	e.ViewType = m.ViewType
@@ -140,8 +140,8 @@ func Models2Entities(ms []*models.Project) []*entities.Project {
 // BatchUpdateProjectValueObjectToMap 批量更新项目值对象转 map
 func BatchUpdateProjectValueObjectToMap(
 	vo *valueobjects.BatchUpdateProject,
-) map[string]interface{} {
-	updateMap := make(map[string]interface{})
+) map[string]any {
+	updateMap := make(map[string]any)
 	if vo.Name != nil {
 		updateMap["Name"] = *vo.Name
 	}

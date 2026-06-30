@@ -3,7 +3,6 @@ package pomodoro
 import (
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/pomodoro/valueobjects"
-	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 	"strconv"
 	"time"
@@ -18,8 +17,6 @@ func CreatePomodoroReqToVO(
 	if err != nil {
 		return nil, err
 	}
-	startAt := utils.DateString2TimePtr(req.StartAt)
-	endAt := utils.DateString2TimePtr(req.EndAt)
 	return valueobjects.NewCreatePomodoro(
 		userId,
 		req.SessionId,
@@ -27,47 +24,47 @@ func CreatePomodoroReqToVO(
 		taskId,
 		req.TaskName,
 		req.Description,
-		startAt,
-		endAt,
-		uint8(req.Duration),
+		req.StartAt,
+		req.EndAt,
+		req.Duration,
 		req.Note,
 	)
 }
 
 // PomodoroEntityToCreateRes 将 PomodoroEntity 转换为 CreatePomodoroRes
 func PomodoroEntityToCreateRes(e *entities.Pomodoro) *types.CreatePomodoroRes {
-	return &types.CreatePomodoroRes{
-		Id:          strconv.FormatInt(e.Id, 10),
-		SessionId:   e.SessionId,
-		Type:        e.Type,
-		TaskId:      strconv.FormatInt(e.TaskId, 10),
-		TaskName:    e.TaskName,
-		Description: e.Description,
-		StartAt:     e.StartAt.Format(time.RFC3339),
-		EndAt:       e.EndAt.Format(time.RFC3339),
-		Duration:    int(e.Duration),
-		Note:        e.Note,
-		CreatedAt:   e.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   e.UpdatedAt.Format(time.RFC3339),
-	}
+	var res types.CreatePomodoroRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.SessionId = e.SessionId
+	res.Type = e.Type
+	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.TaskName = e.TaskName
+	res.Description = e.Description
+	res.StartAt = e.StartAt.Format(time.RFC3339)
+	res.EndAt = e.EndAt.Format(time.RFC3339)
+	res.Duration = e.Duration
+	res.Note = e.Note
+	return &res
 }
 
 // PomodoroEntityToGetRes 将 PomodoroEntity 转换为 GetPomodoroRes
 func PomodoroEntityToGetRes(e *entities.Pomodoro) *types.GetPomodoroRes {
-	return &types.GetPomodoroRes{
-		Id:          strconv.FormatInt(e.Id, 10),
-		CreatedAt:   e.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   e.UpdatedAt.Format(time.RFC3339),
-		SessionId:   e.SessionId,
-		Type:        e.Type,
-		TaskId:      strconv.FormatInt(e.TaskId, 10),
-		TaskName:    e.TaskName,
-		Description: e.Description,
-		StartAt:     e.StartAt.Format(time.RFC3339),
-		EndAt:       e.EndAt.Format(time.RFC3339),
-		Duration:    int(e.Duration),
-		Note:        e.Note,
-	}
+	var res types.GetPomodoroRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.SessionId = e.SessionId
+	res.Type = e.Type
+	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.TaskName = e.TaskName
+	res.Description = e.Description
+	res.StartAt = e.StartAt.Format(time.RFC3339)
+	res.EndAt = e.EndAt.Format(time.RFC3339)
+	res.Duration = e.Duration
+	res.Note = e.Note
+	return &res
 }
 
 // PomodoroEntitiesToGetReses 将 PomodoroEntity 列表转换为 GetPomodoroRes 列表

@@ -22,15 +22,17 @@ func NewRateLimitRepo(rds *redis.Client) repositories.RateLimit {
 
 func (rateLimitRepo *RateLimitRepoImpl) Get(ctx context.Context, key string) int8 {
 	val, err := rateLimitRepo.rds.Get(ctx, key).Result()
-	var count int64
-	if err == redis.Nil {
+	var count int8
+	switch err {
+	case redis.Nil:
 		count = -1
-	} else if err != nil {
+	case err:
 		count = 0
-	} else {
-		count, _ = strconv.ParseInt(val, 10, 64)
+	default:
+		parsed, _ := strconv.ParseInt(val, 10, 8)
+		count = int8(parsed)
 	}
-	return int8(count)
+	return count
 }
 
 func (rateLimitRepo *RateLimitRepoImpl) Incr(ctx context.Context, key string) error {

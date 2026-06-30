@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"context"
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
 	pomodoroApp "naotodoserver/application/pomodoro"
@@ -39,30 +40,38 @@ func LoadDBs() {
 
 // LoadDomains 初始化领域模型
 func LoadDomains() {
+	// 初始化身份领域模型
 	identityDomain := identityService.NewIdentityDomain(
 		identityRepo.NewJWTRepo(),
 		identityRepo.NewUserRepo(dbs.DB),
 		identityRepo.NewSessionRepo(dbs.DB),
 		identityRepo.NewRateLimitRepo(dbs.RdsCli),
 	)
+	// 初始化任务领域模型
 	taskAppInst := taskApp.NewTaskApp(taskService.NewTaskDomain(
 		taskRepo.NewTaskRepo(dbs.DB),
 	))
+	// 初始化番茄领域模型
 	pomodoroAppInst := pomodoroApp.NewPomodoroApp(pomodoroService.NewPomodoroDomain(
 		pomodoroRepo.NewPomodoroRepo(dbs.DB),
 	))
+	// 初始化项目领域模型
+	projectAppInst := projectApp.NewProjectApp(projectService.NewProjectDomain(
+		projectRepo.NewProjectRepo(dbs.DB),
+		projectRepo.NewProjectPreferenceRepo(dbs.DB),
+	))
+	// 初始化标签领域模型
+	tagAppInst := tagApp.NewTagApp(tagService.NewTagDomain(
+		tagRepo.NewTagRepo(dbs.DB),
+		tagRepo.NewTagPreferenceRepo(dbs.DB),
+	))
+	// 初始化项目领域模型
 	application.App = &application.Services{
-		Auth: authApp.NewAuthApp(identityDomain),
-		User: userApp.NewUserApp(identityDomain, taskAppInst),
-		Task: taskAppInst,
-		Project: projectApp.NewProjectApp(projectService.NewProjectDomain(
-			projectRepo.NewProjectRepo(dbs.DB),
-			projectRepo.NewProjectPreferenceRepo(dbs.DB),
-		)),
-		Tag: tagApp.NewTagApp(tagService.NewTagDomain(
-			tagRepo.NewTagRepo(dbs.DB),
-			tagRepo.NewTagPreferenceRepo(dbs.DB),
-		)),
+		Auth:     authApp.NewAuthApp(identityDomain),
+		User:     userApp.NewUserApp(identityDomain, taskAppInst),
+		Task:     taskAppInst,
+		Project:  projectAppInst,
+		Tag:      tagAppInst,
 		Pomodoro: pomodoroAppInst,
 	}
 }
@@ -71,13 +80,15 @@ func LoadDomains() {
 func WireSSE() {
 	sessionRepo := identityRepo.NewSessionRepo(dbs.DB)
 	sse.GetHub().SessionValidator = func(userId int64, token string) bool {
-		return sessionRepo.IsSessionValid(nil, userId, token)
+		return sessionRepo.IsSessionValid(context.TODO(), userId, token)
 	}
 }
 
 // LoadCron 初始化定时任务
 func LoadCron() {
+	// 初始化定时任务
 	cronService := cron.GetCronServiceImpl()
+	// 添加定时任务 - 删除注销用户
 	_, err := cronService.AddJob(
 		"0 2 * * *",
 		cron.NewDeleteDeactivedUserJob(15),
@@ -85,9 +96,11 @@ func LoadCron() {
 	if err != nil {
 		panic("删除注销用户定时任务添加失败：" + err.Error())
 	}
+	// 添加定时任务 - 任务提醒扫描
 	_, err = cronService.AddJob("* * * * *", cron.NewReminderJob())
 	if err != nil {
 		panic("任务提醒扫描定时任务添加失败：" + err.Error())
 	}
+	// 启动定时任务
 	cronService.Start()
 }

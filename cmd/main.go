@@ -53,7 +53,10 @@ func main() {
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		}
-		if err := srv.ListenAndServeTLS(conf.Conf.Server.CertFile, conf.Conf.Server.KeyFile); err != nil {
+		if err := srv.ListenAndServeTLS(
+			conf.Conf.Server.CertFile,
+			conf.Conf.Server.KeyFile,
+		); err != nil {
 			panic("HTTPS 服务器启动失败 - " + err.Error())
 		}
 	} else {

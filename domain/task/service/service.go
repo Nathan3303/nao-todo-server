@@ -9,6 +9,7 @@ import (
 
 // TaskDomain 任务域接口
 type TaskDomain interface {
+	// --- Task ---
 	GetById(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
 	Create(ctx context.Context, userId int64, vo *valueobjects.CreateTask) (*entities.Task, error)
 	Update(ctx context.Context, userId int64, taskId int64, vo *valueobjects.UpdateTask) error
@@ -23,7 +24,6 @@ type TaskDomain interface {
 	) ([]*entities.Task, *valueobjects.Pagination, error)
 
 	// --- CheckItem ---
-
 	GetCheckItemById(
 		ctx context.Context,
 		userId int64,
@@ -49,7 +49,6 @@ type TaskDomain interface {
 	) ([]*entities.TaskCheckItem, error)
 
 	// --- Comment ---
-
 	GetCommentById(ctx context.Context, userId, commentId int64) (*entities.TaskComment, error)
 	CreateComment(
 		ctx context.Context,
@@ -67,7 +66,6 @@ type TaskDomain interface {
 	SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 
 	// --- Snooze ---
-
 	Snooze(ctx context.Context, userId int64, taskId int64, durationMinutes int) (string, error)
 	ProcessReminders(ctx context.Context) ([]*entities.Task, error)
 }

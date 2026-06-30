@@ -92,7 +92,11 @@ func (as *authAppImpl) CheckIn(
 		return nil, errors.New("用户凭证验证失败 - " + err.Error())
 	}
 	// 2. 通过 JWT 令牌和用户 ID 查找会话
-	sessionEntity, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, checkInReq.Token)
+	sessionEntity, err := as.identityDomain.FindSessionByUserIdAndToken(
+		ctx,
+		userId,
+		checkInReq.Token,
+	)
 	// 会话不存在：
 	if err != nil {
 		return nil, errors.New("用户会话验证失败 - " + err.Error())

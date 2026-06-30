@@ -6,12 +6,11 @@ import (
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
-	"naotodoserver/infrastructure/utils"
 
 	"gorm.io/gorm"
 )
 
-// 创建任务值对象转换为任务模型
+// CreateTaskValueObjectToModel 创建任务值对象转换为任务模型
 // @param userId 用户ID
 // @param createTaskValueObject 创建任务值对象
 // @return 任务模型
@@ -26,17 +25,17 @@ func CreateTaskValueObjectToModel(
 		Description:    createTaskValueObject.Description,
 		State:          createTaskValueObject.State,
 		Priority:       createTaskValueObject.Priority,
-		StartAt:        utils.TimePtr2SqlNullTime(createTaskValueObject.StartAt),
-		EndAt:          utils.TimePtr2SqlNullTime(createTaskValueObject.EndAt),
+		StartAt:        createTaskValueObject.StartAt.ToSqlNullTime(),
+		EndAt:          createTaskValueObject.EndAt.ToSqlNullTime(),
 		Tags:           createTaskValueObject.Tags,
-		RemindAt:       utils.TimePtr2SqlNullTime(createTaskValueObject.RemindAt),
+		RemindAt:       createTaskValueObject.RemindAt.ToSqlNullTime(),
 		RemindRepeat:   createTaskValueObject.RemindRepeat,
 		RemindTime:     createTaskValueObject.RemindTime,
 		RemindWeekdays: createTaskValueObject.RemindWeekdays,
 	}
 }
 
-// 更新任务值对象转换为任务模型
+// UpdateTaskValueObjectToModel 更新任务值对象转换为任务模型
 // @param updateTaskValueObject 更新任务值对象
 // @return 任务模型
 func UpdateTaskValueObjectToModel(
@@ -61,15 +60,13 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.Priority != nil {
 		m.Priority = *updateTaskValueObject.Priority
 	}
-	if updateTaskValueObject.StartAt != nil &&
-		updateTaskValueObject.StartAt.ShouldUpdate() &&
+	if updateTaskValueObject.StartAt.ShouldUpdate() &&
 		!updateTaskValueObject.StartAt.IsSetToNull() {
-		m.StartAt = utils.ToSqlNullTime(updateTaskValueObject.StartAt)
+		m.StartAt = updateTaskValueObject.StartAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.EndAt != nil &&
-		updateTaskValueObject.EndAt.ShouldUpdate() &&
+	if updateTaskValueObject.EndAt.ShouldUpdate() &&
 		!updateTaskValueObject.EndAt.IsSetToNull() {
-		m.EndAt = utils.ToSqlNullTime(updateTaskValueObject.EndAt)
+		m.EndAt = updateTaskValueObject.EndAt.ToSqlNullTime()
 	}
 	if updateTaskValueObject.ProjectId != nil {
 		m.ProjectId = *updateTaskValueObject.ProjectId
@@ -77,25 +74,21 @@ func UpdateTaskValueObjectToModel(
 	if updateTaskValueObject.Tags != nil {
 		m.Tags = updateTaskValueObject.Tags
 	}
-	if updateTaskValueObject.ArchivedAt != nil &&
-		updateTaskValueObject.ArchivedAt.ShouldUpdate() &&
+	if updateTaskValueObject.ArchivedAt.ShouldUpdate() &&
 		!updateTaskValueObject.ArchivedAt.IsSetToNull() {
-		m.ArchivedAt = utils.ToSqlNullTime(updateTaskValueObject.ArchivedAt)
+		m.ArchivedAt = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.StarMarkAt != nil &&
-		updateTaskValueObject.StarMarkAt.ShouldUpdate() &&
+	if updateTaskValueObject.StarMarkAt.ShouldUpdate() &&
 		!updateTaskValueObject.StarMarkAt.IsSetToNull() {
-		m.StarMarkAt = utils.ToSqlNullTime(updateTaskValueObject.StarMarkAt)
+		m.StarMarkAt = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.GivenUpAt != nil &&
-		updateTaskValueObject.GivenUpAt.ShouldUpdate() &&
+	if updateTaskValueObject.GivenUpAt.ShouldUpdate() &&
 		!updateTaskValueObject.GivenUpAt.IsSetToNull() {
-		m.GivenUpAt = utils.ToSqlNullTime(updateTaskValueObject.GivenUpAt)
+		m.GivenUpAt = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
 	}
-	if updateTaskValueObject.RemindAt != nil &&
-		updateTaskValueObject.RemindAt.ShouldUpdate() &&
+	if updateTaskValueObject.RemindAt.ShouldUpdate() &&
 		!updateTaskValueObject.RemindAt.IsSetToNull() {
-		m.RemindAt = utils.ToSqlNullTime(updateTaskValueObject.RemindAt)
+		m.RemindAt = updateTaskValueObject.RemindAt.ToSqlNullTime()
 	}
 	if updateTaskValueObject.RemindRepeat != nil {
 		m.RemindRepeat = *updateTaskValueObject.RemindRepeat
@@ -109,7 +102,7 @@ func UpdateTaskValueObjectToModel(
 	return m
 }
 
-// 更新任务值对象转换为任务映射
+// UpdateTaskValueObjectToMap 更新任务值对象转换为任务映射
 // @param updateTaskValueObject 更新任务值对象
 // @return 任务映射
 func UpdateTaskValueObjectToMap(
@@ -134,18 +127,18 @@ func UpdateTaskValueObjectToMap(
 	if updateTaskValueObject.Priority != nil {
 		updateMap["Priority"] = *updateTaskValueObject.Priority
 	}
-	if updateTaskValueObject.StartAt != nil && updateTaskValueObject.StartAt.ShouldUpdate() {
+	if updateTaskValueObject.StartAt.ShouldUpdate() {
 		if updateTaskValueObject.StartAt.IsSetToNull() {
 			updateMap["StartAt"] = nil
 		} else {
-			updateMap["StartAt"] = utils.ToSqlNullTime(updateTaskValueObject.StartAt)
+			updateMap["StartAt"] = updateTaskValueObject.StartAt.ToSqlNullTime()
 		}
 	}
-	if updateTaskValueObject.EndAt != nil && updateTaskValueObject.EndAt.ShouldUpdate() {
+	if updateTaskValueObject.EndAt.ShouldUpdate() {
 		if updateTaskValueObject.EndAt.IsSetToNull() {
 			updateMap["EndAt"] = nil
 		} else {
-			updateMap["EndAt"] = utils.ToSqlNullTime(updateTaskValueObject.EndAt)
+			updateMap["EndAt"] = updateTaskValueObject.EndAt.ToSqlNullTime()
 		}
 	}
 	if updateTaskValueObject.ProjectId != nil {
@@ -157,32 +150,32 @@ func UpdateTaskValueObjectToMap(
 			updateMap["Tags"] = string(tagsJSON)
 		}
 	}
-	if updateTaskValueObject.ArchivedAt != nil && updateTaskValueObject.ArchivedAt.ShouldUpdate() {
+	if updateTaskValueObject.ArchivedAt.ShouldUpdate() {
 		if updateTaskValueObject.ArchivedAt.IsSetToNull() {
 			updateMap["ArchivedAt"] = nil
 		} else {
-			updateMap["ArchivedAt"] = utils.ToSqlNullTime(updateTaskValueObject.ArchivedAt)
+			updateMap["ArchivedAt"] = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
 		}
 	}
-	if updateTaskValueObject.StarMarkAt != nil && updateTaskValueObject.StarMarkAt.ShouldUpdate() {
+	if updateTaskValueObject.StarMarkAt.ShouldUpdate() {
 		if updateTaskValueObject.StarMarkAt.IsSetToNull() {
 			updateMap["StarMarkAt"] = nil
 		} else {
-			updateMap["StarMarkAt"] = utils.ToSqlNullTime(updateTaskValueObject.StarMarkAt)
+			updateMap["StarMarkAt"] = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
 		}
 	}
-	if updateTaskValueObject.GivenUpAt != nil && updateTaskValueObject.GivenUpAt.ShouldUpdate() {
+	if updateTaskValueObject.GivenUpAt.ShouldUpdate() {
 		if updateTaskValueObject.GivenUpAt.IsSetToNull() {
 			updateMap["GivenUpAt"] = nil
 		} else {
-			updateMap["GivenUpAt"] = utils.ToSqlNullTime(updateTaskValueObject.GivenUpAt)
+			updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
 		}
 	}
-	if updateTaskValueObject.RemindAt != nil && updateTaskValueObject.RemindAt.ShouldUpdate() {
+	if updateTaskValueObject.RemindAt.ShouldUpdate() {
 		if updateTaskValueObject.RemindAt.IsSetToNull() {
 			updateMap["RemindAt"] = nil
 		} else {
-			updateMap["RemindAt"] = utils.ToSqlNullTime(updateTaskValueObject.RemindAt)
+			updateMap["RemindAt"] = updateTaskValueObject.RemindAt.ToSqlNullTime()
 		}
 	}
 	if updateTaskValueObject.RemindRepeat != nil {
@@ -197,7 +190,7 @@ func UpdateTaskValueObjectToMap(
 	return updateMap
 }
 
-// 模型转换为任务实体
+// TaskModel2Entity 模型转换为任务实体
 // @param m 任务模型
 // @return 任务实体
 func TaskModel2Entity(m *models.Task) *entities.Task {
@@ -205,7 +198,7 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.Id = m.ID
 	e.UpdatedAt = m.UpdatedAt
 	e.CreatedAt = m.CreatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.ParentTaskId = m.ParentTaskId
 	e.ProjectId = m.ProjectId
@@ -213,12 +206,12 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.Description = m.Description
 	e.State = m.State
 	e.Priority = m.Priority
-	e.StartAt = *types.NewNullableTimeWithTime(m.StartAt.Time)
-	e.EndAt = *types.NewNullableTimeWithTime(m.EndAt.Time)
-	e.ArchivedAt = *types.NewNullableTimeWithTime(m.ArchivedAt.Time)
-	e.StarMarkAt = *types.NewNullableTimeWithTime(m.StarMarkAt.Time)
-	e.GivenUpAt = *types.NewNullableTimeWithTime(m.GivenUpAt.Time)
-	e.RemindAt = *types.NewNullableTimeWithTime(m.RemindAt.Time)
+	e.StartAt = types.NewNullableTimeByTime(m.StartAt.Time)
+	e.EndAt = types.NewNullableTimeByTime(m.EndAt.Time)
+	e.ArchivedAt = types.NewNullableTimeByTime(m.ArchivedAt.Time)
+	e.StarMarkAt = types.NewNullableTimeByTime(m.StarMarkAt.Time)
+	e.GivenUpAt = types.NewNullableTimeByTime(m.GivenUpAt.Time)
+	e.RemindAt = types.NewNullableTimeByTime(m.RemindAt.Time)
 	e.RemindRepeat = m.RemindRepeat
 	e.RemindTime = m.RemindTime
 	e.RemindWeekdays = m.RemindWeekdays
@@ -226,7 +219,7 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	return e
 }
 
-// 分页值对象转换为分页范围
+// PaginationVO2Scopes 分页值对象转换为分页范围
 // @param pagination 分页值对象
 // @return 分页范围
 func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) *gorm.DB {
@@ -242,7 +235,7 @@ func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) 
 	}
 }
 
-// 任务模型列表转换为任务实体列表
+// TaskModels2Entities 任务模型列表转换为任务实体列表
 // @param mList 任务模型列表
 // @return 任务实体列表
 func TaskModels2Entities(mList []*models.Task) []*entities.Task {
@@ -255,7 +248,7 @@ func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 
 // --- 检查项相关 ---
 
-// 创建检查项值对象转换为检查项模型
+// TaskCheckItemValueObjectToModel 创建检查项值对象转换为检查项模型
 func TaskCheckItemValueObjectToModel(vo *valueobjects.CreateTaskCheckItem) *models.TaskCheckItem {
 	return &models.TaskCheckItem{
 		UserId:      vo.UserId,
@@ -314,7 +307,7 @@ func TaskCheckItemModel2Entity(m *models.TaskCheckItem) *entities.TaskCheckItem 
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.TaskId = m.TaskId
 	e.Name = m.Name
@@ -337,7 +330,7 @@ func TaskCheckItemModels2Entities(list []*models.TaskCheckItem) []*entities.Task
 
 // --- Task Comment相关 ---
 
-// 创建任务评论值对象转换为任务评论模型
+// CreateTaskCommentValueObjectToModel 创建任务评论值对象转换为任务评论模型
 func CreateTaskCommentValueObjectToModel(vo *valueobjects.CreateTaskComment) *models.TaskComment {
 	return &models.TaskComment{
 		UserId:      vo.UserId,
@@ -373,7 +366,7 @@ func TaskCommentModel2Entity(m *models.TaskComment) *entities.TaskComment {
 	e.Id = m.ID
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
-	e.DeletedAt = *types.NewNullableTimeWithTime(m.DeletedAt.Time)
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
 	e.TaskId = m.TaskId
 	e.Content = m.Content

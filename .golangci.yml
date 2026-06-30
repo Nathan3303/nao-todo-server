@@ -44,7 +44,7 @@ linters:
 linters-settings:
     # 行宽限制配置
     lll:
-        line-length: 80 # 最大行宽 100 字符
+        line-length: 100 # 最大行宽 100 字符
         tab-width: 4 # Tab 占 4 个字符宽度
 
     # revive 配置 (替代 golint)

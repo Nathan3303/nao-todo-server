@@ -16,7 +16,8 @@
         "ui.diagnostic.staticcheck": true,
         "ui.diagnostic.analyses": {
             "ST1000": false,
-            "ST1003": false
+            "ST1003": false,
+            "ST1016": false
         }
     }
 }

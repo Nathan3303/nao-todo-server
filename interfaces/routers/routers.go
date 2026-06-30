@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"naotodoserver/conf"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 	"time"
@@ -21,15 +22,28 @@ func securityHeaders() gin.HandlerFunc {
 	}
 }
 
+// InitRouters 初始化路由
 func InitRouters() *gin.Engine {
+	// 是否启用 Debug模式
+	if !conf.Conf.Server.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	// 创建 Gin 默认配置引擎
 	router := gin.Default()
+
+	// 禁用信任代理 IP
+	err := router.SetTrustedProxies(nil)
+	if err != nil {
+		panic("设置信任代理 IP 失败: " + err.Error())
+	}
 
 	// 安全响应头（替代 nginx add_header）
 	router.Use(securityHeaders())
 
 	// 添加 Gzip 压缩（排除 SSE 路径，避免缓冲破坏实时推送）
-	router.Use(gzip.Gzip(gzip.DefaultCompression,
+	router.Use(gzip.Gzip(
+		gzip.DefaultCompression,
 		gzip.WithExcludedPaths([]string{"/api/sse/"}),
 	))
 

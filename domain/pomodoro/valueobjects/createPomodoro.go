@@ -2,7 +2,7 @@ package valueobjects
 
 import (
 	"errors"
-	"time"
+	"naotodoserver/domain/types"
 )
 
 // CreatePomodoro 创建待办任务番茄工作请求
@@ -13,9 +13,9 @@ type CreatePomodoro struct {
 	TaskId      int64
 	TaskName    string
 	Description string
-	StartAt     *time.Time
-	EndAt       *time.Time
-	Duration    uint8
+	StartAt     types.NullableTime
+	EndAt       types.NullableTime
+	Duration    uint16
 	Note        string
 }
 
@@ -30,16 +30,16 @@ func (vo *CreatePomodoro) Validate() error {
 	if vo.TaskName == "" {
 		return errors.New("任务名称不能为空")
 	}
-	if vo.StartAt == nil {
+	if vo.StartAt.IsNull {
 		return errors.New("开始时间不能为空")
 	}
-	if vo.EndAt == nil {
+	if vo.EndAt.IsNull {
 		return errors.New("结束时间不能为空")
 	}
 	if vo.Duration <= 0 {
 		return errors.New("专注时长必须大于 0")
 	}
-	if vo.EndAt.Before(*vo.StartAt) {
+	if vo.EndAt.Time.Before(vo.StartAt.Time) {
 		return errors.New("结束时间不能早于开始时间")
 	}
 	return nil
@@ -53,9 +53,9 @@ func NewCreatePomodoro(
 	taskId int64,
 	taskName string,
 	description string,
-	startAt *time.Time,
-	endAt *time.Time,
-	duration uint8,
+	startAt string,
+	endAt string,
+	duration uint16,
 	note string,
 ) (*CreatePomodoro, error) {
 	vo := &CreatePomodoro{
@@ -65,8 +65,8 @@ func NewCreatePomodoro(
 		TaskId:      taskId,
 		TaskName:    taskName,
 		Description: description,
-		StartAt:     startAt,
-		EndAt:       endAt,
+		StartAt:     types.NewNullableTimeByTimeStr(startAt),
+		EndAt:       types.NewNullableTimeByTimeStr(endAt),
 		Duration:    duration,
 		Note:        note,
 	}

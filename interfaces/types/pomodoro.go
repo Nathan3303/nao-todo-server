@@ -9,13 +9,13 @@ type CreatePomodoroReq struct {
 	Description string `json:"description"`
 	StartAt     string `json:"startAt" binding:"required"`
 	EndAt       string `json:"endAt" binding:"required"`
-	Duration    int    `json:"duration" binding:"required"`
+	Duration    uint16 `json:"duration" binding:"required"`
 	Note        string `json:"note"`
 }
 
 // CreatePomodoroRes 创建番茄响应
 type CreatePomodoroRes struct {
-	Id          string `json:"id"`
+	ResBase
 	SessionId   string `json:"sessionId"` // Like uuidv4
 	Type        uint8  `json:"type"`
 	TaskId      string `json:"taskId"`
@@ -23,10 +23,8 @@ type CreatePomodoroRes struct {
 	Description string `json:"description"`
 	StartAt     string `json:"startAt"`
 	EndAt       string `json:"endAt"`
-	Duration    int    `json:"duration"`
+	Duration    uint16 `json:"duration"`
 	Note        string `json:"note"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
 }
 
 // GetPomodoroReq 获取番茄请求
@@ -35,21 +33,7 @@ type GetPomodoroReq struct {
 }
 
 // GetPomodoroRes 获取番茄响应
-type GetPomodoroRes struct {
-	Id          string `json:"id"`
-	SessionId   string `json:"sessionId"` // Like uuidv4
-	Type        uint8  `json:"type"`
-	TaskId      string `json:"taskId"`
-	TaskName    string `json:"taskName"`
-	Description string `json:"description"`
-	StartAt     string `json:"startAt"`
-	EndAt       string `json:"endAt"`
-	Duration    int    `json:"duration"`
-	Note        string `json:"note"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
-	DeletedAt   string `json:"deletedAt"`
-}
+type GetPomodoroRes CreatePomodoroRes
 
 // ListPomodoroReq 获取番茄列表请求
 type ListPomodoroReq struct {

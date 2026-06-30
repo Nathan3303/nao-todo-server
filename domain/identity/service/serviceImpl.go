@@ -98,8 +98,7 @@ func (d *identityDomainImpl) CheckRateLimit(ctx context.Context, key string, lim
 	if d.rateLimitRepo.Get(ctx, key) >= limit {
 		return errors.New("用户请求次数超过限流阈值")
 	}
-	d.rateLimitRepo.Incr(ctx, key)
-	return nil
+	return d.rateLimitRepo.Incr(ctx, key)
 }
 
 // --- 用户管理 --

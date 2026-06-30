@@ -34,13 +34,14 @@ func CreateProjectReqToValueObject(
 func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProjectRes {
 	var res types.CreateProjectRes
 	res.Id = strconv.FormatInt(projectEntity.Id, 10)
+	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = projectEntity.DeletedAt.ToString(time.RFC3339)
 	res.Name = projectEntity.Name
 	res.Description = projectEntity.Description
-	res.ArchivedAt = projectEntity.ArchivedAt.ToString(time.RFC3339)
-	res.CreatedAt = projectEntity.CreatedAt
-	res.UpdatedAt = projectEntity.UpdatedAt
-	res.DeactivedAt = projectEntity.DeactivedAt.ToString(time.RFC3339)
 	res.SortId = projectEntity.SortId
+	res.ArchivedAt = projectEntity.ArchivedAt.ToString(time.RFC3339)
+	res.DeactivedAt = projectEntity.DeactivedAt.ToString(time.RFC3339)
 	return &res
 }
 
@@ -48,16 +49,17 @@ func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProj
 // @param projectEntity 任务清单实体
 // @return *types.GetProjectRes 获取任务清单响应体
 func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes {
-	return &types.GetProjectRes{
-		Id:          strconv.FormatInt(projectEntity.Id, 10),
-		Name:        projectEntity.Name,
-		Description: projectEntity.Description,
-		ArchivedAt:  projectEntity.ArchivedAt.ToString(time.RFC3339),
-		CreatedAt:   projectEntity.CreatedAt,
-		UpdatedAt:   projectEntity.UpdatedAt,
-		DeactivedAt: projectEntity.DeactivedAt.ToString(time.RFC3339),
-		SortId:      projectEntity.SortId,
-	}
+	var res types.GetProjectRes
+	res.Id = strconv.FormatInt(projectEntity.Id, 10)
+	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = projectEntity.DeletedAt.ToString(time.RFC3339)
+	res.Name = projectEntity.Name
+	res.Description = projectEntity.Description
+	res.SortId = projectEntity.SortId
+	res.ArchivedAt = projectEntity.ArchivedAt.ToString(time.RFC3339)
+	res.DeactivedAt = projectEntity.DeactivedAt.ToString(time.RFC3339)
+	return &res
 }
 
 // UpdateProjectReqToValueObject 更新任务清单请求体转换值对象
@@ -102,7 +104,12 @@ func BatchUpdateProjectReqToValueObjects(
 		if err != nil {
 			return nil, err
 		}
-		vo, err := valueobjects.NewBatchUpdateProject(id, project.Name, project.Description, project.SortId)
+		vo, err := valueobjects.NewBatchUpdateProject(
+			id,
+			project.Name,
+			project.Description,
+			project.SortId,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -117,15 +124,16 @@ func BatchUpdateProjectReqToValueObjects(
 func ProjectPreferenceEntityToGetRes(
 	projectPreferenceEntity *entities.ProjectPreference,
 ) *types.GetProjectPreferenceRes {
-	return &types.GetProjectPreferenceRes{
-		Id:         strconv.FormatInt(projectPreferenceEntity.Id, 10),
-		ProjectId:  strconv.FormatInt(projectPreferenceEntity.ProjectId, 10),
-		ViewType:   projectPreferenceEntity.ViewType,
-		GetOptions: projectPreferenceEntity.GetOptions,
-		Columns:    projectPreferenceEntity.Columns,
-		CreatedAt:  projectPreferenceEntity.CreatedAt,
-		UpdatedAt:  projectPreferenceEntity.UpdatedAt,
-	}
+	var res types.GetProjectPreferenceRes
+	res.Id = strconv.FormatInt(projectPreferenceEntity.Id, 10)
+	res.CreatedAt = projectPreferenceEntity.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = projectPreferenceEntity.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = projectPreferenceEntity.DeletedAt.ToString(time.RFC3339)
+	res.ProjectId = strconv.FormatInt(projectPreferenceEntity.ProjectId, 10)
+	res.ViewType = projectPreferenceEntity.ViewType
+	res.GetOptions = projectPreferenceEntity.GetOptions
+	res.Columns = projectPreferenceEntity.Columns
+	return &res
 }
 
 // UpdateProjectPreferenceReqToValueObject 更新任务清单偏好请求体转换值对象

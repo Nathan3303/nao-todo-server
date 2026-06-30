@@ -41,7 +41,8 @@ func InitLogger() {
 	var writer *rotatelogs.RotateLogs
 	var logErr error
 
-	if conf.Conf.Log.MaxAge > 0 {
+	switch {
+	case conf.Conf.Log.MaxAge > 0:
 		// 使用最大保留天数
 		writer, logErr = rotatelogs.New(
 			conf.Conf.Log.FilePath+".%Y%m%d",
@@ -49,15 +50,15 @@ func InitLogger() {
 			rotatelogs.WithMaxAge(time.Duration(conf.Conf.Log.MaxAge)*24*time.Hour),
 			rotatelogs.WithRotationTime(24*time.Hour),
 		)
-	} else if conf.Conf.Log.MaxBackups > 0 {
+	case conf.Conf.Log.MaxBackups > 0:
 		// 使用最大保留数量
 		writer, logErr = rotatelogs.New(
 			conf.Conf.Log.FilePath+".%Y%m%d",
 			rotatelogs.WithLinkName(conf.Conf.Log.FilePath),
-			rotatelogs.WithRotationCount(uint(conf.Conf.Log.MaxBackups)),
+			rotatelogs.WithRotationCount(conf.Conf.Log.MaxBackups),
 			rotatelogs.WithRotationTime(24*time.Hour),
 		)
-	} else {
+	default:
 		// 默认配置 - 只按时间滚动
 		writer, logErr = rotatelogs.New(
 			conf.Conf.Log.FilePath+".%Y%m%d",

@@ -215,7 +215,6 @@ func (tagApp *TagAppImpl) GetTagPreference(
 	}
 	// 响应体转换并返回结果
 	return TagPreferenceEntityToGetRes(tagPreferenceEntity), nil
-
 }
 
 // UpdateTagPreference 更新标签偏好设置

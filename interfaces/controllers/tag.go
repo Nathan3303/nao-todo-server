@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 获取单个标签信息接入点
+// GetTagHandler 获取单个标签信息接入点
 // @code 3000x
 func GetTagHandler(ctx *gin.Context) {
 	// 1. 获取标签 ID
@@ -36,7 +36,7 @@ func GetTagHandler(ctx *gin.Context) {
 	})
 }
 
-// 创建标签接入点
+// CreateTagHandler 创建标签接入点
 // @code 3001x
 func CreateTagHandler(ctx *gin.Context) {
 	// 1. 获取请求参数
@@ -68,7 +68,7 @@ func CreateTagHandler(ctx *gin.Context) {
 	})
 }
 
-// 更新标签接入点
+// UpdateTagHandler 更新标签接入点
 // @code 3002x
 func UpdateTagHandler(ctx *gin.Context) {
 	// 1. 获取标签 ID
@@ -108,7 +108,7 @@ func UpdateTagHandler(ctx *gin.Context) {
 	})
 }
 
-// 删除标签接入点
+// DeleteTagHandler 删除标签接入点
 // @code 3003x
 func DeleteTagHandler(ctx *gin.Context) {
 	// 1. 获取标签 ID
@@ -138,7 +138,7 @@ func DeleteTagHandler(ctx *gin.Context) {
 	})
 }
 
-// 获取标签列表接入点
+// ListTagHandler 获取标签列表接入点
 // @code 3004x
 func ListTagHandler(ctx *gin.Context) {
 	// 1. 获取标签列表
@@ -159,7 +159,7 @@ func ListTagHandler(ctx *gin.Context) {
 	})
 }
 
-// 获取标签偏好接入点
+// GetTagPreferenceHandler 获取标签偏好接入点
 // @code 3005x
 func GetTagPreferenceHandler(ctx *gin.Context) {
 	// 1. 获取标签 ID
@@ -189,7 +189,7 @@ func GetTagPreferenceHandler(ctx *gin.Context) {
 	})
 }
 
-// 批量更新标签接入点
+// BatchUpdateTagsHandler 批量更新标签接入点
 // @code 3007x
 func BatchUpdateTagsHandler(ctx *gin.Context) {
 	var req types.BatchUpdateTagReq
@@ -218,7 +218,7 @@ func BatchUpdateTagsHandler(ctx *gin.Context) {
 	})
 }
 
-// 更新标签偏好接入点
+// UpdateTagPreferenceHandler 更新标签偏好接入点
 // @code 3006x
 func UpdateTagPreferenceHandler(ctx *gin.Context) {
 	// 1. 获取标签 ID
@@ -242,7 +242,8 @@ func UpdateTagPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签偏好
-	err = application.App.Tag.UpdateTagPreference(ctx.Request.Context(), tagId, &req)
+	err = application.App.Tag.
+		UpdateTagPreference(ctx.Request.Context(), tagId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30063,

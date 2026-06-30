@@ -5,6 +5,7 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 	"naotodoserver/interfaces/types"
 	"strconv"
+	"time"
 )
 
 // TagEntityToGetRes 标签实体转换响应体
@@ -13,12 +14,13 @@ import (
 func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 	res := &types.GetTagRes{}
 	res.Id = strconv.FormatInt(tagEntity.Id, 10)
+	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = tagEntity.DeletedAt.ToString(time.RFC3339)
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
 	res.Color = tagEntity.Color
 	res.SortId = tagEntity.SortId
-	res.CreatedAt = tagEntity.CreatedAt
-	res.UpdatedAt = tagEntity.UpdatedAt
 	return res
 }
 
@@ -39,12 +41,13 @@ func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.
 func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
 	res := &types.CreateTagRes{}
 	res.Id = strconv.FormatInt(tagEntity.Id, 10)
+	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = tagEntity.DeletedAt.ToString(time.RFC3339)
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
 	res.Color = tagEntity.Color
 	res.SortId = tagEntity.SortId
-	res.CreatedAt = tagEntity.CreatedAt
-	res.UpdatedAt = tagEntity.UpdatedAt
 	return res
 }
 
@@ -77,15 +80,16 @@ func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*types.GetTagRes {
 func TagPreferenceEntityToGetRes(
 	tagPreferenceEntity *entities.TagPreference,
 ) *types.GetTagPreferenceRes {
-	return &types.GetTagPreferenceRes{
-		Id:         strconv.FormatInt(tagPreferenceEntity.Id, 10),
-		TagId:      strconv.FormatInt(tagPreferenceEntity.TagId, 10),
-		ViewType:   tagPreferenceEntity.ViewType,
-		GetOptions: tagPreferenceEntity.GetOptions,
-		Columns:    tagPreferenceEntity.Columns,
-		CreatedAt:  tagPreferenceEntity.CreatedAt,
-		UpdatedAt:  tagPreferenceEntity.UpdatedAt,
-	}
+	var res types.GetTagPreferenceRes
+	res.Id = strconv.FormatInt(tagPreferenceEntity.Id, 10)
+	res.CreatedAt = tagPreferenceEntity.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = tagPreferenceEntity.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = tagPreferenceEntity.DeletedAt.ToString(time.RFC3339)
+	res.TagId = strconv.FormatInt(tagPreferenceEntity.TagId, 10)
+	res.ViewType = tagPreferenceEntity.ViewType
+	res.GetOptions = tagPreferenceEntity.GetOptions
+	res.Columns = tagPreferenceEntity.Columns
+	return &res
 }
 
 // UpdateTagPreferenceReqToValueObject 更新标签偏好设置请求体转换值对象
