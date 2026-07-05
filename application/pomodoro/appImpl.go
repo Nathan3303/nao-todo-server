@@ -86,35 +86,8 @@ func (app *PomodoroAppImpl) List(
 	if userId <= 0 {
 		return nil, 0, errors.New("用户 ID 无效")
 	}
-	var taskId int64
-	if req.TaskId != "" {
-		var err error
-		taskId, err = strconv.ParseInt(req.TaskId, 10, 64)
-		if err != nil {
-			taskId = 0
-		}
-	}
-	page := req.Page
-	if page <= 0 {
-		page = 1
-	}
-	limit := req.Limit
-	if limit <= 0 {
-		limit = 10
-	}
-	entities, total, err := app.pomodoroRecordRepo.List(
-		ctx,
-		userId,
-		req.SessionId,
-		req.StartTime,
-		req.EndTime,
-		taskId,
-		req.TaskName,
-		req.Type,
-		page,
-		limit,
-		req.Sort,
-	)
+	q := ListPomodoroRecordReqToQueryVO(userId, req)
+	entities, total, err := app.pomodoroRecordRepo.List(ctx, userId, q)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -272,24 +245,8 @@ func (app *PomodoroAppImpl) ListPomodoro(
 	if userId <= 0 {
 		return nil, 0, errors.New("用户 ID 无效")
 	}
-	page := req.Page
-	if page <= 0 {
-		page = 1
-	}
-	limit := req.Limit
-	if limit <= 0 {
-		limit = 10
-	}
-	entities, total, err := app.pomodoroRepo.List(
-		ctx,
-		userId,
-		req.Type,
-		req.Name,
-		req.IsArchived,
-		page,
-		limit,
-		req.Sort,
-	)
+	q := ListPomodoroReqToQueryVO(userId, req)
+	entities, total, err := app.pomodoroRepo.List(ctx, userId, q)
 	if err != nil {
 		return nil, 0, err
 	}

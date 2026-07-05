@@ -80,6 +80,49 @@ func PomodoroRecordEntitiesToGetReses(
 	return res
 }
 
+// ListPomodoroRecordReqToQueryVO 将 ListPomodoroRecordReq 转换为 QueryPomodoroRecord 值对象
+func ListPomodoroRecordReqToQueryVO(
+	userId int64,
+	req *types.ListPomodoroRecordReq,
+) *valueobjects.QueryPomodoroRecord {
+	var taskId int64
+	if req.TaskId != "" {
+		var err error
+		taskId, err = strconv.ParseInt(req.TaskId, 10, 64)
+		if err != nil {
+			taskId = 0
+		}
+	}
+	return valueobjects.NewQueryPomodoroRecord(
+		userId,
+		req.SessionId,
+		req.StartTime,
+		req.EndTime,
+		taskId,
+		req.TaskName,
+		req.Type,
+		req.Sort,
+		req.Page,
+		req.Limit,
+	)
+}
+
+// ListPomodoroReqToQueryVO 将 ListPomodoroReq 转换为 QueryPomodoro 值对象
+func ListPomodoroReqToQueryVO(
+	userId int64,
+	req *types.ListPomodoroReq,
+) *valueobjects.QueryPomodoro {
+	return valueobjects.NewQueryPomodoro(
+		userId,
+		req.Type,
+		req.Name,
+		req.IsArchived,
+		req.Sort,
+		req.Page,
+		req.Limit,
+	)
+}
+
 // --- Pomodoro Converters ---
 
 // CreatePomodoroReqToVO 将 CreatePomodoroReq 转换为 CreatePomodoro 值对象
