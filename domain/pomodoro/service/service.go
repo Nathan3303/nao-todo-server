@@ -9,15 +9,6 @@ import (
 
 // PomodoroDomain Pomodoro 任务服务接口
 type PomodoroDomain interface {
-	// --- PomodoroRecord ---
-
-	// Create 创建 PomodoroRecord
-	Create(
-		ctx context.Context,
-		userId int64,
-		vo *valueobjects.CreatePomodoroRecord,
-	) (*entities.PomodoroRecord, error)
-
 	// --- Pomodoro ---
 
 	// CreatePomodoro 创建常用番茄工作
@@ -34,6 +25,15 @@ type PomodoroDomain interface {
 		id int64,
 		vo *valueobjects.UpdatePomodoro,
 	) (*entities.Pomodoro, error)
+
+	// --- PomodoroRecord ---
+
+	// Create 创建 PomodoroRecord
+	CreatePomodoroRecord(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreatePomodoroRecord,
+	) (*entities.PomodoroRecord, error)
 }
 
 // PomodoroDomainImpl Pomodoro 任务服务实现

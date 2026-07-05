@@ -68,7 +68,7 @@ type PomodoroApp interface {
 
 // PomodoroAppImpl 专注应用应用层实现
 type PomodoroAppImpl struct {
-	pomodoroDomain      service.PomodoroDomain
-	pomodoroRecordRepo  repositories.PomodoroRecord
-	pomodoroRepo        repositories.Pomodoro
+	pomodoroDomain     service.PomodoroDomain
+	pomodoroRecordRepo repositories.PomodoroRecord
+	pomodoroRepo       repositories.Pomodoro
 }

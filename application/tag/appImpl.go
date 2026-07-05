@@ -11,7 +11,11 @@ import (
 )
 
 // NewTagApp 创建标签应用层实例
-func NewTagApp(tagDomain service.TagDomain, tagRepo repositories.TagRepository, preferenceRepo repositories.TagPreference) TagApp {
+func NewTagApp(
+	tagDomain service.TagDomain,
+	tagRepo repositories.TagRepository,
+	preferenceRepo repositories.TagPreference,
+) TagApp {
 	impl := &TagAppImpl{
 		tagDomain:      tagDomain,
 		tagRepo:        tagRepo,

@@ -56,12 +56,20 @@ func LoadDomains() {
 	pomodoroRecordRepoInst := pomodoroRepo.NewPomodoroRecordRepo(dbs.DB)
 	pomodoroRepoInst := pomodoroRepo.NewPomodoroRepo(dbs.DB)
 	pomodoroDomain := pomodoroService.NewPomodoroDomain(pomodoroRecordRepoInst, pomodoroRepoInst)
-	pomodoroAppInst := pomodoroApp.NewPomodoroApp(pomodoroDomain, pomodoroRecordRepoInst, pomodoroRepoInst)
+	pomodoroAppInst := pomodoroApp.NewPomodoroApp(
+		pomodoroDomain,
+		pomodoroRecordRepoInst,
+		pomodoroRepoInst,
+	)
 	// 初始化项目领域模型
 	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB)
 	projectPreferenceRepoInst := projectRepo.NewProjectPreferenceRepo(dbs.DB)
 	projectDomain := projectService.NewProjectDomain(projectRepoInst, projectPreferenceRepoInst)
-	projectAppInst := projectApp.NewProjectApp(projectDomain, projectRepoInst, projectPreferenceRepoInst)
+	projectAppInst := projectApp.NewProjectApp(
+		projectDomain,
+		projectRepoInst,
+		projectPreferenceRepoInst,
+	)
 	// 初始化标签领域模型
 	tagRepoInst := tagRepo.NewTagRepo(dbs.DB)
 	tagPreferenceRepoInst := tagRepo.NewTagPreferenceRepo(dbs.DB)

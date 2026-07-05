@@ -11,7 +11,11 @@ import (
 )
 
 // NewProjectApp 创建任务清单应用层实例
-func NewProjectApp(projectDomain service.ProjectDomain, repo repositories.Project, preferenceRepo repositories.ProjectPreference) ProjectApp {
+func NewProjectApp(
+	projectDomain service.ProjectDomain,
+	repo repositories.Project,
+	preferenceRepo repositories.ProjectPreference,
+) ProjectApp {
 	impl := &projectAppImpl{
 		projectDomain:  projectDomain,
 		repo:           repo,

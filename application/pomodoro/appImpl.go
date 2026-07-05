@@ -11,7 +11,11 @@ import (
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
-func NewPomodoroApp(pomodoroDomain service.PomodoroDomain, pomodoroRecordRepo repositories.PomodoroRecord, pomodoroRepo repositories.Pomodoro) PomodoroApp {
+func NewPomodoroApp(
+	pomodoroDomain service.PomodoroDomain,
+	pomodoroRecordRepo repositories.PomodoroRecord,
+	pomodoroRepo repositories.Pomodoro,
+) PomodoroApp {
 	return &PomodoroAppImpl{
 		pomodoroDomain:     pomodoroDomain,
 		pomodoroRecordRepo: pomodoroRecordRepo,
@@ -38,7 +42,7 @@ func (app *PomodoroAppImpl) Create(
 	if err != nil {
 		return nil, err
 	}
-	entity, err := app.pomodoroDomain.Create(ctx, userId, vo)
+	entity, err := app.pomodoroDomain.CreatePomodoroRecord(ctx, userId, vo)
 	if err != nil {
 		return nil, err
 	}

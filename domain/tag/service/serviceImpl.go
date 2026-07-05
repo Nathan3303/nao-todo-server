@@ -78,5 +78,3 @@ func (tagDomain *TagDomainImpl) Delete(
 	// 删除标签偏好
 	return tagDomain.preferenceRepo.Delete(ctx, userId, tagId)
 }
-
-

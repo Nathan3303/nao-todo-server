@@ -18,21 +18,6 @@ func NewPomodoroDomain(
 	}
 }
 
-// --- PomodoroRecord ---
-
-// Create 创建 PomodoroRecord
-func (d *PomodoroDomainImpl) Create(
-	ctx context.Context,
-	userId int64,
-	vo *valueobjects.CreatePomodoroRecord,
-) (*entities.PomodoroRecord, error) {
-	vo.UserId = userId
-	if err := vo.Validate(); err != nil {
-		return nil, err
-	}
-	return d.pomodoroRecordRepo.Create(ctx, vo)
-}
-
 // --- Pomodoro ---
 
 // CreatePomodoro 创建常用番茄工作
@@ -61,4 +46,17 @@ func (d *PomodoroDomainImpl) UpdatePomodoro(
 	return d.pomodoroRepo.Update(ctx, userId, id, vo)
 }
 
+// --- PomodoroRecord ---
 
+// CreatePomodoroRecord 创建 PomodoroRecord
+func (d *PomodoroDomainImpl) CreatePomodoroRecord(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreatePomodoroRecord,
+) (*entities.PomodoroRecord, error) {
+	vo.UserId = userId
+	if err := vo.Validate(); err != nil {
+		return nil, err
+	}
+	return d.pomodoroRecordRepo.Create(ctx, vo)
+}

@@ -83,5 +83,3 @@ func (p *ProjectDomainImpl) Restore(
 	// 恢复任务清单偏好
 	return p.preferenceRepo.Restore(ctx, userId, projectId)
 }
-
-
