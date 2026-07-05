@@ -6,9 +6,7 @@ import (
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
-	"naotodoserver/infrastructure/utils"
-	"strings"
-	"time"
+	query "naotodoserver/infrastructure/utils/query"
 
 	"gorm.io/gorm"
 )
@@ -57,52 +55,18 @@ func (r *PomodoroRecordRepoImpl) GetById(
 func (r *PomodoroRecordRepoImpl) List(
 	ctx context.Context,
 	userId int64,
-	sessionId, startTime, endTime string,
-	taskId int64,
-	taskName string,
-	pomodoroType uint8,
-	page, limit int,
-	sort string,
+	q *valueobjects.QueryPomodoroRecord,
 ) ([]*entities.PomodoroRecord, int64, error) {
 	tx := r.db.WithContext(ctx).Model(&models.PomodoroRecord{}).
-		Where("user_id = ?", userId)
-
-	if sessionId != "" {
-		tx = tx.Where("session_id = ?", sessionId)
-	}
-
-	// 解析 RFC3339 时间字符串为 time.Time，让 GORM 处理正确的 SQL 格式化
-	var startTimeParsed, endTimeParsed time.Time
-	var hasStartTime, hasEndTime bool
-	if startTime != "" {
-		if t, err := time.Parse(time.RFC3339, startTime); err == nil {
-			startTimeParsed = t
-			hasStartTime = true
-		}
-	}
-	if endTime != "" {
-		if t, err := time.Parse(time.RFC3339, endTime); err == nil {
-			endTimeParsed = t
-			hasEndTime = true
-		}
-	}
-	switch {
-	case hasStartTime && hasEndTime:
-		tx = tx.Where("start_at BETWEEN ? AND ?", startTimeParsed, endTimeParsed)
-	case hasStartTime:
-		tx = tx.Where("start_at >= ?", startTimeParsed)
-	case hasEndTime:
-		tx = tx.Where("start_at <= ?", endTimeParsed)
-	}
-	if taskId > 0 {
-		tx = tx.Where("task_id = ?", taskId)
-	}
-	if taskName != "" {
-		tx = tx.Where("task_name LIKE ?", "%"+taskName+"%")
-	}
-	if pomodoroType > 0 {
-		tx = tx.Where("type = ?", pomodoroType)
-	}
+		Where("user_id = ?", userId).
+		Scopes(
+			ByPomodoroRecordSessionId(q.SessionId),
+			ByPomodoroRecordTimeRange(q.StartTime, q.EndTime),
+			ByPomodoroRecordTaskId(q.TaskId),
+			ByPomodoroRecordTaskName(q.TaskName),
+			ByPomodoroType(q.Type),
+			query.Sort(q.Sort),
+		)
 
 	var total int64
 	tx.Count(&total)
@@ -110,23 +74,15 @@ func (r *PomodoroRecordRepoImpl) List(
 		return nil, 0, tx.Error
 	}
 
-	if sort != "" {
-		parts := strings.Split(sort, ":")
-		if len(parts) == 2 {
-			tx = tx.Order(utils.ToSnakeCase(parts[0]) + " " + parts[1])
-		}
+	if q.Page <= 0 {
+		q.Page = 1
 	}
-
-	if page <= 0 {
-		page = 1
+	if q.Limit <= 0 {
+		q.Limit = 10
 	}
-	if limit <= 0 {
-		limit = 10
-	}
-	offset := (page - 1) * limit
 
 	var modelsList []*models.PomodoroRecord
-	tx = tx.Offset(offset).Limit(limit).Find(&modelsList)
+	tx = tx.Scopes(query.Paginate(q.Page, q.Limit)).Find(&modelsList)
 	if tx.Error != nil {
 		return nil, 0, tx.Error
 	}

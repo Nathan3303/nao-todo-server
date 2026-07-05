@@ -6,8 +6,7 @@ import (
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
-	"naotodoserver/infrastructure/utils"
-	"strings"
+	query "naotodoserver/infrastructure/utils/query"
 	"time"
 
 	"gorm.io/gorm"
@@ -113,27 +112,16 @@ func (r *PomodoroRepoImpl) Unarchive(
 func (r *PomodoroRepoImpl) List(
 	ctx context.Context,
 	userId int64,
-	pomodoroType uint8,
-	name string,
-	isArchived bool,
-	page int,
-	limit int,
-	sort string,
+	q *valueobjects.QueryPomodoro,
 ) ([]*entities.Pomodoro, int64, error) {
 	tx := r.db.WithContext(ctx).Model(&models.Pomodoro{}).
-		Where("user_id = ?", userId)
-
-	if pomodoroType > 0 {
-		tx = tx.Where("type = ?", pomodoroType)
-	}
-	if name != "" {
-		tx = tx.Where("name LIKE ?", "%"+name+"%")
-	}
-	if isArchived {
-		tx = tx.Where("archived_at IS NOT NULL")
-	} else {
-		tx = tx.Where("archived_at IS NULL")
-	}
+		Where("user_id = ?", userId).
+		Scopes(
+			ByPomodoroType(q.Type),
+			ByPomodoroName(q.Name),
+			ByPomodoroArchivedFlag(q.IsArchived),
+			query.Sort(q.Sort),
+		)
 
 	var total int64
 	tx.Count(&total)
@@ -141,23 +129,15 @@ func (r *PomodoroRepoImpl) List(
 		return nil, 0, tx.Error
 	}
 
-	if sort != "" {
-		parts := strings.Split(sort, ":")
-		if len(parts) == 2 {
-			tx = tx.Order(utils.ToSnakeCase(parts[0]) + " " + parts[1])
-		}
+	if q.Page <= 0 {
+		q.Page = 1
 	}
-
-	if page <= 0 {
-		page = 1
+	if q.Limit <= 0 {
+		q.Limit = 10
 	}
-	if limit <= 0 {
-		limit = 10
-	}
-	offset := (page - 1) * limit
 
 	var modelsList []*models.Pomodoro
-	tx = tx.Offset(offset).Limit(limit).Find(&modelsList)
+	tx = tx.Scopes(query.Paginate(q.Page, q.Limit)).Find(&modelsList)
 	if tx.Error != nil {
 		return nil, 0, tx.Error
 	}
