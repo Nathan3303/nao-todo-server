@@ -10,7 +10,11 @@ import (
 )
 
 // NewAuthApp 创建认证应用层实例
-func NewAuthApp(identityDomain service.IdentityDomain, userRepo repositories.User, sessionRepo repositories.UserSession) AuthApp {
+func NewAuthApp(
+	identityDomain service.IdentityDomain,
+	userRepo repositories.User,
+	sessionRepo repositories.UserSession,
+) AuthApp {
 	return &authAppImpl{
 		identityDomain: identityDomain,
 		userRepo:       userRepo,
