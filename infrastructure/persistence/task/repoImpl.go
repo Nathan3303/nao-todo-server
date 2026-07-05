@@ -2,13 +2,11 @@ package task
 
 import (
 	"context"
-	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/infrastructure/persistence/models"
-	"naotodoserver/infrastructure/utils"
-	"strings"
+	query "naotodoserver/infrastructure/utils/query"
 	"time"
 
 	"gorm.io/gorm"
@@ -155,129 +153,53 @@ func GetWeekRange(t time.Time) (start, end time.Time) {
 // List 获取任务列表
 // @param ctx 上下文
 // @param userId 用户ID
-// @param query 查询值对象
+// @param q 查询值对象
 // @param pagination 分页值对象
 // @return 任务实体列表
 // @return error 错误
 func (taskRepo *TaskRepoImpl) List(
 	ctx context.Context,
 	userId int64,
-	query *valueobjects.QueryTask,
+	q *valueobjects.QueryTask,
 	pagination *valueobjects.Pagination,
 ) ([]*entities.Task, *valueobjects.Pagination, error) {
-	// 1. 构建查询
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where("user_id = ?", userId)
-	// 2. 处理 Project 或 Tag ID 过滤条件
-	if query.ProjectId > 0 {
-		tx = tx.Where("project_id = ?", query.ProjectId)
-	} else if query.TagId != "" {
-		tx = tx.Where("tags LIKE ?", "%"+query.TagId+"%")
-	}
-	// 3. 处理名称和描述过滤条件
-	if query.Name != "" {
-		tx = tx.Where("name LIKE ?", "%"+query.Name+"%")
-	}
-	if query.Description != "" {
-		tx = tx.Where("description LIKE ?", "%"+query.Description+"%")
-	}
-	// 4. 处理状态过滤条件
-	if query.State != "" {
-		var stateIDs []int
-		for s := range strings.SplitSeq(query.State, ",") {
-			if val, exists := consts.TodoStateMap[s]; exists {
-				stateIDs = append(stateIDs, int(val))
-			}
-		}
-		if len(stateIDs) > 0 {
-			tx = tx.Where("state IN ?", stateIDs)
-		}
-	}
-	// 5. 处理优先级过滤条件
-	if query.Priority != "" {
-		var priorityIDs []int
-		for s := range strings.SplitSeq(query.Priority, ",") {
-			if val, exists := consts.TodoPriorityMap[s]; exists {
-				priorityIDs = append(priorityIDs, int(val))
-			}
-		}
-		if len(priorityIDs) > 0 {
-			tx = tx.Where("priority IN ?", priorityIDs)
-		}
-	}
-	// 6. 处理开始时间和结束时间过滤条件
-	if query.StartAt != "" {
-		tx = tx.Where("start_at >= ?", query.StartAt)
-	}
-	if query.EndAt != "" {
-		tx = tx.Where("end_at <= ?", query.EndAt)
-	}
-	// 7. 处理所有布尔类型的过滤条件
-	if query.IsDeleted {
-		tx = tx.Unscoped().Where("deleted_at IS NOT NULL")
-	}
-	if query.IsArchived {
-		tx = tx.Where("archived_at IS NOT NULL")
-	}
-	if query.IsStarMarked {
-		tx = tx.Where("star_mark_at IS NOT NULL")
-	}
-	if query.IsGivenUp {
-		tx = tx.Where("given_up_at IS NOT NULL")
-	} else {
-		tx = tx.Where("given_up_at IS NULL")
-	}
-	// 8. 处理相对日期过滤条件
-	if query.RelativeDate != "" {
-		switch query.RelativeDate {
-		case "today":
-			tx.Where("end_at >= ?", time.Now().Format("2006-01-02"))
-		case "tomorrow":
-			tx.Where(
-				"end_at >= ?",
-				time.
-					Now().
-					AddDate(0, 0, 1).
-					Format("2006-01-02"),
-			)
-		case "week":
-			{
-				start, end := GetWeekRange(time.Now())
-				tx.Where("end_at >= ? and end_at <= ?", start, end)
-			}
-		case "month":
-			tx.Where(
-				"end_at >= ?",
-				time.
-					Now().
-					AddDate(0, 0, 7).
-					Format("2006-01-02"),
-			)
-		case "-today":
-			tx.Where("end_at < ?", time.Now().Format("2006-01-02"))
-		}
-	}
-	// 9. 处理排序条件
-	if query.Sort != "" {
-		var splited = strings.Split(query.Sort, ":")
-		if len(splited) == 2 {
-			tx.Order(utils.ToSnakeCase(splited[0]) + " " + splited[1])
-		}
-	}
-	// 10. 查询任务总数
-	tx.Count(&pagination.Total)
+		Where("user_id = ?", userId).
+		Scopes(
+			ByProjectOrTag(q),
+			ByTaskName(q.Name),
+			ByTaskDescription(q.Description),
+			ByTaskState(q.State),
+			ByTaskPriority(q.Priority),
+			ByTaskTimeRange(q.StartAt, q.EndAt),
+			ByTaskDeleted(q.IsDeleted),
+			ByTaskArchived(q.IsArchived),
+			ByTaskStarMarked(q.IsStarMarked),
+			ByTaskGivenUpFlag(q.IsGivenUp),
+			ByRelativeDate(q.RelativeDate),
+			query.Sort(q.Sort),
+		)
+
+	var total int64
+	tx.Count(&total)
 	if tx.Error != nil {
 		return nil, nil, tx.Error
 	}
-	// 11. 查询任务列表
-	taskModels := []*models.Task{}
-	tx = tx.Scopes(PaginationVO2Scopes(pagination)).Find(&taskModels)
+
+	if pagination.Page <= 0 {
+		pagination.Page = 1
+	}
+	if pagination.Limit <= 0 {
+		pagination.Limit = 10
+	}
+
+	var taskModels []*models.Task
+	tx = tx.Scopes(query.Paginate(pagination.Page, pagination.Limit)).Find(&taskModels)
 	if tx.Error != nil {
 		return nil, nil, tx.Error
 	}
-	// 12. 转换模型到实体并返回
-	taskEntities := TaskModels2Entities(taskModels)
-	return taskEntities, pagination, nil
+
+	return TaskModels2Entities(taskModels), pagination, nil
 }
 
 // --- 任务提醒相关 ---

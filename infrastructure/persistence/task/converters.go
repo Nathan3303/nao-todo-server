@@ -6,8 +6,6 @@ import (
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
-
-	"gorm.io/gorm"
 )
 
 // CreateTaskValueObjectToModel 创建任务值对象转换为任务模型
@@ -217,22 +215,6 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.RemindWeekdays = m.RemindWeekdays
 	e.Tags = m.Tags
 	return e
-}
-
-// PaginationVO2Scopes 分页值对象转换为分页范围
-// @param pagination 分页值对象
-// @return 分页范围
-func PaginationVO2Scopes(pagination *valueobjects.Pagination) func(db *gorm.DB) *gorm.DB {
-	if pagination.Page <= 0 {
-		pagination.Page = 1
-	}
-	if pagination.Limit <= 0 {
-		pagination.Limit = 10
-	}
-	offset := (pagination.Page - 1) * pagination.Limit
-	return func(db *gorm.DB) *gorm.DB {
-		return db.Offset(offset).Limit(pagination.Limit)
-	}
 }
 
 // TaskModels2Entities 任务模型列表转换为任务实体列表
