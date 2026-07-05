@@ -2,6 +2,7 @@ package tag
 
 import (
 	"context"
+	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
 	"naotodoserver/interfaces/types"
 )
@@ -52,5 +53,7 @@ type TagApp interface {
 
 // TagAppImpl 标签应用服务实现
 type TagAppImpl struct {
-	tagDomain service.TagDomain
+	tagDomain      service.TagDomain
+	tagRepo        repositories.TagRepository
+	preferenceRepo repositories.TagPreference
 }

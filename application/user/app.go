@@ -4,7 +4,7 @@ import (
 	"context"
 
 	taskApp "naotodoserver/application/task"
-	"naotodoserver/domain/identity/service"
+	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -57,6 +57,6 @@ type UserApp interface {
 
 // userAppImpl 用户应用实现
 type userAppImpl struct {
-	identityDomain service.IdentityDomain
-	taskApp        taskApp.TaskApp
+	userRepo repositories.User
+	taskApp  taskApp.TaskApp
 }

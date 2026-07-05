@@ -15,56 +15,11 @@ type ProjectDomain interface {
 		createProjectValueObject *valueobjects.CreateProject,
 	) (*entities.Project, error)
 
-	// 根据用户ID和任务清单ID获取任务清单
-	GetById(ctx context.Context, userId int64, projectId int64) (*entities.Project, error)
-
-	// 更新任务清单
-	Update(
-		ctx context.Context,
-		userId int64,
-		projectId int64,
-		updateProjectValueObject *valueobjects.UpdateProject,
-	) error
-
 	// 删除任务清单
 	Delete(ctx context.Context, userId int64, projectId int64) error
 
 	// 恢复任务清单
 	Restore(ctx context.Context, userId int64, projectId int64) error
-
-	// 归档任务清单
-	Archive(ctx context.Context, userId int64, projectId int64) error
-
-	// 取消归档任务清单
-	Unarchive(ctx context.Context, userId int64, projectId int64) error
-
-	// 批量更新任务清单
-	BatchUpdate(
-		ctx context.Context,
-		userId int64,
-		batchUpdateProjects []*valueobjects.BatchUpdateProject,
-	) ([]*entities.Project, error)
-
-	// 根据用户ID获取任务清单列表
-	GetByUserId(ctx context.Context, userId int64) ([]*entities.Project, error)
-
-	// 获取任务清单偏好
-	GetPreference(
-		ctx context.Context,
-		userId int64,
-		projectId int64,
-	) (*entities.ProjectPreference, error)
-
-	// 根据用户ID和任务清单ID保存任务清单偏好
-	SavePreference(
-		ctx context.Context,
-		userId int64,
-		projectId int64,
-		saveProjectPreference *valueobjects.SaveProjectPreference,
-	) error
-
-	// 删除已注销的任务清单
-	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error)
 }
 
 // ProjectDomainImpl 任务清单领域服务实现

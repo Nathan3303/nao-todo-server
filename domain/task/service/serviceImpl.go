@@ -16,44 +16,6 @@ func NewTaskDomain(taskRepo repositories.Task) TaskDomain {
 	return &TaskDomainImpl{taskRepo: taskRepo}
 }
 
-// GetById 获取任务详情
-func (d *TaskDomainImpl) GetById(
-	ctx context.Context,
-	userId int64,
-	taskId int64,
-) (*entities.Task, error) {
-	return d.taskRepo.GetById(ctx, userId, taskId)
-}
-
-// Create 创建任务
-func (d *TaskDomainImpl) Create(
-	ctx context.Context,
-	userId int64,
-	vo *valueobjects.CreateTask,
-) (*entities.Task, error) {
-	return d.taskRepo.Create(ctx, userId, vo)
-}
-
-// Update 更新任务
-func (d *TaskDomainImpl) Update(
-	ctx context.Context,
-	userId int64,
-	taskId int64,
-	vo *valueobjects.UpdateTask,
-) error {
-	return d.taskRepo.Update(ctx, userId, taskId, vo)
-}
-
-// Delete 删除任务
-func (d *TaskDomainImpl) Delete(ctx context.Context, userId int64, taskId int64) error {
-	return d.taskRepo.Delete(ctx, userId, taskId)
-}
-
-// Restore 恢复任务
-func (d *TaskDomainImpl) Restore(ctx context.Context, userId int64, taskId int64) error {
-	return d.taskRepo.Restore(ctx, userId, taskId)
-}
-
 // Copy 复制任务
 func (d *TaskDomainImpl) Copy(
 	ctx context.Context,
@@ -102,15 +64,6 @@ func (d *TaskDomainImpl) List(
 
 // --- 检查项相关 ---
 
-// GetCheckItemById 获取检查项详情
-func (d *TaskDomainImpl) GetCheckItemById(
-	ctx context.Context,
-	userId int64,
-	checkItemId int64,
-) (*entities.TaskCheckItem, error) {
-	return d.taskRepo.GetCheckItemById(ctx, userId, checkItemId)
-}
-
 // CreateCheckItem 创建检查项
 func (d *TaskDomainImpl) CreateCheckItem(
 	ctx context.Context,
@@ -119,93 +72,6 @@ func (d *TaskDomainImpl) CreateCheckItem(
 ) (*entities.TaskCheckItem, error) {
 	vo.SortId = d.taskRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
 	return d.taskRepo.CreateCheckItem(ctx, userId, vo)
-}
-
-// UpdateCheckItem 更新检查项
-func (d *TaskDomainImpl) UpdateCheckItem(
-	ctx context.Context,
-	userId int64,
-	checkItemId int64,
-	vo *valueobjects.UpdateTaskCheckItem,
-) error {
-	return d.taskRepo.UpdateCheckItem(ctx, userId, checkItemId, vo)
-}
-
-// DeleteCheckItem 删除检查项
-func (d *TaskDomainImpl) DeleteCheckItem(ctx context.Context, userId, checkItemId int64) error {
-	return d.taskRepo.DeleteCheckItem(ctx, userId, checkItemId)
-}
-
-// ListCheckItems 获取检查项列表
-func (d *TaskDomainImpl) ListCheckItems(
-	ctx context.Context,
-	userId int64,
-	taskId int64,
-) ([]*entities.TaskCheckItem, error) {
-	return d.taskRepo.ListCheckItems(ctx, userId, taskId)
-}
-
-// BatchUpdateCheckItems 批量更新检查项
-func (d *TaskDomainImpl) BatchUpdateCheckItems(
-	ctx context.Context,
-	userId int64,
-	vos []*valueobjects.BatchUpdateTaskCheckItem,
-) ([]*entities.TaskCheckItem, error) {
-	return d.taskRepo.BatchUpdateCheckItems(ctx, userId, vos)
-}
-
-// --- 评论相关 ---
-
-// GetCommentById 获取评论详情
-func (d *TaskDomainImpl) GetCommentById(
-	ctx context.Context,
-	userId int64,
-	commentId int64,
-) (*entities.TaskComment, error) {
-	return d.taskRepo.GetCommentById(ctx, userId, commentId)
-}
-
-// CreateComment 创建评论
-func (d *TaskDomainImpl) CreateComment(
-	ctx context.Context,
-	userId int64,
-	vo *valueobjects.CreateTaskComment,
-) (*entities.TaskComment, error) {
-	return d.taskRepo.CreateComment(ctx, userId, vo)
-}
-
-// UpdateComment 更新评论
-func (d *TaskDomainImpl) UpdateComment(
-	ctx context.Context,
-	userId int64,
-	commentId int64,
-	vo *valueobjects.UpdateTaskComment,
-) error {
-	return d.taskRepo.UpdateComment(ctx, userId, commentId, vo)
-}
-
-// DeleteComment 删除评论
-func (d *TaskDomainImpl) DeleteComment(ctx context.Context, userId, commentId int64) error {
-	return d.taskRepo.DeleteComment(ctx, userId, commentId)
-}
-
-// ListComments 获取评论列表
-func (d *TaskDomainImpl) ListComments(
-	ctx context.Context,
-	userId int64,
-	taskId int64,
-) ([]*entities.TaskComment, error) {
-	return d.taskRepo.ListComments(ctx, userId, taskId)
-}
-
-// SyncCommentUserProfile 同步评论用户配置
-func (d *TaskDomainImpl) SyncCommentUserProfile(
-	ctx context.Context,
-	userId int64,
-	nickname string,
-	avatar string,
-) error {
-	return d.taskRepo.SyncCommentUserProfile(ctx, userId, nickname, avatar)
 }
 
 // --- 任务提醒相关 ---

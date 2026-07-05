@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 	"naotodoserver/domain/identity/entities"
+	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
 	"naotodoserver/interfaces/types"
 )
 
 // NewAuthApp 创建认证应用层实例
-func NewAuthApp(identityDomain service.IdentityDomain) AuthApp {
-	return &authAppImpl{identityDomain: identityDomain}
+func NewAuthApp(identityDomain service.IdentityDomain, userRepo repositories.User, sessionRepo repositories.UserSession) AuthApp {
+	return &authAppImpl{
+		identityDomain: identityDomain,
+		userRepo:       userRepo,
+		sessionRepo:    sessionRepo,
+	}
 }
 
 // 处理用户登录
@@ -24,12 +29,12 @@ func (as *authAppImpl) SignIn(
 	signInReq *types.SignInReq,
 ) (*types.SignInRes, error) {
 	// 1. 通过 Email 查找用户记录
-	userEntity, err := as.identityDomain.FindByEmail(ctx, signInReq.Email)
+	userEntity, err := as.userRepo.FindByEmail(ctx, signInReq.Email)
 	if err != nil {
 		return nil, err
 	}
 	// 2. 比对密码
-	isMatched := as.identityDomain.PasswordCompare(
+	isMatched := as.userRepo.PasswordCompare(
 		[]byte(signInReq.Password),
 		[]byte(userEntity.Password),
 	)
@@ -59,7 +64,7 @@ func (as *authAppImpl) SignUp(
 	signUpReq *types.SignUpReq,
 ) error {
 	// 通过 Email 查找用户记录
-	_, err := as.identityDomain.FindByEmail(ctx, signUpReq.Email)
+	_, err := as.userRepo.FindByEmail(ctx, signUpReq.Email)
 	if err == nil {
 		return errors.New("邮箱已存在")
 	}
@@ -69,7 +74,7 @@ func (as *authAppImpl) SignUp(
 		return err
 	}
 	// 创建
-	_, err = as.identityDomain.CreateUser(ctx, createUserValueObject)
+	_, err = as.userRepo.CreateByVO(ctx, createUserValueObject)
 	if err != nil {
 		return errors.New("注册用户失败")
 	}
@@ -106,7 +111,7 @@ func (as *authAppImpl) CheckIn(
 	}
 	// 会话存在：
 	// 3. 查找最新的用户信息
-	userEntity, err := as.identityDomain.FindById(ctx, userId)
+	userEntity, err := as.userRepo.FindById(ctx, userId)
 	if err != nil {
 		return nil, errors.New("用户信息查询失败 - " + err.Error())
 	}
@@ -117,7 +122,7 @@ func (as *authAppImpl) CheckIn(
 	}
 	// 5. 更新会话中的 Token 字段
 	sessionEntity.Token = newJWT
-	err = as.identityDomain.UpdateSessionToken(ctx, sessionEntity)
+	err = as.sessionRepo.UpdateToken(ctx, sessionEntity)
 	if err != nil {
 		return nil, errors.New("用户 Session 更新失败 - " + err.Error())
 	}

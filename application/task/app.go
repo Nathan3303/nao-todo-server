@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/service"
 	"naotodoserver/interfaces/types"
 )
@@ -53,4 +54,5 @@ type TaskApp interface {
 // TaskAppImpl 任务应用实现
 type TaskAppImpl struct {
 	taskDomain service.TaskDomain
+	taskRepo   repositories.Task
 }

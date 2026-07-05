@@ -3,6 +3,7 @@ package pomodoro
 import (
 	"context"
 	"errors"
+	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
@@ -10,8 +11,12 @@ import (
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
-func NewPomodoroApp(pomodoroDomain service.PomodoroDomain) PomodoroApp {
-	return &PomodoroAppImpl{pomodoroDomain: pomodoroDomain}
+func NewPomodoroApp(pomodoroDomain service.PomodoroDomain, pomodoroRecordRepo repositories.PomodoroRecord, pomodoroRepo repositories.Pomodoro) PomodoroApp {
+	return &PomodoroAppImpl{
+		pomodoroDomain:     pomodoroDomain,
+		pomodoroRecordRepo: pomodoroRecordRepo,
+		pomodoroRepo:       pomodoroRepo,
+	}
 }
 
 // --- PomodoroRecord ---
@@ -57,7 +62,7 @@ func (app *PomodoroAppImpl) Get(
 	if err != nil {
 		return nil, errors.New("专注记录 ID 无效")
 	}
-	entity, err := app.pomodoroDomain.GetById(ctx, userId, id)
+	entity, err := app.pomodoroRecordRepo.GetById(ctx, userId, id)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +98,7 @@ func (app *PomodoroAppImpl) List(
 	if limit <= 0 {
 		limit = 10
 	}
-	entities, total, err := app.pomodoroDomain.List(
+	entities, total, err := app.pomodoroRecordRepo.List(
 		ctx,
 		userId,
 		req.SessionId,
@@ -156,7 +161,7 @@ func (app *PomodoroAppImpl) GetPomodoro(
 	if err != nil {
 		return nil, errors.New("常用番茄工作 ID 无效")
 	}
-	entity, err := app.pomodoroDomain.GetPomodoroById(ctx, userId, id)
+	entity, err := app.pomodoroRepo.GetById(ctx, userId, id)
 	if err != nil {
 		return nil, err
 	}
@@ -208,11 +213,7 @@ func (app *PomodoroAppImpl) DeletePomodoro(
 	if err != nil {
 		return errors.New("常用番茄工作 ID 无效")
 	}
-	err = app.pomodoroDomain.DeletePomodoro(ctx, userId, idInt64)
-	if err != nil {
-		return err
-	}
-	return nil
+	return app.pomodoroRepo.Delete(ctx, userId, idInt64)
 }
 
 // ArchivePomodoro 归档常用番茄工作
@@ -231,11 +232,7 @@ func (app *PomodoroAppImpl) ArchivePomodoro(
 	if err != nil {
 		return errors.New("常用番茄工作 ID 无效")
 	}
-	err = app.pomodoroDomain.ArchivePomodoro(ctx, userId, idInt64)
-	if err != nil {
-		return err
-	}
-	return nil
+	return app.pomodoroRepo.Archive(ctx, userId, idInt64)
 }
 
 // UnarchivePomodoro 取消归档常用番茄工作
@@ -254,11 +251,7 @@ func (app *PomodoroAppImpl) UnarchivePomodoro(
 	if err != nil {
 		return errors.New("常用番茄工作 ID 无效")
 	}
-	err = app.pomodoroDomain.UnarchivePomodoro(ctx, userId, idInt64)
-	if err != nil {
-		return err
-	}
-	return nil
+	return app.pomodoroRepo.Unarchive(ctx, userId, idInt64)
 }
 
 // ListPomodoro 获取常用番茄工作列表
@@ -283,7 +276,7 @@ func (app *PomodoroAppImpl) ListPomodoro(
 	if limit <= 0 {
 		limit = 10
 	}
-	entities, total, err := app.pomodoroDomain.ListPomodoro(
+	entities, total, err := app.pomodoroRepo.List(
 		ctx,
 		userId,
 		req.Type,

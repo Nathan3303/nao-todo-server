@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"errors"
+	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/service"
 	"naotodoserver/domain/task/valueobjects"
 	iCtx "naotodoserver/infrastructure/context"
@@ -13,9 +14,10 @@ import (
 )
 
 // NewTaskApp 创建任务应用层实例
-func NewTaskApp(taskDomain service.TaskDomain) TaskApp {
+func NewTaskApp(taskDomain service.TaskDomain, taskRepo repositories.Task) TaskApp {
 	impl := &TaskAppImpl{
 		taskDomain: taskDomain,
+		taskRepo:   taskRepo,
 	}
 	return impl
 }
@@ -39,8 +41,8 @@ func (taskApp *TaskAppImpl) GetTaskById(
 	if err != nil {
 		return nil, errors.New("待办任务 ID 无效")
 	}
-	// 3. 调用领域层获取待办任务信息
-	taskEntity, err := taskApp.taskDomain.GetById(ctx, userId, taskId64)
+	// 3. 调用仓库获取待办任务信息
+	taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +70,7 @@ func (taskApp *TaskAppImpl) CreateTask(
 	if err != nil {
 		return nil, err
 	}
-	// 3. 调用领域层创建任务
-	taskEntity, err := taskApp.taskDomain.Create(ctx, userId, createTaskValueObject)
+	taskEntity, err := taskApp.taskRepo.Create(ctx, userId, createTaskValueObject)
 	if err != nil {
 		return nil, err
 	}
@@ -104,13 +105,7 @@ func (taskApp *TaskAppImpl) UpdateTask(
 	if err != nil {
 		return err
 	}
-	// 4. 调用领域层更新任务
-	err = taskApp.taskDomain.Update(ctx, userId, taskIdInt64, updateTaskValueObject)
-	if err != nil {
-		return err
-	}
-	// 5. 转换为响应对象
-	return nil
+	return taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject)
 }
 
 // DeleteTask 删除任务
@@ -132,8 +127,7 @@ func (taskApp *TaskAppImpl) DeleteTask(
 	if err != nil {
 		return errors.New("待办任务 ID 无效")
 	}
-	// 3. 调用领域层删除任务
-	return taskApp.taskDomain.Delete(ctx, userId, taskId64)
+	return taskApp.taskRepo.Delete(ctx, userId, taskId64)
 }
 
 // RestoreTask 恢复任务
@@ -155,8 +149,7 @@ func (taskApp *TaskAppImpl) RestoreTask(
 	if err != nil {
 		return errors.New("待办任务 ID 无效")
 	}
-	// 3. 调用领域层恢复任务
-	return taskApp.taskDomain.Restore(ctx, userId, taskId64)
+	return taskApp.taskRepo.Restore(ctx, userId, taskId64)
 }
 
 // CopyTask 复制任务
@@ -302,7 +295,7 @@ func (impl *TaskAppImpl) GetTaskCheckItemById(
 	if err != nil {
 		return nil, errors.New("检查事项 ID 格式错误")
 	}
-	e, err := impl.taskDomain.GetCheckItemById(ctx, userId, id64)
+	e, err := impl.taskRepo.GetCheckItemById(ctx, userId, id64)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +348,7 @@ func (impl *TaskAppImpl) UpdateTaskCheckItem(
 	if err != nil {
 		return err
 	}
-	return impl.taskDomain.UpdateCheckItem(ctx, userId, id64, vo)
+	return impl.taskRepo.UpdateCheckItem(ctx, userId, id64, vo)
 }
 
 // DeleteTaskCheckItem 删除检查事项
@@ -374,7 +367,7 @@ func (impl *TaskAppImpl) DeleteTaskCheckItem(
 	if err != nil {
 		return errors.New("检查事项 ID 格式错误")
 	}
-	return impl.taskDomain.DeleteCheckItem(ctx, userId, id64)
+	return impl.taskRepo.DeleteCheckItem(ctx, userId, id64)
 }
 
 // ListTaskCheckItems 获取检查事项列表
@@ -394,7 +387,7 @@ func (impl *TaskAppImpl) ListTaskCheckItems(
 	if err != nil {
 		return nil, errors.New("待办任务 ID 格式错误")
 	}
-	items, err := impl.taskDomain.ListCheckItems(ctx, userId, taskId64)
+	items, err := impl.taskRepo.ListCheckItems(ctx, userId, taskId64)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +411,7 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 	if err != nil {
 		return nil, err
 	}
-	items, err := impl.taskDomain.BatchUpdateCheckItems(ctx, userId, vos)
+	items, err := impl.taskRepo.BatchUpdateCheckItems(ctx, userId, vos)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +441,7 @@ func (impl *TaskAppImpl) GetTaskCommentById(
 	if err != nil {
 		return nil, errors.New("评论 ID 无效")
 	}
-	e, err := impl.taskDomain.GetCommentById(ctx, userId, id64)
+	e, err := impl.taskRepo.GetCommentById(ctx, userId, id64)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +465,7 @@ func (impl *TaskAppImpl) CreateTaskComment(
 	if err != nil {
 		return nil, err
 	}
-	e, err := impl.taskDomain.CreateComment(ctx, userId, vo)
+	e, err := impl.taskRepo.CreateComment(ctx, userId, vo)
 	if err != nil {
 		return nil, err
 	}
@@ -501,7 +494,7 @@ func (impl *TaskAppImpl) UpdateTaskComment(
 	if err != nil {
 		return err
 	}
-	return impl.taskDomain.UpdateComment(ctx, userId, id64, vo)
+	return impl.taskRepo.UpdateComment(ctx, userId, id64, vo)
 }
 
 // DeleteTaskComment 删除评论
@@ -520,7 +513,7 @@ func (impl *TaskAppImpl) DeleteTaskComment(
 	if err != nil {
 		return errors.New("评论 ID 无效")
 	}
-	return impl.taskDomain.DeleteComment(ctx, userId, id64)
+	return impl.taskRepo.DeleteComment(ctx, userId, id64)
 }
 
 // ListTaskComments 获取评论列表
@@ -540,7 +533,7 @@ func (impl *TaskAppImpl) ListTaskComments(
 	if err != nil {
 		return nil, errors.New("待办任务 ID 无效")
 	}
-	entities, err := impl.taskDomain.ListComments(ctx, userId, taskId64)
+	entities, err := impl.taskRepo.ListComments(ctx, userId, taskId64)
 	if err != nil {
 		return nil, err
 	}
@@ -558,5 +551,5 @@ func (impl *TaskAppImpl) SyncTaskCommentUserProfile(
 	userId int64,
 	nickname, avatar string,
 ) error {
-	return impl.taskDomain.SyncCommentUserProfile(ctx, userId, nickname, avatar)
+	return impl.taskRepo.SyncCommentUserProfile(ctx, userId, nickname, avatar)
 }

@@ -41,35 +41,36 @@ func LoadDBs() {
 // LoadDomains 初始化领域模型
 func LoadDomains() {
 	// 初始化身份领域模型
+	userRepoInst := identityRepo.NewUserRepo(dbs.DB)
+	sessionRepoInst := identityRepo.NewSessionRepo(dbs.DB)
 	identityDomain := identityService.NewIdentityDomain(
 		identityRepo.NewJWTRepo(),
-		identityRepo.NewUserRepo(dbs.DB),
-		identityRepo.NewSessionRepo(dbs.DB),
+		sessionRepoInst,
 		identityRepo.NewRateLimitRepo(dbs.RdsCli),
 	)
 	// 初始化任务领域模型
-	taskAppInst := taskApp.NewTaskApp(taskService.NewTaskDomain(
-		taskRepo.NewTaskRepo(dbs.DB),
-	))
+	taskRepoInst := taskRepo.NewTaskRepo(dbs.DB)
+	taskDomain := taskService.NewTaskDomain(taskRepoInst)
+	taskAppInst := taskApp.NewTaskApp(taskDomain, taskRepoInst)
 	// 初始化番茄领域模型
-	pomodoroAppInst := pomodoroApp.NewPomodoroApp(pomodoroService.NewPomodoroDomain(
-		pomodoroRepo.NewPomodoroRecordRepo(dbs.DB),
-		pomodoroRepo.NewPomodoroRepo(dbs.DB),
-	))
+	pomodoroRecordRepoInst := pomodoroRepo.NewPomodoroRecordRepo(dbs.DB)
+	pomodoroRepoInst := pomodoroRepo.NewPomodoroRepo(dbs.DB)
+	pomodoroDomain := pomodoroService.NewPomodoroDomain(pomodoroRecordRepoInst, pomodoroRepoInst)
+	pomodoroAppInst := pomodoroApp.NewPomodoroApp(pomodoroDomain, pomodoroRecordRepoInst, pomodoroRepoInst)
 	// 初始化项目领域模型
-	projectAppInst := projectApp.NewProjectApp(projectService.NewProjectDomain(
-		projectRepo.NewProjectRepo(dbs.DB),
-		projectRepo.NewProjectPreferenceRepo(dbs.DB),
-	))
+	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB)
+	projectPreferenceRepoInst := projectRepo.NewProjectPreferenceRepo(dbs.DB)
+	projectDomain := projectService.NewProjectDomain(projectRepoInst, projectPreferenceRepoInst)
+	projectAppInst := projectApp.NewProjectApp(projectDomain, projectRepoInst, projectPreferenceRepoInst)
 	// 初始化标签领域模型
-	tagAppInst := tagApp.NewTagApp(tagService.NewTagDomain(
-		tagRepo.NewTagRepo(dbs.DB),
-		tagRepo.NewTagPreferenceRepo(dbs.DB),
-	))
+	tagRepoInst := tagRepo.NewTagRepo(dbs.DB)
+	tagPreferenceRepoInst := tagRepo.NewTagPreferenceRepo(dbs.DB)
+	tagDomain := tagService.NewTagDomain(tagRepoInst, tagPreferenceRepoInst)
+	tagAppInst := tagApp.NewTagApp(tagDomain, tagRepoInst, tagPreferenceRepoInst)
 	// 初始化项目领域模型
 	application.App = &application.Services{
-		Auth:     authApp.NewAuthApp(identityDomain),
-		User:     userApp.NewUserApp(identityDomain, taskAppInst),
+		Auth:     authApp.NewAuthApp(identityDomain, userRepoInst, sessionRepoInst),
+		User:     userApp.NewUserApp(userRepoInst, taskAppInst),
 		Task:     taskAppInst,
 		Project:  projectAppInst,
 		Tag:      tagAppInst,

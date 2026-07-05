@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	"naotodoserver/interfaces/types"
 )
@@ -60,5 +61,7 @@ type ProjectApp interface {
 
 // projectAppImpl 任务清单应用实现
 type projectAppImpl struct {
-	projectDomain service.ProjectDomain
+	projectDomain  service.ProjectDomain
+	repo           repositories.Project
+	preferenceRepo repositories.ProjectPreference
 }

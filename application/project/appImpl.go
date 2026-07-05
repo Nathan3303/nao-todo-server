@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"errors"
+	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
@@ -10,8 +11,12 @@ import (
 )
 
 // NewProjectApp 创建任务清单应用层实例
-func NewProjectApp(projectDomain service.ProjectDomain) ProjectApp {
-	impl := &projectAppImpl{projectDomain: projectDomain}
+func NewProjectApp(projectDomain service.ProjectDomain, repo repositories.Project, preferenceRepo repositories.ProjectPreference) ProjectApp {
+	impl := &projectAppImpl{
+		projectDomain:  projectDomain,
+		repo:           repo,
+		preferenceRepo: preferenceRepo,
+	}
 	return impl
 }
 
@@ -35,7 +40,7 @@ func (app *projectAppImpl) Get(
 		return nil, errors.New("清单 ID 格式错误")
 	}
 	// 获取清单
-	projectEntity, err := app.projectDomain.GetById(ctx, userId, projectIdInt64)
+	projectEntity, err := app.repo.GetById(ctx, userId, projectIdInt64)
 	if err != nil {
 		return nil, err
 	}
@@ -98,13 +103,7 @@ func (app *projectAppImpl) Update(
 	if err != nil {
 		return errors.New("更新任务清单请求体格式错误: " + err.Error())
 	}
-	// 调用域函数 - 更新清单
-	err = app.projectDomain.Update(ctx, userId, projectIdInt64, updateProjectValueObject)
-	if err != nil {
-		return errors.New("更新任务清单失败: " + err.Error())
-	}
-	// 返回结果
-	return nil
+	return app.repo.Update(ctx, userId, projectIdInt64, updateProjectValueObject)
 }
 
 // 删除任务清单
@@ -167,7 +166,7 @@ func (app *projectAppImpl) Restore(
 // @return error 验证失败返回错误，否则返回 nil
 // DeleteDeactivatedProjects 删除已注销的任务清单（供定时任务调用）
 func (app *projectAppImpl) DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error {
-	_, err := app.projectDomain.DeleteDeactivatedProjects(ctx, dayOffset)
+	_, err := app.repo.DeleteDeactivatedProjects(ctx, dayOffset)
 	return err
 }
 
@@ -196,13 +195,7 @@ func (app *projectAppImpl) Archive(
 	if err != nil {
 		return errors.New("清单 ID 格式错误")
 	}
-	// 归档清单
-	err = app.projectDomain.Archive(ctx, userId, projectIdInt64)
-	if err != nil {
-		return err
-	}
-	// 返回结果
-	return nil
+	return app.repo.Archive(ctx, userId, projectIdInt64)
 }
 
 // 取消归档任务清单
@@ -223,13 +216,7 @@ func (app *projectAppImpl) Unarchive(
 	if err != nil {
 		return errors.New("清单 ID 格式错误")
 	}
-	// 取消归档清单
-	err = app.projectDomain.Unarchive(ctx, userId, projectIdInt64)
-	if err != nil {
-		return err
-	}
-	// 返回结果
-	return nil
+	return app.repo.Unarchive(ctx, userId, projectIdInt64)
 }
 
 // 获取用户任务清单列表
@@ -243,14 +230,12 @@ func (app *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, erro
 		return nil, errors.New("用户 ID 不能为空")
 	}
 	// 获取清单列表
-	projectEntities, err := app.projectDomain.GetByUserId(ctx, userId)
+	projectEntities, err := app.repo.GetByUserId(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
 	// 转换实体
-	getResList := EntitiesToGetResList(projectEntities)
-	// 实体转换响应体并返回
-	return getResList, nil
+	return EntitiesToGetResList(projectEntities), nil
 }
 
 // 批量更新任务清单
@@ -272,12 +257,10 @@ func (app *projectAppImpl) BatchUpdate(
 	if err != nil {
 		return nil, err
 	}
-	// 调用域函数 - 批量更新清单
-	updatedEntities, err := app.projectDomain.BatchUpdate(ctx, userId, batchVOs)
+	updatedEntities, err := app.repo.BatchUpdate(ctx, userId, batchVOs)
 	if err != nil {
 		return nil, err
 	}
-	// 实体转换响应体
 	projectResList := EntitiesToGetResList(updatedEntities)
 	// 返回结果
 	return &types.BatchUpdateProjectRes{
@@ -306,7 +289,7 @@ func (app *projectAppImpl) GetPreference(
 		return nil, errors.New("清单 ID 格式错误")
 	}
 	// 获取清单偏好
-	projectPreferenceEntity, err := app.projectDomain.GetPreference(
+	projectPreferenceEntity, err := app.preferenceRepo.Get(
 		ctx,
 		userId,
 		projectIdInt64,
@@ -347,15 +330,10 @@ func (app *projectAppImpl) SavePreference(
 		return err
 	}
 	// 更新清单偏好
-	err = app.projectDomain.SavePreference(
+	return app.preferenceRepo.Save(
 		ctx,
 		userId,
 		projectIdInt64,
 		saveProjectPreferenceValueObject,
 	)
-	if err != nil {
-		return err
-	}
-	// 返回结果
-	return nil
 }

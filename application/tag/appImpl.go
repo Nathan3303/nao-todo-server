@@ -3,6 +3,7 @@ package tag
 import (
 	"context"
 	"errors"
+	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
@@ -10,8 +11,12 @@ import (
 )
 
 // NewTagApp 创建标签应用层实例
-func NewTagApp(tagDomain service.TagDomain) TagApp {
-	impl := &TagAppImpl{tagDomain: tagDomain}
+func NewTagApp(tagDomain service.TagDomain, tagRepo repositories.TagRepository, preferenceRepo repositories.TagPreference) TagApp {
+	impl := &TagAppImpl{
+		tagDomain:      tagDomain,
+		tagRepo:        tagRepo,
+		preferenceRepo: preferenceRepo,
+	}
 	return impl
 }
 
@@ -35,7 +40,7 @@ func (tagApp *TagAppImpl) GetTag(
 		return nil, errors.New("标签 ID 格式错误")
 	}
 	// 获取标签信息
-	tagEntity, err := tagApp.tagDomain.GetById(ctx, userId, tagId64)
+	tagEntity, err := tagApp.tagRepo.GetById(ctx, userId, tagId64)
 	if err != nil {
 		return nil, err
 	}
@@ -100,12 +105,7 @@ func (tagApp *TagAppImpl) UpdateTag(
 		return err
 	}
 	// 更新标签信息
-	err = tagApp.tagDomain.Update(ctx, userId, tagId64, updateTagValueObject)
-	if err != nil {
-		return err
-	}
-	// 转换结果并返回
-	return nil
+	return tagApp.tagRepo.Update(ctx, userId, tagId64, updateTagValueObject)
 }
 
 // DeleteTag 删除标签
@@ -148,7 +148,7 @@ func (tagApp *TagAppImpl) ListTag(
 		return nil, errors.New("用户 ID 无效")
 	}
 	// 获取所有标签信息
-	tagEntities, err := tagApp.tagDomain.List(ctx, userId)
+	tagEntities, err := tagApp.tagRepo.Get(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -175,8 +175,7 @@ func (tagApp *TagAppImpl) BatchUpdateTags(
 	if err != nil {
 		return nil, err
 	}
-	// 调用域函数 - 批量更新标签
-	updatedEntities, err := tagApp.tagDomain.BatchUpdate(ctx, userId, batchVOs)
+	updatedEntities, err := tagApp.tagRepo.BatchUpdate(ctx, userId, batchVOs)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +208,7 @@ func (tagApp *TagAppImpl) GetTagPreference(
 		return nil, errors.New("标签 ID 格式错误")
 	}
 	// 获取标签偏好设置
-	tagPreferenceEntity, err := tagApp.tagDomain.GetPreference(ctx, userId, tagId64)
+	tagPreferenceEntity, err := tagApp.preferenceRepo.Get(ctx, userId, tagId64)
 	if err != nil {
 		return nil, err
 	}
@@ -243,15 +242,10 @@ func (tagApp *TagAppImpl) UpdateTagPreference(
 		return err
 	}
 	// 更新标签偏好设置
-	err = tagApp.tagDomain.UpdatePreference(
+	return tagApp.preferenceRepo.Save(
 		ctx,
 		userId,
 		tagId64,
 		saveTagPreferenceValueObject,
 	)
-	if err != nil {
-		return err
-	}
-	// 返回结果
-	return nil
 }

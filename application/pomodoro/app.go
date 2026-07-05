@@ -2,6 +2,7 @@ package pomodoro
 
 import (
 	"context"
+	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
 	"naotodoserver/interfaces/types"
 )
@@ -67,5 +68,7 @@ type PomodoroApp interface {
 
 // PomodoroAppImpl 专注应用应用层实现
 type PomodoroAppImpl struct {
-	pomodoroDomain service.PomodoroDomain
+	pomodoroDomain      service.PomodoroDomain
+	pomodoroRecordRepo  repositories.PomodoroRecord
+	pomodoroRepo        repositories.Pomodoro
 }
