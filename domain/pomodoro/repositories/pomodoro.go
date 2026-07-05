@@ -38,11 +38,6 @@ type Pomodoro interface {
 	List(
 		ctx context.Context,
 		userId int64,
-		pomodoroType uint8,
-		name string,
-		isArchived bool,
-		page int,
-		limit int,
-		sort string,
+		q *valueobjects.QueryPomodoro,
 	) ([]*entities.Pomodoro, int64, error)
 }

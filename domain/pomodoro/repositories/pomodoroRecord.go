@@ -21,14 +21,6 @@ type PomodoroRecord interface {
 	List(
 		ctx context.Context,
 		userId int64,
-		sessionId string,
-		startTime string,
-		endTime string,
-		taskId int64,
-		taskName string,
-		pomodoroType uint8,
-		page int,
-		limit int,
-		sort string,
+		q *valueobjects.QueryPomodoroRecord,
 	) ([]*entities.PomodoroRecord, int64, error)
 }
