@@ -77,9 +77,7 @@ type ListTaskReq struct {
 	IsStarMarked bool   `form:"isStarMarked"`
 	IsGivenUp    bool   `form:"isGivenUp"`
 	RelativeDate string `form:"relativeDate"`
-	Sort         string `form:"sort"`
-	Page         int    `form:"page"`
-	Limit        int    `form:"limit"`
+	ListReqBase
 }
 
 // ListTaskRes 列表任务响应

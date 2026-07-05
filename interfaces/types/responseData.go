@@ -47,3 +47,12 @@ type ResBase struct {
 	UpdatedAt string `json:"updatedAt"`
 	DeletedAt string `json:"deletedAt"`
 }
+
+// --- ListReqBase ---
+
+// ListReqBase 列表基础请求数据结构体
+type ListReqBase struct {
+	Page  int    `json:"page"`
+	Limit int    `json:"limit"`
+	Sort  string `json:"sort"`
+}

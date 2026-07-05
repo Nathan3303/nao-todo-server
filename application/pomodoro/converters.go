@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// --- PomodoroRecord Converters ---
+
 // CreatePomodoroRecordReqToVO 将 CreatePomodoroRecordReq 转换为 CreatePomodoroValueObject
 func CreatePomodoroRecordReqToVO(
 	userId int64,
@@ -74,6 +76,78 @@ func PomodoroRecordEntitiesToGetReses(
 	res := make([]*types.GetPomodoroRecordRes, 0, len(list))
 	for _, e := range list {
 		res = append(res, PomodoroRecordEntityToGetRes(e))
+	}
+	return res
+}
+
+// --- Pomodoro Converters ---
+
+// CreatePomodoroReqToVO 将 CreatePomodoroReq 转换为 CreatePomodoro 值对象
+func CreatePomodoroReqToVO(
+	userId int64,
+	req *types.CreatePomodoroReq,
+) (*valueobjects.CreatePomodoro, error) {
+	return valueobjects.NewCreatePomodoro(
+		userId,
+		req.Type,
+		req.Name,
+		req.Description,
+		req.Duration,
+	)
+}
+
+// UpdatePomodoroReqToVO 将 UpdatePomodoroReq 转换为 UpdatePomodoro 值对象
+func UpdatePomodoroReqToVO(
+	req *types.UpdatePomodoroReq,
+) (*valueobjects.UpdatePomodoro, error) {
+	return valueobjects.NewUpdatePomodoro(
+		req.Type,
+		req.Name,
+		req.Description,
+		req.Duration,
+		req.ArchivedAt,
+	)
+}
+
+// PomodoroEntityToCreateRes 将 Pomodoro 实体转换为 CreatePomodoroRes
+func PomodoroEntityToCreateRes(e *entities.Pomodoro) *types.CreatePomodoroRes {
+	var res types.CreatePomodoroRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.Type = e.Type
+	res.Name = e.Name
+	res.Description = e.Description
+	res.Duration = e.Duration
+	res.ArchivedAt = e.ArchivedAt.ToString(time.RFC3339)
+	res.TotalDuration = e.TotalDuration
+	return &res
+}
+
+// PomodoroEntityToGetRes 将 Pomodoro 实体转换为 PomodoroRes
+func PomodoroEntityToGetRes(e *entities.Pomodoro) *types.PomodoroRes {
+	var res types.PomodoroRes
+	res.Id = strconv.FormatInt(e.Id, 10)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.Type = e.Type
+	res.Name = e.Name
+	res.Description = e.Description
+	res.Duration = e.Duration
+	res.ArchivedAt = e.ArchivedAt.ToString(time.RFC3339)
+	res.TotalDuration = e.TotalDuration
+	return &res
+}
+
+// PomodoroEntitiesToGetReses 将 Pomodoro 实体列表转换为 PomodoroRes 列表
+func PomodoroEntitiesToGetReses(
+	list []*entities.Pomodoro,
+) types.ListPomodoroRes {
+	res := make(types.ListPomodoroRes, 0, len(list))
+	for _, e := range list {
+		res = append(res, *PomodoroEntityToGetRes(e))
 	}
 	return res
 }

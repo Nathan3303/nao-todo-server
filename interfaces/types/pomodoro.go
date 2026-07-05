@@ -2,7 +2,54 @@ package types
 
 // --- Pomodoro ---
 
-// ...
+// PomodoroRes 常用番茄工作响应
+type PomodoroRes struct {
+	ResBase
+	Type          uint8  `json:"type"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Duration      uint16 `json:"duration"`
+	ArchivedAt    string `json:"archivedAt"`
+	TotalDuration uint64 `json:"totalDuration"`
+}
+
+// CreatePomodoroReq 创建常用番茄工作请求
+type CreatePomodoroReq struct {
+	Type        uint8  `json:"type" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	Duration    uint16 `json:"duration" binding:"required"`
+}
+
+// CreatePomodoroRes 创建常用番茄工作响应
+type CreatePomodoroRes PomodoroRes
+
+// UpdatePomodoroReq 更新常用番茄工作请求
+// 指针字段表示 PATCH 语义：nil 时不更新该字段
+type UpdatePomodoroReq struct {
+	Type        *uint8  `json:"type"`
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	Duration    *uint16 `json:"duration"`
+	ArchivedAt  string  `json:"archivedAt"`
+}
+
+// GetPomodoroReq 获取常用番茄工作请求
+type GetPomodoroReq struct {
+	Id string `json:"id" binding:"required"`
+}
+
+// ListPomodoroReq 获取常用番茄工作列表请求
+type ListPomodoroReq struct {
+	Type       uint8  `json:"type"`
+	Name       string `json:"name"`
+	IsArchived bool   `json:"isArchived"`
+	// ArchivedAt string `json:"archivedAt"`
+	ListReqBase
+}
+
+// ListPomodoroRes 获取常用番茄工作列表响应
+type ListPomodoroRes []PomodoroRes
 
 // --- PomodoroRecord ---
 
@@ -49,9 +96,7 @@ type ListPomodoroRecordReq struct {
 	TaskId    string `form:"taskId"`
 	TaskName  string `form:"taskName"`
 	Type      uint8  `form:"type"`
-	Page      int    `form:"page"`
-	Limit     int    `form:"limit"`
-	Sort      string `form:"sort"` // Like: 'field:order'
+	ListReqBase
 }
 
 // ListPomodoroRecordRes 获取番茄工作记录列表响应

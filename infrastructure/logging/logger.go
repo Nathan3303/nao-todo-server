@@ -93,61 +93,61 @@ func InitLogger() {
 }
 
 // Debug 输出调试日志
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	Logger.Debug(args...)
 }
 
 // Debugf 输出格式化调试日志
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, args ...any) {
 	Logger.Debugf(format, args...)
 }
 
 // Info 输出信息日志
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	Logger.Info(args...)
 }
 
 // Infof 输出格式化信息日志
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	Logger.Infof(format, args...)
 }
 
 // Warn 输出警告日志
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	Logger.Warn(args...)
 }
 
 // Warnf 输出格式化警告日志
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	Logger.Warnf(format, args...)
 }
 
 // Error 输出错误日志
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	Logger.Error(args...)
 }
 
 // Errorf 输出格式化错误日志
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	Logger.Errorf(format, args...)
 }
 
 // Fatal 输出致命错误日志
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	Logger.Fatal(args...)
 }
 
 // Fatalf 输出格式化致命错误日志
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	Logger.Fatalf(format, args...)
 }
 
 // Panic 输出 panic 日志
-func Panic(args ...interface{}) {
+func Panic(args ...any) {
 	Logger.Panic(args...)
 }
 
 // Panicf 输出格式化 panic 日志
-func Panicf(format string, args ...interface{}) {
+func Panicf(format string, args ...any) {
 	Logger.Panicf(format, args...)
 }

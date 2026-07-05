@@ -67,7 +67,7 @@ type ProjectDomain interface {
 	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error)
 }
 
-// 任务清单领域服务实现
+// ProjectDomainImpl 任务清单领域服务实现
 type ProjectDomainImpl struct {
 	repo           repositories.Project
 	preferenceRepo repositories.ProjectPreference
