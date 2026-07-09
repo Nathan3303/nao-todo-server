@@ -56,6 +56,16 @@ func ByPomodoroRecordTaskId(taskId int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
+// ByPomodoroRecordPomodoroId 按 pomodoro_id 精确匹配
+func ByPomodoroRecordPomodoroId(pomodoroId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if pomodoroId <= 0 {
+			return db
+		}
+		return db.Where("pomodoro_id = ?", pomodoroId)
+	}
+}
+
 // ByPomodoroRecordTaskName 按 task_name 模糊匹配
 func ByPomodoroRecordTaskName(taskName string) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {

@@ -90,12 +90,13 @@ type GetPomodoroRecordRes CreatePomodoroRecordRes
 
 // ListPomodoroRecordReq 获取番茄工作记录列表请求
 type ListPomodoroRecordReq struct {
-	SessionId string `form:"sessionId"` // Like uuidv4
-	StartTime string `form:"startTime"`
-	EndTime   string `form:"endTime"`
-	TaskId    string `form:"taskId"`
-	TaskName  string `form:"taskName"`
-	Type      uint8  `form:"type"`
+	PomodoroId string `form:"pomodoroId"`
+	SessionId  string `form:"sessionId"` // Like uuidv4
+	StartTime  string `form:"startTime"`
+	EndTime    string `form:"endTime"`
+	TaskId     string `form:"taskId"`
+	TaskName   string `form:"taskName"`
+	Type       uint8  `form:"type"`
 	ListReqBase
 }
 

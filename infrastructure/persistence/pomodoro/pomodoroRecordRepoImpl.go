@@ -61,6 +61,7 @@ func (r *PomodoroRecordRepoImpl) List(
 		Where("user_id = ?", userId).
 		Scopes(
 			ByPomodoroRecordSessionId(q.SessionId),
+			ByPomodoroRecordPomodoroId(q.PomodoroId),
 			ByPomodoroRecordTimeRange(q.StartTime, q.EndTime),
 			ByPomodoroRecordTaskId(q.TaskId),
 			ByPomodoroRecordTaskName(q.TaskName),

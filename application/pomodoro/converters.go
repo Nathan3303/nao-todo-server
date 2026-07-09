@@ -93,8 +93,17 @@ func ListPomodoroRecordReqToQueryVO(
 			taskId = 0
 		}
 	}
+	var pomodoroId int64
+	if req.PomodoroId != "" {
+		var err error
+		pomodoroId, err = strconv.ParseInt(req.PomodoroId, 10, 64)
+		if err != nil {
+			pomodoroId = 0
+		}
+	}
 	return valueobjects.NewQueryPomodoroRecord(
 		userId,
+		pomodoroId,
 		req.SessionId,
 		req.StartTime,
 		req.EndTime,

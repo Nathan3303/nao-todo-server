@@ -34,6 +34,7 @@ func PomodoroRecordModel2Entity(m *models.PomodoroRecord) *entities.PomodoroReco
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
+	e.PomodoroId = m.PomodoroId
 	e.SessionId = m.SessionId
 	e.Type = m.Type
 	e.TaskId = m.TaskId

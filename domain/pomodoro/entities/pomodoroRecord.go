@@ -10,8 +10,9 @@ import (
 // 包含用户 ID、会话 ID、类型、任务 ID、任务名称、描述、开始时间、结束时间、持续时间、备注等属性
 type PomodoroRecord struct {
 	types.EntityBase
-	UserId      int64
-	SessionId   string
+	UserId     int64
+	PomodoroId int64
+	SessionId  string
 	Type        uint8
 	TaskId      int64
 	TaskName    string
