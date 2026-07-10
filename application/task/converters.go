@@ -46,6 +46,9 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res.CreatedAt = taskEntity.CreatedAt.Format(time.RFC3339)
 	res.DeletedAt = taskEntity.DeletedAt.ToString(time.RFC3339)
 	res.ParentTaskId = strconv.FormatInt(taskEntity.ParentTaskId, 10)
+	if taskEntity.ParentTaskId == 0 {
+		res.ParentTaskId = ""
+	}
 	res.Name = taskEntity.Name
 	res.Description = taskEntity.Description
 	res.State = consts.TodoStateMapReverse[taskEntity.State]

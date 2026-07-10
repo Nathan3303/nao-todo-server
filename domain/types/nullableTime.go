@@ -67,7 +67,7 @@ func (nt *NullableTime) ToString(fmt string) string {
 // @return NullableTime
 func NewNullableTimeNull() NullableTime {
 	return NullableTime{
-		Valid:  true,
+		Valid:  false,
 		IsNull: true,
 		Time:   time.Time{},
 	}
@@ -79,7 +79,7 @@ func NewNullableTimeNull() NullableTime {
 func NewNullableTimeByTime(t time.Time) NullableTime {
 	if t.IsZero() {
 		return NullableTime{
-			Valid:  true,
+			Valid:  false,
 			IsNull: true,
 			Time:   t,
 		}
@@ -101,6 +101,12 @@ func NewNullableTimeByTimePtr(tp *time.Time) NullableTime {
 	return NewNullableTimeByTime(*tp)
 }
 
+// timeStrLayouts 支持解析的时间字符串格式，按优先级依次尝试
+var timeStrLayouts = []string{
+	time.RFC3339,       // 2006-01-02T15:04:05Z07:00
+	"2006-01-02T15:04", // HTML datetime-local 格式
+}
+
 // NewNullableTimeByTimeStr 根据时间字符串创建 NullableTime
 // @param ts 时间字符串
 // @return NullableTime
@@ -108,11 +114,12 @@ func NewNullableTimeByTimeStr(ts string) NullableTime {
 	if ts == "" {
 		return NewNullableTimeNull()
 	}
-	t, err := time.Parse(time.RFC3339, ts)
-	if err != nil {
-		return NewNullableTimeNull()
+	for _, layout := range timeStrLayouts {
+		if t, err := time.Parse(layout, ts); err == nil {
+			return NewNullableTimeByTime(t)
+		}
 	}
-	return NewNullableTimeByTime(t)
+	return NewNullableTimeNull()
 }
 
 // NewNullableTimeByTimeStrPtr 根据时间字符串指针创建 NullableTime

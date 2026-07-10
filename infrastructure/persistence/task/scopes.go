@@ -158,12 +158,24 @@ func ByRelativeDate(relativeDate string) func(db *gorm.DB) *gorm.DB {
 		case "today":
 			return db.Where("end_at >= ?", time.Now().Format("2006-01-02"))
 		case "tomorrow":
-			return db.Where("end_at >= ?", time.Now().AddDate(0, 0, 1).Format("2006-01-02"))
+			return db.Where(
+				"end_at >= ?",
+				time.
+					Now().
+					AddDate(0, 0, 1).
+					Format("2006-01-02"),
+			)
 		case "week":
 			start, end := GetWeekRange(time.Now())
 			return db.Where("end_at >= ? and end_at <= ?", start, end)
 		case "month":
-			return db.Where("end_at >= ?", time.Now().AddDate(0, 0, 7).Format("2006-01-02"))
+			return db.Where(
+				"end_at >= ?",
+				time.
+					Now().
+					AddDate(0, 0, 7).
+					Format("2006-01-02"),
+			)
 		case "-today":
 			return db.Where("end_at < ?", time.Now().Format("2006-01-02"))
 		}

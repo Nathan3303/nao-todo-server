@@ -105,8 +105,8 @@ func UpdateTaskValueObjectToModel(
 // @return 任务映射
 func UpdateTaskValueObjectToMap(
 	updateTaskValueObject *valueobjects.UpdateTask,
-) map[string]interface{} {
-	updateMap := make(map[string]interface{})
+) map[string]any {
+	updateMap := make(map[string]any)
 	if updateTaskValueObject.UserId != 0 {
 		updateMap["UserId"] = updateTaskValueObject.UserId
 	}
