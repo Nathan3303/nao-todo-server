@@ -60,6 +60,7 @@ type UpdateTaskReq struct {
 
 // ListTaskReq 列表任务请求
 type ListTaskReq struct {
+	ParentTaskId string `form:"parentTaskId"`
 	ProjectId    string `form:"projectId"`
 	TagId        string `form:"tagId"`
 	Name         string `form:"name"`

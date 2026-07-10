@@ -185,8 +185,10 @@ func ListTaskReqToQueryTaskValueObject(
 			projectIdInt64 = porjectIdValue
 		}
 	}
+	parentTaskIdInt64, _ := strconv.ParseInt(req.ParentTaskId, 10, 64)
 	return valueobjects.NewQueryTask(
 		userId,
+		parentTaskIdInt64,
 		projectIdInt64,
 		req.TagId,
 		req.Name,

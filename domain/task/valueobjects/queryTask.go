@@ -2,6 +2,7 @@ package valueobjects
 
 type QueryTask struct {
 	UserId       int64
+	ParentTaskId int64
 	ProjectId    int64
 	TagId        string
 	Name         string
@@ -30,6 +31,7 @@ func (queryTask *QueryTask) Validate() error {
 
 func NewQueryTask(
 	userId int64,
+	parentTaskId int64,
 	projectId int64,
 	tagId string,
 	name string,
@@ -53,6 +55,7 @@ func NewQueryTask(
 ) (*QueryTask, error) {
 	vo := &QueryTask{
 		UserId:       userId,
+		ParentTaskId: parentTaskId,
 		ProjectId:    projectId,
 		TagId:        tagId,
 		Name:         name,

@@ -9,6 +9,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// ByParentTaskId 按父任务 ID 过滤
+// parentTaskId > 0 时按精确匹配；parentTaskId == 0 时不筛选
+func ByParentTaskId(parentTaskId int64) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if parentTaskId <= 0 {
+			// return db
+			return db.Where("parent_task_id = 0")
+		}
+		return db.Where("parent_task_id = ?", parentTaskId)
+	}
+}
+
 // ByProjectOrTag 按项目或标签过滤
 // ProjectId > 0 时按精确项目匹配；否则按标签模糊匹配
 func ByProjectOrTag(query *valueobjects.QueryTask) func(db *gorm.DB) *gorm.DB {

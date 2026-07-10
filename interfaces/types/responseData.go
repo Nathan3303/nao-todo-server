@@ -52,7 +52,7 @@ type ResBase struct {
 
 // ListReqBase 列表基础请求数据结构体
 type ListReqBase struct {
-	Page  int    `json:"page"`
-	Limit int    `json:"limit"`
-	Sort  string `json:"sort"`
+	Page  int    `json:"page" form:"page"`
+	Limit int    `json:"limit" form:"limit"`
+	Sort  string `json:"sort" form:"sort"`
 }

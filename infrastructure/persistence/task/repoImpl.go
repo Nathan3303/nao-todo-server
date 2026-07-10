@@ -166,6 +166,7 @@ func (taskRepo *TaskRepoImpl) List(
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where("user_id = ?", userId).
 		Scopes(
+			ByParentTaskId(q.ParentTaskId),
 			ByProjectOrTag(q),
 			ByTaskName(q.Name),
 			ByTaskDescription(q.Description),
@@ -194,11 +195,13 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 
 	var taskModels []*models.Task
-	tx = tx.Scopes(query.Paginate(pagination.Page, pagination.Limit)).Find(&taskModels)
+	tx = tx.
+		Scopes(query.Paginate(pagination.Page, pagination.Limit)).
+		Find(&taskModels)
 	if tx.Error != nil {
 		return nil, nil, tx.Error
 	}
-
+	pagination.Total = total
 	return TaskModels2Entities(taskModels), pagination, nil
 }
 
