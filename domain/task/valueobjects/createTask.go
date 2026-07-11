@@ -23,6 +23,7 @@ type CreateTask struct {
 	RemindRepeat   uint8
 	RemindTime     string
 	RemindWeekdays uint8
+	SortId         uint16
 }
 
 // Validate 验证创建任务值对象

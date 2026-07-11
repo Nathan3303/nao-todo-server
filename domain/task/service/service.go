@@ -11,6 +11,11 @@ import (
 type TaskDomain interface {
 	// --- Task ---
 	Copy(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
+	CreateTask(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreateTask,
+	) (*entities.Task, error)
 	List(
 		ctx context.Context,
 		userId int64,

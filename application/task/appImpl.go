@@ -70,7 +70,7 @@ func (taskApp *TaskAppImpl) CreateTask(
 	if err != nil {
 		return nil, err
 	}
-	taskEntity, err := taskApp.taskRepo.Create(ctx, userId, createTaskValueObject)
+	taskEntity, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
 	if err != nil {
 		return nil, err
 	}

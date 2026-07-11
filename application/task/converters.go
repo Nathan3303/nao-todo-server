@@ -64,6 +64,7 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res.RemindRepeat = consts.RemindRepeatMapReverse[taskEntity.RemindRepeat]
 	res.RemindTime = taskEntity.RemindTime
 	res.RemindWeekdays = bitmaskToWeekdays(taskEntity.RemindWeekdays)
+	res.SortId = taskEntity.SortId
 	return res
 }
 
@@ -165,6 +166,7 @@ func UpdateTaskReqToValueObject(
 		iRemindRepeat,
 		req.RemindTime,
 		iRemindWeekdays,
+		req.SortId,
 	)
 }
 

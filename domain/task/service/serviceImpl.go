@@ -16,6 +16,16 @@ func NewTaskDomain(taskRepo repositories.Task) TaskDomain {
 	return &TaskDomainImpl{taskRepo: taskRepo}
 }
 
+// CreateTask 创建任务
+func (d *TaskDomainImpl) CreateTask(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTask,
+) (*entities.Task, error) {
+	vo.SortId = d.taskRepo.GetMaxSortId(ctx, userId) + 1
+	return d.taskRepo.Create(ctx, userId, vo)
+}
+
 // Copy 复制任务
 func (d *TaskDomainImpl) Copy(
 	ctx context.Context,
@@ -46,7 +56,7 @@ func (d *TaskDomainImpl) Copy(
 		return nil, err
 	}
 	// 创建新任务并返回新任务实体
-	return d.taskRepo.Create(ctx, userId, &vo)
+	return d.CreateTask(ctx, userId, &vo)
 }
 
 // List 获取任务列表

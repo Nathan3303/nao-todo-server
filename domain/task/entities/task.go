@@ -29,6 +29,7 @@ type Task struct {
 	RemindRepeat   uint8
 	RemindTime     string
 	RemindWeekdays uint8
+	SortId         uint16
 }
 
 // IsEndAtValid 检查结束时间是否有效

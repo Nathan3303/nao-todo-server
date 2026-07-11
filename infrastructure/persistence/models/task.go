@@ -74,6 +74,10 @@ type Task struct {
 	// 任务提醒周几
 	// 通过位运算表示，例如 0x01 表示周一，0x02 表示周二，0x04 表示周三 ... 0x00 表示不提醒
 	RemindWeekdays uint8 `gorm:"default:0;type:tinyint(1)"`
+
+	// 排序 ID
+	// 用于任务列表排序，采用大间距整数，基数 255，创建时取当前用户最大值 +1
+	SortId uint16 `gorm:"default:0"`
 }
 
 // TaskCheckItem 待办任务检查项模型

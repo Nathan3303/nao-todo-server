@@ -43,6 +43,9 @@ type Task interface {
 	// Snooze 稍后提醒
 	Snooze(ctx context.Context, userId int64, taskId int64, remindAt string) error
 
+	// GetMaxSortId 获取任务最大排序 ID
+	GetMaxSortId(ctx context.Context, userId int64) uint16
+
 	// GetDueReminders 获取到期提醒任务
 	GetDueReminders(ctx context.Context) ([]*entities.Task, error)
 

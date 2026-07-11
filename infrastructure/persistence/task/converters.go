@@ -30,6 +30,7 @@ func CreateTaskValueObjectToModel(
 		RemindRepeat:   createTaskValueObject.RemindRepeat,
 		RemindTime:     createTaskValueObject.RemindTime,
 		RemindWeekdays: createTaskValueObject.RemindWeekdays,
+		SortId:         createTaskValueObject.SortId,
 	}
 }
 
@@ -96,6 +97,9 @@ func UpdateTaskValueObjectToModel(
 	}
 	if updateTaskValueObject.RemindWeekdays != nil {
 		m.RemindWeekdays = *updateTaskValueObject.RemindWeekdays
+	}
+	if updateTaskValueObject.SortId != nil {
+		m.SortId = *updateTaskValueObject.SortId
 	}
 	return m
 }
@@ -185,6 +189,9 @@ func UpdateTaskValueObjectToMap(
 	if updateTaskValueObject.RemindWeekdays != nil {
 		updateMap["RemindWeekdays"] = *updateTaskValueObject.RemindWeekdays
 	}
+	if updateTaskValueObject.SortId != nil {
+		updateMap["SortId"] = *updateTaskValueObject.SortId
+	}
 	return updateMap
 }
 
@@ -214,6 +221,7 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.RemindTime = m.RemindTime
 	e.RemindWeekdays = m.RemindWeekdays
 	e.Tags = m.Tags
+	e.SortId = m.SortId
 	return e
 }
 

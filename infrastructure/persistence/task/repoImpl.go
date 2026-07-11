@@ -67,6 +67,20 @@ func (taskRepo *TaskRepoImpl) Create(
 	return TaskModel2Entity(createModel), nil
 }
 
+// GetMaxSortId 获取任务最大排序 ID
+// @param ctx 上下文
+// @param userId 用户ID
+// @return 最大排序ID
+func (taskRepo *TaskRepoImpl) GetMaxSortId(ctx context.Context, userId int64) uint16 {
+	var maxSortId uint16 = 255
+	taskRepo.db.
+		WithContext(ctx).
+		Model(&models.Task{}).
+		Where("user_id = ?", userId).
+		Pluck("MAX(sort_id)", &maxSortId)
+	return maxSortId
+}
+
 // Update 更新任务
 // @param ctx 上下文
 // @param whereEntity 查询实体

@@ -27,6 +27,7 @@ type UpdateTask struct {
 	RemindRepeat   *uint8
 	RemindTime     *string
 	RemindWeekdays *uint8
+	SortId         *uint16
 }
 
 // Validate 验证更新任务值对象
@@ -80,6 +81,7 @@ func NewUpdateTask(
 	remindRepeat *uint8,
 	remindTime *string,
 	remindWeekdays *uint8,
+	sortId *uint16,
 ) (*UpdateTask, error) {
 	var vo UpdateTask
 	vo.UserId = userId
