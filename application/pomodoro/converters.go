@@ -19,9 +19,14 @@ func CreatePomodoroRecordReqToVO(
 	if err != nil {
 		return nil, err
 	}
+	pomodoroId, err := strconv.ParseInt(req.PomodoroId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
 	return valueobjects.NewCreatePomodoroRecord(
 		userId,
 		req.SessionId,
+		pomodoroId,
 		req.Type,
 		taskId,
 		req.TaskName,

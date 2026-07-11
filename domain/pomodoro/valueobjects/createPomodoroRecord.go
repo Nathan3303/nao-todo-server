@@ -9,6 +9,7 @@ import (
 type CreatePomodoroRecord struct {
 	UserId      int64
 	SessionId   string
+	PomodoroId  int64
 	Type        uint8
 	TaskId      int64
 	TaskName    string
@@ -49,6 +50,7 @@ func (vo *CreatePomodoroRecord) Validate() error {
 func NewCreatePomodoroRecord(
 	userId int64,
 	sessionId string,
+	pomodoroId int64,
 	pomodoroType uint8,
 	taskId int64,
 	taskName string,
@@ -61,6 +63,7 @@ func NewCreatePomodoroRecord(
 	vo := &CreatePomodoroRecord{
 		UserId:      userId,
 		SessionId:   sessionId,
+		PomodoroId:  pomodoroId,
 		Type:        pomodoroType,
 		TaskId:      taskId,
 		TaskName:    taskName,

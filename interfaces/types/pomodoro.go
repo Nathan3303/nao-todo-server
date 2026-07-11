@@ -56,9 +56,10 @@ type ListPomodoroRes []PomodoroRes
 // CreatePomodoroRecordReq 创建番茄工作记录请求
 type CreatePomodoroRecordReq struct {
 	SessionId   string `json:"sessionId" binding:"required"` // Like uuidv4
-	Type        uint8  `json:"type"`
-	TaskId      string `json:"taskId" binding:"required"`
-	TaskName    string `json:"taskName" binding:"required"`
+	PomodoroId  string `json:"pomodoroId"`
+	Type        uint8  `json:"type" binding:"required"`
+	TaskId      string `json:"taskId"`
+	TaskName    string `json:"taskName"`
 	Description string `json:"description"`
 	StartAt     string `json:"startAt" binding:"required"`
 	EndAt       string `json:"endAt" binding:"required"`

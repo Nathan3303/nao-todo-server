@@ -14,6 +14,7 @@ func CreatePomodoroRecordVOToModel(vo *valueobjects.CreatePomodoroRecord) *model
 	var m models.PomodoroRecord
 	m.UserId = vo.UserId
 	m.SessionId = vo.SessionId
+	m.PomodoroId = vo.PomodoroId
 	m.Type = vo.Type
 	m.TaskId = vo.TaskId
 	m.TaskName = vo.TaskName
