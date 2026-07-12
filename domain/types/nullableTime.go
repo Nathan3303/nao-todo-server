@@ -111,15 +111,14 @@ var timeStrLayouts = []string{
 // @param ts 时间字符串
 // @return NullableTime
 func NewNullableTimeByTimeStr(ts string) NullableTime {
-	if ts == "" {
-		return NewNullableTimeNull()
-	}
-	for _, layout := range timeStrLayouts {
-		if t, err := time.Parse(layout, ts); err == nil {
-			return NewNullableTimeByTime(t)
+	if ts != "" {
+		for _, layout := range timeStrLayouts {
+			if t, err := time.Parse(layout, ts); err == nil {
+				return NewNullableTimeByTime(t)
+			}
 		}
 	}
-	return NewNullableTimeNull()
+	return NullableTime{Valid: true, IsNull: true, Time: time.Time{}}
 }
 
 // NewNullableTimeByTimeStrPtr 根据时间字符串指针创建 NullableTime

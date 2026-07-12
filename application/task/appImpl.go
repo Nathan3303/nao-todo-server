@@ -25,11 +25,13 @@ func NewTaskApp(taskDomain service.TaskDomain, taskRepo repositories.Task) TaskA
 // GetTaskById 获取单个任务信息
 // @param ctx 上下文
 // @param taskId 任务 ID
+// @param includeDeleted 为 true 时可查询到已软删除的任务
 // @return 任务响应
 // @return error 错误信息
 func (taskApp *TaskAppImpl) GetTaskById(
 	ctx context.Context,
 	taskId string,
+	includeDeleted bool,
 ) (*types.GetTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -42,7 +44,7 @@ func (taskApp *TaskAppImpl) GetTaskById(
 		return nil, errors.New("待办任务 ID 无效")
 	}
 	// 3. 调用仓库获取待办任务信息
-	taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64)
+	taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, includeDeleted)
 	if err != nil {
 		return nil, err
 	}

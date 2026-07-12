@@ -24,12 +24,14 @@ func NewTaskRepo(db *gorm.DB) repositories.Task {
 // @param ctx 上下文
 // @param userId 用户ID
 // @param taskId 任务ID
+// @param includeDeleted 为 true 时可查询到已软删除的任务
 // @return 任务实体
 // @return error 错误
 func (taskRepo *TaskRepoImpl) GetById(
 	ctx context.Context,
 	userId int64,
 	taskId int64,
+	includeDeleted bool,
 ) (*entities.Task, error) {
 	// 1. 创建结果模型
 	taskModel := &models.Task{}
@@ -38,7 +40,11 @@ func (taskRepo *TaskRepoImpl) GetById(
 	whereCond.UserId = userId
 	whereCond.ID = taskId
 	// 3. 查询
-	tx := taskRepo.db.WithContext(ctx).Where(whereCond).First(taskModel)
+	db := taskRepo.db.WithContext(ctx)
+	if includeDeleted {
+		db = db.Unscoped()
+	}
+	tx := db.Where(whereCond).First(taskModel)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

@@ -10,7 +10,7 @@ import (
 // TaskApp 任务应用接口
 type TaskApp interface {
 	// --- Task ---
-	GetTaskById(ctx context.Context, taskId string) (*types.GetTaskRes, error)
+	GetTaskById(ctx context.Context, taskId string, includeDeleted bool) (*types.GetTaskRes, error)
 	CreateTask(ctx context.Context, req *types.CreateTaskReq) (*types.GetTaskRes, error)
 	UpdateTask(ctx context.Context, taskId string, req *types.UpdateTaskReq) error
 	DeleteTask(ctx context.Context, taskId string) error

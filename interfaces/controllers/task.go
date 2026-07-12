@@ -20,7 +20,8 @@ func GetTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层获取任务信息
-	res, err := application.App.Task.GetTaskById(ctx.Request.Context(), taskId)
+	includeDeleted := ctx.Query("isDeleted") == "true"
+	res, err := application.App.Task.GetTaskById(ctx.Request.Context(), taskId, includeDeleted)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40002,

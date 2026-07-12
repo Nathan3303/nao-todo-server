@@ -33,7 +33,7 @@ func (d *TaskDomainImpl) Copy(
 	taskId int64,
 ) (*entities.Task, error) {
 	// 检查任务是否存在
-	task, err := d.taskRepo.GetById(ctx, userId, taskId)
+	task, err := d.taskRepo.GetById(ctx, userId, taskId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (d *TaskDomainImpl) Snooze(
 	taskId int64,
 	durationMinutes int,
 ) (string, error) {
-	if _, err := d.taskRepo.GetById(ctx, userId, taskId); err != nil {
+	if _, err := d.taskRepo.GetById(ctx, userId, taskId, false); err != nil {
 		return "", err
 	}
 	newRemindAt := time.
