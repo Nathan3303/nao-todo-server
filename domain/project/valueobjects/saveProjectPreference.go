@@ -1,10 +1,14 @@
 package valueobjects
 
-import "errors"
+import (
+	"errors"
+
+	"naotodoserver/domain/types"
+)
 
 // SaveProjectPreference 保存项目偏好值对象
 type SaveProjectPreference struct {
-	ViewType   string
+	ViewType   types.ViewType
 	GetOptions string
 	Columns    string
 }
@@ -15,9 +19,9 @@ func (saveProjectPreference *SaveProjectPreference) Validate() error {
 	if saveProjectPreference.ViewType == "" {
 		return errors.New("视图类型不能为空")
 	}
-	if saveProjectPreference.ViewType != "table" &&
-		saveProjectPreference.ViewType != "list" &&
-		saveProjectPreference.ViewType != "kanban" {
+	if saveProjectPreference.ViewType != types.ViewTypeTable &&
+		saveProjectPreference.ViewType != types.ViewTypeList &&
+		saveProjectPreference.ViewType != types.ViewTypeKanban {
 		return errors.New("视图类型必须是 table、list 或 kanban")
 	}
 	if saveProjectPreference.GetOptions == "" {
@@ -36,7 +40,7 @@ func (saveProjectPreference *SaveProjectPreference) Validate() error {
 // @return *SaveProjectPreference 保存项目偏好值对象
 // @return error 验证失败返回错误，否则返回 nil
 func NewSaveProjectPreference(
-	viewType string,
+	viewType types.ViewType,
 	getOptions string,
 	columns string,
 ) (*SaveProjectPreference, error) {

@@ -1,11 +1,15 @@
 package valueobjects
 
-import "errors"
+import (
+	"errors"
+
+	"naotodoserver/domain/pomodoro/entities"
+)
 
 // CreatePomodoro 创建常用番茄工作值对象
 type CreatePomodoro struct {
 	UserId      int64
-	Type        uint8
+	Type        entities.PomodoroType
 	Name        string
 	Description string
 	Duration    uint16
@@ -25,7 +29,7 @@ func (vo *CreatePomodoro) Validate() error {
 // NewCreatePomodoro 创建常用番茄工作值对象
 func NewCreatePomodoro(
 	userId int64,
-	pomodoroType uint8,
+	pomodoroType entities.PomodoroType,
 	name string,
 	description string,
 	duration uint16,

@@ -2,13 +2,15 @@ package valueobjects
 
 import (
 	"errors"
+
+	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/types"
 )
 
 // UpdatePomodoro 更新常用番茄工作值对象
 // 指针字段表示 PATCH 语义：nil 时不更新该字段
 type UpdatePomodoro struct {
-	Type        *uint8
+	Type        *entities.PomodoroType
 	Name        *string
 	Description *string
 	Duration    *uint16
@@ -28,7 +30,7 @@ func (vo *UpdatePomodoro) Validate() error {
 
 // NewUpdatePomodoro 创建更新常用番茄工作值对象
 func NewUpdatePomodoro(
-	pomodoroType *uint8,
+	pomodoroType *entities.PomodoroType,
 	name *string,
 	description *string,
 	duration *uint16,

@@ -167,7 +167,7 @@ func UpdateProjectPrefrenceValueObjectToModel(
 	m := &models.ProjectPreference{}
 	m.UserId = userId
 	m.ProjectId = projectId
-	m.ViewType = updateProjectPreferenceValueObject.ViewType
+	m.ViewType = string(updateProjectPreferenceValueObject.ViewType)
 	m.GetOptions = updateProjectPreferenceValueObject.GetOptions
 	m.Columns = updateProjectPreferenceValueObject.Columns
 	return m

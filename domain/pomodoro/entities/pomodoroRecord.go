@@ -13,7 +13,7 @@ type PomodoroRecord struct {
 	UserId      int64
 	PomodoroId  int64
 	SessionId   string
-	Type        uint8
+	Type        PomodoroType
 	TaskId      int64
 	TaskName    string
 	Description string

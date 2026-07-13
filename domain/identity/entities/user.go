@@ -20,8 +20,8 @@ type User struct {
 	Nickname    string
 	Avatar      string
 	CreatedFrom string
-	Role        uint8
-	State       uint8
+	Role        UserRole
+	State       UserState
 	DeactivedAt types.NullableTime
 	Config      *UserConfig
 }

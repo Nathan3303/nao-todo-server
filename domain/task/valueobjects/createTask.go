@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/textutils"
 	"naotodoserver/domain/types"
 )
@@ -13,8 +14,8 @@ type CreateTask struct {
 	ParentTaskId   int64
 	Name           string
 	Description    string
-	State          uint8
-	Priority       uint8
+	State          entities.TaskState
+	Priority       entities.TaskPriority
 	StartAt        types.NullableTime
 	EndAt          types.NullableTime
 	ProjectId      int64
@@ -75,8 +76,8 @@ func NewCreateTask(
 	parentTaskId int64,
 	name string,
 	description string,
-	state uint8,
-	priority uint8,
+	state entities.TaskState,
+	priority entities.TaskPriority,
 	startAt string,
 	endAt string,
 	projectId int64,

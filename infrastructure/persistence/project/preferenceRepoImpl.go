@@ -80,7 +80,7 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Save(
 	} else {
 		// 更新
 		tx.Updates(models.ProjectPreference{
-			ViewType:   saveProjectPreference.ViewType,
+			ViewType:   string(saveProjectPreference.ViewType),
 			GetOptions: saveProjectPreference.GetOptions,
 			Columns:    saveProjectPreference.Columns,
 		})

@@ -8,10 +8,10 @@ import (
 )
 
 type EventController struct {
-	taskApp taskApp.TaskApp
+	taskApp taskApp.TaskCheckItemApp
 }
 
-func NewEventController(app taskApp.TaskApp) *EventController {
+func NewEventController(app taskApp.TaskCheckItemApp) *EventController {
 	return &EventController{taskApp: app}
 }
 

@@ -1,5 +1,7 @@
 package valueobjects
 
+import "naotodoserver/domain/pomodoro/entities"
+
 // QueryPomodoroRecord 番茄工作记录查询值对象
 type QueryPomodoroRecord struct {
 	UserId     int64
@@ -9,7 +11,7 @@ type QueryPomodoroRecord struct {
 	EndTime    string
 	TaskId     int64
 	TaskName   string
-	Type       uint8
+	Type       entities.PomodoroType
 	Sort       string
 	Page       int
 	Limit      int
@@ -24,7 +26,7 @@ func NewQueryPomodoroRecord(
 	endTime string,
 	taskId int64,
 	taskName string,
-	pomodoroType uint8,
+	pomodoroType entities.PomodoroType,
 	sort string,
 	page int,
 	limit int,

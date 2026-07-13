@@ -1,9 +1,11 @@
 package valueobjects
 
+import "naotodoserver/domain/pomodoro/entities"
+
 // QueryPomodoro 常用番茄工作查询值对象
 type QueryPomodoro struct {
 	UserId     int64
-	Type       uint8
+	Type       entities.PomodoroType
 	Name       string
 	IsArchived bool
 	Sort       string
@@ -14,7 +16,7 @@ type QueryPomodoro struct {
 // NewQueryPomodoro 创建 QueryPomodoro 值对象
 func NewQueryPomodoro(
 	userId int64,
-	pomodoroType uint8,
+	pomodoroType entities.PomodoroType,
 	name string,
 	isArchived bool,
 	sort string,

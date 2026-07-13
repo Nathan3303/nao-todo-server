@@ -15,7 +15,7 @@ func CreatePomodoroRecordVOToModel(vo *valueobjects.CreatePomodoroRecord) *model
 	m.UserId = vo.UserId
 	m.SessionId = vo.SessionId
 	m.PomodoroId = vo.PomodoroId
-	m.Type = vo.Type
+	m.Type = uint8(vo.Type)
 	m.TaskId = vo.TaskId
 	m.TaskName = vo.TaskName
 	m.Description = vo.Description
@@ -37,7 +37,7 @@ func PomodoroRecordModel2Entity(m *models.PomodoroRecord) *entities.PomodoroReco
 	e.UserId = m.UserId
 	e.PomodoroId = m.PomodoroId
 	e.SessionId = m.SessionId
-	e.Type = m.Type
+	e.Type = entities.PomodoroType(m.Type)
 	e.TaskId = m.TaskId
 	e.TaskName = m.TaskName
 	e.Description = m.Description
@@ -63,7 +63,7 @@ func PomodoroRecordModels2Entities(list []*models.PomodoroRecord) []*entities.Po
 func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 	var m models.Pomodoro
 	m.UserId = vo.UserId
-	m.Type = vo.Type
+	m.Type = uint8(vo.Type)
 	m.Name = vo.Name
 	m.Description = vo.Description
 	m.Duration = vo.Duration
@@ -104,7 +104,7 @@ func PomodoroModel2Entity(m *models.Pomodoro) *entities.Pomodoro {
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = m.UserId
-	e.Type = m.Type
+	e.Type = entities.PomodoroType(m.Type)
 	e.Name = m.Name
 	e.Description = m.Description
 	e.Duration = m.Duration

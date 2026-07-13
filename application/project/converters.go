@@ -3,8 +3,9 @@ package project
 import (
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/valueobjects"
+	"naotodoserver/application/idutil"
+	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
-	"strconv"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func CreateProjectReqToValueObject(
 // @return *types.CreateProjectRes 创建任务清单响应体
 func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProjectRes {
 	var res types.CreateProjectRes
-	res.Id = strconv.FormatInt(projectEntity.Id, 10)
+	res.Id = idutil.FormatID(projectEntity.Id)
 	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = projectEntity.DeletedAt.ToString(time.RFC3339)
@@ -50,7 +51,7 @@ func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProj
 // @return *types.GetProjectRes 获取任务清单响应体
 func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes {
 	var res types.GetProjectRes
-	res.Id = strconv.FormatInt(projectEntity.Id, 10)
+	res.Id = idutil.FormatID(projectEntity.Id)
 	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = projectEntity.DeletedAt.ToString(time.RFC3339)
@@ -100,7 +101,7 @@ func BatchUpdateProjectReqToValueObjects(
 ) ([]*valueobjects.BatchUpdateProject, error) {
 	batchVOs := make([]*valueobjects.BatchUpdateProject, 0, len(req.Projects))
 	for _, project := range req.Projects {
-		id, err := strconv.ParseInt(project.Id, 10, 64)
+		id, err := idutil.ParseID(project.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -125,11 +126,11 @@ func ProjectPreferenceEntityToGetRes(
 	projectPreferenceEntity *entities.ProjectPreference,
 ) *types.GetProjectPreferenceRes {
 	var res types.GetProjectPreferenceRes
-	res.Id = strconv.FormatInt(projectPreferenceEntity.Id, 10)
+	res.Id = idutil.FormatID(projectPreferenceEntity.Id)
 	res.CreatedAt = projectPreferenceEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = projectPreferenceEntity.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = projectPreferenceEntity.DeletedAt.ToString(time.RFC3339)
-	res.ProjectId = strconv.FormatInt(projectPreferenceEntity.ProjectId, 10)
+	res.ProjectId = idutil.FormatID(projectPreferenceEntity.ProjectId)
 	res.ViewType = projectPreferenceEntity.ViewType
 	res.GetOptions = projectPreferenceEntity.GetOptions
 	res.Columns = projectPreferenceEntity.Columns
@@ -144,7 +145,7 @@ func UpdateProjectPreferenceReqToValueObject(
 	updateProjectPreferenceReq *types.UpdateProjectPreferenceReq,
 ) (*valueobjects.SaveProjectPreference, error) {
 	saveProjectPreferenceValueObject, err := valueobjects.NewSaveProjectPreference(
-		updateProjectPreferenceReq.ViewType,
+		domaintypes.ViewType(updateProjectPreferenceReq.ViewType),
 		updateProjectPreferenceReq.GetOptions,
 		updateProjectPreferenceReq.Columns,
 	)

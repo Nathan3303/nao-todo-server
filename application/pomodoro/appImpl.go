@@ -2,12 +2,13 @@ package pomodoro
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/application/idutil"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
-	"strconv"
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
@@ -36,7 +37,7 @@ func (app *PomodoroAppImpl) Create(
 ) (*types.CreatePomodoroRecordRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	vo, err := CreatePomodoroRecordReqToVO(userId, req)
 	if err != nil {
@@ -44,7 +45,7 @@ func (app *PomodoroAppImpl) Create(
 	}
 	entity, err := app.pomodoroDomain.CreatePomodoroRecord(ctx, userId, vo)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("pomodoro.Create: %w", err)
 	}
 	return PomodoroRecordEntityToCreateRes(entity), nil
 }
@@ -60,15 +61,15 @@ func (app *PomodoroAppImpl) Get(
 ) (*types.GetPomodoroRecordRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
-	id, err := strconv.ParseInt(req.Id, 10, 64)
+	id, err := idutil.ParseID(req.Id)
 	if err != nil {
-		return nil, errors.New("专注记录 ID 无效")
+		return nil, domerr.ErrInvalidID
 	}
 	entity, err := app.pomodoroRecordRepo.GetById(ctx, userId, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("pomodoro.Get: %w", err)
 	}
 	return PomodoroRecordEntityToGetRes(entity), nil
 }
@@ -84,12 +85,12 @@ func (app *PomodoroAppImpl) List(
 ) ([]*types.GetPomodoroRecordRes, int64, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, 0, errors.New("用户 ID 无效")
+		return nil, 0, domerr.ErrInvalidUserID
 	}
 	q := ListPomodoroRecordReqToQueryVO(userId, req)
 	entities, total, err := app.pomodoroRecordRepo.List(ctx, userId, q)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("pomodoroRecord.List: %w", err)
 	}
 	resList := PomodoroRecordEntitiesToGetReses(entities)
 	return resList, total, nil
@@ -108,7 +109,7 @@ func (app *PomodoroAppImpl) CreatePomodoro(
 ) (*types.CreatePomodoroRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	vo, err := CreatePomodoroReqToVO(userId, req)
 	if err != nil {
@@ -116,7 +117,7 @@ func (app *PomodoroAppImpl) CreatePomodoro(
 	}
 	entity, err := app.pomodoroDomain.CreatePomodoro(ctx, userId, vo)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("pomodoro.CreatePomodoro: %w", err)
 	}
 	return PomodoroEntityToCreateRes(entity), nil
 }
@@ -132,15 +133,15 @@ func (app *PomodoroAppImpl) GetPomodoro(
 ) (*types.PomodoroRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
-	id, err := strconv.ParseInt(req.Id, 10, 64)
+	id, err := idutil.ParseID(req.Id)
 	if err != nil {
-		return nil, errors.New("常用番茄工作 ID 无效")
+		return nil, domerr.ErrInvalidPomodoroID
 	}
 	entity, err := app.pomodoroRepo.GetById(ctx, userId, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("pomodoro.GetPomodoro: %w", err)
 	}
 	return PomodoroEntityToGetRes(entity), nil
 }
@@ -157,11 +158,11 @@ func (app *PomodoroAppImpl) UpdatePomodoro(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	idInt64, err := strconv.ParseInt(id, 10, 64)
+	idInt64, err := idutil.ParseID(id)
 	if err != nil {
-		return errors.New("常用番茄工作 ID 无效")
+		return domerr.ErrInvalidPomodoroID
 	}
 	vo, err := UpdatePomodoroReqToVO(req)
 	if err != nil {
@@ -169,7 +170,7 @@ func (app *PomodoroAppImpl) UpdatePomodoro(
 	}
 	_, err = app.pomodoroDomain.UpdatePomodoro(ctx, userId, idInt64, vo)
 	if err != nil {
-		return err
+		return fmt.Errorf("pomodoro.Update: %w", err)
 	}
 	return nil
 }
@@ -184,13 +185,16 @@ func (app *PomodoroAppImpl) DeletePomodoro(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	idInt64, err := strconv.ParseInt(id, 10, 64)
+	idInt64, err := idutil.ParseID(id)
 	if err != nil {
-		return errors.New("常用番茄工作 ID 无效")
+		return domerr.ErrInvalidPomodoroID
 	}
-	return app.pomodoroRepo.Delete(ctx, userId, idInt64)
+	if err := app.pomodoroRepo.Delete(ctx, userId, idInt64); err != nil {
+		return fmt.Errorf("pomodoro.Delete: %w", err)
+	}
+	return nil
 }
 
 // ArchivePomodoro 归档常用番茄工作
@@ -203,13 +207,16 @@ func (app *PomodoroAppImpl) ArchivePomodoro(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	idInt64, err := strconv.ParseInt(id, 10, 64)
+	idInt64, err := idutil.ParseID(id)
 	if err != nil {
-		return errors.New("常用番茄工作 ID 无效")
+		return domerr.ErrInvalidPomodoroID
 	}
-	return app.pomodoroRepo.Archive(ctx, userId, idInt64)
+	if err := app.pomodoroRepo.Archive(ctx, userId, idInt64); err != nil {
+		return fmt.Errorf("pomodoro.Archive: %w", err)
+	}
+	return nil
 }
 
 // UnarchivePomodoro 取消归档常用番茄工作
@@ -222,13 +229,16 @@ func (app *PomodoroAppImpl) UnarchivePomodoro(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	idInt64, err := strconv.ParseInt(id, 10, 64)
+	idInt64, err := idutil.ParseID(id)
 	if err != nil {
-		return errors.New("常用番茄工作 ID 无效")
+		return domerr.ErrInvalidPomodoroID
 	}
-	return app.pomodoroRepo.Unarchive(ctx, userId, idInt64)
+	if err := app.pomodoroRepo.Unarchive(ctx, userId, idInt64); err != nil {
+		return fmt.Errorf("pomodoro.Unarchive: %w", err)
+	}
+	return nil
 }
 
 // ListPomodoro 获取常用番茄工作列表
@@ -243,12 +253,12 @@ func (app *PomodoroAppImpl) ListPomodoro(
 ) (types.ListPomodoroRes, int64, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, 0, errors.New("用户 ID 无效")
+		return nil, 0, domerr.ErrInvalidUserID
 	}
 	q := ListPomodoroReqToQueryVO(userId, req)
 	entities, total, err := app.pomodoroRepo.List(ctx, userId, q)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("pomodoro.List: %w", err)
 	}
 	resList := PomodoroEntitiesToGetReses(entities)
 	return resList, total, nil

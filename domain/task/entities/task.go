@@ -15,8 +15,8 @@ type Task struct {
 	ParentTaskId   int64
 	Name           string
 	Description    string
-	State          uint8
-	Priority       uint8
+	State          TaskState
+	Priority       TaskPriority
 	StartAt        types.NullableTime
 	EndAt          types.NullableTime
 	ProjectId      int64

@@ -3,11 +3,13 @@ package project
 import (
 	"context"
 	"errors"
+	"fmt"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/application/idutil"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
-	"strconv"
 )
 
 // NewProjectApp 创建任务清单应用层实例
@@ -36,17 +38,17 @@ func (app *projectAppImpl) Get(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("用户 ID 不能为空")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 转换清单 ID 为 int64 类型
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return nil, errors.New("清单 ID 格式错误")
+		return nil, domerr.ErrInvalidProjectID
 	}
 	// 获取清单
 	projectEntity, err := app.repo.GetById(ctx, userId, projectIdInt64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("project.Get: %w", err)
 	}
 	// 实体转换响应体并返回
 	return ProjectEntityToGetRes(projectEntity), nil
@@ -64,7 +66,7 @@ func (app *projectAppImpl) Create(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("用户 ID 不能为空")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 请求体转换值对象
 	createProjectValueObject, err := CreateProjectReqToValueObject(userId, createProjectReq)
@@ -74,7 +76,7 @@ func (app *projectAppImpl) Create(
 	// 创建任务清单
 	projectEntity, err := app.projectDomain.Create(ctx, createProjectValueObject)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("project.Create: %w", err)
 	}
 	// 实体转换响应体
 	createProjectRes := ProjectEntityToCreateRes(projectEntity)
@@ -95,19 +97,22 @@ func (app *projectAppImpl) Update(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return errors.New("用户 ID 不能为空")
+		return domerr.ErrInvalidUserID
 	}
 	// 转换清单 ID 为 int64 类型
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return errors.New("清单 ID 格式错误")
+		return domerr.ErrInvalidProjectID
 	}
 	// 请求体转换实体
 	updateProjectValueObject, err := UpdateProjectReqToValueObject(updateProjectReq)
 	if err != nil {
 		return errors.New("更新任务清单请求体格式错误: " + err.Error())
 	}
-	return app.repo.Update(ctx, userId, projectIdInt64, updateProjectValueObject)
+	if err := app.repo.Update(ctx, userId, projectIdInt64, updateProjectValueObject); err != nil {
+		return fmt.Errorf("project.Update: %w", err)
+	}
+	return nil
 }
 
 // 删除任务清单
@@ -121,12 +126,12 @@ func (app *projectAppImpl) Delete(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return errors.New("用户 ID 不能为空")
+		return domerr.ErrInvalidUserID
 	}
 	// 获取清单 ID
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return errors.New("清单 ID 格式错误")
+		return domerr.ErrInvalidProjectID
 	}
 	// 删除清单
 	err = app.projectDomain.Delete(ctx, userId, projectIdInt64)
@@ -148,12 +153,12 @@ func (app *projectAppImpl) Restore(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return errors.New("用户 ID 不能为空")
+		return domerr.ErrInvalidUserID
 	}
 	// 获取清单 ID
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return errors.New("清单 ID 格式错误")
+		return domerr.ErrInvalidProjectID
 	}
 	// 恢复清单
 	err = app.projectDomain.Restore(ctx, userId, projectIdInt64)
@@ -192,12 +197,12 @@ func (app *projectAppImpl) Archive(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return errors.New("用户 ID 不能为空")
+		return domerr.ErrInvalidUserID
 	}
 	// 获取清单 ID
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return errors.New("清单 ID 格式错误")
+		return domerr.ErrInvalidProjectID
 	}
 	return app.repo.Archive(ctx, userId, projectIdInt64)
 }
@@ -213,12 +218,12 @@ func (app *projectAppImpl) Unarchive(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return errors.New("用户 ID 不能为空")
+		return domerr.ErrInvalidUserID
 	}
 	// 获取清单 ID
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return errors.New("清单 ID 格式错误")
+		return domerr.ErrInvalidProjectID
 	}
 	return app.repo.Unarchive(ctx, userId, projectIdInt64)
 }
@@ -231,7 +236,7 @@ func (app *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, erro
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("用户 ID 不能为空")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 获取清单列表
 	projectEntities, err := app.repo.GetByUserId(ctx, userId)
@@ -254,7 +259,7 @@ func (app *projectAppImpl) BatchUpdate(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("用户 ID 不能为空")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 请求体转换值对象
 	batchVOs, err := BatchUpdateProjectReqToValueObjects(req)
@@ -285,12 +290,12 @@ func (app *projectAppImpl) GetPreference(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return nil, errors.New("用户 ID 不能为空")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 获取清单 ID
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return nil, errors.New("清单 ID 格式错误")
+		return nil, domerr.ErrInvalidProjectID
 	}
 	// 获取清单偏好
 	projectPreferenceEntity, err := app.preferenceRepo.Get(
@@ -319,12 +324,12 @@ func (app *projectAppImpl) SavePreference(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
-		return errors.New("用户 ID 不能为空")
+		return domerr.ErrInvalidUserID
 	}
 	// 获取清单 ID
-	projectIdInt64, err := strconv.ParseInt(projectId, 10, 64)
+	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return errors.New("清单 ID 格式错误")
+		return domerr.ErrInvalidProjectID
 	}
 	// 请求体转换实体
 	saveProjectPreferenceValueObject, err := UpdateProjectPreferenceReqToValueObject(

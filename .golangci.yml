@@ -10,7 +10,8 @@ run:
 # 输出格式配置
 output:
     # 输出格式：tab, colored-line-number, line-number, json, checkstyle, code-climate
-    format: colored-line-number
+    formats:
+        - format: colored-line-number
     # 打印出有问题的代码行
     print-issued-lines: true
     # 打印出 linter 的名称
@@ -61,7 +62,7 @@ linters-settings:
 
     # goimports 配置
     goimports:
-        local-prefixes: "github.com/Nathan3303/nao-todo-server" # 替换为你的项目路径，用于 import 分组
+        local-prefixes: "naotodoserver" # 项目模块路径，用于 import 分组
 
 # 排除特定规则或文件的报错
 issues:

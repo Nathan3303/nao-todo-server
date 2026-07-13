@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func strPtr(s string) *string   { return &s }
+func strPtr(s string) *string    { return &s }
 func uint16Ptr(v uint16) *uint16 { return &v }
 
 func TestUpdateProject_Validate(t *testing.T) {

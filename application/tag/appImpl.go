@@ -2,12 +2,13 @@ package tag
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/application/idutil"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
-	"strconv"
 )
 
 // NewTagApp 创建标签应用层实例
@@ -36,17 +37,17 @@ func (tagApp *TagAppImpl) GetTag(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 转换 tagId
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return nil, errors.New("标签 ID 格式错误")
+		return nil, domerr.ErrInvalidTagID
 	}
 	// 获取标签信息
 	tagEntity, err := tagApp.tagRepo.GetById(ctx, userId, tagId64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tag.Get: %w", err)
 	}
 	// 实体转换响应体
 	getRes := TagEntityToGetRes(tagEntity)
@@ -67,7 +68,7 @@ func (tagApp *TagAppImpl) CreateTag(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 转换请求体
 	createTagValueObject, err := CreateTagReqToValueObject(createTagReq)
@@ -77,7 +78,7 @@ func (tagApp *TagAppImpl) CreateTag(
 	// 创建标签
 	tagEntity, err := tagApp.tagDomain.Create(ctx, userId, createTagValueObject)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tag.Create: %w", err)
 	}
 	// 实体转换响应体并返回结果
 	return TagEntityToCreateRes(tagEntity), nil
@@ -96,12 +97,12 @@ func (tagApp *TagAppImpl) UpdateTag(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 转换 tagId
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return errors.New("标签 ID 格式错误")
+		return domerr.ErrInvalidTagID
 	}
 	// 转换请求体
 	updateTagValueObject, err := UpdateTagReqToValueObject(updateTagReq)
@@ -109,7 +110,10 @@ func (tagApp *TagAppImpl) UpdateTag(
 		return err
 	}
 	// 更新标签信息
-	return tagApp.tagRepo.Update(ctx, userId, tagId64, updateTagValueObject)
+	if err := tagApp.tagRepo.Update(ctx, userId, tagId64, updateTagValueObject); err != nil {
+		return fmt.Errorf("tag.Update: %w", err)
+	}
+	return nil
 }
 
 // DeleteTag 删除标签
@@ -123,17 +127,17 @@ func (tagApp *TagAppImpl) DeleteTag(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 转换 tagId
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return errors.New("标签 ID 格式错误")
+		return domerr.ErrInvalidTagID
 	}
 	// 删除标签信息
 	err = tagApp.tagDomain.Delete(ctx, userId, tagId64)
 	if err != nil {
-		return err
+		return fmt.Errorf("tag.Delete: %w", err)
 	}
 	// 转换结果并返回
 	return nil
@@ -149,7 +153,7 @@ func (tagApp *TagAppImpl) ListTag(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 获取所有标签信息
 	tagEntities, err := tagApp.tagRepo.Get(ctx, userId)
@@ -172,7 +176,7 @@ func (tagApp *TagAppImpl) BatchUpdateTags(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 请求体转换值对象
 	batchVOs, err := BatchUpdateTagReqToValueObjects(req)
@@ -204,12 +208,12 @@ func (tagApp *TagAppImpl) GetTagPreference(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 获取标签 ID
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return nil, errors.New("标签 ID 格式错误")
+		return nil, domerr.ErrInvalidTagID
 	}
 	// 获取标签偏好设置
 	tagPreferenceEntity, err := tagApp.preferenceRepo.Get(ctx, userId, tagId64)
@@ -233,12 +237,12 @@ func (tagApp *TagAppImpl) UpdateTagPreference(
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 获取标签 ID
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return errors.New("标签 ID 格式错误")
+		return domerr.ErrInvalidTagID
 	}
 	// 数据转换
 	saveTagPreferenceValueObject, err := UpdateTagPreferenceReqToValueObject(updateTagPreferenceReq)

@@ -23,8 +23,8 @@ func UserEntity2Model(e *entities.User) *models.User {
 	m.Nickname = e.Nickname
 	m.Avatar = e.Avatar
 	m.CreatedFrom = e.CreatedFrom
-	m.Role = e.Role
-	m.State = e.State
+	m.Role = uint8(e.Role)
+	m.State = uint8(e.State)
 	m.DeactivedAt = e.DeactivedAt.ToSqlNullTime()
 	return &m
 }
@@ -42,8 +42,8 @@ func UserModel2Entity(m *models.User) *entities.User {
 	e.Nickname = m.Nickname
 	e.Avatar = m.Avatar
 	e.CreatedFrom = m.CreatedFrom
-	e.Role = m.Role
-	e.State = m.State
+	e.Role = entities.UserRole(m.Role)
+	e.State = entities.UserState(m.State)
 	e.DeactivedAt = types.NewNullableTimeByTime(m.DeactivedAt.Time)
 	return &e
 }

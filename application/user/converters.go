@@ -16,7 +16,7 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res.Avatar = e.Avatar
 	res.Role = ""
 	res.CreatedFrom = e.CreatedFrom
-	res.State = e.State
+	res.State = uint8(e.State)
 	res.Config = e.Config
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)

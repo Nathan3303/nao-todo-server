@@ -23,32 +23,6 @@ type TaskApp interface {
 		ctx context.Context, taskId string, req *types.SnoozeTaskReq,
 	) (*types.SnoozeTaskRes, error)
 	ProcessReminders(ctx context.Context) error
-
-	// --- TaskCheckItem ---
-	GetTaskCheckItemById(
-		ctx context.Context, checkItemId string,
-	) (*types.GetTaskCheckItemRes, error)
-	CreateTaskCheckItem(
-		ctx context.Context, req *types.CreateTaskCheckItemReq,
-	) (*types.CreateTaskCheckItemRes, error)
-	UpdateTaskCheckItem(
-		ctx context.Context, checkItemId string, req *types.UpdateTaskCheckItemReq,
-	) error
-	DeleteTaskCheckItem(ctx context.Context, checkItemId string) error
-	ListTaskCheckItems(ctx context.Context, taskId string) (types.ListTaskCheckItemRes, error)
-	BatchUpdateTaskCheckItems(
-		ctx context.Context, req *types.BatchUpdateTaskCheckItemReq,
-	) (*types.BatchUpdateTaskCheckItemRes, error)
-
-	// --- TaskComment ---
-	GetTaskCommentById(ctx context.Context, commentId string) (*types.TaskCommentRes, error)
-	CreateTaskComment(
-		ctx context.Context, req *types.CreateTaskCommentReq,
-	) (*types.TaskCommentRes, error)
-	UpdateTaskComment(ctx context.Context, commentId string, req *types.UpdateTaskCommentReq) error
-	DeleteTaskComment(ctx context.Context, commentId string) error
-	ListTaskComments(ctx context.Context, taskId string) ([]*types.TaskCommentRes, error)
-	SyncTaskCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }
 
 // TaskAppImpl 任务应用实现

@@ -10,12 +10,14 @@ import (
 )
 
 type Services struct {
-	Auth     authApp.AuthApp
-	User     userApp.UserApp
-	Task     taskApp.TaskApp
-	Project  projectApp.ProjectApp
-	Tag      tagApp.TagApp
-	Pomodoro pomodoroApp.PomodoroApp
+	Auth          authApp.AuthApp
+	User          userApp.UserApp
+	Task          taskApp.TaskApp
+	TaskComment   taskApp.TaskCommentApp
+	TaskCheckItem taskApp.TaskCheckItemApp
+	Project       projectApp.ProjectApp
+	Tag           tagApp.TagApp
+	Pomodoro      pomodoroApp.PomodoroApp
 }
 
 var App *Services

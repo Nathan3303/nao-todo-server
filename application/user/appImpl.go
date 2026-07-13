@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	domerr "naotodoserver/domain/errors"
 	taskApp "naotodoserver/application/task"
 	"naotodoserver/conf"
 	"naotodoserver/domain/identity/repositories"
@@ -17,7 +18,7 @@ import (
 )
 
 // NewUserApp 创建用户应用层实例
-func NewUserApp(userRepo repositories.User, taskApp taskApp.TaskApp) UserApp {
+func NewUserApp(userRepo repositories.User, taskApp taskApp.TaskCommentApp) UserApp {
 	return &userAppImpl{
 		userRepo: userRepo,
 		taskApp:  taskApp,
@@ -35,7 +36,7 @@ func (u *userAppImpl) UpdateNickname(
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户昵称
 	if err := u.userRepo.UpdateNickname(ctx, userId, req.Nickname); err != nil {
@@ -54,7 +55,7 @@ func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes,
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 获取用户详情
 	userEntity, err := u.userRepo.FindById(ctx, userId)
@@ -76,14 +77,13 @@ func (u *userAppImpl) UpdatePassword(
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户密码
-	return u.userRepo.UpdatePassword(
-		ctx, userId,
-		req.OldPassword,
-		req.NewPassword,
-	)
+	if err := u.userRepo.UpdatePassword(ctx, userId, req.OldPassword, req.NewPassword); err != nil {
+		return fmt.Errorf("user.UpdatePassword: %w", err)
+	}
+	return nil
 }
 
 // UpdateAvatar 更新用户头像
@@ -98,7 +98,7 @@ func (u *userAppImpl) UpdateAvatar(
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户头像
 	if err := u.userRepo.UpdateAvatar(ctx, userId, req.AvatarURL); err != nil {
@@ -122,7 +122,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 获取文件
 	file, err := ctxRaw.FormFile("avatar")
@@ -180,7 +180,7 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 查询用户是否存在
 	user, err := u.userRepo.FindById(ctx, userId)
@@ -193,25 +193,28 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 		[]byte(user.Password),
 	)
 	if !isPasswordValid {
-		return errors.New("密码错误")
+		return domerr.ErrPasswordMismatch
 	}
 	// 4. 检查用户状态
 	if user.IsDeactived() {
-		return errors.New("用户已注销")
+		return domerr.ErrUserDeactivated
 	}
 	// 5. 更新用户状态
-	return u.userRepo.Deactive(ctx, userId)
+	if err := u.userRepo.Deactive(ctx, userId); err != nil {
+		return fmt.Errorf("user.Deactive: %w", err)
+	}
+	return nil
 }
 
 // GetConfig 获取用户配置
 func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	config, err := u.userRepo.GetConfig(ctx, userId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("user.GetConfig: %w", err)
 	}
 	return ConfigEntity2Res(config), nil
 }
@@ -220,15 +223,21 @@ func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, e
 func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	return u.userRepo.UpdateConfig(ctx, userId, req.Appearance)
+	if err := u.userRepo.UpdateConfig(ctx, userId, req.Appearance); err != nil {
+		return fmt.Errorf("user.UpdateConfig: %w", err)
+	}
+	return nil
 }
 
 // DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
 func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error {
 	_, err := u.userRepo.DeleteDeactivatedUsers(ctx, dayOffset)
-	return err
+	if err != nil {
+		return fmt.Errorf("user.DeleteDeactivatedUsers: %w", err)
+	}
+	return nil
 }
 
 // ActiveUser 激活用户
@@ -236,7 +245,7 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 查询用户是否存在
 	user, err := u.userRepo.FindById(ctx, userId)
@@ -249,12 +258,15 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 		[]byte(user.Password),
 	)
 	if !isPasswordValid {
-		return errors.New("密码错误")
+		return domerr.ErrPasswordMismatch
 	}
 	// 4. 检查用户状态
 	if !user.IsDeactived() {
 		return errors.New("用户未注销")
 	}
 	// 5. 更新用户状态
-	return u.userRepo.Active(ctx, userId)
+	if err := u.userRepo.Active(ctx, userId); err != nil {
+		return fmt.Errorf("user.Active: %w", err)
+	}
+	return nil
 }

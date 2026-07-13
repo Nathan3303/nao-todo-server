@@ -2,7 +2,8 @@ package auth
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
@@ -35,7 +36,7 @@ func (as *authAppImpl) SignIn(
 	// 1. 通过 Email 查找用户记录
 	userEntity, err := as.userRepo.FindByEmail(ctx, signInReq.Email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("auth.SignIn.FindByEmail: %w", err)
 	}
 	// 2. 比对密码
 	isMatched := as.userRepo.PasswordCompare(
@@ -43,17 +44,17 @@ func (as *authAppImpl) SignIn(
 		[]byte(userEntity.Password),
 	)
 	if !isMatched {
-		return nil, errors.New("用户名或密码错误")
+		return nil, domerr.ErrPasswordMismatch
 	}
 	// 2. 创建 JWT 令牌
 	jwtString, err := as.identityDomain.GenerateJWT(ctx, userEntity)
 	if err != nil {
-		return nil, errors.New("用户凭证签发失败")
+		return nil, fmt.Errorf("auth.SignIn.GenerateJWT: %w", err)
 	}
 	// 3. 创建 Session
 	err = as.identityDomain.CreateSession(ctx, userEntity.Id, jwtString)
 	if err != nil {
-		return nil, errors.New("用户 Session 创建失败 - " + err.Error())
+		return nil, fmt.Errorf("auth.SignIn.CreateSession: %w", err)
 	}
 	// 4. 登录成功 返回 JWT
 	return &types.SignInRes{Token: jwtString}, nil
@@ -70,7 +71,7 @@ func (as *authAppImpl) SignUp(
 	// 通过 Email 查找用户记录
 	_, err := as.userRepo.FindByEmail(ctx, signUpReq.Email)
 	if err == nil {
-		return errors.New("邮箱已存在")
+		return fmt.Errorf("auth.SignUp.FindByEmail: %w", err)
 	}
 	// 转换为 CreateUserValueObject
 	createUserValueObject, err := SignUpReqToCreateUserValueObject(signUpReq)
@@ -80,7 +81,7 @@ func (as *authAppImpl) SignUp(
 	// 创建
 	_, err = as.userRepo.CreateByVO(ctx, createUserValueObject)
 	if err != nil {
-		return errors.New("注册用户失败")
+		return fmt.Errorf("auth.SignUp.Create: %w", err)
 	}
 	// 注册成功
 	return nil
@@ -98,7 +99,7 @@ func (as *authAppImpl) CheckIn(
 	// 1. 解析 JWT 令牌
 	userId, err := as.identityDomain.ParseJWT(ctx, checkInReq.Token)
 	if err != nil {
-		return nil, errors.New("用户凭证验证失败 - " + err.Error())
+		return nil, fmt.Errorf("auth.CheckIn.ParseJWT: %w", err)
 	}
 	// 2. 通过 JWT 令牌和用户 ID 查找会话
 	sessionEntity, err := as.identityDomain.FindSessionByUserIdAndToken(
@@ -108,27 +109,27 @@ func (as *authAppImpl) CheckIn(
 	)
 	// 会话不存在：
 	if err != nil {
-		return nil, errors.New("用户会话验证失败 - " + err.Error())
+		return nil, fmt.Errorf("auth.CheckIn.FindSession: %w", err)
 	}
 	if !sessionEntity.IsValid() {
-		return nil, errors.New("用户会话验证失败")
+		return nil, domerr.ErrTokenExpired
 	}
 	// 会话存在：
 	// 3. 查找最新的用户信息
 	userEntity, err := as.userRepo.FindById(ctx, userId)
 	if err != nil {
-		return nil, errors.New("用户信息查询失败 - " + err.Error())
+		return nil, fmt.Errorf("auth.CheckIn.FindById: %w", err)
 	}
 	// 4. 构建新的 JWT 令牌
 	newJWT, err := as.identityDomain.GenerateJWT(ctx, userEntity)
 	if err != nil {
-		return nil, errors.New("用户凭证签发失败 - " + err.Error())
+		return nil, fmt.Errorf("auth.CheckIn.GenerateJWT: %w", err)
 	}
 	// 5. 更新会话中的 Token 字段
 	sessionEntity.Token = newJWT
 	err = as.sessionRepo.UpdateToken(ctx, sessionEntity)
 	if err != nil {
-		return nil, errors.New("用户 Session 更新失败 - " + err.Error())
+		return nil, fmt.Errorf("auth.CheckIn.UpdateToken: %w", err)
 	}
 	// 6. 返回
 	return &types.CheckInRes{Token: newJWT}, nil
@@ -145,7 +146,7 @@ func (as *authAppImpl) SignOut(
 	// 1. 解析 JWT 令牌
 	userId, err := as.identityDomain.ParseJWT(ctx, signOutReq.Token)
 	if err != nil {
-		return err
+		return fmt.Errorf("auth.SignOut.ParseJWT: %w", err)
 	}
 	// 2. 通过 JWT 令牌和用户 ID 删除会话
 	err = as.identityDomain.DeleteSession(ctx, &entities.UserSession{
@@ -153,7 +154,7 @@ func (as *authAppImpl) SignOut(
 		Token:  signOutReq.Token,
 	})
 	if err != nil {
-		return errors.New(err.Error())
+		return fmt.Errorf("auth.SignOut.DeleteSession: %w", err)
 	}
 	// 3. 返回结果
 	return nil
@@ -170,15 +171,15 @@ func (as *authAppImpl) Validate(
 	// 1. 解析 JWT
 	userId, err := as.identityDomain.ParseJWT(ctx, token)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("auth.Validate.ParseJWT: %w", err)
 	}
 	// 2. 检查会话
 	session, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, token)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("auth.Validate.FindSession: %w", err)
 	}
 	if !session.IsValid() {
-		return 0, errors.New("用户会话验证失败")
+		return 0, domerr.ErrTokenExpired
 	}
 	// 3. 返回结果
 	return userId, nil
@@ -198,5 +199,8 @@ func (as *authAppImpl) RateLimit(
 	// 2. 检查是否超过限流阈值
 	err := as.identityDomain.CheckRateLimit(ctx, key, limit)
 	// 3. 返回结果
-	return err
+	if err != nil {
+		return fmt.Errorf("auth.RateLimit: %w", err)
+	}
+	return nil
 }

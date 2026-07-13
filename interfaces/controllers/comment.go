@@ -8,10 +8,10 @@ import (
 )
 
 type CommentController struct {
-	taskApp taskApp.TaskApp
+	taskApp taskApp.TaskCommentApp
 }
 
-func NewCommentController(app taskApp.TaskApp) *CommentController {
+func NewCommentController(app taskApp.TaskCommentApp) *CommentController {
 	return &CommentController{taskApp: app}
 }
 

@@ -3,8 +3,9 @@ package tag
 import (
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/valueobjects"
+	"naotodoserver/application/idutil"
+	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
-	"strconv"
 	"time"
 )
 
@@ -13,7 +14,7 @@ import (
 // @return 标签响应体
 func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 	res := &types.GetTagRes{}
-	res.Id = strconv.FormatInt(tagEntity.Id, 10)
+	res.Id = idutil.FormatID(tagEntity.Id)
 	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = tagEntity.DeletedAt.ToString(time.RFC3339)
@@ -40,7 +41,7 @@ func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.
 // @return 创建标签响应体
 func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
 	res := &types.CreateTagRes{}
-	res.Id = strconv.FormatInt(tagEntity.Id, 10)
+	res.Id = idutil.FormatID(tagEntity.Id)
 	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = tagEntity.DeletedAt.ToString(time.RFC3339)
@@ -81,11 +82,11 @@ func TagPreferenceEntityToGetRes(
 	tagPreferenceEntity *entities.TagPreference,
 ) *types.GetTagPreferenceRes {
 	var res types.GetTagPreferenceRes
-	res.Id = strconv.FormatInt(tagPreferenceEntity.Id, 10)
+	res.Id = idutil.FormatID(tagPreferenceEntity.Id)
 	res.CreatedAt = tagPreferenceEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = tagPreferenceEntity.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = tagPreferenceEntity.DeletedAt.ToString(time.RFC3339)
-	res.TagId = strconv.FormatInt(tagPreferenceEntity.TagId, 10)
+	res.TagId = idutil.FormatID(tagPreferenceEntity.TagId)
 	res.ViewType = tagPreferenceEntity.ViewType
 	res.GetOptions = tagPreferenceEntity.GetOptions
 	res.Columns = tagPreferenceEntity.Columns
@@ -99,7 +100,7 @@ func UpdateTagPreferenceReqToValueObject(
 	updateTagPreferenceReq *types.UpdateTagPreferenceReq,
 ) (*valueobjects.SaveTagPreference, error) {
 	return valueobjects.NewSaveTagPreference(
-		updateTagPreferenceReq.ViewType,
+		domaintypes.ViewType(updateTagPreferenceReq.ViewType),
 		updateTagPreferenceReq.GetOptions,
 		updateTagPreferenceReq.Columns,
 	)
@@ -114,7 +115,7 @@ func BatchUpdateTagReqToValueObjects(
 ) ([]*valueobjects.BatchUpdateTag, error) {
 	batchVOs := make([]*valueobjects.BatchUpdateTag, 0, len(req.Tags))
 	for _, tag := range req.Tags {
-		id, err := strconv.ParseInt(tag.Id, 10, 64)
+		id, err := idutil.ParseID(tag.Id)
 		if err != nil {
 			return nil, err
 		}

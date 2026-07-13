@@ -2,11 +2,13 @@ package valueobjects
 
 import (
 	"errors"
+
+	"naotodoserver/domain/types"
 )
 
 // SaveTagPreference 保存标签偏好值对象
 type SaveTagPreference struct {
-	ViewType   string
+	ViewType   types.ViewType
 	GetOptions string
 	Columns    string
 }
@@ -17,9 +19,9 @@ func (saveTagPreference *SaveTagPreference) Validate() error {
 	if saveTagPreference.ViewType == "" {
 		return errors.New("视图类型不能为空")
 	}
-	if saveTagPreference.ViewType != "table" &&
-		saveTagPreference.ViewType != "list" &&
-		saveTagPreference.ViewType != "kanban" {
+	if saveTagPreference.ViewType != types.ViewTypeTable &&
+		saveTagPreference.ViewType != types.ViewTypeList &&
+		saveTagPreference.ViewType != types.ViewTypeKanban {
 		return errors.New("视图类型必须是 table、list 或 kanban")
 	}
 	if saveTagPreference.GetOptions == "" {
@@ -38,7 +40,7 @@ func (saveTagPreference *SaveTagPreference) Validate() error {
 // @return *SaveTagPreference 保存标签偏好值对象
 // @return error 验证失败返回错误，否则返回 nil
 func NewSaveTagPreference(
-	viewType string,
+	viewType types.ViewType,
 	getOptions string,
 	columns string,
 ) (*SaveTagPreference, error) {

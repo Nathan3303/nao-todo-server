@@ -2,19 +2,20 @@ package task
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/application/idutil"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/service"
 	"naotodoserver/domain/task/valueobjects"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/sse"
 	"naotodoserver/interfaces/types"
-	"strconv"
 	"time"
 )
 
 // NewTaskApp 创建任务应用层实例
-func NewTaskApp(taskDomain service.TaskDomain, taskRepo repositories.Task) TaskApp {
+func NewTaskApp(taskDomain service.TaskDomain, taskRepo repositories.Task) *TaskAppImpl {
 	impl := &TaskAppImpl{
 		taskDomain: taskDomain,
 		taskRepo:   taskRepo,
@@ -36,17 +37,17 @@ func (taskApp *TaskAppImpl) GetTaskById(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 转换待办任务 ID
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 无效")
+		return nil, domerr.ErrInvalidTaskID
 	}
 	// 3. 调用仓库获取待办任务信息
 	taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, includeDeleted)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetTaskById: %w", err)
 	}
 	// 4. 转换为响应对象
 	res := TaskEntityToGetRes(taskEntity)
@@ -65,7 +66,7 @@ func (taskApp *TaskAppImpl) CreateTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 请求体转换值对象
 	createTaskValueObject, err := CreateTaskReqToValueObject(userId, req)
@@ -74,7 +75,7 @@ func (taskApp *TaskAppImpl) CreateTask(
 	}
 	taskEntity, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateTask: %w", err)
 	}
 	// 4. 转换为响应对象
 	res := TaskEntityToGetRes(taskEntity)
@@ -95,19 +96,22 @@ func (taskApp *TaskAppImpl) UpdateTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 转换待办任务 ID
-	taskIdInt64, err := strconv.ParseInt(taskId, 10, 64)
+	taskIdInt64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return errors.New("待办任务 ID 无效")
+		return domerr.ErrInvalidTaskID
 	}
 	// 3. 请求体转换值对象
 	updateTaskValueObject, err := UpdateTaskReqToValueObject(userId, req)
 	if err != nil {
 		return err
 	}
-	return taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject)
+	if err := taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject); err != nil {
+		return fmt.Errorf("UpdateTask: %w", err)
+	}
+	return nil
 }
 
 // DeleteTask 删除任务
@@ -122,14 +126,17 @@ func (taskApp *TaskAppImpl) DeleteTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 转换待办任务 ID
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return errors.New("待办任务 ID 无效")
+		return domerr.ErrInvalidTaskID
 	}
-	return taskApp.taskRepo.Delete(ctx, userId, taskId64)
+	if err := taskApp.taskRepo.Delete(ctx, userId, taskId64); err != nil {
+		return fmt.Errorf("DeleteTask: %w", err)
+	}
+	return nil
 }
 
 // RestoreTask 恢复任务
@@ -144,14 +151,17 @@ func (taskApp *TaskAppImpl) RestoreTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
 	// 2. 转换待办任务 ID
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return errors.New("待办任务 ID 无效")
+		return domerr.ErrInvalidTaskID
 	}
-	return taskApp.taskRepo.Restore(ctx, userId, taskId64)
+	if err := taskApp.taskRepo.Restore(ctx, userId, taskId64); err != nil {
+		return fmt.Errorf("RestoreTask: %w", err)
+	}
+	return nil
 }
 
 // CopyTask 复制任务
@@ -166,17 +176,17 @@ func (taskApp *TaskAppImpl) CopyTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 转换待办任务 ID
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 无效")
+		return nil, domerr.ErrInvalidTaskID
 	}
 	// 3. 调用领域层复制任务
 	taskEntity, err := taskApp.taskDomain.Copy(ctx, userId, taskId64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CopyTask: %w", err)
 	}
 	// 4. 转换为响应对象
 	res := TaskEntityToGetRes(taskEntity)
@@ -195,12 +205,12 @@ func (taskApp *TaskAppImpl) ListTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, nil, errors.New("用户 ID 无效")
+		return nil, nil, domerr.ErrInvalidUserID
 	}
 	// 2. 请求体转换值对象
 	queryTaskValueObject, err := ListTaskReqToQueryTaskValueObject(userId, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("ListTask req: %w", err)
 	}
 	// 3. 分页值对象
 	paginationValueObject := valueobjects.NewPagination(0, req.Page, req.Limit)
@@ -212,7 +222,7 @@ func (taskApp *TaskAppImpl) ListTask(
 		paginationValueObject,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("ListTask: %w", err)
 	}
 	// 5. 转换为响应对象
 	tasks := TaskEntitiesToGetReses(taskEntities)
@@ -234,12 +244,12 @@ func (taskApp *TaskAppImpl) SnoozeTask(
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 转换任务 ID
-	taskIdInt64, err := strconv.ParseInt(taskId, 10, 64)
+	taskIdInt64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return nil, errors.New("任务 ID 无效")
+		return nil, domerr.ErrInvalidTaskID
 	}
 	// 3. 调用领域层设置稍后提醒
 	newRemindAt, err := taskApp.taskDomain.Snooze(
@@ -249,7 +259,7 @@ func (taskApp *TaskAppImpl) SnoozeTask(
 		req.DurationMinutes,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SnoozeTask: %w", err)
 	}
 	// 4. 返回结果
 	return &types.SnoozeTaskRes{
@@ -263,13 +273,13 @@ func (taskApp *TaskAppImpl) SnoozeTask(
 func (taskApp *TaskAppImpl) ProcessReminders(ctx context.Context) error {
 	tasks, err := taskApp.taskDomain.ProcessReminders(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("ProcessReminders: %w", err)
 	}
 	hub := sse.GetHub()
 	for _, task := range tasks {
 		hub.Publish(task.UserId, sse.ReminderEvent{
 			Type:        "REMINDER",
-			TaskId:      strconv.FormatInt(task.Id, 10),
+			TaskId:      idutil.FormatID(task.Id),
 			TaskName:    task.Name,
 			Description: task.Description,
 			RemindAt:    task.RemindAt.ToString(time.RFC3339),
@@ -291,15 +301,15 @@ func (impl *TaskAppImpl) GetTaskCheckItemById(
 ) (*types.GetTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
-	id64, err := strconv.ParseInt(itemId, 10, 64)
+	id64, err := idutil.ParseID(itemId)
 	if err != nil {
-		return nil, errors.New("检查事项 ID 格式错误")
+		return nil, domerr.ErrInvalidItemID
 	}
 	e, err := impl.taskRepo.GetCheckItemById(ctx, userId, id64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetCheckItemById: %w", err)
 	}
 	return TaskCheckItemEntityToGetRes(e), nil
 }
@@ -315,7 +325,7 @@ func (impl *TaskAppImpl) CreateTaskCheckItem(
 ) (*types.CreateTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	vo, err := CreateTaskCheckItemReqToVO(userId, req)
 	if err != nil {
@@ -323,7 +333,7 @@ func (impl *TaskAppImpl) CreateTaskCheckItem(
 	}
 	e, err := impl.taskDomain.CreateCheckItem(ctx, userId, vo)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateCheckItem: %w", err)
 	}
 	return TaskCheckItemEntityToCreateRes(e), nil
 }
@@ -340,17 +350,20 @@ func (impl *TaskAppImpl) UpdateTaskCheckItem(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	id64, err := strconv.ParseInt(itemId, 10, 64)
+	id64, err := idutil.ParseID(itemId)
 	if err != nil {
-		return errors.New("检查事项 ID 格式错误")
+		return domerr.ErrInvalidItemID
 	}
 	vo, err := UpdateTaskCheckItemReqToVO(req)
 	if err != nil {
 		return err
 	}
-	return impl.taskRepo.UpdateCheckItem(ctx, userId, id64, vo)
+	if err := impl.taskRepo.UpdateCheckItem(ctx, userId, id64, vo); err != nil {
+		return fmt.Errorf("UpdateCheckItem: %w", err)
+	}
+	return nil
 }
 
 // DeleteTaskCheckItem 删除检查事项
@@ -363,13 +376,16 @@ func (impl *TaskAppImpl) DeleteTaskCheckItem(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	id64, err := strconv.ParseInt(itemId, 10, 64)
+	id64, err := idutil.ParseID(itemId)
 	if err != nil {
-		return errors.New("检查事项 ID 格式错误")
+		return domerr.ErrInvalidItemID
 	}
-	return impl.taskRepo.DeleteCheckItem(ctx, userId, id64)
+	if err := impl.taskRepo.DeleteCheckItem(ctx, userId, id64); err != nil {
+		return fmt.Errorf("DeleteCheckItem: %w", err)
+	}
+	return nil
 }
 
 // ListTaskCheckItems 获取检查事项列表
@@ -383,15 +399,15 @@ func (impl *TaskAppImpl) ListTaskCheckItems(
 ) (types.ListTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 格式错误")
+		return nil, domerr.ErrInvalidTaskID
 	}
 	items, err := impl.taskRepo.ListCheckItems(ctx, userId, taskId64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListCheckItems: %w", err)
 	}
 	return TaskCheckItemEntitiesToReses(items), nil
 }
@@ -407,7 +423,7 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 ) (*types.BatchUpdateTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	vos, err := BatchUpdateTaskCheckItemReqToVOs(req)
 	if err != nil {
@@ -415,7 +431,7 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 	}
 	items, err := impl.taskRepo.BatchUpdateCheckItems(ctx, userId, vos)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("BatchUpdateCheckItems: %w", err)
 	}
 	resList := TaskCheckItemEntitiesToReses(items)
 	return &types.BatchUpdateTaskCheckItemRes{
@@ -437,15 +453,15 @@ func (impl *TaskAppImpl) GetTaskCommentById(
 ) (*types.TaskCommentRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
-	id64, err := strconv.ParseInt(commentId, 10, 64)
+	id64, err := idutil.ParseID(commentId)
 	if err != nil {
-		return nil, errors.New("评论 ID 无效")
+		return nil, domerr.ErrInvalidCommentID
 	}
 	e, err := impl.taskRepo.GetCommentById(ctx, userId, id64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetCommentById: %w", err)
 	}
 	return TaskCommentEntityToRes(e), nil
 }
@@ -461,7 +477,7 @@ func (impl *TaskAppImpl) CreateTaskComment(
 ) (*types.TaskCommentRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
 	vo, err := CreateTaskCommentReqToVO(userId, req)
 	if err != nil {
@@ -469,7 +485,7 @@ func (impl *TaskAppImpl) CreateTaskComment(
 	}
 	e, err := impl.taskRepo.CreateComment(ctx, userId, vo)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateComment: %w", err)
 	}
 	return TaskCommentEntityToRes(e), nil
 }
@@ -486,17 +502,20 @@ func (impl *TaskAppImpl) UpdateTaskComment(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	id64, err := strconv.ParseInt(commentId, 10, 64)
+	id64, err := idutil.ParseID(commentId)
 	if err != nil {
-		return errors.New("评论 ID 无效")
+		return domerr.ErrInvalidCommentID
 	}
 	vo, err := UpdateTaskCommentReqToVO(req)
 	if err != nil {
 		return err
 	}
-	return impl.taskRepo.UpdateComment(ctx, userId, id64, vo)
+	if err := impl.taskRepo.UpdateComment(ctx, userId, id64, vo); err != nil {
+		return fmt.Errorf("UpdateComment: %w", err)
+	}
+	return nil
 }
 
 // DeleteTaskComment 删除评论
@@ -509,13 +528,16 @@ func (impl *TaskAppImpl) DeleteTaskComment(
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return errors.New("用户 ID 无效")
+		return domerr.ErrInvalidUserID
 	}
-	id64, err := strconv.ParseInt(commentId, 10, 64)
+	id64, err := idutil.ParseID(commentId)
 	if err != nil {
-		return errors.New("评论 ID 无效")
+		return domerr.ErrInvalidCommentID
 	}
-	return impl.taskRepo.DeleteComment(ctx, userId, id64)
+	if err := impl.taskRepo.DeleteComment(ctx, userId, id64); err != nil {
+		return fmt.Errorf("DeleteComment: %w", err)
+	}
+	return nil
 }
 
 // ListTaskComments 获取评论列表
@@ -529,15 +551,15 @@ func (impl *TaskAppImpl) ListTaskComments(
 ) ([]*types.TaskCommentRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
+		return nil, domerr.ErrInvalidUserID
 	}
-	taskId64, err := strconv.ParseInt(taskId, 10, 64)
+	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return nil, errors.New("待办任务 ID 无效")
+		return nil, domerr.ErrInvalidTaskID
 	}
 	entities, err := impl.taskRepo.ListComments(ctx, userId, taskId64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListComments: %w", err)
 	}
 	return TaskCommentEntitiesToListRes(entities), nil
 }

@@ -117,7 +117,7 @@ func (r *PomodoroRepoImpl) List(
 	tx := r.db.WithContext(ctx).Model(&models.Pomodoro{}).
 		Where("user_id = ?", userId).
 		Scopes(
-			ByPomodoroType(q.Type),
+			ByPomodoroType(uint8(q.Type)),
 			ByPomodoroName(q.Name),
 			ByPomodoroArchivedFlag(q.IsArchived),
 			query.Sort(q.Sort),

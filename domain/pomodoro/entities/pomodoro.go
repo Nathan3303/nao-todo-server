@@ -6,7 +6,7 @@ import "naotodoserver/domain/types"
 type Pomodoro struct {
 	types.EntityBase
 	UserId        int64
-	Type          uint8
+	Type          PomodoroType
 	Name          string
 	Description   string
 	Duration      uint16

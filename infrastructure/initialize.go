@@ -77,12 +77,14 @@ func LoadDomains() {
 	tagAppInst := tagApp.NewTagApp(tagDomain, tagRepoInst, tagPreferenceRepoInst)
 	// 初始化项目领域模型
 	application.App = &application.Services{
-		Auth:     authApp.NewAuthApp(identityDomain, userRepoInst, sessionRepoInst),
-		User:     userApp.NewUserApp(userRepoInst, taskAppInst),
-		Task:     taskAppInst,
-		Project:  projectAppInst,
-		Tag:      tagAppInst,
-		Pomodoro: pomodoroAppInst,
+		Auth:          authApp.NewAuthApp(identityDomain, userRepoInst, sessionRepoInst),
+		User:          userApp.NewUserApp(userRepoInst, taskAppInst),
+		Task:          taskAppInst,
+		TaskComment:   taskAppInst,
+		TaskCheckItem: taskAppInst,
+		Project:       projectAppInst,
+		Tag:           tagAppInst,
+		Pomodoro:      pomodoroAppInst,
 	}
 }
 

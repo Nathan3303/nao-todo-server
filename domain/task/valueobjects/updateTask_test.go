@@ -3,11 +3,15 @@ package valueobjects
 import (
 	"strings"
 	"testing"
+
+	"naotodoserver/domain/task/entities"
 )
 
-func strPtr(s string) *string   { return &s }
-func uint8Ptr(v uint8) *uint8   { return &v }
-func uint16Ptr(v uint16) *uint16 { return &v }
+func strPtr(s string) *string       { return &s }
+func uint8Ptr(v uint8) *uint8       { return &v }
+func uint16Ptr(v uint16) *uint16    { return &v }
+func taskStatePtr(v entities.TaskState) *entities.TaskState     { return &v }
+func taskPriorityPtr(v entities.TaskPriority) *entities.TaskPriority { return &v }
 
 func TestUpdateTask_Validate(t *testing.T) {
 	longName := strings.Repeat("a", 257)
@@ -47,7 +51,7 @@ func TestUpdateTask_Validate(t *testing.T) {
 		},
 		{
 			name: "valid state update",
-			vo:   &UpdateTask{State: uint8Ptr(2)},
+			vo:   &UpdateTask{State: taskStatePtr(entities.TaskStateCompleted)},
 		},
 	}
 
@@ -69,11 +73,11 @@ func TestUpdateTask_Validate(t *testing.T) {
 
 func TestUpdateTask_Trim(t *testing.T) {
 	tests := []struct {
-		name         string
-		inputName    *string
-		inputDesc    *string
-		wantName     *string
-		wantDesc     *string
+		name      string
+		inputName *string
+		inputDesc *string
+		wantName  *string
+		wantDesc  *string
 	}{
 		{
 			name:      "trim name and description",

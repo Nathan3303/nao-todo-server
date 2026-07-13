@@ -21,8 +21,8 @@ func CreateTaskValueObjectToModel(
 		ProjectId:      createTaskValueObject.ProjectId,
 		Name:           createTaskValueObject.Name,
 		Description:    createTaskValueObject.Description,
-		State:          createTaskValueObject.State,
-		Priority:       createTaskValueObject.Priority,
+		State:          uint8(createTaskValueObject.State),
+		Priority:       uint8(createTaskValueObject.Priority),
 		StartAt:        createTaskValueObject.StartAt.ToSqlNullTime(),
 		EndAt:          createTaskValueObject.EndAt.ToSqlNullTime(),
 		Tags:           createTaskValueObject.Tags,
@@ -54,10 +54,10 @@ func UpdateTaskValueObjectToModel(
 		m.Description = *updateTaskValueObject.Description
 	}
 	if updateTaskValueObject.State != nil {
-		m.State = *updateTaskValueObject.State
+		m.State = uint8(*updateTaskValueObject.State)
 	}
 	if updateTaskValueObject.Priority != nil {
-		m.Priority = *updateTaskValueObject.Priority
+		m.Priority = uint8(*updateTaskValueObject.Priority)
 	}
 	if updateTaskValueObject.StartAt.ShouldUpdate() &&
 		!updateTaskValueObject.StartAt.IsSetToNull() {
@@ -209,8 +209,8 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.ProjectId = m.ProjectId
 	e.Name = m.Name
 	e.Description = m.Description
-	e.State = m.State
-	e.Priority = m.Priority
+	e.State = entities.TaskState(m.State)
+	e.Priority = entities.TaskPriority(m.Priority)
 	e.StartAt = types.NewNullableTimeByTime(m.StartAt.Time)
 	e.EndAt = types.NewNullableTimeByTime(m.EndAt.Time)
 	e.ArchivedAt = types.NewNullableTimeByTime(m.ArchivedAt.Time)

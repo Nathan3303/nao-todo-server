@@ -78,7 +78,7 @@ func (r *PomodoroRecordRepoImpl) List(
 			ByPomodoroRecordTimeRange(q.StartTime, q.EndTime),
 			ByPomodoroRecordTaskId(q.TaskId),
 			ByPomodoroRecordTaskName(q.TaskName),
-			ByPomodoroType(q.Type),
+			ByPomodoroType(uint8(q.Type)),
 			query.Sort(q.Sort),
 		)
 

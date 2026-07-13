@@ -2,6 +2,8 @@ package valueobjects
 
 import (
 	"errors"
+
+	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/types"
 )
 
@@ -10,7 +12,7 @@ type CreatePomodoroRecord struct {
 	UserId      int64
 	SessionId   string
 	PomodoroId  int64
-	Type        uint8
+	Type        entities.PomodoroType
 	TaskId      int64
 	TaskName    string
 	Description string
@@ -48,7 +50,7 @@ func NewCreatePomodoroRecord(
 	userId int64,
 	sessionId string,
 	pomodoroId int64,
-	pomodoroType uint8,
+	pomodoroType entities.PomodoroType,
 	taskId int64,
 	taskName string,
 	description string,

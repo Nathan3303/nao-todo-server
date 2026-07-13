@@ -143,10 +143,10 @@ func TestNullableTime_IsSetToNull(t *testing.T) {
 func TestNullableTime_Value(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
-		name    string
-		nt      *NullableTime
-		want    time.Time
-		wantOk  bool
+		name   string
+		nt     *NullableTime
+		want   time.Time
+		wantOk bool
 	}{
 		{"nil", nil, time.Time{}, false},
 		{"valid non-null", &NullableTime{Valid: true, IsNull: false, Time: now}, now, true},

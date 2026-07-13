@@ -181,7 +181,7 @@ func UpdateTagPreferenceValueObjectToModel(
 	return &models.TagPreference{
 		UserId:     userId,
 		TagId:      tagId,
-		ViewType:   updateTagPreferenceValueObject.ViewType,
+		ViewType:   string(updateTagPreferenceValueObject.ViewType),
 		GetOptions: updateTagPreferenceValueObject.GetOptions,
 		Columns:    updateTagPreferenceValueObject.Columns,
 	}

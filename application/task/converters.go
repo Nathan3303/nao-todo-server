@@ -1,11 +1,11 @@
 package task
 
 import (
+	"naotodoserver/application/idutil"
 	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/interfaces/types"
-	"strconv"
 	"time"
 )
 
@@ -41,21 +41,21 @@ func bitmaskToWeekdays(mask uint8) []uint8 {
 // TaskEntityToGetRes 任务实体转换为获取任务响应
 func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res := &types.GetTaskRes{}
-	res.Id = strconv.FormatInt(taskEntity.Id, 10)
+	res.Id = idutil.FormatID(taskEntity.Id)
 	res.UpdatedAt = taskEntity.UpdatedAt.Format(time.RFC3339)
 	res.CreatedAt = taskEntity.CreatedAt.Format(time.RFC3339)
 	res.DeletedAt = taskEntity.DeletedAt.ToString(time.RFC3339)
-	res.ParentTaskId = strconv.FormatInt(taskEntity.ParentTaskId, 10)
+	res.ParentTaskId = idutil.FormatID(taskEntity.ParentTaskId)
 	if taskEntity.ParentTaskId == 0 {
 		res.ParentTaskId = ""
 	}
 	res.Name = taskEntity.Name
 	res.Description = taskEntity.Description
-	res.State = consts.TodoStateMapReverse[taskEntity.State]
-	res.Priority = consts.TodoPriorityMapReverse[taskEntity.Priority]
+	res.State = consts.TodoStateMapReverse[uint8(taskEntity.State)]
+	res.Priority = consts.TodoPriorityMapReverse[uint8(taskEntity.Priority)]
 	res.StartAt = taskEntity.StartAt.ToString(time.RFC3339)
 	res.EndAt = taskEntity.EndAt.ToString(time.RFC3339)
-	res.ProjectId = strconv.FormatInt(taskEntity.ProjectId, 10)
+	res.ProjectId = idutil.FormatID(taskEntity.ProjectId)
 	res.Tags = taskEntity.Tags
 	res.ArchivedAt = taskEntity.ArchivedAt.ToString(time.RFC3339)
 	res.StarMarkAt = taskEntity.StarMarkAt.ToString(time.RFC3339)
@@ -77,7 +77,7 @@ func CreateTaskReqToValueObject(
 	userId int64,
 	req *types.CreateTaskReq,
 ) (*valueobjects.CreateTask, error) {
-	parentTaskIdInt64, err := strconv.ParseInt(req.ParentTaskId, 10, 64)
+	parentTaskIdInt64, err := idutil.ParseID(req.ParentTaskId)
 	if err != nil {
 		parentTaskIdInt64 = 0
 	}
@@ -85,7 +85,7 @@ func CreateTaskReqToValueObject(
 	if req.ProjectId == "" {
 		projectIdInt64 = userId
 	} else {
-		projectIdInt64, err = strconv.ParseInt(req.ProjectId, 10, 64)
+		projectIdInt64, err = idutil.ParseID(req.ProjectId)
 		if err != nil {
 			return nil, err
 		}
@@ -94,8 +94,8 @@ func CreateTaskReqToValueObject(
 		parentTaskIdInt64,
 		req.Name,
 		req.Description,
-		consts.TodoStateMap[req.State],
-		consts.TodoPriorityMap[req.Priority],
+		entities.TaskState(consts.TodoStateMap[req.State]),
+		entities.TaskPriority(consts.TodoPriorityMap[req.Priority]),
 		req.StartAt,
 		req.EndAt,
 		projectIdInt64,
@@ -117,27 +117,28 @@ func UpdateTaskReqToValueObject(
 	req *types.UpdateTaskReq,
 ) (*valueobjects.UpdateTask, error) {
 	var iParentId, iProjectId *int64
-	var iState, iPriority *uint8
+	var iState *entities.TaskState
+	var iPriority *entities.TaskPriority
 	var iRemindRepeat *uint8
 	var iRemindWeekdays *uint8
 	if req.ParentTaskId != nil {
-		iParentIdValue, _ := strconv.ParseInt(*req.ParentTaskId, 10, 64)
+		iParentIdValue, _ := idutil.ParseID(*req.ParentTaskId)
 		iParentId = &iParentIdValue
 	}
 	if req.ProjectId != nil {
 		if *req.ProjectId == "inbox" {
 			iProjectId = &userId
 		} else {
-			iProjectIdValue, _ := strconv.ParseInt(*req.ProjectId, 10, 64)
+			iProjectIdValue, _ := idutil.ParseID(*req.ProjectId)
 			iProjectId = &iProjectIdValue
 		}
 	}
 	if req.State != nil {
-		iStateValue := consts.TodoStateMap[*req.State]
+		iStateValue := entities.TaskState(consts.TodoStateMap[*req.State])
 		iState = &iStateValue
 	}
 	if req.Priority != nil {
-		iPriorityValue := consts.TodoPriorityMap[*req.Priority]
+		iPriorityValue := entities.TaskPriority(consts.TodoPriorityMap[*req.Priority])
 		iPriority = &iPriorityValue
 	}
 	if req.RemindRepeat != nil {
@@ -183,14 +184,14 @@ func ListTaskReqToQueryTaskValueObject(
 	if req.ProjectId == "inbox" {
 		projectIdInt64 = userId
 	} else {
-		porjectIdValue, err := strconv.ParseInt(req.ProjectId, 10, 64)
+		porjectIdValue, err := idutil.ParseID(req.ProjectId)
 		if err != nil {
 			projectIdInt64 = 0
 		} else {
 			projectIdInt64 = porjectIdValue
 		}
 	}
-	parentTaskIdInt64, _ := strconv.ParseInt(req.ParentTaskId, 10, 64)
+	parentTaskIdInt64, _ := idutil.ParseID(req.ParentTaskId)
 	return valueobjects.NewQueryTask(
 		userId,
 		parentTaskIdInt64,
@@ -248,11 +249,11 @@ func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) 
 // @return 任务检查项响应
 func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *types.GetTaskCheckItemRes {
 	var res types.GetTaskCheckItemRes
-	res.Id = strconv.FormatInt(e.Id, 10)
+	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
-	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.TaskId = idutil.FormatID(e.TaskId)
 	res.Name = e.Name
 	res.Description = e.Description
 	res.IsDone = e.IsDone
@@ -269,7 +270,7 @@ func CreateTaskCheckItemReqToVO(
 	userId int64,
 	req *types.CreateTaskCheckItemReq,
 ) (*valueobjects.CreateTaskCheckItem, error) {
-	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
+	taskId, err := idutil.ParseID(req.TaskId)
 	if err != nil {
 		return nil, err
 	}
@@ -286,11 +287,11 @@ func CreateTaskCheckItemReqToVO(
 // @return 创建任务检查项响应
 func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *types.CreateTaskCheckItemRes {
 	var res types.CreateTaskCheckItemRes
-	res.Id = strconv.FormatInt(e.Id, 10)
+	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
-	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.TaskId = idutil.FormatID(e.TaskId)
 	res.Name = e.Name
 	res.Description = e.Description
 	res.IsDone = e.IsDone
@@ -333,7 +334,7 @@ func BatchUpdateTaskCheckItemReqToVOs(
 ) ([]*valueobjects.BatchUpdateTaskCheckItem, error) {
 	vos := make([]*valueobjects.BatchUpdateTaskCheckItem, 0, len(req.Events))
 	for _, e := range req.Events {
-		id, err := strconv.ParseInt(e.Id, 10, 64)
+		id, err := idutil.ParseID(e.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -359,11 +360,11 @@ func BatchUpdateTaskCheckItemReqToVOs(
 // @return 任务评论响应
 func TaskCommentEntityToRes(e *entities.TaskComment) *types.TaskCommentRes {
 	var res types.TaskCommentRes
-	res.Id = strconv.FormatInt(e.Id, 10)
+	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
-	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	res.TaskId = idutil.FormatID(e.TaskId)
 	res.Content = e.Content
 	res.Attachments = e.Attachments
 	res.IsTopUp = e.IsTopUp
@@ -381,7 +382,7 @@ func CreateTaskCommentReqToVO(
 	userId int64,
 	req *types.CreateTaskCommentReq,
 ) (*valueobjects.CreateTaskComment, error) {
-	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
+	taskId, err := idutil.ParseID(req.TaskId)
 	if err != nil {
 		return nil, err
 	}
