@@ -7,18 +7,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseEventRouter(router *gin.RouterGroup) {
+func UseEventRouter(router *gin.RouterGroup, ctrl *controllers.EventController) {
 	eventGroup := router.Group(
 		"/events",
 		middlewares.RateLimiter(64, "events"),
 		middlewares.JWTValidator,
 	)
 	{
-		eventGroup.GET("/", controllers.ListEventHandler)
-		eventGroup.GET("/:eventId", controllers.GetEventHandler)
-		eventGroup.POST("/", controllers.CreateEventHandler)
-		eventGroup.PUT("/:eventId", controllers.UpdateEventHandler)
-		eventGroup.DELETE("/:eventId", controllers.DeleteEventHandler)
-		eventGroup.PUT("/", controllers.BatchUpdateEventHandler)
+		eventGroup.GET("/", ctrl.ListEvent)
+		eventGroup.GET("/:eventId", ctrl.GetEvent)
+		eventGroup.POST("/", ctrl.CreateEvent)
+		eventGroup.PUT("/:eventId", ctrl.UpdateEvent)
+		eventGroup.DELETE("/:eventId", ctrl.DeleteEvent)
+		eventGroup.PUT("/", ctrl.BatchUpdateEvent)
 	}
 }

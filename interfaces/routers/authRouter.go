@@ -7,16 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseAuthRouter(router *gin.RouterGroup) {
+func UseAuthRouter(router *gin.RouterGroup, ctrl *controllers.AuthController) {
 	authGroup := router.Group(
 		"/auth",
 		middlewares.RateLimiter(8, "auth"),
 	)
 	{
-		authGroup.POST("/signin", controllers.UserSignInHandler)
-		authGroup.POST("/signup", controllers.UserSignUpHandler)
-		authGroup.PUT("/checkin", controllers.UserCheckInHandler)
-		authGroup.DELETE("/signout", controllers.UserSignOutHandler)
+		authGroup.POST("/signin", ctrl.UserSignIn)
+		authGroup.POST("/signup", ctrl.UserSignUp)
+		authGroup.PUT("/checkin", ctrl.UserCheckIn)
+		authGroup.DELETE("/signout", ctrl.UserSignOut)
 		authGroup.GET(
 			"/validate",
 			middlewares.JWTValidator,

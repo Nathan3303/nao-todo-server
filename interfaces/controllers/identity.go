@@ -1,15 +1,23 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// UserSignInHandler 用户登录控制器
+type AuthController struct {
+	authApp authApp.AuthApp
+}
+
+func NewAuthController(app authApp.AuthApp) *AuthController {
+	return &AuthController{authApp: app}
+}
+
+// UserSignIn 用户登录控制器
 // @code 1001x
-func UserSignInHandler(ctx *gin.Context) {
+func (c *AuthController) UserSignIn(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	req := types.SignInReq{}
 	err := ctx.ShouldBind(&req)
@@ -22,7 +30,7 @@ func UserSignInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登录
-	signInRes, err := application.App.Auth.SignIn(ctx.Request.Context(), &req)
+	signInRes, err := c.authApp.SignIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10012,
@@ -39,9 +47,9 @@ func UserSignInHandler(ctx *gin.Context) {
 	})
 }
 
-// UserSignUpHandler 用户注册控制器
+// UserSignUp 用户注册控制器
 // @code 1000x
-func UserSignUpHandler(ctx *gin.Context) {
+func (c *AuthController) UserSignUp(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	var req = types.SignUpReq{}
 	err := ctx.ShouldBind(&req)
@@ -54,7 +62,7 @@ func UserSignUpHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 注册
-	err = application.App.Auth.SignUp(ctx.Request.Context(), &req)
+	err = c.authApp.SignUp(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10002,
@@ -70,9 +78,9 @@ func UserSignUpHandler(ctx *gin.Context) {
 	})
 }
 
-// UserCheckInHandler 用户检入控制器
+// UserCheckIn 用户检入控制器
 // @code 1002x
-func UserCheckInHandler(ctx *gin.Context) {
+func (c *AuthController) UserCheckIn(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	var req = types.CheckInReq{}
 	err := ctx.ShouldBind(&req)
@@ -85,7 +93,7 @@ func UserCheckInHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 检入
-	checkInRes, err := application.App.Auth.CheckIn(ctx.Request.Context(), &req)
+	checkInRes, err := c.authApp.CheckIn(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10022,
@@ -102,9 +110,9 @@ func UserCheckInHandler(ctx *gin.Context) {
 	})
 }
 
-// UserSignOutHandler 用户登出控制器
+// UserSignOut 用户登出控制器
 // @code 1003x
-func UserSignOutHandler(ctx *gin.Context) {
+func (c *AuthController) UserSignOut(ctx *gin.Context) {
 	// @step 1. 绑定请求参数
 	var req = types.SignOutReq{}
 	err := ctx.ShouldBind(&req)
@@ -117,7 +125,7 @@ func UserSignOutHandler(ctx *gin.Context) {
 		return
 	}
 	// @step 2. 调用用户服务 - 登出
-	err = application.App.Auth.SignOut(ctx.Request.Context(), &req)
+	err = c.authApp.SignOut(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10032,

@@ -8,20 +8,20 @@ import (
 )
 
 // UseCommentRouter 评论路由
-func UseCommentRouter(router *gin.RouterGroup) {
+func UseCommentRouter(router *gin.RouterGroup, ctrl *controllers.CommentController) {
 	commentGroup := router.Group(
 		"/comments",
 		middlewares.RateLimiter(32, "comments"),
 		middlewares.JWTValidator,
 	)
 	{
-		commentGroup.GET("/", controllers.ListCommentHandler)
-		commentGroup.GET("/:commentId", controllers.GetCommentHandler)
-		commentGroup.POST("/", controllers.CreateCommentHandler)
-		commentGroup.PUT("/:commentId", controllers.UpdateCommentHandler)
+		commentGroup.GET("/", ctrl.ListComment)
+		commentGroup.GET("/:commentId", ctrl.GetComment)
+		commentGroup.POST("/", ctrl.CreateComment)
+		commentGroup.PUT("/:commentId", ctrl.UpdateComment)
 		commentGroup.DELETE(
 			"/:commentId",
-			controllers.DeleteCommentHandler,
+			ctrl.DeleteComment,
 		)
 	}
 }

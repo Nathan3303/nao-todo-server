@@ -1,15 +1,23 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	taskApp "naotodoserver/application/task"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetCommentHandler 获取评论详情控制器
+type CommentController struct {
+	taskApp taskApp.TaskApp
+}
+
+func NewCommentController(app taskApp.TaskApp) *CommentController {
+	return &CommentController{taskApp: app}
+}
+
+// GetComment 获取评论详情控制器
 // @code 6000x
-func GetCommentHandler(ctx *gin.Context) {
+func (c *CommentController) GetComment(ctx *gin.Context) {
 	// 1. 获取评论 ID
 	commentId := ctx.Param("commentId")
 	if commentId == "" {
@@ -20,7 +28,7 @@ func GetCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论详情
-	comment, err := application.App.Task.GetTaskCommentById(ctx.Request.Context(), commentId)
+	comment, err := c.taskApp.GetTaskCommentById(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60002,
@@ -37,9 +45,9 @@ func GetCommentHandler(ctx *gin.Context) {
 	})
 }
 
-// CreateCommentHandler 新增评论控制器
+// CreateComment 新增评论控制器
 // @code 6001x
-func CreateCommentHandler(ctx *gin.Context) {
+func (c *CommentController) CreateComment(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.CreateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -51,7 +59,7 @@ func CreateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层新增评论
-	res, err := application.App.Task.CreateTaskComment(ctx.Request.Context(), &req)
+	res, err := c.taskApp.CreateTaskComment(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60012,
@@ -68,9 +76,9 @@ func CreateCommentHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateCommentHandler 更新评论控制器
+// UpdateComment 更新评论控制器
 // @code 6002x
-func UpdateCommentHandler(ctx *gin.Context) {
+func (c *CommentController) UpdateComment(ctx *gin.Context) {
 	// 1. 获取评论 ID
 	commentId := ctx.Param("commentId")
 	if commentId == "" {
@@ -91,7 +99,7 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新评论
-	err := application.App.Task.UpdateTaskComment(ctx.Request.Context(), commentId, &req)
+	err := c.taskApp.UpdateTaskComment(ctx.Request.Context(), commentId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60023,
@@ -108,9 +116,9 @@ func UpdateCommentHandler(ctx *gin.Context) {
 	})
 }
 
-// DeleteCommentHandler 删除评论控制器
+// DeleteComment 删除评论控制器
 // @code 6003x
-func DeleteCommentHandler(ctx *gin.Context) {
+func (c *CommentController) DeleteComment(ctx *gin.Context) {
 	// 1. 获取评论 ID
 	commentId := ctx.Param("commentId")
 	if commentId == "" {
@@ -121,7 +129,7 @@ func DeleteCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除评论
-	err := application.App.Task.DeleteTaskComment(ctx.Request.Context(), commentId)
+	err := c.taskApp.DeleteTaskComment(ctx.Request.Context(), commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60032,
@@ -138,9 +146,9 @@ func DeleteCommentHandler(ctx *gin.Context) {
 	})
 }
 
-// ListCommentHandler 获取评论列表控制器
+// ListComment 获取评论列表控制器
 // @code 6004x
-func ListCommentHandler(ctx *gin.Context) {
+func (c *CommentController) ListComment(ctx *gin.Context) {
 	// 1. 获取待办任务 ID
 	taskId := ctx.Query("taskId")
 	if taskId == "" {
@@ -151,7 +159,7 @@ func ListCommentHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取评论列表
-	comments, err := application.App.Task.ListTaskComments(ctx.Request.Context(), taskId)
+	comments, err := c.taskApp.ListTaskComments(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60042,

@@ -10,7 +10,12 @@ import (
 type Task interface {
 	// GetById 获取单个任务信息
 	// includeDeleted 为 true 时可查询到已软删除的任务
-	GetById(ctx context.Context, userId int64, taskId int64, includeDeleted bool) (*entities.Task, error)
+	GetById(
+		ctx context.Context,
+		userId int64,
+		taskId int64,
+		includeDeleted bool,
+	) (*entities.Task, error)
 
 	// Create 创建任务
 	Create(

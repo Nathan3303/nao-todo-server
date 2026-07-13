@@ -1,15 +1,23 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	projectApp "naotodoserver/application/project"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetProjectHandler 根据清单 ID 获取清单接入点
+type ProjectController struct {
+	projectApp projectApp.ProjectApp
+}
+
+func NewProjectController(app projectApp.ProjectApp) *ProjectController {
+	return &ProjectController{projectApp: app}
+}
+
+// GetProject 根据清单 ID 获取清单接入点
 // @code 2000x
-func GetProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) GetProject(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -21,7 +29,7 @@ func GetProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 获取清单
-	res, err := application.App.Project.Get(ctx.Request.Context(), projectId)
+	res, err := c.projectApp.Get(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20002,
@@ -38,9 +46,9 @@ func GetProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// CreateProjectHandler 创建清单接入点
+// CreateProject 创建清单接入点
 // @code 2001x
-func CreateProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) CreateProject(ctx *gin.Context) {
 	// 获取参数
 	var createProjectReq types.CreateProjectReq
 	err := ctx.ShouldBind(&createProjectReq)
@@ -53,7 +61,7 @@ func CreateProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 创建清单
-	res, err := application.App.Project.Create(ctx.Request.Context(), &createProjectReq)
+	res, err := c.projectApp.Create(ctx.Request.Context(), &createProjectReq)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20012,
@@ -70,9 +78,9 @@ func CreateProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateProjectHandler 更新清单接入点
+// UpdateProject 更新清单接入点
 // @code 2002x
-func UpdateProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) UpdateProject(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -95,7 +103,7 @@ func UpdateProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 更新清单
-	err = application.App.Project.Update(
+	err = c.projectApp.Update(
 		ctx.Request.Context(),
 		projectId,
 		&updateProjectReq,
@@ -116,9 +124,9 @@ func UpdateProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// DeleteProjectHandler 删除清单接入点
+// DeleteProject 删除清单接入点
 // @code 2003x
-func DeleteProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) DeleteProject(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -130,7 +138,7 @@ func DeleteProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 删除清单
-	err := application.App.Project.Delete(ctx.Request.Context(), projectId)
+	err := c.projectApp.Delete(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20032,
@@ -147,9 +155,9 @@ func DeleteProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// RestoreProjectHandler 恢复清单接入点
+// RestoreProject 恢复清单接入点
 // @code 2004x
-func RestoreProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) RestoreProject(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -161,7 +169,7 @@ func RestoreProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 恢复清单
-	err := application.App.Project.Restore(ctx.Request.Context(), projectId)
+	err := c.projectApp.Restore(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20042,
@@ -178,9 +186,9 @@ func RestoreProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// ArchiveProjectHandler 归档清单接入点
+// ArchiveProject 归档清单接入点
 // @code 2005x
-func ArchiveProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) ArchiveProject(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -192,7 +200,7 @@ func ArchiveProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 归档清单
-	err := application.App.Project.Archive(ctx.Request.Context(), projectId)
+	err := c.projectApp.Archive(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20052,
@@ -209,9 +217,9 @@ func ArchiveProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// UnarchiveProjectHandler 取消归档清单接入点
+// UnarchiveProject 取消归档清单接入点
 // @code 2006x
-func UnarchiveProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) UnarchiveProject(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -223,7 +231,7 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 取消归档清单
-	err := application.App.Project.Unarchive(ctx.Request.Context(), projectId)
+	err := c.projectApp.Unarchive(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20062,
@@ -240,11 +248,11 @@ func UnarchiveProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// ListProjectHandler 获取清单列表接入点
+// ListProject 获取清单列表接入点
 // @code 2007x
-func ListProjectHandler(ctx *gin.Context) {
+func (c *ProjectController) ListProject(ctx *gin.Context) {
 	// 获取清单列表
-	res, err := application.App.Project.List(ctx.Request.Context())
+	res, err := c.projectApp.List(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20071,
@@ -261,9 +269,9 @@ func ListProjectHandler(ctx *gin.Context) {
 	})
 }
 
-// GetProjectPreferenceHandler 获取清单偏好接入点
+// GetProjectPreference 获取清单偏好接入点
 // @code 2008x
-func GetProjectPreferenceHandler(ctx *gin.Context) {
+func (c *ProjectController) GetProjectPreference(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -275,7 +283,7 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 获取清单偏好
-	res, err := application.App.Project.GetPreference(ctx.Request.Context(), projectId)
+	res, err := c.projectApp.GetPreference(ctx.Request.Context(), projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20082,
@@ -292,9 +300,9 @@ func GetProjectPreferenceHandler(ctx *gin.Context) {
 	})
 }
 
-// BatchUpdateProjectsHandler 批量更新清单接入点
+// BatchUpdateProjects 批量更新清单接入点
 // @code 2010x
-func BatchUpdateProjectsHandler(ctx *gin.Context) {
+func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 	var req types.BatchUpdateProjectReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -305,7 +313,7 @@ func BatchUpdateProjectsHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := application.App.Project.BatchUpdate(ctx.Request.Context(), &req)
+	res, err := c.projectApp.BatchUpdate(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20102,
@@ -321,9 +329,9 @@ func BatchUpdateProjectsHandler(ctx *gin.Context) {
 	})
 }
 
-// SaveProjectPreferenceHandler 保存清单偏好接入点
+// SaveProjectPreference 保存清单偏好接入点
 // @code 2009x
-func SaveProjectPreferenceHandler(ctx *gin.Context) {
+func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -346,7 +354,7 @@ func SaveProjectPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 保存清单偏好
-	err = application.App.Project.SavePreference(
+	err = c.projectApp.SavePreference(
 		ctx.Request.Context(),
 		projectId,
 		&updatePreferenceReq,

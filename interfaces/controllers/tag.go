@@ -1,15 +1,23 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	tagApp "naotodoserver/application/tag"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetTagHandler 获取单个标签信息接入点
+type TagController struct {
+	tagApp tagApp.TagApp
+}
+
+func NewTagController(app tagApp.TagApp) *TagController {
+	return &TagController{tagApp: app}
+}
+
+// GetTag 获取单个标签信息接入点
 // @code 3000x
-func GetTagHandler(ctx *gin.Context) {
+func (c *TagController) GetTag(ctx *gin.Context) {
 	// 1. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
@@ -20,7 +28,7 @@ func GetTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 获取标签信息
-	res, err := application.App.Tag.GetTag(ctx.Request.Context(), tagId)
+	res, err := c.tagApp.GetTag(ctx.Request.Context(), tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30002,
@@ -36,9 +44,9 @@ func GetTagHandler(ctx *gin.Context) {
 	})
 }
 
-// CreateTagHandler 创建标签接入点
+// CreateTag 创建标签接入点
 // @code 3001x
-func CreateTagHandler(ctx *gin.Context) {
+func (c *TagController) CreateTag(ctx *gin.Context) {
 	// 1. 获取请求参数
 	createTagReq := &types.CreateTagReq{}
 	err := ctx.ShouldBindJSON(createTagReq)
@@ -51,7 +59,7 @@ func CreateTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 创建标签
-	res, err := application.App.Tag.CreateTag(ctx.Request.Context(), createTagReq)
+	res, err := c.tagApp.CreateTag(ctx.Request.Context(), createTagReq)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30012,
@@ -68,9 +76,9 @@ func CreateTagHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateTagHandler 更新标签接入点
+// UpdateTag 更新标签接入点
 // @code 3002x
-func UpdateTagHandler(ctx *gin.Context) {
+func (c *TagController) UpdateTag(ctx *gin.Context) {
 	// 1. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
@@ -91,7 +99,7 @@ func UpdateTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签
-	err := application.App.Tag.UpdateTag(ctx.Request.Context(), tagId, &updateTagReq)
+	err := c.tagApp.UpdateTag(ctx.Request.Context(), tagId, &updateTagReq)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30023,
@@ -108,9 +116,9 @@ func UpdateTagHandler(ctx *gin.Context) {
 	})
 }
 
-// DeleteTagHandler 删除标签接入点
+// DeleteTag 删除标签接入点
 // @code 3003x
-func DeleteTagHandler(ctx *gin.Context) {
+func (c *TagController) DeleteTag(ctx *gin.Context) {
 	// 1. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
@@ -121,7 +129,7 @@ func DeleteTagHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 删除标签
-	err := application.App.Tag.DeleteTag(ctx.Request.Context(), tagId)
+	err := c.tagApp.DeleteTag(ctx.Request.Context(), tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30032,
@@ -138,11 +146,11 @@ func DeleteTagHandler(ctx *gin.Context) {
 	})
 }
 
-// ListTagHandler 获取标签列表接入点
+// ListTag 获取标签列表接入点
 // @code 3004x
-func ListTagHandler(ctx *gin.Context) {
+func (c *TagController) ListTag(ctx *gin.Context) {
 	// 1. 获取标签列表
-	res, err := application.App.Tag.ListTag(ctx.Request.Context())
+	res, err := c.tagApp.ListTag(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30041,
@@ -159,9 +167,9 @@ func ListTagHandler(ctx *gin.Context) {
 	})
 }
 
-// GetTagPreferenceHandler 获取标签偏好接入点
+// GetTagPreference 获取标签偏好接入点
 // @code 3005x
-func GetTagPreferenceHandler(ctx *gin.Context) {
+func (c *TagController) GetTagPreference(ctx *gin.Context) {
 	// 1. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
@@ -172,7 +180,7 @@ func GetTagPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 获取标签偏好
-	res, err := application.App.Tag.GetTagPreference(ctx.Request.Context(), tagId)
+	res, err := c.tagApp.GetTagPreference(ctx.Request.Context(), tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30052,
@@ -189,9 +197,9 @@ func GetTagPreferenceHandler(ctx *gin.Context) {
 	})
 }
 
-// BatchUpdateTagsHandler 批量更新标签接入点
+// BatchUpdateTags 批量更新标签接入点
 // @code 3007x
-func BatchUpdateTagsHandler(ctx *gin.Context) {
+func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
 	var req types.BatchUpdateTagReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -202,7 +210,7 @@ func BatchUpdateTagsHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := application.App.Tag.BatchUpdateTags(ctx.Request.Context(), &req)
+	res, err := c.tagApp.BatchUpdateTags(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30072,
@@ -218,9 +226,9 @@ func BatchUpdateTagsHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateTagPreferenceHandler 更新标签偏好接入点
+// UpdateTagPreference 更新标签偏好接入点
 // @code 3006x
-func UpdateTagPreferenceHandler(ctx *gin.Context) {
+func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 	// 1. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
@@ -242,8 +250,7 @@ func UpdateTagPreferenceHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签偏好
-	err = application.App.Tag.
-		UpdateTagPreference(ctx.Request.Context(), tagId, &req)
+	err = c.tagApp.UpdateTagPreference(ctx.Request.Context(), tagId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30063,

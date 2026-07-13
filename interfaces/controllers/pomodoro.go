@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	pomodoroApp "naotodoserver/application/pomodoro"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -9,9 +9,17 @@ import (
 
 // --- Pomodoro Record ---
 
-// CreatePomodoroRecordHandler 创建番茄工作记录控制器
+type PomodoroController struct {
+	pomodoroApp pomodoroApp.PomodoroApp
+}
+
+func NewPomodoroController(app pomodoroApp.PomodoroApp) *PomodoroController {
+	return &PomodoroController{pomodoroApp: app}
+}
+
+// CreatePomodoroRecord 创建番茄工作记录控制器
 // @code 7001x
-func CreatePomodoroRecordHandler(ctx *gin.Context) {
+func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 	var req types.CreatePomodoroRecordReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -22,7 +30,7 @@ func CreatePomodoroRecordHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := application.App.Pomodoro.Create(ctx.Request.Context(), &req)
+	res, err := c.pomodoroApp.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70012,
@@ -38,9 +46,9 @@ func CreatePomodoroRecordHandler(ctx *gin.Context) {
 	})
 }
 
-// GetPomodoroRecordHandler 获取专注记录详情控制器
+// GetPomodoroRecord 获取专注记录详情控制器
 // @code 7002x
-func GetPomodoroRecordHandler(ctx *gin.Context) {
+func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -49,7 +57,7 @@ func GetPomodoroRecordHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := application.App.Pomodoro.Get(
+	res, err := c.pomodoroApp.Get(
 		ctx.Request.Context(),
 		&types.GetPomodoroRecordReq{Id: id},
 	)
@@ -67,9 +75,9 @@ func GetPomodoroRecordHandler(ctx *gin.Context) {
 	})
 }
 
-// ListPomodoroRecordHandler 获取专注记录列表控制器
+// ListPomodoroRecord 获取专注记录列表控制器
 // @code 7003x
-func ListPomodoroRecordHandler(ctx *gin.Context) {
+func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 	var req types.ListPomodoroRecordReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -79,7 +87,7 @@ func ListPomodoroRecordHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, total, err := application.App.Pomodoro.List(ctx.Request.Context(), &req)
+	res, total, err := c.pomodoroApp.List(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70032,
@@ -101,9 +109,9 @@ func ListPomodoroRecordHandler(ctx *gin.Context) {
 
 // --- Pomodoro ---
 
-// GetPomodoroHandler 获取常用番茄工作详情控制器
+// GetPomodoro 获取常用番茄工作详情控制器
 // @code 7004x
-func GetPomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -112,7 +120,7 @@ func GetPomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := application.App.Pomodoro.GetPomodoro(
+	res, err := c.pomodoroApp.GetPomodoro(
 		ctx.Request.Context(),
 		&types.GetPomodoroReq{Id: id},
 	)
@@ -130,9 +138,9 @@ func GetPomodoroHandler(ctx *gin.Context) {
 	})
 }
 
-// CreatePomodoroHandler 创建常用番茄工作控制器
+// CreatePomodoro 创建常用番茄工作控制器
 // @code 7005x
-func CreatePomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 	var req types.CreatePomodoroReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -143,7 +151,7 @@ func CreatePomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := application.App.Pomodoro.CreatePomodoro(ctx.Request.Context(), &req)
+	res, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70052,
@@ -159,9 +167,9 @@ func CreatePomodoroHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdatePomodoroHandler 更新常用番茄工作控制器
+// UpdatePomodoro 更新常用番茄工作控制器
 // @code 7006x
-func UpdatePomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -180,7 +188,7 @@ func UpdatePomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	err = application.App.Pomodoro.UpdatePomodoro(
+	err = c.pomodoroApp.UpdatePomodoro(
 		ctx.Request.Context(),
 		id,
 		&req,
@@ -200,9 +208,9 @@ func UpdatePomodoroHandler(ctx *gin.Context) {
 	})
 }
 
-// DeletePomodoroHandler 删除常用番茄工作控制器
+// DeletePomodoro 删除常用番茄工作控制器
 // @code 7010x
-func DeletePomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) DeletePomodoro(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -211,7 +219,7 @@ func DeletePomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	err := application.App.Pomodoro.DeletePomodoro(ctx.Request.Context(), id)
+	err := c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), id)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70102,
@@ -227,9 +235,9 @@ func DeletePomodoroHandler(ctx *gin.Context) {
 	})
 }
 
-// ArchivedPomodoroHandler 归档常用番茄工作控制器
+// ArchivedPomodoro 归档常用番茄工作控制器
 // @code 7007x
-func ArchivedPomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) ArchivedPomodoro(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -238,7 +246,7 @@ func ArchivedPomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	err := application.App.Pomodoro.ArchivePomodoro(ctx.Request.Context(), id)
+	err := c.pomodoroApp.ArchivePomodoro(ctx.Request.Context(), id)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70072,
@@ -254,9 +262,9 @@ func ArchivedPomodoroHandler(ctx *gin.Context) {
 	})
 }
 
-// UnarchivedPomodoroHandler 取消归档常用番茄工作控制器
+// UnarchivedPomodoro 取消归档常用番茄工作控制器
 // @code 7008x
-func UnarchivedPomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) UnarchivedPomodoro(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -265,7 +273,7 @@ func UnarchivedPomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	err := application.App.Pomodoro.UnarchivePomodoro(ctx.Request.Context(), id)
+	err := c.pomodoroApp.UnarchivePomodoro(ctx.Request.Context(), id)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70082,
@@ -281,9 +289,9 @@ func UnarchivedPomodoroHandler(ctx *gin.Context) {
 	})
 }
 
-// ListPomodoroHandler 获取常用番茄工作列表控制器
+// ListPomodoro 获取常用番茄工作列表控制器
 // @code 7009x
-func ListPomodoroHandler(ctx *gin.Context) {
+func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 	var req types.ListPomodoroReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -293,7 +301,7 @@ func ListPomodoroHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	res, total, err := application.App.Pomodoro.ListPomodoro(ctx.Request.Context(), &req)
+	res, total, err := c.pomodoroApp.ListPomodoro(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70092,

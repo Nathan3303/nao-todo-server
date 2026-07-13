@@ -1,15 +1,23 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	taskApp "naotodoserver/application/task"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetEventHandler 获取检查事项详情控制器
+type EventController struct {
+	taskApp taskApp.TaskApp
+}
+
+func NewEventController(app taskApp.TaskApp) *EventController {
+	return &EventController{taskApp: app}
+}
+
+// GetEvent 获取检查事项详情控制器
 // @code 5000x
-func GetEventHandler(ctx *gin.Context) {
+func (c *EventController) GetEvent(ctx *gin.Context) {
 	// 1. 获取检查事项 ID
 	eventId := ctx.Param("eventId")
 	if eventId == "" {
@@ -20,7 +28,7 @@ func GetEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取检查事项
-	res, err := application.App.Task.GetTaskCheckItemById(ctx.Request.Context(), eventId)
+	res, err := c.taskApp.GetTaskCheckItemById(ctx.Request.Context(), eventId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50002,
@@ -37,9 +45,9 @@ func GetEventHandler(ctx *gin.Context) {
 	})
 }
 
-// CreateEventHandler 新增检查事项控制器
+// CreateEvent 新增检查事项控制器
 // @code 5001x
-func CreateEventHandler(ctx *gin.Context) {
+func (c *EventController) CreateEvent(ctx *gin.Context) {
 	// 1. 获取请求参数
 	var req types.CreateTaskCheckItemReq
 	err := ctx.ShouldBindJSON(&req)
@@ -52,7 +60,7 @@ func CreateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层创建检查事项
-	res, err := application.App.Task.CreateTaskCheckItem(ctx.Request.Context(), &req)
+	res, err := c.taskApp.CreateTaskCheckItem(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50012,
@@ -69,9 +77,9 @@ func CreateEventHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateEventHandler 更新检查事项控制器
+// UpdateEvent 更新检查事项控制器
 // @code 5002x
-func UpdateEventHandler(ctx *gin.Context) {
+func (c *EventController) UpdateEvent(ctx *gin.Context) {
 	// 1. 获取检查事项 ID
 	eventId := ctx.Param("eventId")
 	if eventId == "" {
@@ -93,7 +101,7 @@ func UpdateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新检查事项
-	err = application.App.Task.UpdateTaskCheckItem(ctx.Request.Context(), eventId, &req)
+	err = c.taskApp.UpdateTaskCheckItem(ctx.Request.Context(), eventId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50023,
@@ -110,9 +118,9 @@ func UpdateEventHandler(ctx *gin.Context) {
 	})
 }
 
-// DeleteEventHandler 删除检查事项控制器
+// DeleteEvent 删除检查事项控制器
 // @code 5003x
-func DeleteEventHandler(ctx *gin.Context) {
+func (c *EventController) DeleteEvent(ctx *gin.Context) {
 	// 1. 获取检查事项 ID
 	eventId := ctx.Param("eventId")
 	if eventId == "" {
@@ -123,7 +131,7 @@ func DeleteEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层删除检查事项
-	err := application.App.Task.DeleteTaskCheckItem(ctx.Request.Context(), eventId)
+	err := c.taskApp.DeleteTaskCheckItem(ctx.Request.Context(), eventId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50032,
@@ -140,9 +148,9 @@ func DeleteEventHandler(ctx *gin.Context) {
 	})
 }
 
-// ListEventHandler 获取检查事项列表控制器
+// ListEvent 获取检查事项列表控制器
 // @code 5004x
-func ListEventHandler(ctx *gin.Context) {
+func (c *EventController) ListEvent(ctx *gin.Context) {
 	// 1. 获取待办事项 ID
 	taskId := ctx.Query("taskId")
 	if taskId == "" {
@@ -153,7 +161,7 @@ func ListEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层获取检查事项列表
-	res, err := application.App.Task.ListTaskCheckItems(ctx.Request.Context(), taskId)
+	res, err := c.taskApp.ListTaskCheckItems(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50042,
@@ -170,9 +178,9 @@ func ListEventHandler(ctx *gin.Context) {
 	})
 }
 
-// BatchUpdateEventHandler 批量更新检查事项控制器
+// BatchUpdateEvent 批量更新检查事项控制器
 // @code 5006x
-func BatchUpdateEventHandler(ctx *gin.Context) {
+func (c *EventController) BatchUpdateEvent(ctx *gin.Context) {
 	// 1. 获取请求参数
 	var req types.BatchUpdateTaskCheckItemReq
 	err := ctx.ShouldBindJSON(&req)
@@ -185,7 +193,7 @@ func BatchUpdateEventHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层批量更新检查事项
-	res, err := application.App.Task.BatchUpdateTaskCheckItems(ctx.Request.Context(), &req)
+	res, err := c.taskApp.BatchUpdateTaskCheckItems(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50062,

@@ -25,7 +25,7 @@ func Success(ctx *gin.Context, resData types.ResponseData) {
 }
 
 func Failure(ctx *gin.Context, resData types.ResponseData) {
-	EndWithStatus(ctx, http.StatusOK, resData)
+	EndWithStatus(ctx, http.StatusBadRequest, resData)
 }
 
 func FailureByHttpStatus(ctx *gin.Context, status int, resData types.ResponseData) {

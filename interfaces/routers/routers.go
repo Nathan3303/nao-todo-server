@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"naotodoserver/application"
 	"naotodoserver/conf"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
@@ -80,15 +81,25 @@ func InitRouters() *gin.Engine {
 	)
 	{
 		v1.GET("/ping", controllers.PingHandler)
-		UseAuthRouter(v1)
-		UseUserRouter(v1)
-		UseProjectRouter(v1)
-		UseTagRouter(v1)
-		UseTaskRouter(v1)
-		UseEventRouter(v1)
-		UseCommentRouter(v1)
-		UsePomodoroRouter(v1)
-		UseSSERouter(v1)
+		authCtrl := controllers.NewAuthController(application.App.Auth)
+		userCtrl := controllers.NewUserController(application.App.User)
+		projectCtrl := controllers.NewProjectController(application.App.Project)
+		taskCtrl := controllers.NewTaskController(application.App.Task)
+		eventCtrl := controllers.NewEventController(application.App.Task)
+		commentCtrl := controllers.NewCommentController(application.App.Task)
+		tagCtrl := controllers.NewTagController(application.App.Tag)
+		pomodoroCtrl := controllers.NewPomodoroController(application.App.Pomodoro)
+		sseCtrl := controllers.NewSSEController()
+
+		UseAuthRouter(v1, authCtrl)
+		UseUserRouter(v1, userCtrl)
+		UseProjectRouter(v1, projectCtrl)
+		UseTagRouter(v1, tagCtrl)
+		UseTaskRouter(v1, taskCtrl)
+		UseEventRouter(v1, eventCtrl)
+		UseCommentRouter(v1, commentCtrl)
+		UsePomodoroRouter(v1, pomodoroCtrl)
+		UseSSERouter(v1, sseCtrl)
 	}
 
 	// 返回 Gin 引擎

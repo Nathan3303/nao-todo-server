@@ -7,26 +7,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseTagRouter(router *gin.RouterGroup) {
+func UseTagRouter(router *gin.RouterGroup, ctrl *controllers.TagController) {
 	tagGroup := router.Group(
 		"/tags",
 		middlewares.RateLimiter(32, "tags"),
 		middlewares.JWTValidator,
 	)
 	{
-		tagGroup.GET("/", controllers.ListTagHandler)
-		tagGroup.GET("/:tagId", controllers.GetTagHandler)
-		tagGroup.POST("/", controllers.CreateTagHandler)
-		tagGroup.PUT("/", controllers.BatchUpdateTagsHandler)
-		tagGroup.PUT("/:tagId", controllers.UpdateTagHandler)
-		tagGroup.DELETE("/:tagId", controllers.DeleteTagHandler)
+		tagGroup.GET("/", ctrl.ListTag)
+		tagGroup.GET("/:tagId", ctrl.GetTag)
+		tagGroup.POST("/", ctrl.CreateTag)
+		tagGroup.PUT("/", ctrl.BatchUpdateTags)
+		tagGroup.PUT("/:tagId", ctrl.UpdateTag)
+		tagGroup.DELETE("/:tagId", ctrl.DeleteTag)
 		tagGroup.GET(
 			"/:tagId/preference",
-			controllers.GetTagPreferenceHandler,
+			ctrl.GetTagPreference,
 		)
 		tagGroup.POST(
 			"/:tagId/preference",
-			controllers.UpdateTagPreferenceHandler,
+			ctrl.UpdateTagPreference,
 		)
 	}
 }

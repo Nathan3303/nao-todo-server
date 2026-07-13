@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseProjectRouter(router *gin.RouterGroup) {
+func UseProjectRouter(router *gin.RouterGroup, ctrl *controllers.ProjectController) {
 	projectGroup := router.Group(
 		"/projects",
 		middlewares.RateLimiter(32, "projects"),
@@ -16,47 +16,47 @@ func UseProjectRouter(router *gin.RouterGroup) {
 	{
 		projectGroup.GET(
 			"/",
-			controllers.ListProjectHandler,
+			ctrl.ListProject,
 		)
 		projectGroup.GET(
 			"/:projectId",
-			controllers.GetProjectHandler,
+			ctrl.GetProject,
 		)
 		projectGroup.POST(
 			"/",
-			controllers.CreateProjectHandler,
+			ctrl.CreateProject,
 		)
 		projectGroup.PUT(
 			"/",
-			controllers.BatchUpdateProjectsHandler,
+			ctrl.BatchUpdateProjects,
 		)
 		projectGroup.PUT(
 			"/:projectId",
-			controllers.UpdateProjectHandler,
+			ctrl.UpdateProject,
 		)
 		projectGroup.DELETE(
 			"/:projectId",
-			controllers.DeleteProjectHandler,
+			ctrl.DeleteProject,
 		)
 		projectGroup.PUT(
 			"/restore/:projectId",
-			controllers.RestoreProjectHandler,
+			ctrl.RestoreProject,
 		)
 		projectGroup.PUT(
 			"/archive/:projectId",
-			controllers.ArchiveProjectHandler,
+			ctrl.ArchiveProject,
 		)
 		projectGroup.PUT(
 			"/unarchive/:projectId",
-			controllers.UnarchiveProjectHandler,
+			ctrl.UnarchiveProject,
 		)
 		projectGroup.GET(
 			"/:projectId/preference",
-			controllers.GetProjectPreferenceHandler,
+			ctrl.GetProjectPreference,
 		)
 		projectGroup.POST(
 			"/:projectId/preference",
-			controllers.SaveProjectPreferenceHandler,
+			ctrl.SaveProjectPreference,
 		)
 	}
 }

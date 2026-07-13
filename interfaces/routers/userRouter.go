@@ -7,20 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseUserRouter(router *gin.RouterGroup) {
+func UseUserRouter(router *gin.RouterGroup, ctrl *controllers.UserController) {
 	userGroup := router.Group(
 		"/user",
 		middlewares.RateLimiter(16, "user"),
 		middlewares.JWTValidator,
 	)
 	{
-		userGroup.GET("/profile", controllers.GetUserProfileHandler)
-		userGroup.PUT("/nickname", controllers.UpdateUserNicknameHandler)
-		userGroup.PUT("/password", controllers.UpdateUserPasswordHandler)
-		userGroup.PUT("/avatar", controllers.UpdateUserAvatarHandler)
-		userGroup.PUT("/active", controllers.ActiveUserHandler)
-		userGroup.PUT("/deactive", controllers.DeactiveUserHandler)
-		userGroup.GET("/config", controllers.GetUserConfigHandler)
-		userGroup.PUT("/config", controllers.UpdateUserConfigHandler)
+		userGroup.GET("/profile", ctrl.GetUserProfile)
+		userGroup.PUT("/nickname", ctrl.UpdateUserNickname)
+		userGroup.PUT("/password", ctrl.UpdateUserPassword)
+		userGroup.PUT("/avatar", ctrl.UpdateUserAvatar)
+		userGroup.PUT("/active", ctrl.ActiveUser)
+		userGroup.PUT("/deactive", ctrl.DeactiveUser)
+		userGroup.GET("/config", ctrl.GetUserConfig)
+		userGroup.PUT("/config", ctrl.UpdateUserConfig)
 	}
 }

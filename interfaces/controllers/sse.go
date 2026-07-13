@@ -9,9 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type SSEController struct{}
+
+func NewSSEController() *SSEController {
+	return &SSEController{}
+}
+
 // ReminderStream 提醒事件 SSE 流
 // @code 5000x
-func ReminderStream(ctx *gin.Context) {
+func (c *SSEController) ReminderStream(ctx *gin.Context) {
 	// 1. 获取用户 ID 和 token
 	userId := context.GetUserId(ctx.Request.Context())
 	token := context.GetToken(ctx.Request.Context())

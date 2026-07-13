@@ -1,16 +1,24 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	userApp "naotodoserver/application/user"
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// UpdateUserNicknameHandler 更新用户昵称控制器
+type UserController struct {
+	userApp userApp.UserApp
+}
+
+func NewUserController(app userApp.UserApp) *UserController {
+	return &UserController{userApp: app}
+}
+
+// UpdateUserNickname 更新用户昵称控制器
 // @code 1005x
-func UpdateUserNicknameHandler(ctx *gin.Context) {
+func (c *UserController) UpdateUserNickname(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.UpdateUserNicknameReq
 	err := ctx.ShouldBind(&req)
@@ -30,7 +38,7 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户昵称
-	err = application.App.User.UpdateNickname(ctx.Request.Context(), req)
+	err = c.userApp.UpdateNickname(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10053,
@@ -45,11 +53,11 @@ func UpdateUserNicknameHandler(ctx *gin.Context) {
 	})
 }
 
-// GetUserProfileHandler 获取用户详情控制器
+// GetUserProfile 获取用户详情控制器
 // @code 1006x
-func GetUserProfileHandler(ctx *gin.Context) {
+func (c *UserController) GetUserProfile(ctx *gin.Context) {
 	// 1. 调用用户服务 - 获取用户详情
-	res, err := application.App.User.GetProfile(ctx.Request.Context())
+	res, err := c.userApp.GetProfile(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10065,
@@ -65,9 +73,9 @@ func GetUserProfileHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateUserPasswordHandler 更新用户密码控制器
+// UpdateUserPassword 更新用户密码控制器
 // @code 1007x
-func UpdateUserPasswordHandler(ctx *gin.Context) {
+func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.UpdateUserPasswordReq
 	err := ctx.ShouldBind(&req)
@@ -87,7 +95,7 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户密码
-	err = application.App.User.UpdatePassword(ctx.Request.Context(), req)
+	err = c.userApp.UpdatePassword(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10074,
@@ -102,9 +110,9 @@ func UpdateUserPasswordHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateUserAvatarHandler 更新用户头像控制器
+// UpdateUserAvatar 更新用户头像控制器
 // @code 1008x
-func UpdateUserAvatarHandler(ctx *gin.Context) {
+func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 	// 1. 判断请求类型
 	contentType := ctx.ContentType()
 
@@ -126,7 +134,7 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 		}
 
 		if req.AvatarURL != "" {
-			res, err = application.App.User.UpdateAvatar(ctx.Request.Context(), req)
+			res, err = c.userApp.UpdateAvatar(ctx.Request.Context(), req)
 		} else {
 			Failure(ctx, types.ResponseData{
 				Code:    10081,
@@ -136,7 +144,7 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 		}
 	case "multipart/form-data":
 		// 表单请求：通过文件上传更新
-		res, err = application.App.User.UpdateAvatarByFile(ctx, ctx.Request.Context())
+		res, err = c.userApp.UpdateAvatarByFile(ctx, ctx.Request.Context())
 	default:
 		Failure(ctx, types.ResponseData{
 			Code:    10081,
@@ -162,9 +170,9 @@ func UpdateUserAvatarHandler(ctx *gin.Context) {
 	})
 }
 
-// DeactiveUserHandler 禁用用户控制器
+// DeactiveUser 禁用用户控制器
 // @code 1009x
-func DeactiveUserHandler(ctx *gin.Context) {
+func (c *UserController) DeactiveUser(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.DeactiveUserReq
 	err := ctx.ShouldBind(&req)
@@ -176,7 +184,7 @@ func DeactiveUserHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用用户服务 - 禁用用户
-	err = application.App.User.DeactiveUser(ctx.Request.Context(), &req)
+	err = c.userApp.DeactiveUser(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10092,
@@ -192,9 +200,9 @@ func DeactiveUserHandler(ctx *gin.Context) {
 	})
 }
 
-// ActiveUserHandler 启用用户控制器
+// ActiveUser 启用用户控制器
 // @code 1010x
-func ActiveUserHandler(ctx *gin.Context) {
+func (c *UserController) ActiveUser(ctx *gin.Context) {
 	// 1. 获取参数
 	var req types.ActiveUserReq
 	err := ctx.ShouldBind(&req)
@@ -206,7 +214,7 @@ func ActiveUserHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用用户服务 - 启用用户
-	err = application.App.User.ActiveUser(ctx.Request.Context(), &req)
+	err = c.userApp.ActiveUser(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10102,
@@ -222,10 +230,10 @@ func ActiveUserHandler(ctx *gin.Context) {
 	})
 }
 
-// GetUserConfigHandler 获取用户配置控制器
+// GetUserConfig 获取用户配置控制器
 // @code 1011x
-func GetUserConfigHandler(ctx *gin.Context) {
-	res, err := application.App.User.GetConfig(ctx.Request.Context())
+func (c *UserController) GetUserConfig(ctx *gin.Context) {
+	res, err := c.userApp.GetConfig(ctx.Request.Context())
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10111,
@@ -240,9 +248,9 @@ func GetUserConfigHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateUserConfigHandler 更新用户配置控制器
+// UpdateUserConfig 更新用户配置控制器
 // @code 1012x
-func UpdateUserConfigHandler(ctx *gin.Context) {
+func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 	var req types.UpdateUserConfigReq
 	err := ctx.ShouldBind(&req)
 	if err != nil {
@@ -259,7 +267,7 @@ func UpdateUserConfigHandler(ctx *gin.Context) {
 	// 	})
 	// 	return
 	// }
-	err = application.App.User.UpdateConfig(ctx.Request.Context(), req)
+	err = c.userApp.UpdateConfig(ctx.Request.Context(), req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10123,

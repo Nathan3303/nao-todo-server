@@ -1,15 +1,23 @@
 package controllers
 
 import (
-	"naotodoserver/application"
+	taskApp "naotodoserver/application/task"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetTaskHandler 获取待办任务详情控制器
+type TaskController struct {
+	taskApp taskApp.TaskApp
+}
+
+func NewTaskController(app taskApp.TaskApp) *TaskController {
+	return &TaskController{taskApp: app}
+}
+
+// GetTask 获取待办任务详情控制器
 // @code 4000x
-func GetTaskHandler(ctx *gin.Context) {
+func (c *TaskController) GetTask(ctx *gin.Context) {
 	// 1. 获取待办任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
@@ -21,7 +29,7 @@ func GetTaskHandler(ctx *gin.Context) {
 	}
 	// 2. 调用应用层获取任务信息
 	includeDeleted := ctx.Query("isDeleted") == "true"
-	res, err := application.App.Task.GetTaskById(ctx.Request.Context(), taskId, includeDeleted)
+	res, err := c.taskApp.GetTaskById(ctx.Request.Context(), taskId, includeDeleted)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40002,
@@ -37,9 +45,9 @@ func GetTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// CreateTaskHandler 创建待办任务控制器
+// CreateTask 创建待办任务控制器
 // @code 4001x
-func CreateTaskHandler(ctx *gin.Context) {
+func (c *TaskController) CreateTask(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.CreateTaskReq
 	err := ctx.ShouldBindJSON(&req)
@@ -52,7 +60,7 @@ func CreateTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层创建任务
-	res, err := application.App.Task.CreateTask(ctx.Request.Context(), &req)
+	res, err := c.taskApp.CreateTask(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40012,
@@ -69,9 +77,9 @@ func CreateTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// UpdateTaskHandler 更新待办任务控制器
+// UpdateTask 更新待办任务控制器
 // @code 4002x
-func UpdateTaskHandler(ctx *gin.Context) {
+func (c *TaskController) UpdateTask(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.UpdateTaskReq
 	err := ctx.ShouldBindJSON(&req)
@@ -92,7 +100,7 @@ func UpdateTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层更新任务
-	err = application.App.Task.UpdateTask(ctx.Request.Context(), taskId, &req)
+	err = c.taskApp.UpdateTask(ctx.Request.Context(), taskId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40023,
@@ -108,9 +116,9 @@ func UpdateTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// DeleteTaskHandler 删除待办任务控制器
+// DeleteTask 删除待办任务控制器
 // @code 4003x
-func DeleteTaskHandler(ctx *gin.Context) {
+func (c *TaskController) DeleteTask(ctx *gin.Context) {
 	// 1. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
@@ -121,7 +129,7 @@ func DeleteTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层删除任务
-	err := application.App.Task.DeleteTask(ctx.Request.Context(), taskId)
+	err := c.taskApp.DeleteTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40032,
@@ -137,9 +145,9 @@ func DeleteTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// RestoreTaskHandler 恢复待办任务控制器
+// RestoreTask 恢复待办任务控制器
 // @code 4004x
-func RestoreTaskHandler(ctx *gin.Context) {
+func (c *TaskController) RestoreTask(ctx *gin.Context) {
 	// 1. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
@@ -150,7 +158,7 @@ func RestoreTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层恢复任务
-	err := application.App.Task.RestoreTask(ctx.Request.Context(), taskId)
+	err := c.taskApp.RestoreTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40042,
@@ -166,9 +174,9 @@ func RestoreTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// CopyTaskHandler 复制待办任务控制器
+// CopyTask 复制待办任务控制器
 // @code 4006x
-func CopyTaskHandler(ctx *gin.Context) {
+func (c *TaskController) CopyTask(ctx *gin.Context) {
 	// 1. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
@@ -179,7 +187,7 @@ func CopyTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层复制任务
-	res, err := application.App.Task.CopyTask(ctx.Request.Context(), taskId)
+	res, err := c.taskApp.CopyTask(ctx.Request.Context(), taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40062,
@@ -195,9 +203,9 @@ func CopyTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// ListTaskHandler 获取待办任务列表控制器
+// ListTask 获取待办任务列表控制器
 // @code 4005x
-func ListTaskHandler(ctx *gin.Context) {
+func (c *TaskController) ListTask(ctx *gin.Context) {
 	// 1. 绑定请求参数
 	var req types.ListTaskReq
 	err := ctx.ShouldBindQuery(&req)
@@ -209,7 +217,7 @@ func ListTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用层获取任务列表
-	tasks, paginationRes, err := application.App.Task.ListTask(ctx.Request.Context(), &req)
+	tasks, paginationRes, err := c.taskApp.ListTask(ctx.Request.Context(), &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40052,
@@ -226,9 +234,9 @@ func ListTaskHandler(ctx *gin.Context) {
 	})
 }
 
-// SnoozeTaskHandler 稍后提醒控制器
+// SnoozeTask 稍后提醒控制器
 // @code 4009x
-func SnoozeTaskHandler(ctx *gin.Context) {
+func (c *TaskController) SnoozeTask(ctx *gin.Context) {
 	// 1. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
@@ -250,7 +258,7 @@ func SnoozeTaskHandler(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层设置稍后提醒
-	res, err := application.App.Task.SnoozeTask(ctx.Request.Context(), taskId, &req)
+	res, err := c.taskApp.SnoozeTask(ctx.Request.Context(), taskId, &req)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40093,

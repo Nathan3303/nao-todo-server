@@ -8,7 +8,7 @@ import (
 )
 
 // UsePomodoroRouter 配置 Pomodoro 路由
-func UsePomodoroRouter(router *gin.RouterGroup) {
+func UsePomodoroRouter(router *gin.RouterGroup, ctrl *controllers.PomodoroController) {
 	// Pomodoro 路由
 	pomodoroGroup := router.Group(
 		"/pomodoros",
@@ -16,13 +16,13 @@ func UsePomodoroRouter(router *gin.RouterGroup) {
 		middlewares.JWTValidator,
 	)
 	{
-		pomodoroGroup.GET("/:id", controllers.GetPomodoroHandler)
-		pomodoroGroup.POST("/", controllers.CreatePomodoroHandler)
-		pomodoroGroup.PUT("/:id", controllers.UpdatePomodoroHandler)
-		pomodoroGroup.DELETE("/:id", controllers.DeletePomodoroHandler)
-		pomodoroGroup.PUT("/:id/archived", controllers.ArchivedPomodoroHandler)
-		pomodoroGroup.PUT("/:id/unarchived", controllers.UnarchivedPomodoroHandler)
-		pomodoroGroup.GET("/", controllers.ListPomodoroHandler)
+		pomodoroGroup.GET("/:id", ctrl.GetPomodoro)
+		pomodoroGroup.POST("/", ctrl.CreatePomodoro)
+		pomodoroGroup.PUT("/:id", ctrl.UpdatePomodoro)
+		pomodoroGroup.DELETE("/:id", ctrl.DeletePomodoro)
+		pomodoroGroup.PUT("/:id/archived", ctrl.ArchivedPomodoro)
+		pomodoroGroup.PUT("/:id/unarchived", ctrl.UnarchivedPomodoro)
+		pomodoroGroup.GET("/", ctrl.ListPomodoro)
 	}
 
 	// Pomodoro Record 路由
@@ -34,15 +34,15 @@ func UsePomodoroRouter(router *gin.RouterGroup) {
 	{
 		pomodoroRecordsGroup.POST(
 			"/",
-			controllers.CreatePomodoroRecordHandler,
+			ctrl.CreatePomodoroRecord,
 		)
 		pomodoroRecordsGroup.GET(
 			"/:id",
-			controllers.GetPomodoroRecordHandler,
+			ctrl.GetPomodoroRecord,
 		)
 		pomodoroRecordsGroup.GET(
 			"/",
-			controllers.ListPomodoroRecordHandler,
+			ctrl.ListPomodoroRecord,
 		)
 	}
 }
