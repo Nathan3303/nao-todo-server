@@ -19,9 +19,13 @@ func CreatePomodoroRecordReqToVO(
 	if err != nil {
 		return nil, err
 	}
-	pomodoroId, err := strconv.ParseInt(req.PomodoroId, 10, 64)
-	if err != nil {
-		return nil, err
+	// PomodoroId 为弱关联，可为空；仅在非空时解析
+	var pomodoroId int64
+	if req.PomodoroId != "" {
+		pomodoroId, err = strconv.ParseInt(req.PomodoroId, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return valueobjects.NewCreatePomodoroRecord(
 		userId,

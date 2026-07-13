@@ -22,14 +22,27 @@ func NewPomodoroRecordRepo(db *gorm.DB) repositories.PomodoroRecord {
 }
 
 // Create 创建 PomodoroRecord
+// 若记录关联了常用番茄工作（PomodoroId > 0），在同一事务内原子累加其 TotalDuration，
+// 保证记录落库与时长累计要么同时成功、要么同时回滚。
 func (r *PomodoroRecordRepoImpl) Create(
 	ctx context.Context,
 	vo *valueobjects.CreatePomodoroRecord,
 ) (*entities.PomodoroRecord, error) {
 	m := CreatePomodoroRecordVOToModel(vo)
-	tx := r.db.WithContext(ctx).Create(m)
-	if tx.Error != nil {
-		return nil, tx.Error
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(m).Error; err != nil {
+			return err
+		}
+		if vo.PomodoroId > 0 {
+			return tx.Model(&models.Pomodoro{}).
+				Where("id = ? AND user_id = ?", vo.PomodoroId, vo.UserId).
+				Update("total_duration", gorm.Expr("total_duration + ?", uint64(vo.Duration))).
+				Error
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	return PomodoroRecordModel2Entity(m), nil
 }
