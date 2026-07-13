@@ -25,10 +25,7 @@ func (vo *CreatePomodoroRecord) Validate() error {
 	if vo.SessionId == "" {
 		return errors.New("会话 ID 不能为空")
 	}
-	if vo.TaskId <= 0 {
-		return errors.New("任务 ID 无效")
-	}
-	if vo.TaskName == "" {
+	if vo.TaskId > 0 && vo.TaskName == "" {
 		return errors.New("任务名称不能为空")
 	}
 	if vo.StartAt.IsNull {

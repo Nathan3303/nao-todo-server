@@ -71,6 +71,7 @@ type CreatePomodoroRecordReq struct {
 type CreatePomodoroRecordRes struct {
 	ResBase
 	SessionId   string `json:"sessionId"` // Like uuidv4
+	PomodoroId  string `json:"pomodoroId"`
 	Type        uint8  `json:"type"`
 	TaskId      string `json:"taskId"`
 	TaskName    string `json:"taskName"`

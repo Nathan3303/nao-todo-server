@@ -15,9 +15,14 @@ func CreatePomodoroRecordReqToVO(
 	userId int64,
 	req *types.CreatePomodoroRecordReq,
 ) (*valueobjects.CreatePomodoroRecord, error) {
-	taskId, err := strconv.ParseInt(req.TaskId, 10, 64)
-	if err != nil {
-		return nil, err
+	// TaskId 为弱关联，可为空（纯专注番茄）；仅在非空时解析
+	var taskId int64
+	var err error
+	if req.TaskId != "" {
+		taskId, err = strconv.ParseInt(req.TaskId, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
 	// PomodoroId 为弱关联，可为空；仅在非空时解析
 	var pomodoroId int64
@@ -49,8 +54,15 @@ func PomodoroRecordEntityToCreateRes(e *entities.PomodoroRecord) *types.CreatePo
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
 	res.SessionId = e.SessionId
+	res.PomodoroId = strconv.FormatInt(e.PomodoroId, 10)
+	if e.PomodoroId == 0 {
+		res.PomodoroId = ""
+	}
 	res.Type = e.Type
 	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	if e.TaskId == 0 {
+		res.TaskId = ""
+	}
 	res.TaskName = e.TaskName
 	res.Description = e.Description
 	res.StartAt = e.StartAt.Format(time.RFC3339)
@@ -67,8 +79,15 @@ func PomodoroRecordEntityToGetRes(e *entities.PomodoroRecord) *types.GetPomodoro
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
 	res.SessionId = e.SessionId
+	res.PomodoroId = strconv.FormatInt(e.PomodoroId, 10)
+	if e.PomodoroId == 0 {
+		res.PomodoroId = ""
+	}
 	res.Type = e.Type
 	res.TaskId = strconv.FormatInt(e.TaskId, 10)
+	if e.TaskId == 0 {
+		res.TaskId = ""
+	}
 	res.TaskName = e.TaskName
 	res.Description = e.Description
 	res.StartAt = e.StartAt.Format(time.RFC3339)
