@@ -6,6 +6,7 @@ import (
 	"naotodoserver/domain/identity/repositories"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/ip2region"
+	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
 	"time"
 
@@ -13,12 +14,14 @@ import (
 )
 
 type sessionRepoImpl struct {
-	db *gorm.DB
+	db    *gorm.DB
+	cache *cache.Cache
 }
 
-func NewSessionRepo(db *gorm.DB) repositories.UserSession {
+func NewSessionRepo(db *gorm.DB, c *cache.Cache) repositories.UserSession {
 	return &sessionRepoImpl{
-		db: db,
+		db:    db,
+		cache: c,
 	}
 }
 
@@ -50,6 +53,11 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 		if tx.Error != nil {
 			return tx.Error
 		}
+		// 3. 失效旧 token 与新 token 的会话缓存
+		if currentSession.Token != "" {
+			sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, currentSession.Token))
+		}
+		sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, sessionEntity.Token))
 		return nil
 	}
 	// 3. 执行结果不存在逻辑 - 创建记录
@@ -63,6 +71,8 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 	if tx.Error != nil {
 		return tx.Error
 	}
+	// 4. 失效新 token 的会话缓存
+	sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, sessionEntity.Token))
 	return nil
 }
 
@@ -81,7 +91,9 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token strin
 	if tx.Error != nil {
 		return tx.Error
 	}
-	// 3. 返回结果
+	// 3. 失效该会话缓存
+	sr.cache.Del(ctx, cache.SessionKey(userId, token))
+	// 4. 返回结果
 	return nil
 }
 
@@ -130,7 +142,9 @@ func (sr *sessionRepoImpl) UpdateToken(
 	if tx.Error != nil {
 		return tx.Error
 	}
-	// 3. 返回结果
+	// 3. 失效该会话缓存
+	sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, sessionEntity.Token))
+	// 4. 返回结果
 	return nil
 }
 
@@ -138,6 +152,13 @@ func (sr *sessionRepoImpl) UpdateToken(
  * Is Session Valid
  */
 func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId int64, token string) bool {
+	// 1. 优先读取缓存，命中直接返回
+	key := cache.SessionKey(userId, token)
+	var cached bool
+	if sr.cache.Get(ctx, key, &cached) {
+		return cached
+	}
+	// 2. 未命中则执行 MySQL 查询
 	session := &models.UserSession{}
 	tx := sr.db.
 		WithContext(ctx).
@@ -149,7 +170,12 @@ func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId int64, tok
 			time.Now(),
 		).
 		First(session)
-	return tx.Error == nil && session.ID != 0
+	valid := tx.Error == nil && session.ID != 0
+	// 3. 仅缓存有效会话，TTL 5 分钟
+	if valid {
+		sr.cache.Set(ctx, key, valid, time.Minute*5)
+	}
+	return valid
 }
 
 /**

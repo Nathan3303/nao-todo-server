@@ -5,17 +5,20 @@ import (
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
+	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type TagRepositoryImpl struct {
-	db *gorm.DB
+	db    *gorm.DB
+	cache *cache.Cache
 }
 
-func NewTagRepo(db *gorm.DB) repositories.TagRepository {
-	return &TagRepositoryImpl{db: db}
+func NewTagRepo(db *gorm.DB, c *cache.Cache) repositories.TagRepository {
+	return &TagRepositoryImpl{db: db, cache: c}
 }
 
 // GetById 获取标签信息
@@ -66,7 +69,10 @@ func (tagRepo *TagRepositoryImpl) Create(
 		return nil, tx.Error
 	}
 	// 3. 返回结果
-	return TagModel2Entity(createValue), nil
+	entity := TagModel2Entity(createValue)
+	// 4. 失效标签列表缓存
+	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
+	return entity, nil
 }
 
 // Update 更新标签
@@ -90,7 +96,12 @@ func (tagRepo *TagRepositoryImpl) Update(
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
 		Where(&whereCond).
 		Updates(updateCond)
-	return tx.Error
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// 3. 失效标签列表缓存
+	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
+	return nil
 }
 
 // Delete 删除标签
@@ -107,7 +118,12 @@ func (tagRepo *TagRepositoryImpl) Delete(ctx context.Context, userId int64, tagI
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
 		Where(&whereCond).
 		Delete(&models.Tag{})
-	return tx.Error
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// 3. 失效标签列表缓存
+	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
+	return nil
 }
 
 // Get 获取所有标签
@@ -116,10 +132,16 @@ func (tagRepo *TagRepositoryImpl) Delete(ctx context.Context, userId int64, tagI
 // @return []*entities.Tag 标签实体列表
 // @return error 错误
 func (tagRepo *TagRepositoryImpl) Get(ctx context.Context, userId int64) ([]*entities.Tag, error) {
-	// 1. 转换实体为模型
+	// 1. 优先读取缓存
+	key := cache.TagListKey(userId)
+	var cached []*entities.Tag
+	if tagRepo.cache.Get(ctx, key, &cached) {
+		return cached, nil
+	}
+	// 2. 转换实体为模型
 	var findCond models.Tag
 	findCond.UserId = userId
-	// 2. 查询
+	// 3. 查询
 	tagModelList := []*models.Tag{}
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
 		Preload("Preference").
@@ -129,8 +151,11 @@ func (tagRepo *TagRepositoryImpl) Get(ctx context.Context, userId int64) ([]*ent
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	// 3. 返回结果
-	return TagModelList2EntityList(tagModelList), nil
+	// 4. 转换为实体并写入缓存
+	es := TagModelList2EntityList(tagModelList)
+	tagRepo.cache.Set(ctx, key, es, time.Minute*30)
+	// 5. 返回结果
+	return es, nil
 }
 
 // GetMaxSortId 获取最大排序 ID
@@ -188,6 +213,9 @@ func (tagRepo *TagRepositoryImpl) BatchUpdate(
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
+
+	// 失效标签列表缓存
+	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
 
 	return TagModelList2EntityList(updatedTags), nil
 }

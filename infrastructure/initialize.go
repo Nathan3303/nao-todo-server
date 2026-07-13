@@ -16,6 +16,7 @@ import (
 	taskService "naotodoserver/domain/task/service"
 	"naotodoserver/infrastructure/cron"
 	"naotodoserver/infrastructure/logging"
+	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/dbs"
 	identityRepo "naotodoserver/infrastructure/persistence/identity"
 	"naotodoserver/infrastructure/persistence/models"
@@ -40,9 +41,11 @@ func LoadDBs() {
 
 // LoadDomains 初始化领域模型
 func LoadDomains() {
+	// 初始化缓存辅助组件
+	cacheInst := cache.NewCache(dbs.RdsCli)
 	// 初始化身份领域模型
-	userRepoInst := identityRepo.NewUserRepo(dbs.DB)
-	sessionRepoInst := identityRepo.NewSessionRepo(dbs.DB)
+	userRepoInst := identityRepo.NewUserRepo(dbs.DB, cacheInst)
+	sessionRepoInst := identityRepo.NewSessionRepo(dbs.DB, cacheInst)
 	identityDomain := identityService.NewIdentityDomain(
 		identityRepo.NewJWTRepo(),
 		sessionRepoInst,
@@ -62,7 +65,7 @@ func LoadDomains() {
 		pomodoroRepoInst,
 	)
 	// 初始化项目领域模型
-	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB)
+	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB, cacheInst)
 	projectPreferenceRepoInst := projectRepo.NewProjectPreferenceRepo(dbs.DB)
 	projectDomain := projectService.NewProjectDomain(projectRepoInst, projectPreferenceRepoInst)
 	projectAppInst := projectApp.NewProjectApp(
@@ -71,7 +74,7 @@ func LoadDomains() {
 		projectPreferenceRepoInst,
 	)
 	// 初始化标签领域模型
-	tagRepoInst := tagRepo.NewTagRepo(dbs.DB)
+	tagRepoInst := tagRepo.NewTagRepo(dbs.DB, cacheInst)
 	tagPreferenceRepoInst := tagRepo.NewTagPreferenceRepo(dbs.DB)
 	tagDomain := tagService.NewTagDomain(tagRepoInst, tagPreferenceRepoInst)
 	tagAppInst := tagApp.NewTagApp(tagDomain, tagRepoInst, tagPreferenceRepoInst)
@@ -90,7 +93,7 @@ func LoadDomains() {
 
 // WireSSE 配置 SSE 会话验证
 func WireSSE() {
-	sessionRepo := identityRepo.NewSessionRepo(dbs.DB)
+	sessionRepo := identityRepo.NewSessionRepo(dbs.DB, cache.NewCache(dbs.RdsCli))
 	sse.GetHub().SessionValidator = func(userId int64, token string) bool {
 		return sessionRepo.IsSessionValid(context.TODO(), userId, token)
 	}

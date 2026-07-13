@@ -6,6 +6,7 @@ import (
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
+	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
 	"time"
 
@@ -13,11 +14,12 @@ import (
 )
 
 type ProjectRepoImpl struct {
-	db *gorm.DB
+	db    *gorm.DB
+	cache *cache.Cache
 }
 
-func NewProjectRepo(db *gorm.DB) repositories.Project {
-	return &ProjectRepoImpl{db: db}
+func NewProjectRepo(db *gorm.DB, c *cache.Cache) repositories.Project {
+	return &ProjectRepoImpl{db: db, cache: c}
 }
 
 // Create 创建清单
@@ -37,7 +39,10 @@ func (projectRepo *ProjectRepoImpl) Create(
 		return nil, tx.Error
 	}
 	// 3. 转换为实体并返回结果
-	return Model2Entity(m), nil
+	entity := Model2Entity(m)
+	// 4. 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(createProjectValueObject.UserId))
+	return entity, nil
 }
 
 // GetById 获取单个清单详情
@@ -88,7 +93,12 @@ func (projectRepo *ProjectRepoImpl) Update(
 		Where(&whereCond).
 		Updates(updateCond)
 	// 4. 返回结果
-	return tx.Error
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// 5. 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
+	return nil
 }
 
 // Delete 删除清单（软删除，设置 deactived_at）
@@ -114,6 +124,8 @@ func (projectRepo *ProjectRepoImpl) Delete(
 	if tx.Error != nil {
 		return tx.Error
 	}
+	// 4. 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	return nil
 }
 
@@ -142,6 +154,8 @@ func (projectRepo *ProjectRepoImpl) Restore(
 	if tx.RowsAffected == 0 {
 		return errors.New("清单不存在")
 	}
+	// 4. 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	return nil
 }
 
@@ -170,6 +184,8 @@ func (projectRepo *ProjectRepoImpl) Archive(
 	if tx.RowsAffected == 0 {
 		return errors.New("清单不存在")
 	}
+	// 4. 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	return nil
 }
 
@@ -198,6 +214,8 @@ func (projectRepo *ProjectRepoImpl) Unarchive(
 	if tx.RowsAffected == 0 {
 		return errors.New("清单不存在")
 	}
+	// 4. 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	return nil
 }
 
@@ -242,6 +260,9 @@ func (projectRepo *ProjectRepoImpl) BatchUpdate(
 		return nil, err
 	}
 
+	// 失效项目列表缓存
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
+
 	return Models2Entities(updatedProjects), nil
 }
 
@@ -254,18 +275,27 @@ func (projectRepo *ProjectRepoImpl) GetByUserId(
 	ctx context.Context,
 	userId int64,
 ) ([]*entities.Project, error) {
-	// 1. 从数据库中查询
+	// 1. 优先读取缓存
+	key := cache.ProjectListKey(userId)
+	var cached []*entities.Project
+	if projectRepo.cache.Get(ctx, key, &cached) {
+		return cached, nil
+	}
+	// 2. 从数据库中查询
 	var ms []*models.Project
 	tx := projectRepo.db.WithContext(ctx).
 		Preload("Preference").
 		Where("user_id = ?", userId).
 		Order("sort_id ASC").
 		Find(&ms)
-	// 2. 转换为实体并返回结果
+	// 3. 转换为实体并返回结果
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
-	return Models2Entities(ms), nil
+	es := Models2Entities(ms)
+	// 4. 写入缓存
+	projectRepo.cache.Set(ctx, key, es, time.Minute*30)
+	return es, nil
 }
 
 // GetMaxSortId 获取最大排序 ID

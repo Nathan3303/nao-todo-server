@@ -10,6 +10,7 @@ import (
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"golang.org/x/crypto/bcrypt"
@@ -17,11 +18,12 @@ import (
 )
 
 type UserRepoImpl struct {
-	db *gorm.DB
+	db    *gorm.DB
+	cache *cache.Cache
 }
 
-func NewUserRepo(db *gorm.DB) repositories.User {
-	return &UserRepoImpl{db: db}
+func NewUserRepo(db *gorm.DB, c *cache.Cache) repositories.User {
+	return &UserRepoImpl{db: db, cache: c}
 }
 
 // CreateByVO 通过值对象创建用户（注册流程）
@@ -63,6 +65,11 @@ func (r *UserRepoImpl) FindByEmail(ctx context.Context, email string) (*entities
 
 // FindById 根据ID查找用户
 func (r *UserRepoImpl) FindById(ctx context.Context, id int64) (*entities.User, error) {
+	// 先查缓存
+	cached := &entities.User{}
+	if r.cache.Get(ctx, cache.UserProfileKey(id), cached) {
+		return cached, nil
+	}
 	user := &models.User{}
 	if err := r.db.
 		WithContext(ctx).
@@ -71,25 +78,38 @@ func (r *UserRepoImpl) FindById(ctx context.Context, id int64) (*entities.User, 
 		First(user).Error; err != nil {
 		return nil, err
 	}
-	return UserModel2Entity(user), nil
+	result := UserModel2Entity(user)
+	// 写入缓存
+	r.cache.Set(ctx, cache.UserProfileKey(id), result, time.Minute*30)
+	return result, nil
 }
 
 // UpdateAvatar 更新头像
 func (r *UserRepoImpl) UpdateAvatar(ctx context.Context, userId int64, avatarUrl string) error {
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
-		Update("avatar", avatarUrl).Error
+		Update("avatar", avatarUrl).Error; err != nil {
+		return err
+	}
+	// 失效资料缓存
+	r.cache.Del(ctx, cache.UserProfileKey(userId))
+	return nil
 }
 
 // UpdateNickname 更新昵称
 func (r *UserRepoImpl) UpdateNickname(ctx context.Context, userId int64, nickname string) error {
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
-		Update("nickname", nickname).Error
+		Update("nickname", nickname).Error; err != nil {
+		return err
+	}
+	// 失效资料缓存
+	r.cache.Del(ctx, cache.UserProfileKey(userId))
+	return nil
 }
 
 // UpdatePassword 更新密码
@@ -110,12 +130,17 @@ func (r *UserRepoImpl) UpdatePassword(
 	if err != nil {
 		return err
 	}
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
 		Update("password", string(hashed)).
-		Error
+		Error; err != nil {
+		return err
+	}
+	// 失效资料缓存
+	r.cache.Del(ctx, cache.UserProfileKey(userId))
+	return nil
 }
 
 // PasswordCompare 密码比对
@@ -125,26 +150,41 @@ func (r *UserRepoImpl) PasswordCompare(password, encryptedPassword []byte) bool 
 
 // Deactive 注销用户
 func (r *UserRepoImpl) Deactive(ctx context.Context, userId int64) error {
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
 		Update("deactived_at", &sql.NullTime{Time: time.Now(), Valid: true}).
-		Error
+		Error; err != nil {
+		return err
+	}
+	// 失效资料与配置缓存
+	r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
+	return nil
 }
 
 // Active 激活用户
 func (r *UserRepoImpl) Active(ctx context.Context, userId int64) error {
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
 		Update("deactived_at", &sql.NullTime{Time: time.Time{}, Valid: false}).
-		Error
+		Error; err != nil {
+		return err
+	}
+	// 失效资料与配置缓存
+	r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
+	return nil
 }
 
 // GetConfig 获取用户配置
 func (r *UserRepoImpl) GetConfig(ctx context.Context, userId int64) (*entities.UserConfig, error) {
+	// 先查缓存
+	cached := &entities.UserConfig{}
+	if r.cache.Get(ctx, cache.UserConfigKey(userId), cached) {
+		return cached, nil
+	}
 	config := &models.UserConfig{}
 	err := r.db.
 		WithContext(ctx).
@@ -156,11 +196,17 @@ func (r *UserRepoImpl) GetConfig(ctx context.Context, userId int64) (*entities.U
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			defaultCfg := &models.UserConfig{UserId: userId, Appearance: "auto"}
 			r.db.WithContext(ctx).Create(defaultCfg)
-			return UserConfigModel2Entity(defaultCfg), nil
+			result := UserConfigModel2Entity(defaultCfg)
+			// 写入缓存
+			r.cache.Set(ctx, cache.UserConfigKey(userId), result, time.Minute*30)
+			return result, nil
 		}
 		return nil, err
 	}
-	return UserConfigModel2Entity(config), nil
+	result := UserConfigModel2Entity(config)
+	// 写入缓存
+	r.cache.Set(ctx, cache.UserConfigKey(userId), result, time.Minute*30)
+	return result, nil
 }
 
 // UpdateConfig 更新用户配置
@@ -174,18 +220,28 @@ func (r *UserRepoImpl) UpdateConfig(ctx context.Context, userId int64, appearanc
 		Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return r.db.
+			if err := r.db.
 				WithContext(ctx).
 				Create(&models.UserConfig{UserId: userId, Appearance: appearance}).
-				Error
+				Error; err != nil {
+				return err
+			}
+			// 失效配置缓存
+			r.cache.Del(ctx, cache.UserConfigKey(userId))
+			return nil
 		}
 		return err
 	}
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(config).
 		Update("appearance", appearance).
-		Error
+		Error; err != nil {
+		return err
+	}
+	// 失效配置缓存
+	r.cache.Del(ctx, cache.UserConfigKey(userId))
+	return nil
 }
 
 // Delete 删除用户
@@ -195,12 +251,17 @@ func (r *UserRepoImpl) Delete(ctx context.Context, userId int64) error {
 		Model(&models.UserConfig{}).
 		Where("user_id = ?", userId).
 		Delete(&models.UserConfig{})
-	return r.db.
+	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
 		Delete(&models.User{}).
-		Error
+		Error; err != nil {
+		return err
+	}
+	// 失效资料与配置缓存
+	r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
+	return nil
 }
 
 // DeleteDeactivatedUsers 删除已注销用户
