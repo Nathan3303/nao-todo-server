@@ -3,8 +3,8 @@ package tag
 import (
 	"context"
 	"fmt"
-	domerr "naotodoserver/domain/errors"
 	"naotodoserver/application/idutil"
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
 	iCtx "naotodoserver/infrastructure/context"

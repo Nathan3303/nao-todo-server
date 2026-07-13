@@ -1,9 +1,9 @@
 package tag
 
 import (
+	"naotodoserver/application/idutil"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/valueobjects"
-	"naotodoserver/application/idutil"
 	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
 	"time"
