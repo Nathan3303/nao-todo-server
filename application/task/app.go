@@ -27,6 +27,8 @@ type TaskApp interface {
 
 // TaskAppImpl 任务应用实现
 type TaskAppImpl struct {
-	taskDomain service.TaskDomain
-	taskRepo   repositories.Task
+	taskDomain    service.TaskDomain
+	taskRepo      repositories.Task
+	checkItemRepo repositories.TaskCheckItem
+	commentRepo   repositories.TaskComment
 }

@@ -1,17 +1,18 @@
 package routers
 
 import (
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
-func UseProjectRouter(router *gin.RouterGroup, ctrl *controllers.ProjectController) {
+func UseProjectRouter(router *gin.RouterGroup, ctrl *controllers.ProjectController, auth authApp.AuthApp) {
 	projectGroup := router.Group(
 		"/projects",
-		middlewares.RateLimiter(32, "projects"),
-		middlewares.JWTValidator,
+		middlewares.RateLimiter(auth, 32, "projects"),
+		middlewares.JWTValidator(auth),
 	)
 	{
 		projectGroup.GET(

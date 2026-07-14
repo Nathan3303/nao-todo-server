@@ -12,11 +12,11 @@ import (
 // CreatePomodoroRecordVOToModel 转换创建待办任务番茄工作记录为数据库模型
 func CreatePomodoroRecordVOToModel(vo *valueobjects.CreatePomodoroRecord) *models.PomodoroRecord {
 	var m models.PomodoroRecord
-	m.UserId = vo.UserId
+	m.UserId = int64(vo.UserId)
 	m.SessionId = vo.SessionId
-	m.PomodoroId = vo.PomodoroId
+	m.PomodoroId = int64(vo.PomodoroId)
 	m.Type = uint8(vo.Type)
-	m.TaskId = vo.TaskId
+	m.TaskId = int64(vo.TaskId)
 	m.TaskName = vo.TaskName
 	m.Description = vo.Description
 	// vo.StartAt 和 vo.EndAt 经过校验，确保了非空指针
@@ -34,11 +34,11 @@ func PomodoroRecordModel2Entity(m *models.PomodoroRecord) *entities.PomodoroReco
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
-	e.PomodoroId = m.PomodoroId
+	e.UserId = types.UserID(m.UserId)
+	e.PomodoroId = types.PomodoroID(m.PomodoroId)
 	e.SessionId = m.SessionId
 	e.Type = entities.PomodoroType(m.Type)
-	e.TaskId = m.TaskId
+	e.TaskId = types.TaskID(m.TaskId)
 	e.TaskName = m.TaskName
 	e.Description = m.Description
 	e.StartAt = m.StartAt
@@ -62,7 +62,7 @@ func PomodoroRecordModels2Entities(list []*models.PomodoroRecord) []*entities.Po
 // CreatePomodoroVOToModel 转换创建常用番茄工作值对象为数据库模型
 func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 	var m models.Pomodoro
-	m.UserId = vo.UserId
+	m.UserId = int64(vo.UserId)
 	m.Type = uint8(vo.Type)
 	m.Name = vo.Name
 	m.Description = vo.Description
@@ -103,7 +103,7 @@ func PomodoroModel2Entity(m *models.Pomodoro) *entities.Pomodoro {
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
+	e.UserId = types.UserID(m.UserId)
 	e.Type = entities.PomodoroType(m.Type)
 	e.Name = m.Name
 	e.Description = m.Description

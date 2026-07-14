@@ -7,7 +7,7 @@ func ParseID(s string) (int64, error) {
 	return strconv.ParseInt(s, 10, 64)
 }
 
-// FormatID 将 int64 ID 转换为字符串
-func FormatID(id int64) string {
-	return strconv.FormatInt(id, 10)
+// FormatID 将 int64 或自定义类型 ID 转换为字符串
+func FormatID[T ~int64](id T) string {
+	return strconv.FormatInt(int64(id), 10)
 }

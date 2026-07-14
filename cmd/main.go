@@ -23,12 +23,12 @@ func main() {
 
 	// @step 3. 加载 Infrastructure 层
 	infrastructure.LoadDBs()
-	infrastructure.LoadDomains()
+	svc := infrastructure.LoadDomains()
 	infrastructure.WireSSE()
-	infrastructure.LoadCron()
+	infrastructure.LoadCron(svc)
 
 	// @step 3. 加载路由
-	router := routers.InitRouters()
+	router := routers.InitRouters(svc)
 
 	addr := fmt.Sprintf("%s:%s", conf.Conf.Server.Ip, conf.Conf.Server.Port)
 

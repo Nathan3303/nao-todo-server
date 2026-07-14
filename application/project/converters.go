@@ -29,23 +29,6 @@ func CreateProjectReqToValueObject(
 	return createProjectValueObject, nil
 }
 
-// ProjectEntityToCreateRes 任务清单实体转换响应体
-// @param projectEntity 任务清单实体
-// @return *types.CreateProjectRes 创建任务清单响应体
-func ProjectEntityToCreateRes(projectEntity *entities.Project) *types.CreateProjectRes {
-	var res types.CreateProjectRes
-	res.Id = idutil.FormatID(projectEntity.Id)
-	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
-	res.DeletedAt = projectEntity.DeletedAt.ToString(time.RFC3339)
-	res.Name = projectEntity.Name
-	res.Description = projectEntity.Description
-	res.SortId = projectEntity.SortId
-	res.ArchivedAt = projectEntity.ArchivedAt.ToString(time.RFC3339)
-	res.DeactivedAt = projectEntity.DeactivedAt.ToString(time.RFC3339)
-	return &res
-}
-
 // ProjectEntityToGetRes 任务清单实体转换响应体
 // @param projectEntity 任务清单实体
 // @return *types.GetProjectRes 获取任务清单响应体

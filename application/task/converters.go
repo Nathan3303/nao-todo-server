@@ -5,6 +5,7 @@ import (
 	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
 	"time"
 )
@@ -91,14 +92,14 @@ func CreateTaskReqToValueObject(
 		}
 	}
 	return valueobjects.NewCreateTask(
-		parentTaskIdInt64,
+		domaintypes.TaskID(parentTaskIdInt64),
 		req.Name,
 		req.Description,
 		entities.TaskState(consts.TodoStateMap[req.State]),
 		entities.TaskPriority(consts.TodoPriorityMap[req.Priority]),
 		req.StartAt,
 		req.EndAt,
-		projectIdInt64,
+		domaintypes.ProjectID(projectIdInt64),
 		req.Tags,
 		req.RemindAt,
 		consts.RemindRepeatMap[req.RemindRepeat],

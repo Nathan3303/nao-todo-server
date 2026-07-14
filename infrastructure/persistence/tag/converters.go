@@ -3,6 +3,7 @@ package tag
 import (
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
 )
 
@@ -92,7 +93,7 @@ func TagPreferenceEntity2Model(e *entities.TagPreference) *models.TagPreference 
 	}
 	m := &models.TagPreference{}
 	m.ID = e.Id
-	m.TagId = e.TagId
+	m.TagId = int64(e.TagId)
 	m.ViewType = e.ViewType
 	m.GetOptions = e.GetOptions
 	m.Columns = e.Columns
@@ -110,7 +111,7 @@ func TagModel2Entity(m *models.Tag) *entities.Tag {
 	}
 	e := &entities.Tag{}
 	e.Id = m.ID
-	e.UserId = m.UserId
+	e.UserId = types.UserID(m.UserId)
 	e.Name = m.Name
 	e.Description = m.Description
 	e.Color = m.Color
@@ -129,8 +130,8 @@ func TagPreferenceModel2Entity(m *models.TagPreference) *entities.TagPreference 
 	}
 	e := &entities.TagPreference{}
 	e.Id = m.ID
-	e.UserId = m.UserId
-	e.TagId = m.TagId
+	e.UserId = types.UserID(m.UserId)
+	e.TagId = types.TagID(m.TagId)
 	e.ViewType = m.ViewType
 	e.GetOptions = m.GetOptions
 	e.Columns = m.Columns

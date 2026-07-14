@@ -20,4 +20,4 @@ type Services struct {
 	Pomodoro      pomodoroApp.PomodoroApp
 }
 
-var App *Services
+

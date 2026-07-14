@@ -1,6 +1,7 @@
 package routers
 
 import (
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 
@@ -8,12 +9,12 @@ import (
 )
 
 // UsePomodoroRouter 配置 Pomodoro 路由
-func UsePomodoroRouter(router *gin.RouterGroup, ctrl *controllers.PomodoroController) {
+func UsePomodoroRouter(router *gin.RouterGroup, ctrl *controllers.PomodoroController, auth authApp.AuthApp) {
 	// Pomodoro 路由
 	pomodoroGroup := router.Group(
 		"/pomodoros",
-		middlewares.RateLimiter(48, "pomodoros"),
-		middlewares.JWTValidator,
+		middlewares.RateLimiter(auth, 48, "pomodoros"),
+		middlewares.JWTValidator(auth),
 	)
 	{
 		pomodoroGroup.GET("/:id", ctrl.GetPomodoro)
@@ -28,8 +29,8 @@ func UsePomodoroRouter(router *gin.RouterGroup, ctrl *controllers.PomodoroContro
 	// Pomodoro Record 路由
 	pomodoroRecordsGroup := router.Group(
 		"/pomodoro-records",
-		middlewares.RateLimiter(48, "pomodoro-records"),
-		middlewares.JWTValidator,
+		middlewares.RateLimiter(auth, 48, "pomodoro-records"),
+		middlewares.JWTValidator(auth),
 	)
 	{
 		pomodoroRecordsGroup.POST(

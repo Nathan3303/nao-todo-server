@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
+	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
 )
 
@@ -23,7 +24,7 @@ type AuthApp interface {
 	SignOut(ctx context.Context, signOutReq *types.SignOutReq) error
 
 	// 处理用户令牌验证
-	Validate(ctx context.Context, token string) (int64, error)
+	Validate(ctx context.Context, token string) (domaintypes.UserID, error)
 
 	// 处理用户限流
 	RateLimit(ctx context.Context, clientIP string, limit int8) error

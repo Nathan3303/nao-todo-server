@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
+	"naotodoserver/domain/types"
 	pomodoroApp "naotodoserver/application/pomodoro"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
@@ -40,7 +41,7 @@ func LoadDBs() {
 }
 
 // LoadDomains 初始化领域模型
-func LoadDomains() {
+func LoadDomains() *application.Services {
 	// 初始化缓存辅助组件
 	cacheInst := cache.NewCache(dbs.RdsCli)
 	// 初始化身份领域模型
@@ -53,8 +54,8 @@ func LoadDomains() {
 	)
 	// 初始化任务领域模型
 	taskRepoInst := taskRepo.NewTaskRepo(dbs.DB)
-	taskDomain := taskService.NewTaskDomain(taskRepoInst)
-	taskAppInst := taskApp.NewTaskApp(taskDomain, taskRepoInst)
+	taskDomain := taskService.NewTaskDomain(taskRepoInst, taskRepoInst)
+	taskAppInst := taskApp.NewTaskApp(taskDomain, taskRepoInst, taskRepoInst, taskRepoInst)
 	// 初始化番茄领域模型
 	pomodoroRecordRepoInst := pomodoroRepo.NewPomodoroRecordRepo(dbs.DB)
 	pomodoroRepoInst := pomodoroRepo.NewPomodoroRepo(dbs.DB)
@@ -79,7 +80,7 @@ func LoadDomains() {
 	tagDomain := tagService.NewTagDomain(tagRepoInst, tagPreferenceRepoInst)
 	tagAppInst := tagApp.NewTagApp(tagDomain, tagRepoInst, tagPreferenceRepoInst)
 	// 初始化项目领域模型
-	application.App = &application.Services{
+	return &application.Services{
 		Auth:          authApp.NewAuthApp(identityDomain, userRepoInst, sessionRepoInst),
 		User:          userApp.NewUserApp(userRepoInst, taskAppInst),
 		Task:          taskAppInst,
@@ -95,24 +96,24 @@ func LoadDomains() {
 func WireSSE() {
 	sessionRepo := identityRepo.NewSessionRepo(dbs.DB, cache.NewCache(dbs.RdsCli))
 	sse.GetHub().SessionValidator = func(userId int64, token string) bool {
-		return sessionRepo.IsSessionValid(context.TODO(), userId, token)
+		return sessionRepo.IsSessionValid(context.TODO(), types.UserID(userId), token)
 	}
 }
 
 // LoadCron 初始化定时任务
-func LoadCron() {
+func LoadCron(svc *application.Services) {
 	// 初始化定时任务
 	cronService := cron.GetCronServiceImpl()
 	// 添加定时任务 - 删除注销用户
-	_, err := cronService.AddJob(
+	_, err := 	cronService.AddJob(
 		"0 2 * * *",
-		cron.NewDeleteDeactivedUserJob(15),
+		cron.NewDeleteDeactivedUserJob(15, svc.User),
 	)
 	if err != nil {
 		panic("删除注销用户定时任务添加失败：" + err.Error())
 	}
 	// 添加定时任务 - 任务提醒扫描
-	_, err = cronService.AddJob("* * * * *", cron.NewReminderJob())
+	_, err = cronService.AddJob("* * * * *", cron.NewReminderJob(svc.Task))
 	if err != nil {
 		panic("任务提醒扫描定时任务添加失败：" + err.Error())
 	}

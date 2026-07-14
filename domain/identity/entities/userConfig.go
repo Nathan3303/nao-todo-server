@@ -7,6 +7,6 @@ import "naotodoserver/domain/types"
 // 包含用户 ID、外观等属性
 type UserConfig struct {
 	types.EntityBase
-	UserId     int64
+	UserId     types.UserID
 	Appearance string
 }

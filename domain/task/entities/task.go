@@ -11,15 +11,15 @@ import (
 // 项目 ID、标签、提醒时间、提醒重复、提醒时间、提醒周几等属性
 type Task struct {
 	types.EntityBase
-	UserId         int64
-	ParentTaskId   int64
+	UserId         types.UserID
+	ParentTaskId   types.TaskID
 	Name           string
 	Description    string
 	State          TaskState
 	Priority       TaskPriority
 	StartAt        types.NullableTime
 	EndAt          types.NullableTime
-	ProjectId      int64
+	ProjectId      types.ProjectID
 	Tags           []string
 	ArchivedAt     types.NullableTime
 	StarMarkAt     types.NullableTime

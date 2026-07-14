@@ -16,7 +16,12 @@ type TaskRepoImpl struct {
 	db *gorm.DB
 }
 
-func NewTaskRepo(db *gorm.DB) repositories.Task {
+// 编译期接口实现断言
+var _ repositories.Task = (*TaskRepoImpl)(nil)
+var _ repositories.TaskCheckItem = (*TaskRepoImpl)(nil)
+var _ repositories.TaskComment = (*TaskRepoImpl)(nil)
+
+func NewTaskRepo(db *gorm.DB) *TaskRepoImpl {
 	return &TaskRepoImpl{db: db}
 }
 

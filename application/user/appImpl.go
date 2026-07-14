@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	domerr "naotodoserver/domain/errors"
 	taskApp "naotodoserver/application/task"
 	"naotodoserver/conf"
 	"naotodoserver/domain/identity/repositories"
+	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
-	"os"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +40,7 @@ func (u *userAppImpl) UpdateNickname(
 		return domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户昵称
-	if err := u.userRepo.UpdateNickname(ctx, userId, req.Nickname); err != nil {
+	if err := u.userRepo.UpdateNickname(ctx, domaintypes.UserID(userId), req.Nickname); err != nil {
 		return err
 	}
 	// 3. 同步评论中的用户昵称
@@ -58,7 +59,7 @@ func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes,
 		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 获取用户详情
-	userEntity, err := u.userRepo.FindById(ctx, userId)
+	userEntity, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (u *userAppImpl) UpdatePassword(
 		return domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户密码
-	if err := u.userRepo.UpdatePassword(ctx, userId, req.OldPassword, req.NewPassword); err != nil {
+	if err := u.userRepo.UpdatePassword(ctx, domaintypes.UserID(userId), req.OldPassword, req.NewPassword); err != nil {
 		return fmt.Errorf("user.UpdatePassword: %w", err)
 	}
 	return nil
@@ -101,7 +102,7 @@ func (u *userAppImpl) UpdateAvatar(
 		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户头像
-	if err := u.userRepo.UpdateAvatar(ctx, userId, req.AvatarURL); err != nil {
+	if err := u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), req.AvatarURL); err != nil {
 		return nil, err
 	}
 	// 3. 同步评论中的用户头像
@@ -161,7 +162,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	}
 	avatarURL := fmt.Sprintf("%s/%s/%s", staticPath, conf.Conf.Uploads.AvatarDir, uniqueFilename)
 	// 8. 更新用户头像
-	if err = u.userRepo.UpdateAvatar(ctx, userId, avatarURL); err != nil {
+	if err = u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), avatarURL); err != nil {
 		// 更新失败时删除已上传的文件
 		os.Remove(savePath)
 		return nil, err
@@ -183,7 +184,7 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 		return domerr.ErrInvalidUserID
 	}
 	// 2. 查询用户是否存在
-	user, err := u.userRepo.FindById(ctx, userId)
+	user, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId))
 	if err != nil {
 		return err
 	}
@@ -200,7 +201,7 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 		return domerr.ErrUserDeactivated
 	}
 	// 5. 更新用户状态
-	if err := u.userRepo.Deactive(ctx, userId); err != nil {
+	if err := u.userRepo.Deactive(ctx, domaintypes.UserID(userId)); err != nil {
 		return fmt.Errorf("user.Deactive: %w", err)
 	}
 	return nil
@@ -212,7 +213,7 @@ func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, e
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
 	}
-	config, err := u.userRepo.GetConfig(ctx, userId)
+	config, err := u.userRepo.GetConfig(ctx, domaintypes.UserID(userId))
 	if err != nil {
 		return nil, fmt.Errorf("user.GetConfig: %w", err)
 	}
@@ -225,7 +226,7 @@ func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConf
 	if userId <= 0 {
 		return domerr.ErrInvalidUserID
 	}
-	if err := u.userRepo.UpdateConfig(ctx, userId, req.Appearance); err != nil {
+	if err := u.userRepo.UpdateConfig(ctx, domaintypes.UserID(userId), req.Appearance); err != nil {
 		return fmt.Errorf("user.UpdateConfig: %w", err)
 	}
 	return nil
@@ -248,7 +249,7 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 		return domerr.ErrInvalidUserID
 	}
 	// 2. 查询用户是否存在
-	user, err := u.userRepo.FindById(ctx, userId)
+	user, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId))
 	if err != nil {
 		return err
 	}
@@ -265,7 +266,7 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 		return errors.New("用户未注销")
 	}
 	// 5. 更新用户状态
-	if err := u.userRepo.Active(ctx, userId); err != nil {
+	if err := u.userRepo.Active(ctx, domaintypes.UserID(userId)); err != nil {
 		return fmt.Errorf("user.Active: %w", err)
 	}
 	return nil

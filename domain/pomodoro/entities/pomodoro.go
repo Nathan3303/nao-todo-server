@@ -5,7 +5,7 @@ import "naotodoserver/domain/types"
 // Pomodoro 专注工作记录实体
 type Pomodoro struct {
 	types.EntityBase
-	UserId        int64
+	UserId        types.UserID
 	Type          PomodoroType
 	Name          string
 	Description   string

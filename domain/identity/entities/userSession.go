@@ -10,7 +10,7 @@ import (
 // 包含用户 ID、会话令牌、过期时间、设备类型等属性
 type UserSession struct {
 	types.EntityBase
-	UserId     int64
+	UserId     types.UserID
 	Token      string
 	ExpiredAt  time.Time
 	DeviceType string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
+	"naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/ip2region"
 	"naotodoserver/infrastructure/persistence/cache"
@@ -31,11 +32,11 @@ func NewSessionRepo(db *gorm.DB, c *cache.Cache) repositories.UserSession {
 func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.UserSession) error {
 	// 1. 查找现存记录
 	currentSession := &models.UserSession{}
-	findCond := &models.UserSession{UserId: sessionEntity.UserId}
+	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId)}
 	sr.db.
 		WithContext(ctx).
 		Model(&models.UserSession{}).
-		Where(findCond).
+		Where("user_id = ?", findCond.UserId).
 		First(currentSession)
 	// 2. 获取上下文 ClientInfo
 	clientInfo := iCtx.GetClientInfo(ctx)
@@ -55,9 +56,9 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 		}
 		// 3. 失效旧 token 与新 token 的会话缓存
 		if currentSession.Token != "" {
-			sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, currentSession.Token))
+			sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), currentSession.Token))
 		}
-		sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, sessionEntity.Token))
+		sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), sessionEntity.Token))
 		return nil
 	}
 	// 3. 执行结果不存在逻辑 - 创建记录
@@ -72,14 +73,14 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 		return tx.Error
 	}
 	// 4. 失效新 token 的会话缓存
-	sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, sessionEntity.Token))
+	sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), sessionEntity.Token))
 	return nil
 }
 
 /**
  * Delete Session
  */
-func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token string) error {
+func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, token string) error {
 	// 1. 创建删除模型
 	deleteCond := &models.UserSession{Token: token}
 	// 2. 执行删除
@@ -92,7 +93,7 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token strin
 		return tx.Error
 	}
 	// 3. 失效该会话缓存
-	sr.cache.Del(ctx, cache.SessionKey(userId, token))
+	sr.cache.Del(ctx, cache.SessionKey(int64(userId), token))
 	// 4. 返回结果
 	return nil
 }
@@ -102,13 +103,13 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId int64, token strin
  */
 func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	ctx context.Context,
-	userId int64,
+	userId types.UserID,
 	token string,
 ) *entities.UserSession {
 	// 1. 创建结果模型
 	session := &models.UserSession{}
 	// 2. 创建查找模型（携带区域信息）
-	findCond := &models.UserSession{UserId: userId, Token: token}
+	findCond := &models.UserSession{UserId: int64(userId), Token: token}
 	// 3. 填充 区域信息和设备类型
 	clientInfo := iCtx.GetClientInfo(ctx)
 	findCond.Region = clientInfo.IPRegion
@@ -132,7 +133,7 @@ func (sr *sessionRepoImpl) UpdateToken(
 ) error {
 	// 1. 创建模型
 	updateCond := &models.UserSession{Token: sessionEntity.Token}
-	findCond := &models.UserSession{UserId: sessionEntity.UserId}
+	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId)}
 	// 2. 执行更新
 	tx := sr.db.
 		WithContext(ctx).
@@ -143,7 +144,7 @@ func (sr *sessionRepoImpl) UpdateToken(
 		return tx.Error
 	}
 	// 3. 失效该会话缓存
-	sr.cache.Del(ctx, cache.SessionKey(sessionEntity.UserId, sessionEntity.Token))
+	sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), sessionEntity.Token))
 	// 4. 返回结果
 	return nil
 }
@@ -151,9 +152,9 @@ func (sr *sessionRepoImpl) UpdateToken(
 /**
  * Is Session Valid
  */
-func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId int64, token string) bool {
+func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId types.UserID, token string) bool {
 	// 1. 优先读取缓存，命中直接返回
-	key := cache.SessionKey(userId, token)
+	key := cache.SessionKey(int64(userId), token)
 	var cached bool
 	if sr.cache.Get(ctx, key, &cached) {
 		return cached
@@ -165,7 +166,7 @@ func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId int64, tok
 		Model(&models.UserSession{}).
 		Where(
 			"user_id = ? AND token = ? AND expired_at > ?",
-			userId,
+			int64(userId),
 			token,
 			time.Now(),
 		).

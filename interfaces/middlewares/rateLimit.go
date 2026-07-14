@@ -1,21 +1,21 @@
 package middlewares
 
 import (
-	"naotodoserver/application"
+	"net/http"
+
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
-
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RateLimiter(limit int8, tag string) gin.HandlerFunc {
+func RateLimiter(auth authApp.AuthApp, limit int8, tag string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 1. 构建 Key
 		key := ctx.ClientIP() + ":" + tag
 		// 2. 检查
-		err := application.App.Auth.RateLimit(ctx, key, limit)
+		err := auth.RateLimit(ctx, key, limit)
 		if err != nil {
 			controllers.FailureByHttpStatus(ctx, http.StatusTooManyRequests, types.ResponseData{
 				Code:    10051,

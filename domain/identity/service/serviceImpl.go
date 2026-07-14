@@ -6,6 +6,7 @@ import (
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
+	"naotodoserver/domain/types"
 )
 
 func NewIdentityDomain(
@@ -21,7 +22,7 @@ func NewIdentityDomain(
 }
 
 // CreateSession 创建用户会话
-func (d *identityDomainImpl) CreateSession(ctx context.Context, userId int64, token string) error {
+func (d *identityDomainImpl) CreateSession(ctx context.Context, userId types.UserID, token string) error {
 	return d.userSessionRepo.Create(
 		ctx,
 		&entities.UserSession{UserId: userId, Token: token},
@@ -31,7 +32,7 @@ func (d *identityDomainImpl) CreateSession(ctx context.Context, userId int64, to
 // FindSessionByUserIdAndToken 根据用户ID和会话令牌查找用户会话
 func (d *identityDomainImpl) FindSessionByUserIdAndToken(
 	ctx context.Context,
-	userId int64,
+	userId types.UserID,
 	token string,
 ) (*entities.UserSession, error) {
 	session := d.userSessionRepo.FindByUserIdAndToken(ctx, userId, token)
@@ -65,12 +66,12 @@ func (d *identityDomainImpl) GenerateJWT(
 }
 
 // ParseJWT 解析JWT令牌
-func (d *identityDomainImpl) ParseJWT(ctx context.Context, token string) (int64, error) {
+func (d *identityDomainImpl) ParseJWT(ctx context.Context, token string) (types.UserID, error) {
 	jwtClaims, err := d.jwtRepo.Parse(ctx, token)
 	if err != nil {
 		return 0, err
 	}
-	return jwtClaims.UserId, nil
+	return types.UserID(jwtClaims.UserId), nil
 }
 
 // CheckRateLimit 检查用户请求次数是否超过限流阈值

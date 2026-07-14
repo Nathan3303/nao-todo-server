@@ -1,17 +1,18 @@
 package routers
 
 import (
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
-func UseEventRouter(router *gin.RouterGroup, ctrl *controllers.EventController) {
+func UseEventRouter(router *gin.RouterGroup, ctrl *controllers.EventController, auth authApp.AuthApp) {
 	eventGroup := router.Group(
 		"/events",
-		middlewares.RateLimiter(64, "events"),
-		middlewares.JWTValidator,
+		middlewares.RateLimiter(auth, 64, "events"),
+		middlewares.JWTValidator(auth),
 	)
 	{
 		eventGroup.GET("/", ctrl.ListEvent)

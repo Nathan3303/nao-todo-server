@@ -1,17 +1,18 @@
 package routers
 
 import (
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
-func UseTagRouter(router *gin.RouterGroup, ctrl *controllers.TagController) {
+func UseTagRouter(router *gin.RouterGroup, ctrl *controllers.TagController, auth authApp.AuthApp) {
 	tagGroup := router.Group(
 		"/tags",
-		middlewares.RateLimiter(32, "tags"),
-		middlewares.JWTValidator,
+		middlewares.RateLimiter(auth, 32, "tags"),
+		middlewares.JWTValidator(auth),
 	)
 	{
 		tagGroup.GET("/", ctrl.ListTag)

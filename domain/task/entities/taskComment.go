@@ -9,8 +9,8 @@ import (
 // 包含用户 ID、任务 ID、内容、附件、是否是充值、昵称、头像等属性
 type TaskComment struct {
 	types.EntityBase
-	UserId      int64
-	TaskId      int64
+	UserId      types.UserID
+	TaskId      types.TaskID
 	Content     string
 	Attachments []string
 	IsTopUp     bool

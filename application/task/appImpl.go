@@ -15,10 +15,17 @@ import (
 )
 
 // NewTaskApp 创建任务应用层实例
-func NewTaskApp(taskDomain service.TaskDomain, taskRepo repositories.Task) *TaskAppImpl {
+func NewTaskApp(
+	taskDomain service.TaskDomain,
+	taskRepo repositories.Task,
+	checkItemRepo repositories.TaskCheckItem,
+	commentRepo repositories.TaskComment,
+) *TaskAppImpl {
 	impl := &TaskAppImpl{
-		taskDomain: taskDomain,
-		taskRepo:   taskRepo,
+		taskDomain:    taskDomain,
+		taskRepo:      taskRepo,
+		checkItemRepo: checkItemRepo,
+		commentRepo:   commentRepo,
 	}
 	return impl
 }
@@ -277,7 +284,7 @@ func (taskApp *TaskAppImpl) ProcessReminders(ctx context.Context) error {
 	}
 	hub := sse.GetHub()
 	for _, task := range tasks {
-		hub.Publish(task.UserId, sse.ReminderEvent{
+		hub.Publish(int64(task.UserId), sse.ReminderEvent{
 			Type:        "REMINDER",
 			TaskId:      idutil.FormatID(task.Id),
 			TaskName:    task.Name,
@@ -307,7 +314,7 @@ func (impl *TaskAppImpl) GetTaskCheckItemById(
 	if err != nil {
 		return nil, domerr.ErrInvalidItemID
 	}
-	e, err := impl.taskRepo.GetCheckItemById(ctx, userId, id64)
+	e, err := impl.checkItemRepo.GetCheckItemById(ctx, userId, id64)
 	if err != nil {
 		return nil, fmt.Errorf("GetCheckItemById: %w", err)
 	}
@@ -360,7 +367,7 @@ func (impl *TaskAppImpl) UpdateTaskCheckItem(
 	if err != nil {
 		return err
 	}
-	if err := impl.taskRepo.UpdateCheckItem(ctx, userId, id64, vo); err != nil {
+	if err := impl.checkItemRepo.UpdateCheckItem(ctx, userId, id64, vo); err != nil {
 		return fmt.Errorf("UpdateCheckItem: %w", err)
 	}
 	return nil
@@ -382,7 +389,7 @@ func (impl *TaskAppImpl) DeleteTaskCheckItem(
 	if err != nil {
 		return domerr.ErrInvalidItemID
 	}
-	if err := impl.taskRepo.DeleteCheckItem(ctx, userId, id64); err != nil {
+	if err := impl.checkItemRepo.DeleteCheckItem(ctx, userId, id64); err != nil {
 		return fmt.Errorf("DeleteCheckItem: %w", err)
 	}
 	return nil
@@ -405,7 +412,7 @@ func (impl *TaskAppImpl) ListTaskCheckItems(
 	if err != nil {
 		return nil, domerr.ErrInvalidTaskID
 	}
-	items, err := impl.taskRepo.ListCheckItems(ctx, userId, taskId64)
+	items, err := impl.checkItemRepo.ListCheckItems(ctx, userId, taskId64)
 	if err != nil {
 		return nil, fmt.Errorf("ListCheckItems: %w", err)
 	}
@@ -429,7 +436,7 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 	if err != nil {
 		return nil, err
 	}
-	items, err := impl.taskRepo.BatchUpdateCheckItems(ctx, userId, vos)
+	items, err := impl.checkItemRepo.BatchUpdateCheckItems(ctx, userId, vos)
 	if err != nil {
 		return nil, fmt.Errorf("BatchUpdateCheckItems: %w", err)
 	}
@@ -459,7 +466,7 @@ func (impl *TaskAppImpl) GetTaskCommentById(
 	if err != nil {
 		return nil, domerr.ErrInvalidCommentID
 	}
-	e, err := impl.taskRepo.GetCommentById(ctx, userId, id64)
+	e, err := impl.commentRepo.GetCommentById(ctx, userId, id64)
 	if err != nil {
 		return nil, fmt.Errorf("GetCommentById: %w", err)
 	}
@@ -483,7 +490,7 @@ func (impl *TaskAppImpl) CreateTaskComment(
 	if err != nil {
 		return nil, err
 	}
-	e, err := impl.taskRepo.CreateComment(ctx, userId, vo)
+	e, err := impl.commentRepo.CreateComment(ctx, userId, vo)
 	if err != nil {
 		return nil, fmt.Errorf("CreateComment: %w", err)
 	}
@@ -512,7 +519,7 @@ func (impl *TaskAppImpl) UpdateTaskComment(
 	if err != nil {
 		return err
 	}
-	if err := impl.taskRepo.UpdateComment(ctx, userId, id64, vo); err != nil {
+	if err := impl.commentRepo.UpdateComment(ctx, userId, id64, vo); err != nil {
 		return fmt.Errorf("UpdateComment: %w", err)
 	}
 	return nil
@@ -534,7 +541,7 @@ func (impl *TaskAppImpl) DeleteTaskComment(
 	if err != nil {
 		return domerr.ErrInvalidCommentID
 	}
-	if err := impl.taskRepo.DeleteComment(ctx, userId, id64); err != nil {
+	if err := impl.commentRepo.DeleteComment(ctx, userId, id64); err != nil {
 		return fmt.Errorf("DeleteComment: %w", err)
 	}
 	return nil
@@ -557,7 +564,7 @@ func (impl *TaskAppImpl) ListTaskComments(
 	if err != nil {
 		return nil, domerr.ErrInvalidTaskID
 	}
-	entities, err := impl.taskRepo.ListComments(ctx, userId, taskId64)
+	entities, err := impl.commentRepo.ListComments(ctx, userId, taskId64)
 	if err != nil {
 		return nil, fmt.Errorf("ListComments: %w", err)
 	}
@@ -575,5 +582,5 @@ func (impl *TaskAppImpl) SyncTaskCommentUserProfile(
 	userId int64,
 	nickname, avatar string,
 ) error {
-	return impl.taskRepo.SyncCommentUserProfile(ctx, userId, nickname, avatar)
+	return impl.commentRepo.SyncCommentUserProfile(ctx, userId, nickname, avatar)
 }

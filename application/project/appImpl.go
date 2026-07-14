@@ -79,7 +79,7 @@ func (app *projectAppImpl) Create(
 		return nil, fmt.Errorf("project.Create: %w", err)
 	}
 	// 实体转换响应体
-	createProjectRes := ProjectEntityToCreateRes(projectEntity)
+	createProjectRes := (*types.CreateProjectRes)(ProjectEntityToGetRes(projectEntity))
 	// 返回结果
 	return createProjectRes, nil
 }

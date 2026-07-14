@@ -37,5 +37,6 @@ type TaskDomain interface {
 
 // TaskDomainImpl 任务域实现
 type TaskDomainImpl struct {
-	taskRepo repositories.Task
+	taskRepo      repositories.Task
+	checkItemRepo repositories.TaskCheckItem
 }

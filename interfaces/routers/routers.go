@@ -24,7 +24,7 @@ func securityHeaders() gin.HandlerFunc {
 }
 
 // InitRouters 初始化路由
-func InitRouters() *gin.Engine {
+func InitRouters(svc *application.Services) *gin.Engine {
 	// 是否启用 Debug模式
 	if !conf.Conf.Server.Debug {
 		gin.SetMode(gin.ReleaseMode)
@@ -52,6 +52,7 @@ func InitRouters() *gin.Engine {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",
+			"http://localhost:5273",
 			"http://localhost:4173",
 			"https://todo.nathanao.space",
 			"https://todobe.nathanao.space",
@@ -81,25 +82,25 @@ func InitRouters() *gin.Engine {
 	)
 	{
 		v1.GET("/ping", controllers.PingHandler)
-		authCtrl := controllers.NewAuthController(application.App.Auth)
-		userCtrl := controllers.NewUserController(application.App.User)
-		projectCtrl := controllers.NewProjectController(application.App.Project)
-		taskCtrl := controllers.NewTaskController(application.App.Task)
-		eventCtrl := controllers.NewEventController(application.App.TaskCheckItem)
-		commentCtrl := controllers.NewCommentController(application.App.TaskComment)
-		tagCtrl := controllers.NewTagController(application.App.Tag)
-		pomodoroCtrl := controllers.NewPomodoroController(application.App.Pomodoro)
+		authCtrl := controllers.NewAuthController(svc.Auth)
+		userCtrl := controllers.NewUserController(svc.User)
+		projectCtrl := controllers.NewProjectController(svc.Project)
+		taskCtrl := controllers.NewTaskController(svc.Task)
+		eventCtrl := controllers.NewEventController(svc.TaskCheckItem)
+		commentCtrl := controllers.NewCommentController(svc.TaskComment)
+		tagCtrl := controllers.NewTagController(svc.Tag)
+		pomodoroCtrl := controllers.NewPomodoroController(svc.Pomodoro)
 		sseCtrl := controllers.NewSSEController()
 
-		UseAuthRouter(v1, authCtrl)
-		UseUserRouter(v1, userCtrl)
-		UseProjectRouter(v1, projectCtrl)
-		UseTagRouter(v1, tagCtrl)
-		UseTaskRouter(v1, taskCtrl)
-		UseEventRouter(v1, eventCtrl)
-		UseCommentRouter(v1, commentCtrl)
-		UsePomodoroRouter(v1, pomodoroCtrl)
-		UseSSERouter(v1, sseCtrl)
+		UseAuthRouter(v1, authCtrl, svc.Auth)
+		UseUserRouter(v1, userCtrl, svc.Auth)
+		UseProjectRouter(v1, projectCtrl, svc.Auth)
+		UseTagRouter(v1, tagCtrl, svc.Auth)
+		UseTaskRouter(v1, taskCtrl, svc.Auth)
+		UseEventRouter(v1, eventCtrl, svc.Auth)
+		UseCommentRouter(v1, commentCtrl, svc.Auth)
+		UsePomodoroRouter(v1, pomodoroCtrl, svc.Auth)
+		UseSSERouter(v1, sseCtrl, svc.Auth)
 	}
 
 	// 返回 Gin 引擎

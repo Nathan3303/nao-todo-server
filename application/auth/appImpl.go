@@ -7,6 +7,7 @@ import (
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
+	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
 )
 
@@ -52,7 +53,7 @@ func (as *authAppImpl) SignIn(
 		return nil, fmt.Errorf("auth.SignIn.GenerateJWT: %w", err)
 	}
 	// 3. 创建 Session
-	err = as.identityDomain.CreateSession(ctx, userEntity.Id, jwtString)
+	err = as.identityDomain.CreateSession(ctx, domaintypes.UserID(userEntity.Id), jwtString)
 	if err != nil {
 		return nil, fmt.Errorf("auth.SignIn.CreateSession: %w", err)
 	}
@@ -167,7 +168,7 @@ func (as *authAppImpl) SignOut(
 func (as *authAppImpl) Validate(
 	ctx context.Context,
 	token string,
-) (int64, error) {
+) (domaintypes.UserID, error) {
 	// 1. 解析 JWT
 	userId, err := as.identityDomain.ParseJWT(ctx, token)
 	if err != nil {

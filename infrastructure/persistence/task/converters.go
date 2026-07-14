@@ -18,7 +18,7 @@ func CreateTaskValueObjectToModel(
 ) *models.Task {
 	return &models.Task{
 		UserId:         userId,
-		ProjectId:      createTaskValueObject.ProjectId,
+		ProjectId:      int64(createTaskValueObject.ProjectId),
 		Name:           createTaskValueObject.Name,
 		Description:    createTaskValueObject.Description,
 		State:          uint8(createTaskValueObject.State),
@@ -32,76 +32,6 @@ func CreateTaskValueObjectToModel(
 		RemindWeekdays: createTaskValueObject.RemindWeekdays,
 		SortId:         createTaskValueObject.SortId,
 	}
-}
-
-// UpdateTaskValueObjectToModel 更新任务值对象转换为任务模型
-// @param updateTaskValueObject 更新任务值对象
-// @return 任务模型
-func UpdateTaskValueObjectToModel(
-	updateTaskValueObject *valueobjects.UpdateTask,
-) *models.Task {
-	m := &models.Task{}
-	if updateTaskValueObject.UserId == 0 {
-		m.UserId = updateTaskValueObject.UserId
-	}
-	if updateTaskValueObject.ParentTaskId != nil {
-		m.ParentTaskId = *updateTaskValueObject.ParentTaskId
-	}
-	if updateTaskValueObject.Name != nil {
-		m.Name = *updateTaskValueObject.Name
-	}
-	if updateTaskValueObject.Description != nil {
-		m.Description = *updateTaskValueObject.Description
-	}
-	if updateTaskValueObject.State != nil {
-		m.State = uint8(*updateTaskValueObject.State)
-	}
-	if updateTaskValueObject.Priority != nil {
-		m.Priority = uint8(*updateTaskValueObject.Priority)
-	}
-	if updateTaskValueObject.StartAt.ShouldUpdate() &&
-		!updateTaskValueObject.StartAt.IsSetToNull() {
-		m.StartAt = updateTaskValueObject.StartAt.ToSqlNullTime()
-	}
-	if updateTaskValueObject.EndAt.ShouldUpdate() &&
-		!updateTaskValueObject.EndAt.IsSetToNull() {
-		m.EndAt = updateTaskValueObject.EndAt.ToSqlNullTime()
-	}
-	if updateTaskValueObject.ProjectId != nil {
-		m.ProjectId = *updateTaskValueObject.ProjectId
-	}
-	if updateTaskValueObject.Tags != nil {
-		m.Tags = updateTaskValueObject.Tags
-	}
-	if updateTaskValueObject.ArchivedAt.ShouldUpdate() &&
-		!updateTaskValueObject.ArchivedAt.IsSetToNull() {
-		m.ArchivedAt = updateTaskValueObject.ArchivedAt.ToSqlNullTime()
-	}
-	if updateTaskValueObject.StarMarkAt.ShouldUpdate() &&
-		!updateTaskValueObject.StarMarkAt.IsSetToNull() {
-		m.StarMarkAt = updateTaskValueObject.StarMarkAt.ToSqlNullTime()
-	}
-	if updateTaskValueObject.GivenUpAt.ShouldUpdate() &&
-		!updateTaskValueObject.GivenUpAt.IsSetToNull() {
-		m.GivenUpAt = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
-	}
-	if updateTaskValueObject.RemindAt.ShouldUpdate() &&
-		!updateTaskValueObject.RemindAt.IsSetToNull() {
-		m.RemindAt = updateTaskValueObject.RemindAt.ToSqlNullTime()
-	}
-	if updateTaskValueObject.RemindRepeat != nil {
-		m.RemindRepeat = *updateTaskValueObject.RemindRepeat
-	}
-	if updateTaskValueObject.RemindTime != nil {
-		m.RemindTime = *updateTaskValueObject.RemindTime
-	}
-	if updateTaskValueObject.RemindWeekdays != nil {
-		m.RemindWeekdays = *updateTaskValueObject.RemindWeekdays
-	}
-	if updateTaskValueObject.SortId != nil {
-		m.SortId = *updateTaskValueObject.SortId
-	}
-	return m
 }
 
 // UpdateTaskValueObjectToMap 更新任务值对象转换为任务映射
@@ -204,9 +134,9 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.UpdatedAt = m.UpdatedAt
 	e.CreatedAt = m.CreatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
-	e.ParentTaskId = m.ParentTaskId
-	e.ProjectId = m.ProjectId
+	e.UserId = types.UserID(m.UserId)
+	e.ParentTaskId = types.TaskID(m.ParentTaskId)
+	e.ProjectId = types.ProjectID(m.ProjectId)
 	e.Name = m.Name
 	e.Description = m.Description
 	e.State = entities.TaskState(m.State)
@@ -298,8 +228,8 @@ func TaskCheckItemModel2Entity(m *models.TaskCheckItem) *entities.TaskCheckItem 
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
-	e.TaskId = m.TaskId
+	e.UserId = types.UserID(m.UserId)
+	e.TaskId = types.TaskID(m.TaskId)
 	e.Name = m.Name
 	e.Description = m.Description
 	e.IsDone = m.IsDone
@@ -323,8 +253,8 @@ func TaskCheckItemModels2Entities(list []*models.TaskCheckItem) []*entities.Task
 // CreateTaskCommentValueObjectToModel 创建任务评论值对象转换为任务评论模型
 func CreateTaskCommentValueObjectToModel(vo *valueobjects.CreateTaskComment) *models.TaskComment {
 	return &models.TaskComment{
-		UserId:      vo.UserId,
-		TaskId:      vo.TaskId,
+		UserId:      int64(vo.UserId),
+		TaskId:      int64(vo.TaskId),
 		Content:     vo.Content,
 		Attachments: vo.Attachments,
 		IsTopUp:     vo.IsTopUp,
@@ -357,8 +287,8 @@ func TaskCommentModel2Entity(m *models.TaskComment) *entities.TaskComment {
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
-	e.TaskId = m.TaskId
+	e.UserId = types.UserID(m.UserId)
+	e.TaskId = types.TaskID(m.TaskId)
 	e.Content = m.Content
 	e.Attachments = m.Attachments
 	e.IsTopUp = m.IsTopUp

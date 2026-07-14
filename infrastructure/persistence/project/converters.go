@@ -64,7 +64,7 @@ func Entity2Model(e *entities.Project) *models.Project {
 	m.CreatedAt = e.CreatedAt
 	m.UpdatedAt = e.UpdatedAt
 	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
-	m.UserId = e.UserId
+	m.UserId = int64(e.UserId)
 	m.Name = e.Name
 	m.Description = e.Description
 	m.ArchivedAt = e.ArchivedAt.ToSqlNullTime()
@@ -82,8 +82,8 @@ func PreferenceVO2Model(e *entities.ProjectPreference) *models.ProjectPreference
 	m.CreatedAt = e.CreatedAt
 	m.UpdatedAt = e.UpdatedAt
 	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
-	m.UserId = e.UserId
-	m.ProjectId = e.ProjectId
+	m.UserId = int64(e.UserId)
+	m.ProjectId = int64(e.ProjectId)
 	m.ViewType = e.ViewType
 	m.GetOptions = e.GetOptions
 	m.Columns = e.Columns
@@ -100,7 +100,7 @@ func Model2Entity(m *models.Project) *entities.Project {
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
+	e.UserId = types.UserID(m.UserId)
 	e.Name = m.Name
 	e.Description = m.Description
 	e.ArchivedAt = types.NewNullableTimeByTime(m.ArchivedAt.Time)
@@ -118,8 +118,8 @@ func PreferenceModel2Entity(m *models.ProjectPreference) *entities.ProjectPrefer
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
-	e.ProjectId = m.ProjectId
+	e.UserId = types.UserID(m.UserId)
+	e.ProjectId = types.ProjectID(m.ProjectId)
 	e.ViewType = m.ViewType
 	e.GetOptions = m.GetOptions
 	e.Columns = m.Columns

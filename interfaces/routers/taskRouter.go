@@ -1,17 +1,18 @@
 package routers
 
 import (
+	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
-func UseTaskRouter(router *gin.RouterGroup, ctrl *controllers.TaskController) {
+func UseTaskRouter(router *gin.RouterGroup, ctrl *controllers.TaskController, auth authApp.AuthApp) {
 	taskGroup := router.Group(
 		"/tasks",
-		middlewares.RateLimiter(48, "tasks"),
-		middlewares.JWTValidator,
+		middlewares.RateLimiter(auth, 48, "tasks"),
+		middlewares.JWTValidator(auth),
 	)
 	{
 		taskGroup.GET("/", ctrl.ListTask)

@@ -9,7 +9,7 @@ import (
 // 包含用户 ID、名称、描述、颜色、排序 ID等属性
 type Tag struct {
 	types.EntityBase
-	UserId      int64
+	UserId      types.UserID
 	Name        string
 	Description string
 	Color       string

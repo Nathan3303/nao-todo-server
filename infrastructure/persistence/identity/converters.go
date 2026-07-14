@@ -55,7 +55,7 @@ func UserConfigEntity2Model(e *entities.UserConfig) *models.UserConfig {
 	m.CreatedAt = e.CreatedAt
 	m.UpdatedAt = e.UpdatedAt
 	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
-	m.UserId = e.UserId
+	m.UserId = int64(e.UserId)
 	m.Appearance = e.Appearance
 	return &m
 }
@@ -67,7 +67,7 @@ func UserConfigModel2Entity(m *models.UserConfig) *entities.UserConfig {
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
+	e.UserId = types.UserID(m.UserId)
 	e.Appearance = m.Appearance
 	return &e
 }
@@ -79,7 +79,7 @@ func SessionModel2Entity(m *models.UserSession) *entities.UserSession {
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
-	e.UserId = m.UserId
+	e.UserId = types.UserID(m.UserId)
 	e.Token = m.Token
 	e.ExpiredAt = m.ExpiredAt
 	e.DeviceType = m.DeviceType
@@ -95,7 +95,7 @@ func SessionEntity2Model(e *entities.UserSession) *models.UserSession {
 	m.CreatedAt = e.CreatedAt
 	m.UpdatedAt = e.UpdatedAt
 	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
-	m.UserId = e.UserId
+	m.UserId = int64(e.UserId)
 	m.Token = e.Token
 	m.ExpiredAt = e.ExpiredAt
 	m.DeviceType = e.DeviceType

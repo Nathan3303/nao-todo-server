@@ -11,14 +11,14 @@ import (
 
 // CreateTask 创建任务值对象
 type CreateTask struct {
-	ParentTaskId   int64
+	ParentTaskId   types.TaskID
 	Name           string
 	Description    string
 	State          entities.TaskState
 	Priority       entities.TaskPriority
 	StartAt        types.NullableTime
 	EndAt          types.NullableTime
-	ProjectId      int64
+	ProjectId      types.ProjectID
 	Tags           []string
 	RemindAt       types.NullableTime
 	RemindRepeat   uint8
@@ -73,14 +73,14 @@ func (createTask *CreateTask) FillStartAt() {
 // @return *CreateTask 创建任务值对象
 // @return error 创建失败返回错误
 func NewCreateTask(
-	parentTaskId int64,
+	parentTaskId types.TaskID,
 	name string,
 	description string,
 	state entities.TaskState,
 	priority entities.TaskPriority,
 	startAt string,
 	endAt string,
-	projectId int64,
+	projectId types.ProjectID,
 	tags []string,
 	remindAt string,
 	remindRepeat uint8,

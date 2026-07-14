@@ -12,8 +12,8 @@ import (
 )
 
 // NewTaskDomain 任务域实现
-func NewTaskDomain(taskRepo repositories.Task) TaskDomain {
-	return &TaskDomainImpl{taskRepo: taskRepo}
+func NewTaskDomain(taskRepo repositories.Task, checkItemRepo repositories.TaskCheckItem) TaskDomain {
+	return &TaskDomainImpl{taskRepo: taskRepo, checkItemRepo: checkItemRepo}
 }
 
 // CreateTask 创建任务
@@ -80,8 +80,8 @@ func (d *TaskDomainImpl) CreateCheckItem(
 	userId int64,
 	vo *valueobjects.CreateTaskCheckItem,
 ) (*entities.TaskCheckItem, error) {
-	vo.SortId = d.taskRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
-	return d.taskRepo.CreateCheckItem(ctx, userId, vo)
+	vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
+	return d.checkItemRepo.CreateCheckItem(ctx, userId, vo)
 }
 
 // --- 任务提醒相关 ---

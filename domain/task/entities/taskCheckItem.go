@@ -12,8 +12,8 @@ import (
 // 包含用户 ID、任务 ID、名称、描述、是否完成、排序 ID等属性
 type TaskCheckItem struct {
 	types.EntityBase
-	UserId      int64
-	TaskId      int64
+	UserId      types.UserID
+	TaskId      types.TaskID
 	Name        string
 	Description string
 	IsDone      bool

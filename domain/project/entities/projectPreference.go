@@ -9,8 +9,8 @@ import (
 // 包含用户 ID、任务清单 ID、视图类型、获取选项、列等属性
 type ProjectPreference struct {
 	types.EntityBase
-	UserId     int64
-	ProjectId  int64
+	UserId     types.UserID
+	ProjectId  types.ProjectID
 	ViewType   string
 	GetOptions string
 	Columns    string

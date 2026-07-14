@@ -9,7 +9,7 @@ import (
 // 包含用户 ID、名称、描述、归档时间、创建时间、更新时间、删除时间、停用时间、排序 ID等属性
 type Project struct {
 	types.EntityBase
-	UserId      int64
+	UserId      types.UserID
 	Name        string
 	Description string
 	ArchivedAt  types.NullableTime
