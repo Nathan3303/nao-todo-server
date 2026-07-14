@@ -8,7 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseUserRouter(router *gin.RouterGroup, ctrl *controllers.UserController, auth authApp.AuthApp) {
+func UseUserRouter(
+	router *gin.RouterGroup,
+	ctrl *controllers.UserController,
+	auth authApp.AuthApp,
+) {
 	userGroup := router.Group(
 		"/user",
 		middlewares.RateLimiter(auth, 16, "user"),

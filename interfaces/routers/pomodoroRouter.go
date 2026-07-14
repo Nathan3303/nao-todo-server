@@ -9,7 +9,11 @@ import (
 )
 
 // UsePomodoroRouter 配置 Pomodoro 路由
-func UsePomodoroRouter(router *gin.RouterGroup, ctrl *controllers.PomodoroController, auth authApp.AuthApp) {
+func UsePomodoroRouter(
+	router *gin.RouterGroup,
+	ctrl *controllers.PomodoroController,
+	auth authApp.AuthApp,
+) {
 	// Pomodoro 路由
 	pomodoroGroup := router.Group(
 		"/pomodoros",

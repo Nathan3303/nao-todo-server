@@ -7,11 +7,14 @@ import (
 )
 
 type DeleteDeactivedProjectJob struct {
-	DayOffset   int8
-	ProjectApp  projectApp.ProjectApp
+	DayOffset  int8
+	ProjectApp projectApp.ProjectApp
 }
 
-func NewDeleteDeactivedProjectJob(dayOffset int8, projectApp projectApp.ProjectApp) *DeleteDeactivedProjectJob {
+func NewDeleteDeactivedProjectJob(
+	dayOffset int8,
+	projectApp projectApp.ProjectApp,
+) *DeleteDeactivedProjectJob {
 	return &DeleteDeactivedProjectJob{DayOffset: dayOffset, ProjectApp: projectApp}
 }
 

@@ -55,14 +55,12 @@ func GetJWTService() *JWTServiceImpl {
 	return jwtService
 }
 
-/**
- * 生成 JWT
- * @param id 用户 ID
- * @param payload 有效载荷
- * @param expOffset 过期时间偏移量，默认 48 小时
- * @return JWT 字符串
- * @note 该方法会根据提供的参数生成一个 JWT 字符串，用于标识用户身份和传递信息
- */
+// Generate 生成 JWT
+// @param id 用户 ID
+// @param payload 有效载荷
+// @param expOffset 过期时间偏移量，默认 48 小时
+// @return JWT 字符串
+// @note 该方法会根据提供的参数生成一个 JWT 字符串，用于标识用户身份和传递信息
 func (jwtService *JWTServiceImpl) Generate(
 	id int64,
 	payload string,
@@ -93,12 +91,10 @@ func (jwtService *JWTServiceImpl) Generate(
 	return jwtString, nil
 }
 
-/**
- * 解析 JWT
- * @param jwtString JWT 字符串
- * @return 解析后的 JWT 断言
- * @note 该方法会尝试解析提供的 JWT 字符串，返回解析后的断言对象
- */
+// Parse 解析 JWT
+// @param jwtString JWT 字符串
+// @return 解析后的 JWT 断言
+// @note 该方法会尝试解析提供的 JWT 字符串，返回解析后的断言对象
 func (jwtService *JWTServiceImpl) Parse(jwtString string) (*Claims, error) {
 	claims := &Claims{}
 	// 解析 JWT 字符串
@@ -116,12 +112,10 @@ func (jwtService *JWTServiceImpl) Parse(jwtString string) (*Claims, error) {
 	return claims, nil
 }
 
-/**
- * 检查 JWT 是否过期
- * @param jwtString JWT 字符串
- * @return 是否过期
- * @note 该方法会尝试解析提供的 JWT 字符串，检查其是否过期
- */
+// IsTokenExpired 检查 JWT 是否过期
+// @param jwtString JWT 字符串
+// @return 是否过期
+// @note 该方法会尝试解析提供的 JWT 字符串，检查其是否过期
 func (jwtService *JWTServiceImpl) IsTokenExpired(jwtString string) bool {
 	// 解析 JWT 字符串
 	claims, err := jwtService.Parse(jwtString)
@@ -132,12 +126,10 @@ func (jwtService *JWTServiceImpl) IsTokenExpired(jwtString string) bool {
 	return jwtService.IsExpired(claims)
 }
 
-/**
- * 检查 JWT 断言是否过期
- * @param claims JWT 断言
- * @return 是否过期
- * @note 该方法会检查提供的 JWT 断言是否过期，返回是否过期的结果
- */
+// IsExpired 检查 JWT 断言是否过期
+// @param claims JWT 断言
+// @return 是否过期
+// @note 该方法会检查提供的 JWT 断言是否过期，返回是否过期的结果
 func (jwtService *JWTServiceImpl) IsExpired(claims *Claims) bool {
 	// 检查断言是否为空或过期时间是否为空
 	if claims == nil || claims.RegisteredClaims.ExpiresAt == nil {

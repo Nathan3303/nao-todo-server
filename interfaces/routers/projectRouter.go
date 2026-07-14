@@ -8,7 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseProjectRouter(router *gin.RouterGroup, ctrl *controllers.ProjectController, auth authApp.AuthApp) {
+func UseProjectRouter(
+	router *gin.RouterGroup,
+	ctrl *controllers.ProjectController,
+	auth authApp.AuthApp,
+) {
 	projectGroup := router.Group(
 		"/projects",
 		middlewares.RateLimiter(auth, 32, "projects"),

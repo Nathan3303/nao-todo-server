@@ -2,7 +2,8 @@ package types
 
 import "reflect"
 
-// CopyStruct copies fields from src to dst for structs with identical field names and compatible types.
+// CopyStruct copies fields from src to dst for structs with identical field
+// names and compatible types.
 // Only exported fields are copied. Fields in dst that are zero-valued in src are left unchanged.
 // This is a shallow copy — reference types (slices, maps, pointers) share the underlying data.
 func CopyStruct(src, dst any) {

@@ -12,7 +12,10 @@ import (
 )
 
 // NewTaskDomain 任务域实现
-func NewTaskDomain(taskRepo repositories.Task, checkItemRepo repositories.TaskCheckItem) TaskDomain {
+func NewTaskDomain(
+	taskRepo repositories.Task,
+	checkItemRepo repositories.TaskCheckItem,
+) TaskDomain {
 	return &TaskDomainImpl{taskRepo: taskRepo, checkItemRepo: checkItemRepo}
 }
 

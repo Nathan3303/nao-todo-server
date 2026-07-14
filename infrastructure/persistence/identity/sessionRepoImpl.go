@@ -152,7 +152,11 @@ func (sr *sessionRepoImpl) UpdateToken(
 /**
  * Is Session Valid
  */
-func (sr *sessionRepoImpl) IsSessionValid(ctx context.Context, userId types.UserID, token string) bool {
+func (sr *sessionRepoImpl) IsSessionValid(
+	ctx context.Context,
+	userId types.UserID,
+	token string,
+) bool {
 	// 1. 优先读取缓存，命中直接返回
 	key := cache.SessionKey(int64(userId), token)
 	var cached bool

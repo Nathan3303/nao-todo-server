@@ -9,7 +9,11 @@ import (
 )
 
 // UseCommentRouter 评论路由
-func UseCommentRouter(router *gin.RouterGroup, ctrl *controllers.CommentController, auth authApp.AuthApp) {
+func UseCommentRouter(
+	router *gin.RouterGroup,
+	ctrl *controllers.CommentController,
+	auth authApp.AuthApp,
+) {
 	commentGroup := router.Group(
 		"/comments",
 		middlewares.RateLimiter(auth, 32, "comments"),

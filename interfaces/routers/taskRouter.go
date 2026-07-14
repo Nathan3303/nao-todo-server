@@ -8,7 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseTaskRouter(router *gin.RouterGroup, ctrl *controllers.TaskController, auth authApp.AuthApp) {
+func UseTaskRouter(
+	router *gin.RouterGroup,
+	ctrl *controllers.TaskController,
+	auth authApp.AuthApp,
+) {
 	taskGroup := router.Group(
 		"/tasks",
 		middlewares.RateLimiter(auth, 48, "tasks"),

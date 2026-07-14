@@ -22,7 +22,11 @@ func NewIdentityDomain(
 }
 
 // CreateSession 创建用户会话
-func (d *identityDomainImpl) CreateSession(ctx context.Context, userId types.UserID, token string) error {
+func (d *identityDomainImpl) CreateSession(
+	ctx context.Context,
+	userId types.UserID,
+	token string,
+) error {
 	return d.userSessionRepo.Create(
 		ctx,
 		&entities.UserSession{UserId: userId, Token: token},

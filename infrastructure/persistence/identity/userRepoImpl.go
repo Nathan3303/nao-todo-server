@@ -86,7 +86,11 @@ func (r *UserRepoImpl) FindById(ctx context.Context, id types.UserID) (*entities
 }
 
 // UpdateAvatar 更新头像
-func (r *UserRepoImpl) UpdateAvatar(ctx context.Context, userId types.UserID, avatarUrl string) error {
+func (r *UserRepoImpl) UpdateAvatar(
+	ctx context.Context,
+	userId types.UserID,
+	avatarUrl string,
+) error {
 	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
@@ -100,7 +104,11 @@ func (r *UserRepoImpl) UpdateAvatar(ctx context.Context, userId types.UserID, av
 }
 
 // UpdateNickname 更新昵称
-func (r *UserRepoImpl) UpdateNickname(ctx context.Context, userId types.UserID, nickname string) error {
+func (r *UserRepoImpl) UpdateNickname(
+	ctx context.Context,
+	userId types.UserID,
+	nickname string,
+) error {
 	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
@@ -180,7 +188,10 @@ func (r *UserRepoImpl) Active(ctx context.Context, userId types.UserID) error {
 }
 
 // GetConfig 获取用户配置
-func (r *UserRepoImpl) GetConfig(ctx context.Context, userId types.UserID) (*entities.UserConfig, error) {
+func (r *UserRepoImpl) GetConfig(
+	ctx context.Context,
+	userId types.UserID,
+) (*entities.UserConfig, error) {
 	// 先查缓存
 	cached := &entities.UserConfig{}
 	if r.cache.Get(ctx, cache.UserConfigKey(int64(userId)), cached) {
@@ -211,7 +222,11 @@ func (r *UserRepoImpl) GetConfig(ctx context.Context, userId types.UserID) (*ent
 }
 
 // UpdateConfig 更新用户配置
-func (r *UserRepoImpl) UpdateConfig(ctx context.Context, userId types.UserID, appearance string) error {
+func (r *UserRepoImpl) UpdateConfig(
+	ctx context.Context,
+	userId types.UserID,
+	appearance string,
+) error {
 	config := &models.UserConfig{}
 	err := r.db.
 		WithContext(ctx).

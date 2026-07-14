@@ -8,7 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UseEventRouter(router *gin.RouterGroup, ctrl *controllers.EventController, auth authApp.AuthApp) {
+func UseEventRouter(
+	router *gin.RouterGroup,
+	ctrl *controllers.EventController,
+	auth authApp.AuthApp,
+) {
 	eventGroup := router.Group(
 		"/events",
 		middlewares.RateLimiter(auth, 64, "events"),

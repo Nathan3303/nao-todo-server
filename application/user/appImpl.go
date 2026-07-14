@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	domerr "naotodoserver/domain/errors"
 	taskApp "naotodoserver/application/task"
 	"naotodoserver/conf"
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/repositories"
 	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
@@ -81,7 +81,12 @@ func (u *userAppImpl) UpdatePassword(
 		return domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户密码
-	if err := u.userRepo.UpdatePassword(ctx, domaintypes.UserID(userId), req.OldPassword, req.NewPassword); err != nil {
+	err := u.userRepo.UpdatePassword(
+		ctx,
+		domaintypes.UserID(userId),
+		req.OldPassword, req.NewPassword,
+	)
+	if err != nil {
 		return fmt.Errorf("user.UpdatePassword: %w", err)
 	}
 	return nil
