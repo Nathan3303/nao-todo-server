@@ -1,0 +1,136 @@
+services:
+    mysql:
+        image: mysql:8.4.9
+        container_name: naotodo-mysql-dev
+        ports:
+            - "3306:${MYSQL_PORT}"
+        volumes:
+            - mysql-data:/var/lib/mysql
+            - ${USERPROFILE}/Docker/nao-todo-server/mysql/conf/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+            - ${USERPROFILE}/Docker/nao-todo-server/mysql/conf/client.cnf:/etc/mysql/client.cnf:ro
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - TZ=Asia/Shanghai
+        mem_limit: 768m
+        memswap_limit: 768m
+        cpus: 0.75
+        networks:
+            - naotodo-backend
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mysqladmin",
+                    "ping",
+                    "-h",
+                    "localhost",
+                    "-u",
+                    "root",
+                    "-p${MYSQL_ROOT_PASSWORD}",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        restart: unless-stopped
+
+    redis:
+        image: redis:8.8.0
+        container_name: naotodo-redis-dev
+        ports:
+            - "6379:${REDIS_PORT}"
+        volumes:
+            - redis-data:/data
+            - ${USERPROFILE}/Docker/nao-todo-server/redis/conf/redis.conf:/etc/redis/redis.conf:ro
+        environment:
+            - TZ=Asia/Shanghai
+        command: redis-server /etc/redis/redis.conf --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+        mem_limit: 128m
+        memswap_limit: 128m
+        cpus: 0.25
+        networks:
+            - naotodo-backend
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        restart: unless-stopped
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: naotodo-server-dev
+        ports:
+            - "${APP_PORT}:${APP_PORT}"
+        volumes:
+            - app-uploads-data:/app/uploads
+            - app-logs-data:/app/logs
+            - app-ssl-certs:/app/ssl:ro
+        environment:
+            - MYSQL_HOST=mysql
+            - MYSQL_PORT=${MYSQL_PORT}
+            - MYSQL_USER=root
+            - MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - REDIS_HOST=redis
+            - REDIS_PORT=${REDIS_PORT}
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+            - REDIS_DB=${REDIS_DB}
+            - JWT_SECRET=${JWT_SECRET}
+            - TZ=Asia/Shanghai
+            - APP_DEBUG=${APP_DEBUG:-true}
+            - GOMAXPROCS=${GOMAXPROCS}
+            - GOMEMLIMIT=${GOMEMLIMIT}
+            - TLS_CERT_FILE=${TLS_CERT_FILE}
+            - TLS_KEY_FILE=${TLS_KEY_FILE}
+        depends_on:
+            mysql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        mem_limit: 512m
+        memswap_limit: 512m
+        cpus: 0.75
+        networks:
+            - naotodo-backend
+        restart: unless-stopped
+
+volumes:
+    mysql-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${USERPROFILE}/Docker/nao-todo-server/mysql/data
+    redis-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${USERPROFILE}/Docker/nao-todo-server/redis/data
+    app-uploads-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${USERPROFILE}/Docker/nao-todo-server/app/uploads
+    app-logs-data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${USERPROFILE}/Docker/nao-todo-server/app/logs
+    app-ssl-certs:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${USERPROFILE}/Docker/nao-todo-server/app/ssl
+
+networks:
+    naotodo-backend:
+        driver: bridge
