@@ -1,8 +1,6 @@
 package middlewares
 
 import (
-	"net/http"
-
 	authApp "naotodoserver/application/auth"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
@@ -17,7 +15,7 @@ func RateLimiter(auth authApp.AuthApp, limit int8, tag string) gin.HandlerFunc {
 		// 2. 检查
 		err := auth.RateLimit(ctx, key, limit)
 		if err != nil {
-			controllers.FailureByHttpStatus(ctx, http.StatusTooManyRequests, types.ResponseData{
+			controllers.Failure(ctx, types.ResponseData{
 				Code:    10051,
 				Message: "请求失败",
 				Error:   "请求次数超出单位时间内次数",
