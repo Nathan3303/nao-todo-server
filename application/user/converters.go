@@ -1,6 +1,7 @@
 package user
 
 import (
+	"naotodoserver/conf"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/interfaces/types"
 	"time"
@@ -13,7 +14,7 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res := &types.GetUserProfileRes{}
 	res.Email = e.Email
 	res.Nickname = e.Nickname
-	res.Avatar = e.Avatar
+	res.Avatar = conf.Conf.Uploads.AvatarURL(e.Avatar)
 	res.Role = ""
 	res.CreatedFrom = e.CreatedFrom
 	res.State = uint8(e.State)

@@ -83,6 +83,7 @@ services:
             - JWT_SECRET=${JWT_SECRET}
             - TZ=Asia/Shanghai
             - APP_DEBUG=${APP_DEBUG:-false} # 是否启用 Debug 模式
+            - APP_SERVER_URL=${APP_SERVER_URL} # 服务器地址（用于拼接头像完整 URL）
             - GOMAXPROCS=${GOMAXPROCS} # Go 并发数，根据 CPU 核心数调整
             - GOMEMLIMIT=${GOMEMLIMIT} # Go 1.19+ 的内存软限制，防止 OOM
             - TLS_CERT_FILE=${TLS_CERT_FILE} # TLS 证书文件路径

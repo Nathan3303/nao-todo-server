@@ -2,6 +2,7 @@ package task
 
 import (
 	"naotodoserver/application/idutil"
+	"naotodoserver/conf"
 	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
@@ -370,7 +371,7 @@ func TaskCommentEntityToRes(e *entities.TaskComment) *types.TaskCommentRes {
 	res.Attachments = e.Attachments
 	res.IsTopUp = e.IsTopUp
 	res.Nickname = e.Nickname
-	res.Avatar = e.Avatar
+	res.Avatar = conf.Conf.Uploads.AvatarURL(e.Avatar)
 	return &res
 }
 

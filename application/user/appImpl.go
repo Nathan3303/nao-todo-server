@@ -113,7 +113,7 @@ func (u *userAppImpl) UpdateAvatar(
 	// 3. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", req.AvatarURL)
 	// 4. 返回结果
-	return &types.UpdateUserAvatarRes{AvatarURL: req.AvatarURL}, nil
+	return &types.UpdateUserAvatarRes{AvatarURL: conf.Conf.Uploads.AvatarURL(req.AvatarURL)}, nil
 }
 
 // UpdateAvatarByFile 更新用户头像（通过文件上传）
@@ -175,7 +175,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	// 9. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", avatarURL)
 	// 10. 返回结果
-	return &types.UpdateUserAvatarRes{AvatarURL: avatarURL}, nil
+	return &types.UpdateUserAvatarRes{AvatarURL: conf.Conf.Uploads.AvatarURL(avatarURL)}, nil
 }
 
 // DeactiveUser 禁用用户

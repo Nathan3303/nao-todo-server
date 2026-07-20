@@ -3,6 +3,7 @@ package conf
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -22,6 +23,20 @@ type Uploads struct {
 	AvatarDir   string `yaml:"avatarDir"`   // 头像存储子目录
 	MaxFileSize int64  `yaml:"maxFileSize"` // 最大文件大小（字节）
 	StaticPath  string `yaml:"staticPath"`  // 静态文件访问路径
+	ServerURL   string `yaml:"serverURL"`   // 服务器地址（用于拼接头像完整 URL）
+}
+
+// AvatarURL 将相对路径的头像 URL 拼接为完整 URL。
+// 若 avatar 为空、已是绝对 URL、或 ServerURL 未配置，则原样返回。
+func (u *Uploads) AvatarURL(avatar string) string {
+	if avatar == "" || u.ServerURL == "" {
+		return avatar
+	}
+	if strings.HasPrefix(avatar, "http://") ||
+		strings.HasPrefix(avatar, "https://") {
+		return avatar
+	}
+	return u.ServerURL + avatar
 }
 
 type LogConfig struct {
@@ -129,6 +144,9 @@ func overrideWithEnv() {
 		if maxProc, err := strconv.Atoi(env); err == nil {
 			Conf.Server.GoMaxProc = maxProc
 		}
+	}
+	if env = os.Getenv("APP_SERVER_URL"); env != "" {
+		Conf.Uploads.ServerURL = env
 	}
 	if Conf.Server.Debug {
 		Conf.Server.CertFile = ""

@@ -83,6 +83,7 @@ services:
             - JWT_SECRET=${JWT_SECRET}
             - TZ=Asia/Shanghai
             - APP_DEBUG=${APP_DEBUG:-true}
+            - APP_SERVER_URL=${APP_SERVER_URL} # 服务器地址（用于拼接头像完整 URL）
             - GOMAXPROCS=${GOMAXPROCS}
             - GOMEMLIMIT=${GOMEMLIMIT}
             - TLS_CERT_FILE=${TLS_CERT_FILE}

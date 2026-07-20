@@ -18,13 +18,14 @@ func CreateTaskValueObjectToModel(
 ) *models.Task {
 	return &models.Task{
 		UserId:         userId,
-		ProjectId:      int64(createTaskValueObject.ProjectId),
+		ParentTaskId:   int64(createTaskValueObject.ParentTaskId),
 		Name:           createTaskValueObject.Name,
 		Description:    createTaskValueObject.Description,
 		State:          uint8(createTaskValueObject.State),
 		Priority:       uint8(createTaskValueObject.Priority),
 		StartAt:        createTaskValueObject.StartAt.ToSqlNullTime(),
 		EndAt:          createTaskValueObject.EndAt.ToSqlNullTime(),
+		ProjectId:      int64(createTaskValueObject.ProjectId),
 		Tags:           createTaskValueObject.Tags,
 		RemindAt:       createTaskValueObject.RemindAt.ToSqlNullTime(),
 		RemindRepeat:   createTaskValueObject.RemindRepeat,
