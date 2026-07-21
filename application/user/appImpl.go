@@ -45,7 +45,8 @@ func (u *userAppImpl) UpdateNickname(
 		return domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户昵称
-	if err := u.userRepo.UpdateNickname(ctx, domaintypes.UserID(userId), req.Nickname); err != nil {
+	err := u.userRepo.UpdateNickname(ctx, domaintypes.UserID(userId), req.Nickname)
+	if err != nil {
 		return err
 	}
 	// 3. 同步评论中的用户昵称
@@ -112,13 +113,16 @@ func (u *userAppImpl) UpdateAvatar(
 		return nil, domerr.ErrInvalidUserID
 	}
 	// 2. 更新用户头像
-	if err := u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), req.AvatarURL); err != nil {
+	err := u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), req.AvatarURL)
+	if err != nil {
 		return nil, err
 	}
 	// 3. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", req.AvatarURL)
 	// 4. 返回结果
-	return &types.UpdateUserAvatarRes{AvatarURL: conf.Conf.Uploads.AvatarURL(req.AvatarURL)}, nil
+	return &types.UpdateUserAvatarRes{
+		AvatarURL: conf.Conf.Uploads.AvatarURL(req.AvatarURL),
+	}, nil
 }
 
 // UpdateAvatarByFile 更新用户头像（通过文件上传）
@@ -170,9 +174,15 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	if staticPath == "" {
 		staticPath = "/static/uploads"
 	}
-	avatarURL := fmt.Sprintf("%s/%s/%s", staticPath, conf.Conf.Uploads.AvatarDir, uniqueFilename)
+	avatarURL := fmt.Sprintf(
+		"%s/%s/%s",
+		staticPath,
+		conf.Conf.Uploads.AvatarDir,
+		uniqueFilename,
+	)
 	// 8. 更新用户头像
-	if err = u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), avatarURL); err != nil {
+	err = u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), avatarURL)
+	if err != nil {
 		// 更新失败时删除已上传的文件
 		os.Remove(savePath)
 		return nil, err
@@ -180,14 +190,16 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	// 9. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", avatarURL)
 	// 10. 返回结果
-	return &types.UpdateUserAvatarRes{AvatarURL: conf.Conf.Uploads.AvatarURL(avatarURL)}, nil
+	return &types.UpdateUserAvatarRes{
+		AvatarURL: conf.Conf.Uploads.AvatarURL(avatarURL),
+	}, nil
 }
 
-// DeactiveUser 禁用用户
+// DeleteUser 删除用户（注销用户）
 // @param ctx 上下文
-// @param req 禁用用户请求
+// @param req 删除用户请求
 // @return error 错误
-func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error {
+func (u *userAppImpl) DeleteUser(ctx context.Context, req *types.DeleteUserReq) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -217,32 +229,10 @@ func (u *userAppImpl) DeactiveUser(ctx context.Context, req *types.DeactiveUserR
 	return nil
 }
 
-// GetConfig 获取用户配置
-func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, domerr.ErrInvalidUserID
-	}
-	config, err := u.userRepo.GetConfig(ctx, domaintypes.UserID(userId))
-	if err != nil {
-		return nil, fmt.Errorf("user.GetConfig: %w", err)
-	}
-	return ConfigEntity2Res(config), nil
-}
-
-// UpdateConfig 更新用户配置
-func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return domerr.ErrInvalidUserID
-	}
-	if err := u.userRepo.UpdateConfig(ctx, domaintypes.UserID(userId), req.Appearance); err != nil {
-		return fmt.Errorf("user.UpdateConfig: %w", err)
-	}
-	return nil
-}
-
 // DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
+// @param ctx 上下文
+// @param dayOffset 注销时间偏移天数
+// @return error 错误
 func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error {
 	_, err := u.userRepo.DeleteDeactivatedUsers(ctx, dayOffset)
 	if err != nil {
@@ -251,8 +241,11 @@ func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8
 	return nil
 }
 
-// ActiveUser 激活用户（取消注销）
-func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) error {
+// RestoreUser 激活用户（取消注销）
+// @param ctx 上下文
+// @param req 激活用户请求
+// @return error 错误
+func (u *userAppImpl) RestoreUser(ctx context.Context, req *types.RestoreUserReq) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -282,37 +275,38 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 	return nil
 }
 
-// DeleteUser 删除用户（注销账户）
-func (u *userAppImpl) DeleteUser(ctx context.Context, req *types.DeleteUserReq) error {
-	// 1. 获取 User ID
+// GetConfig 获取用户配置
+// @param ctx 上下文
+// @return *types.GetUserConfigRes 获取用户配置响应
+// @return error 错误
+func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, error) {
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, domerr.ErrInvalidUserID
+	}
+	config, err := u.userRepo.GetConfig(ctx, domaintypes.UserID(userId))
+	if err != nil {
+		return nil, fmt.Errorf("user.GetConfig: %w", err)
+	}
+	return ConfigEntity2Res(config), nil
+}
+
+// UpdateConfig 更新用户配置
+// @param ctx 上下文
+// @param req 更新用户配置请求
+// @return error 错误
+func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return domerr.ErrInvalidUserID
 	}
-	// 2. 查询用户是否存在
-	user, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId))
-	if err != nil {
-		return err
-	}
-	// 3. 密码比对
-	isPasswordValid := u.userRepo.PasswordCompare(
-		[]byte(req.Password),
-		[]byte(user.Password),
+	err := u.userRepo.UpdateConfig(
+		ctx,
+		domaintypes.UserID(userId),
+		req.Appearance,
 	)
-	if !isPasswordValid {
-		return domerr.ErrPasswordMismatch
-	}
-	// 4. 检查用户状态
-	if user.IsDeactived() {
-		return domerr.ErrUserDeactivated
-	}
-	// 5. 更新用户状态为待注销
-	if err := u.userRepo.Deactive(ctx, domaintypes.UserID(userId)); err != nil {
-		return fmt.Errorf("user.Deactive: %w", err)
-	}
-	// 6. 删除用户所有会话
-	if err := u.sessionRepo.DeleteByUserId(ctx, domaintypes.UserID(userId)); err != nil {
-		return fmt.Errorf("user.DeleteSession: %w", err)
+	if err != nil {
+		return fmt.Errorf("user.UpdateConfig: %w", err)
 	}
 	return nil
 }

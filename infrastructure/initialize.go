@@ -4,7 +4,6 @@ import (
 	"context"
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
-	"naotodoserver/domain/types"
 	pomodoroApp "naotodoserver/application/pomodoro"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
@@ -15,6 +14,7 @@ import (
 	projectService "naotodoserver/domain/project/service"
 	tagService "naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/cron"
 	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/persistence/cache"
@@ -55,11 +55,19 @@ func LoadDomains() *application.Services {
 	// 初始化任务领域模型
 	taskRepoInst := taskRepo.NewTaskRepo(dbs.DB)
 	taskDomain := taskService.NewTaskDomain(taskRepoInst, taskRepoInst)
-	taskAppInst := taskApp.NewTaskApp(taskDomain, taskRepoInst, taskRepoInst, taskRepoInst)
+	taskAppInst := taskApp.NewTaskApp(
+		taskDomain,
+		taskRepoInst,
+		taskRepoInst,
+		taskRepoInst,
+	)
 	// 初始化番茄领域模型
 	pomodoroRecordRepoInst := pomodoroRepo.NewPomodoroRecordRepo(dbs.DB)
 	pomodoroRepoInst := pomodoroRepo.NewPomodoroRepo(dbs.DB)
-	pomodoroDomain := pomodoroService.NewPomodoroDomain(pomodoroRecordRepoInst, pomodoroRepoInst)
+	pomodoroDomain := pomodoroService.NewPomodoroDomain(
+		pomodoroRecordRepoInst,
+		pomodoroRepoInst,
+	)
 	pomodoroAppInst := pomodoroApp.NewPomodoroApp(
 		pomodoroDomain,
 		pomodoroRecordRepoInst,
@@ -68,7 +76,10 @@ func LoadDomains() *application.Services {
 	// 初始化项目领域模型
 	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB, cacheInst)
 	projectPreferenceRepoInst := projectRepo.NewProjectPreferenceRepo(dbs.DB)
-	projectDomain := projectService.NewProjectDomain(projectRepoInst, projectPreferenceRepoInst)
+	projectDomain := projectService.NewProjectDomain(
+		projectRepoInst,
+		projectPreferenceRepoInst,
+	)
 	projectAppInst := projectApp.NewProjectApp(
 		projectDomain,
 		projectRepoInst,
@@ -78,12 +89,27 @@ func LoadDomains() *application.Services {
 	// 初始化标签领域模型
 	tagRepoInst := tagRepo.NewTagRepo(dbs.DB, cacheInst)
 	tagPreferenceRepoInst := tagRepo.NewTagPreferenceRepo(dbs.DB)
-	tagDomain := tagService.NewTagDomain(tagRepoInst, tagPreferenceRepoInst)
-	tagAppInst := tagApp.NewTagApp(tagDomain, tagRepoInst, tagPreferenceRepoInst)
+	tagDomain := tagService.NewTagDomain(
+		tagRepoInst,
+		tagPreferenceRepoInst,
+	)
+	tagAppInst := tagApp.NewTagApp(
+		tagDomain,
+		tagRepoInst,
+		tagPreferenceRepoInst,
+	)
 	// 初始化项目领域模型
 	return &application.Services{
-		Auth:          authApp.NewAuthApp(identityDomain, userRepoInst, sessionRepoInst),
-		User:          userApp.NewUserApp(userRepoInst, sessionRepoInst, taskAppInst),
+		Auth: authApp.NewAuthApp(
+			identityDomain,
+			userRepoInst,
+			sessionRepoInst,
+		),
+		User: userApp.NewUserApp(
+			userRepoInst,
+			sessionRepoInst,
+			taskAppInst,
+		),
 		Task:          taskAppInst,
 		TaskComment:   taskAppInst,
 		TaskCheckItem: taskAppInst,
@@ -107,7 +133,7 @@ func LoadCron(svc *application.Services) {
 	cronService := cron.GetCronServiceImpl()
 	// 添加定时任务 - 删除注销用户
 	_, err := cronService.AddJob(
-		"0 2 * * *",
+		"0 4 * * *",
 		cron.NewDeleteDeactivedUserJob(7, svc.User),
 	)
 	if err != nil {

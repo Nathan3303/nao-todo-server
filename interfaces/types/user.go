@@ -35,18 +35,13 @@ type UpdateUserAvatarRes struct {
 	AvatarURL string `json:"avatarURL"`
 }
 
-// DeactiveUserReq 退出登录请求
-type DeactiveUserReq struct {
-	Password string `json:"password" form:"password" binding:"required"`
-}
-
-// ActiveUserReq 激活用户请求
-type ActiveUserReq struct {
-	Password string `json:"password" form:"password" binding:"required"`
-}
-
 // DeleteUserReq 删除用户请求
 type DeleteUserReq struct {
+	Password string `json:"password" form:"password" binding:"required"`
+}
+
+// RestoreUserReq 激活用户请求
+type RestoreUserReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 

@@ -39,11 +39,11 @@ type UserApp interface {
 		ctx context.Context,
 	) (*types.UpdateUserAvatarRes, error)
 
-	// DeactiveUser 禁用用户
-	DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error
+	// DeleteUser 删除用户（注销账户）
+	DeleteUser(ctx context.Context, req *types.DeleteUserReq) error
 
-	// ActiveUser 激活用户
-	ActiveUser(ctx context.Context, req *types.ActiveUserReq) error
+	// RestoreUser 激活用户
+	RestoreUser(ctx context.Context, req *types.RestoreUserReq) error
 
 	// GetConfig 获取用户配置
 	GetConfig(ctx context.Context) (*types.GetUserConfigRes, error)
@@ -53,9 +53,6 @@ type UserApp interface {
 
 	// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
 	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error
-
-	// DeleteUser 删除用户（注销账户）
-	DeleteUser(ctx context.Context, req *types.DeleteUserReq) error
 }
 
 // userAppImpl 用户应用实现
