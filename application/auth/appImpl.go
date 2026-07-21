@@ -9,6 +9,7 @@ import (
 	"naotodoserver/domain/identity/service"
 	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
+	"time"
 )
 
 // NewAuthApp 创建认证应用层实例
@@ -57,8 +58,19 @@ func (as *authAppImpl) SignIn(
 	if err != nil {
 		return nil, fmt.Errorf("auth.SignIn.CreateSession: %w", err)
 	}
+	// 4. 检查是否出于待注销状态，并返回注销时间
+	var pendingDeletion = false
+	var deletionDeadline = ""
+	if userEntity.IsDeactived() {
+		pendingDeletion = true
+		deletionDeadline = userEntity.DeletedAt.Time.Format(time.RFC3339)
+	}
 	// 4. 登录成功 返回 JWT
-	return &types.SignInRes{Token: jwtString}, nil
+	return &types.SignInRes{
+		Token:            jwtString,
+		PendingDeletion:  pendingDeletion,
+		DeletionDeadline: deletionDeadline,
+	}, nil
 }
 
 /*

@@ -23,7 +23,7 @@ func UseUserRouter(
 		userGroup.PUT("/nickname", ctrl.UpdateUserNickname)
 		userGroup.PUT("/password", ctrl.UpdateUserPassword)
 		userGroup.PUT("/avatar", ctrl.UpdateUserAvatar)
-		userGroup.DELETE("/delete", ctrl.DeleteUser)
+		userGroup.DELETE("/", ctrl.DeleteUser)
 		userGroup.PUT("/restore", ctrl.RestoreUser)
 		userGroup.GET("/config", ctrl.GetUserConfig)
 		userGroup.PUT("/config", ctrl.UpdateUserConfig)
