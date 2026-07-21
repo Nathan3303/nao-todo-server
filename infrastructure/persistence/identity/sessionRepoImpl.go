@@ -26,9 +26,10 @@ func NewSessionRepo(db *gorm.DB, c *cache.Cache) repositories.UserSession {
 	}
 }
 
-/**
- * Create Session
- */
+// Create 创建会话
+// @param ctx 上下文
+// @param sessionEntity 会话实体
+// @return error 错误
 func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.UserSession) error {
 	// 1. 查找现存记录
 	currentSession := &models.UserSession{}
@@ -56,9 +57,15 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 		}
 		// 3. 失效旧 token 与新 token 的会话缓存
 		if currentSession.Token != "" {
-			sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), currentSession.Token))
+			sr.cache.Del(ctx, cache.SessionKey(
+				int64(sessionEntity.UserId),
+				currentSession.Token,
+			))
 		}
-		sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), sessionEntity.Token))
+		sr.cache.Del(ctx, cache.SessionKey(
+			int64(sessionEntity.UserId),
+			sessionEntity.Token,
+		))
 		return nil
 	}
 	// 3. 执行结果不存在逻辑 - 创建记录
@@ -73,13 +80,18 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 		return tx.Error
 	}
 	// 4. 失效新 token 的会话缓存
-	sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), sessionEntity.Token))
+	sr.cache.Del(ctx, cache.SessionKey(
+		int64(sessionEntity.UserId),
+		sessionEntity.Token,
+	))
 	return nil
 }
 
-/**
- * Delete Session
- */
+// Delete 删除会话
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param token 会话令牌
+// @return error 错误
 func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, token string) error {
 	// 1. 创建删除模型
 	deleteCond := &models.UserSession{Token: token}
@@ -98,9 +110,10 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, toke
 	return nil
 }
 
-/**
- * Delete All Sessions by User ID
- */
+// DeleteByUserId 删除用户所有会话
+// @param ctx 上下文
+// @param userId 用户 ID
+// @return error 错误
 func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.UserID) error {
 	// 1. 获取用户所有会话的 token
 	var tokens []string
@@ -126,9 +139,12 @@ func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.User
 	return nil
 }
 
-/**
- * Find Session by User ID and Token
- */
+// FindByUserIdAndToken 根据用户 ID和会话令牌查找会话
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param token 会话令牌
+// @return 会话实体
+// @note 会话不存在时返回 nil
 func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	ctx context.Context,
 	userId types.UserID,
@@ -152,9 +168,10 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	return SessionModel2Entity(session)
 }
 
-/**
- * Update Session Token
- */
+// UpdateToken 更新会话令牌
+// @param ctx 上下文
+// @param sessionEntity 会话实体
+// @return error 错误
 func (sr *sessionRepoImpl) UpdateToken(
 	ctx context.Context,
 	sessionEntity *entities.UserSession,
@@ -172,14 +189,19 @@ func (sr *sessionRepoImpl) UpdateToken(
 		return tx.Error
 	}
 	// 3. 失效该会话缓存
-	sr.cache.Del(ctx, cache.SessionKey(int64(sessionEntity.UserId), sessionEntity.Token))
+	sr.cache.Del(ctx, cache.SessionKey(
+		int64(sessionEntity.UserId),
+		sessionEntity.Token,
+	))
 	// 4. 返回结果
 	return nil
 }
 
-/**
- * Is Session Valid
- */
+// IsSessionValid 验证会话是否有效
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param token 会话令牌
+// @return 会话是否有效
 func (sr *sessionRepoImpl) IsSessionValid(
 	ctx context.Context,
 	userId types.UserID,
@@ -211,9 +233,10 @@ func (sr *sessionRepoImpl) IsSessionValid(
 	return valid
 }
 
-/**
- * Ip to Region
- */
+// Ip2Region IP 地址转换为区域
+// @param ip IP 地址
+// @return 区域
+// @note 如果 IP 地址无效，返回空字符串
 func (sr *sessionRepoImpl) Ip2Region(ip string) (string, error) {
 	// 1. 获取 IP 地址区域信息
 	region, err := ip2region.GetIp2RegionImpl().ParseIp(ip)

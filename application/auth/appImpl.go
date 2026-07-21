@@ -187,13 +187,13 @@ func (as *authAppImpl) Validate(
 		return 0, fmt.Errorf("auth.Validate.ParseJWT: %w", err)
 	}
 	// 2. 检查用户是否存在且未注销
-	userEntity, err := as.userRepo.FindById(ctx, userId)
-	if err != nil {
-		return 0, fmt.Errorf("auth.Validate.FindById: %w", err)
-	}
-	if userEntity.IsDeactived() {
-		return 0, domerr.ErrUserDeactivated
-	}
+	// userEntity, err := as.userRepo.FindById(ctx, userId)
+	// if err != nil {
+	// 	return 0, fmt.Errorf("auth.Validate.FindById: %w", err)
+	// }
+	// if userEntity.IsDeactived() {
+	// 	return 0, domerr.ErrUserDeactivated
+	// }
 	// 3. 检查会话
 	session, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, token)
 	if err != nil {
