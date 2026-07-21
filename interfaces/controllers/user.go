@@ -280,3 +280,30 @@ func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 		Message: "更新用户配置成功",
 	})
 }
+ 
+// DeleteUser 删除用户控制器（注销账户）
+// @code 1013x
+func (c *UserController) DeleteUser(ctx *gin.Context) {
+	var req types.DeleteUserReq
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10131,
+			Message: "参数错误",
+		})
+		return
+	}
+	err = c.userApp.DeleteUser(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    10132,
+			Message: "注销账户失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	Success(ctx, types.ResponseData{
+		Code:    10130,
+		Message: "注销账户成功，账户将在 7 天后自动删除",
+	})
+}

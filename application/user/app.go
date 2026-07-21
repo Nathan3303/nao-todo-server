@@ -53,10 +53,14 @@ type UserApp interface {
 
 	// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
 	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error
+
+	// DeleteUser 删除用户（注销账户）
+	DeleteUser(ctx context.Context, req *types.DeleteUserReq) error
 }
 
 // userAppImpl 用户应用实现
 type userAppImpl struct {
-	userRepo repositories.User
-	taskApp  taskApp.TaskCommentApp
+	userRepo    repositories.User
+	sessionRepo repositories.UserSession
+	taskApp     taskApp.TaskCommentApp
 }

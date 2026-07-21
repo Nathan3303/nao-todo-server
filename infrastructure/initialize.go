@@ -83,7 +83,7 @@ func LoadDomains() *application.Services {
 	// 初始化项目领域模型
 	return &application.Services{
 		Auth:          authApp.NewAuthApp(identityDomain, userRepoInst, sessionRepoInst),
-		User:          userApp.NewUserApp(userRepoInst, taskAppInst),
+		User:          userApp.NewUserApp(userRepoInst, sessionRepoInst, taskAppInst),
 		Task:          taskAppInst,
 		TaskComment:   taskAppInst,
 		TaskCheckItem: taskAppInst,
@@ -106,9 +106,9 @@ func LoadCron(svc *application.Services) {
 	// 初始化定时任务
 	cronService := cron.GetCronServiceImpl()
 	// 添加定时任务 - 删除注销用户
-	_, err := 	cronService.AddJob(
+	_, err := cronService.AddJob(
 		"0 2 * * *",
-		cron.NewDeleteDeactivedUserJob(15, svc.User),
+		cron.NewDeleteDeactivedUserJob(7, svc.User),
 	)
 	if err != nil {
 		panic("删除注销用户定时任务添加失败：" + err.Error())

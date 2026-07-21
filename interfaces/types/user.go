@@ -8,6 +8,7 @@ type GetUserProfileRes struct {
 	CreatedFrom string `json:"createdFrom"`
 	Role        string `json:"role"`
 	State       uint8  `json:"state"`
+	DeactivedAt string `json:"deactivedAt"`
 	Config      any    `json:"config"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`
@@ -39,8 +40,13 @@ type DeactiveUserReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
-// ActiveUserReq 登录请求
+// ActiveUserReq 激活用户请求
 type ActiveUserReq struct {
+	Password string `json:"password" form:"password" binding:"required"`
+}
+
+// DeleteUserReq 删除用户请求
+type DeleteUserReq struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 

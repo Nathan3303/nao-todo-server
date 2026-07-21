@@ -19,10 +19,15 @@ import (
 )
 
 // NewUserApp 创建用户应用层实例
-func NewUserApp(userRepo repositories.User, taskApp taskApp.TaskCommentApp) UserApp {
+func NewUserApp(
+	userRepo repositories.User,
+	sessionRepo repositories.UserSession,
+	taskApp taskApp.TaskCommentApp,
+) UserApp {
 	return &userAppImpl{
-		userRepo: userRepo,
-		taskApp:  taskApp,
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
+		taskApp:     taskApp,
 	}
 }
 
@@ -246,7 +251,7 @@ func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8
 	return nil
 }
 
-// ActiveUser 激活用户
+// ActiveUser 激活用户（取消注销）
 func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
@@ -268,11 +273,46 @@ func (u *userAppImpl) ActiveUser(ctx context.Context, req *types.ActiveUserReq) 
 	}
 	// 4. 检查用户状态
 	if !user.IsDeactived() {
-		return errors.New("用户未注销")
+		return errors.New("用户未处于注销状态")
 	}
 	// 5. 更新用户状态
 	if err := u.userRepo.Active(ctx, domaintypes.UserID(userId)); err != nil {
 		return fmt.Errorf("user.Active: %w", err)
+	}
+	return nil
+}
+
+// DeleteUser 删除用户（注销账户）
+func (u *userAppImpl) DeleteUser(ctx context.Context, req *types.DeleteUserReq) error {
+	// 1. 获取 User ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return domerr.ErrInvalidUserID
+	}
+	// 2. 查询用户是否存在
+	user, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId))
+	if err != nil {
+		return err
+	}
+	// 3. 密码比对
+	isPasswordValid := u.userRepo.PasswordCompare(
+		[]byte(req.Password),
+		[]byte(user.Password),
+	)
+	if !isPasswordValid {
+		return domerr.ErrPasswordMismatch
+	}
+	// 4. 检查用户状态
+	if user.IsDeactived() {
+		return domerr.ErrUserDeactivated
+	}
+	// 5. 更新用户状态为待注销
+	if err := u.userRepo.Deactive(ctx, domaintypes.UserID(userId)); err != nil {
+		return fmt.Errorf("user.Deactive: %w", err)
+	}
+	// 6. 删除用户所有会话
+	if err := u.sessionRepo.DeleteByUserId(ctx, domaintypes.UserID(userId)); err != nil {
+		return fmt.Errorf("user.DeleteSession: %w", err)
 	}
 	return nil
 }

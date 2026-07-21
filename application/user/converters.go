@@ -18,6 +18,9 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 	res.Role = ""
 	res.CreatedFrom = e.CreatedFrom
 	res.State = uint8(e.State)
+	if deactivedAt, ok := e.DeactivedAt.Value(); ok {
+		res.DeactivedAt = deactivedAt.Add(time.Hour * 24 * 7).Format(time.RFC3339)
+	}
 	res.Config = e.Config
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)

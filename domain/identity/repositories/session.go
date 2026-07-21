@@ -16,6 +16,7 @@ type UserSession interface {
 	) *entities.UserSession
 	UpdateToken(ctx context.Context, sessionEntity *entities.UserSession) error
 	Delete(ctx context.Context, userId types.UserID, token string) error
+	DeleteByUserId(ctx context.Context, userId types.UserID) error
 	IsSessionValid(ctx context.Context, userId types.UserID, token string) bool
 	Ip2Region(ip string) (string, error)
 }

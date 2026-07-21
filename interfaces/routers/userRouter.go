@@ -25,6 +25,7 @@ func UseUserRouter(
 		userGroup.PUT("/avatar", ctrl.UpdateUserAvatar)
 		userGroup.PUT("/active", ctrl.ActiveUser)
 		userGroup.PUT("/deactive", ctrl.DeactiveUser)
+		userGroup.POST("/delete", ctrl.DeleteUser)
 		userGroup.GET("/config", ctrl.GetUserConfig)
 		userGroup.PUT("/config", ctrl.UpdateUserConfig)
 	}

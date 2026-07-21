@@ -292,9 +292,62 @@ func (r *UserRepoImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int
 	if len(userIds) > 0 {
 		r.db.
 			WithContext(ctx).
+			Model(&models.UserSession{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.UserSession{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.TaskComment{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.TaskComment{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.TaskCheckItem{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.TaskCheckItem{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.Task{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.Task{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.ProjectPreference{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.ProjectPreference{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.Project{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.Project{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.TagPreference{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.TagPreference{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.Tag{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.Tag{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.PomodoroRecord{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.PomodoroRecord{})
+		r.db.
+			WithContext(ctx).
+			Model(&models.Pomodoro{}).
+			Where("user_id IN ?", userIds).
+			Delete(&models.Pomodoro{})
+		r.db.
+			WithContext(ctx).
 			Model(&models.UserConfig{}).
 			Where("user_id IN ?", userIds).
 			Delete(&models.UserConfig{})
+		for _, userId := range userIds {
+			r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
+		}
 	}
 	tx := r.db.
 		WithContext(ctx).

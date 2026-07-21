@@ -1,0 +1,19 @@
+- [x] Checkpoint 1: `interfaces/types/user.go` 中新增 `DeleteUserReq` 请求结构体
+- [x] Checkpoint 2: `interfaces/types/user.go` 中 `GetUserProfileRes` 新增 `DeactivedAt` 字段
+- [x] Checkpoint 3: `domain/identity/repositories/session.go` 中新增 `DeleteByUserId` 方法定义
+- [x] Checkpoint 4: `infrastructure/persistence/identity/sessionRepoImpl.go` 中 `DeleteByUserId` 方法实现
+- [x] Checkpoint 5: `application/user/app.go` 中新增 `DeleteUser` 方法定义
+- [x] Checkpoint 6: `application/user/appImpl.go` 中 `DeleteUser` 方法实现密码验证、标记待注销、清理会话逻辑
+- [x] Checkpoint 7: `application/user/appImpl.go` 中 `ActiveUser` 方法实现取消注销逻辑
+- [x] Checkpoint 8: `application/user/converters.go` 中 `UserEntity2Res` 方法转换 `DeactivedAt` 字段
+- [x] Checkpoint 9: `interfaces/controllers/user.go` 中新增 `DeleteUser` 控制器方法
+- [x] Checkpoint 10: `interfaces/routers/userRouter.go` 中注册了 `POST /user/delete` 路由
+- [x] Checkpoint 11: `application/auth/appImpl.go` 中 `Validate` 方法已检查用户是否处于待注销状态
+- [x] Checkpoint 12: `infrastructure/cron/deleteInactiveUser.go` 中定时任务正确删除超过7天的待注销用户
+- [x] Checkpoint 13: 数据库模型中外键约束配置正确，支持级联删除用户关联数据
+- [x] Checkpoint 14: 编译通过，无语法错误
+- [ ] Checkpoint 15: 用户注销接口能正确处理密码验证（正确密码成功进入待注销状态，错误密码失败）
+- [ ] Checkpoint 16: 用户注销后旧令牌无法访问受保护接口
+- [ ] Checkpoint 17: 冷却期内用户可取消注销，恢复账户正常状态
+- [ ] Checkpoint 18: 用户个人信息接口返回待注销状态和预计删除时间
+- [ ] Checkpoint 19: 冷却期结束后用户数据被定时任务自动清理

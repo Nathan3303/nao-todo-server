@@ -99,6 +99,34 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, toke
 }
 
 /**
+ * Delete All Sessions by User ID
+ */
+func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.UserID) error {
+	// 1. 获取用户所有会话的 token
+	var tokens []string
+	sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ?", int64(userId)).
+		Pluck("token", &tokens)
+	// 2. 执行删除
+	tx := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ?", int64(userId)).
+		Delete(&models.UserSession{})
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// 3. 失效所有会话缓存
+	for _, token := range tokens {
+		sr.cache.Del(ctx, cache.SessionKey(int64(userId), token))
+	}
+	// 4. 返回结果
+	return nil
+}
+
+/**
  * Find Session by User ID and Token
  */
 func (sr *sessionRepoImpl) FindByUserIdAndToken(
