@@ -36,16 +36,31 @@ func GetHub() *Hub {
 	return hub
 }
 
-// Publish 向指定用户推送事件
+// Publish 向指定用户推送提醒事件
 func (h *Hub) Publish(userId int64, event ReminderEvent) {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+	h.publishRaw(userId, data)
+}
+
+// PublishJSON 向指定用户推送任意 JSON 序列化的事件
+// 用于领域事件触发的 SSE 通知（如项目删除、任务级联等）
+func (h *Hub) PublishJSON(userId int64, event any) {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+	h.publishRaw(userId, data)
+}
+
+// publishRaw 向指定用户的所有有效通道推送原始数据
+func (h *Hub) publishRaw(userId int64, data []byte) {
 	h.mu.RLock()
 	channels, ok := h.clients[userId]
 	h.mu.RUnlock()
 	if !ok {
-		return
-	}
-	data, err := json.Marshal(event)
-	if err != nil {
 		return
 	}
 	// 收集需要清理的无效通道

@@ -630,3 +630,56 @@ func (repo *TaskRepoImpl) SyncCommentUserProfile(
 		Updates(updates).
 		Error
 }
+
+// SoftDeleteByProjectId 软删除指定项目下的所有任务
+// 用于项目删除时的级联操作，设置 deleted_at 为当前时间
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
+func (repo *TaskRepoImpl) SoftDeleteByProjectId(ctx context.Context, userId int64, projectId int64) error {
+	return repo.db.WithContext(ctx).
+		Model(&models.Task{}).
+		Where("user_id = ? AND project_id = ?", userId, projectId).
+		Update("deleted_at", time.Now()).Error
+}
+
+// RestoreByProjectId 恢复指定项目下的所有任务
+// 用于项目恢复时的级联操作，清除 deleted_at
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
+func (repo *TaskRepoImpl) RestoreByProjectId(ctx context.Context, userId int64, projectId int64) error {
+	return repo.db.WithContext(ctx).
+		Unscoped().
+		Model(&models.Task{}).
+		Where("user_id = ? AND project_id = ?", userId, projectId).
+		Update("deleted_at", nil).Error
+}
+
+// ArchiveByProjectId 归档指定项目下的所有任务
+// 用于项目归档时的级联操作，设置 archived_at 为当前时间
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
+func (repo *TaskRepoImpl) ArchiveByProjectId(ctx context.Context, userId int64, projectId int64) error {
+	return repo.db.WithContext(ctx).
+		Model(&models.Task{}).
+		Where("user_id = ? AND project_id = ?", userId, projectId).
+		Update("archived_at", time.Now()).Error
+}
+
+// UnarchiveByProjectId 取消归档指定项目下的所有任务
+// 用于项目取消归档时的级联操作，清除 archived_at
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 项目ID
+// @return error 错误
+func (repo *TaskRepoImpl) UnarchiveByProjectId(ctx context.Context, userId int64, projectId int64) error {
+	return repo.db.WithContext(ctx).
+		Model(&models.Task{}).
+		Where("user_id = ? AND project_id = ?", userId, projectId).
+		Update("archived_at", nil).Error
+}

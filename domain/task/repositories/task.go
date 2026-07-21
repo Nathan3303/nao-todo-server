@@ -60,4 +60,16 @@ type Task interface {
 
 	// UpdateRemindAt 更新提醒时间
 	UpdateRemindAt(ctx context.Context, taskId int64, remindAt string) error
+
+	// SoftDeleteByProjectId 软删除指定项目下的所有任务（级联删除用）
+	SoftDeleteByProjectId(ctx context.Context, userId int64, projectId int64) error
+
+	// RestoreByProjectId 恢复指定项目下的所有任务（级联恢复用）
+	RestoreByProjectId(ctx context.Context, userId int64, projectId int64) error
+
+	// ArchiveByProjectId 归档指定项目下的所有任务（级联归档用）
+	ArchiveByProjectId(ctx context.Context, userId int64, projectId int64) error
+
+	// UnarchiveByProjectId 取消归档指定项目下的所有任务（级联取消归档用）
+	UnarchiveByProjectId(ctx context.Context, userId int64, projectId int64) error
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
+	taskRepo "naotodoserver/domain/task/repositories"
 	"naotodoserver/interfaces/types"
 )
 
@@ -64,4 +65,5 @@ type projectAppImpl struct {
 	projectDomain  service.ProjectDomain
 	repo           repositories.Project
 	preferenceRepo repositories.ProjectPreference
+	taskRepo       taskRepo.Task           // 用于级联操作
 }

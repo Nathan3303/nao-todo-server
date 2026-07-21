@@ -73,6 +73,7 @@ func LoadDomains() *application.Services {
 		projectDomain,
 		projectRepoInst,
 		projectPreferenceRepoInst,
+		taskRepoInst, // 注入 Task 仓库，用于级联操作
 	)
 	// 初始化标签领域模型
 	tagRepoInst := tagRepo.NewTagRepo(dbs.DB, cacheInst)
