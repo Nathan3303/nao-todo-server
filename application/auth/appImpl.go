@@ -60,16 +60,17 @@ func (as *authAppImpl) SignIn(
 	}
 	// 4. 检查是否出于待注销状态，并返回注销时间
 	var pendingDeletion = false
-	var deletionDeadline = ""
+	var deletedAt = ""
 	if userEntity.IsDeactived() {
 		pendingDeletion = true
-		deletionDeadline = userEntity.DeletedAt.Time.Format(time.RFC3339)
+		// deactiveAt 标记，但归属于 deletedAt
+		deletedAt = userEntity.DeactivedAt.ToString(time.RFC3339)
 	}
-	// 4. 登录成功 返回 JWT
+	// 5. 登录成功 返回 JWT
 	return &types.SignInRes{
-		Token:            jwtString,
-		PendingDeletion:  pendingDeletion,
-		DeletionDeadline: deletionDeadline,
+		Token:           jwtString,
+		PendingDeletion: pendingDeletion,
+		DeletedAt:       deletedAt,
 	}, nil
 }
 
@@ -144,8 +145,20 @@ func (as *authAppImpl) CheckIn(
 	if err != nil {
 		return nil, fmt.Errorf("auth.CheckIn.UpdateToken: %w", err)
 	}
-	// 6. 返回
-	return &types.CheckInRes{Token: newJWT}, nil
+	// 6. 检查是否出于待注销状态，并返回注销时间
+	var pendingDeletion = false
+	var deletedAt = ""
+	if userEntity.IsDeactived() {
+		pendingDeletion = true
+		// deactiveAt 标记，但归属于 deletedAt
+		deletedAt = userEntity.DeactivedAt.ToString(time.RFC3339)
+	}
+	// 7. 返回
+	return &types.CheckInRes{
+		Token:           newJWT,
+		PendingDeletion: pendingDeletion,
+		DeletedAt:       deletedAt,
+	}, nil
 }
 
 /*

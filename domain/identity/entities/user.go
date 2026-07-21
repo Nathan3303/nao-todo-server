@@ -59,5 +59,5 @@ func (u *User) EncryptPassword() error {
 // IsDeactived 检查用户是否已停用
 // 如果 DeactivedAt 不为空，则用户已停用
 func (u *User) IsDeactived() bool {
-	return u.DeactivedAt.IsNull
+	return !u.DeactivedAt.IsNull
 }

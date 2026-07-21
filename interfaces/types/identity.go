@@ -8,9 +8,9 @@ type SignInReq struct {
 
 // SignInRes 登录响应结构体
 type SignInRes struct {
-	Token            string `json:"jwt"`
-	PendingDeletion  bool   `json:"pendingDeletion"`
-	DeletionDeadline string `json:"deletionDeadline,omitempty"`
+	Token           string `json:"jwt"`
+	PendingDeletion bool   `json:"pendingDeletion"`
+	DeletedAt       string `json:"deletedAt,omitempty"`
 }
 
 // SignUpReq 注册请求结构体
@@ -37,5 +37,7 @@ type CheckInReq struct {
 
 // CheckInRes 检入响应结构体
 type CheckInRes struct {
-	Token string `json:"jwt"`
+	Token           string `json:"jwt"`
+	PendingDeletion bool   `json:"pendingDeletion"`
+	DeletedAt       string `json:"deletedAt,omitempty"`
 }
