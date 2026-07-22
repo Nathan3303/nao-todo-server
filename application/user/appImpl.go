@@ -222,7 +222,11 @@ func (u *userAppImpl) DeleteUser(ctx context.Context, req *types.DeleteUserReq) 
 	if user.IsDeactived() {
 		return domerr.ErrUserDeactivated
 	}
-	// 5. 更新用户状态
+	// 5. 检查冷却期
+	if user.IsInCooldown() {
+		return domerr.ErrUserInCooldown
+	}
+	// 6. 更新用户状态
 	if err := u.userRepo.Deactive(ctx, domaintypes.UserID(userId)); err != nil {
 		return fmt.Errorf("user.Deactive: %w", err)
 	}

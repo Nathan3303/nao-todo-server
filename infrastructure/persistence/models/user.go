@@ -49,6 +49,10 @@ type User struct {
 	// 当 DeactivedAt 不为 NULL 时被检查，判断用户是否需要更新 DeletedAt
 	DeactivedAt sql.NullTime `gorm:"null;index:idx_user_deactived_at"`
 
+	// 最后一次注销/恢复操作时间
+	// 用于30天冷却期控制，用户执行注销或恢复操作后需等待30天才能再次注销
+	LastCancelRestoreAt sql.NullTime `gorm:"null"`
+
 	// 用户配置
 	Config *UserConfig `gorm:"foreignKey:UserId;references:ID;constraint:OnDelete:CASCADE;"`
 }

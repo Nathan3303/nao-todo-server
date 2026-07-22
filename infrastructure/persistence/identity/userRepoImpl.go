@@ -159,11 +159,15 @@ func (r *UserRepoImpl) PasswordCompare(password, encryptedPassword []byte) bool 
 
 // Deactive 注销用户
 func (r *UserRepoImpl) Deactive(ctx context.Context, userId types.UserID) error {
+	now := time.Now()
 	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", int64(userId)).
-		Update("deactived_at", &sql.NullTime{Time: time.Now(), Valid: true}).
+		Updates(map[string]interface{}{
+			"deactived_at":          &sql.NullTime{Time: now, Valid: true},
+			"last_cancel_restore_at": &sql.NullTime{Time: now, Valid: true},
+		}).
 		Error; err != nil {
 		return err
 	}
@@ -174,11 +178,15 @@ func (r *UserRepoImpl) Deactive(ctx context.Context, userId types.UserID) error 
 
 // Active 激活用户
 func (r *UserRepoImpl) Active(ctx context.Context, userId types.UserID) error {
+	now := time.Now()
 	if err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", int64(userId)).
-		Update("deactived_at", &sql.NullTime{Time: time.Time{}, Valid: false}).
+		Updates(map[string]interface{}{
+			"deactived_at":          &sql.NullTime{Time: time.Time{}, Valid: false},
+			"last_cancel_restore_at": &sql.NullTime{Time: now, Valid: true},
+		}).
 		Error; err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -23,6 +24,7 @@ type User struct {
 	Role        UserRole
 	State       UserState
 	DeactivedAt types.NullableTime
+	LastCancelRestoreAt types.NullableTime
 	Config      *UserConfig
 }
 
@@ -60,4 +62,28 @@ func (u *User) EncryptPassword() error {
 // 如果 DeactivedAt 不为空，则用户已停用
 func (u *User) IsDeactived() bool {
 	return !u.DeactivedAt.IsNull
+}
+
+// IsInCooldown 检查用户是否处于注销冷却期
+// 如果 LastCancelRestoreAt 不为空且距今不足30天，则处于冷却期
+func (u *User) IsInCooldown() bool {
+	t, ok := u.LastCancelRestoreAt.Value()
+	if !ok {
+		return false
+	}
+	return time.Since(t) < 30*24*time.Hour
+}
+
+// CooldownRemainingDays 获取冷却期剩余天数
+// 返回剩余整天数，若不在冷却期则返回0
+func (u *User) CooldownRemainingDays() int {
+	t, ok := u.LastCancelRestoreAt.Value()
+	if !ok {
+		return 0
+	}
+	remaining := 30*24*time.Hour - time.Since(t)
+	if remaining <= 0 {
+		return 0
+	}
+	return int(remaining.Hours()/24) + 1
 }

@@ -2,16 +2,17 @@ package types
 
 // GetUserProfileRes 获取用户个人信息响应
 type GetUserProfileRes struct {
-	Email       string `json:"email"`
-	Nickname    string `json:"nickname"`
-	Avatar      string `json:"avatar"`
-	CreatedFrom string `json:"createdFrom"`
-	Role        string `json:"role"`
-	State       uint8  `json:"state"`
-	DeactivedAt string `json:"deactivedAt"`
-	Config      any    `json:"config"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	Email                string `json:"email"`
+	Nickname             string `json:"nickname"`
+	Avatar               string `json:"avatar"`
+	CreatedFrom          string `json:"createdFrom"`
+	Role                 string `json:"role"`
+	State                uint8  `json:"state"`
+	DeactivedAt          string `json:"deactivedAt"`
+	LastRestoreAt        string `json:"lastRestoreAt"`
+	Config               any    `json:"config"`
+	CreatedAt            string `json:"createdAt"`
+	UpdatedAt            string `json:"updatedAt"`
 }
 
 // UpdateUserNicknameReq 更新用户昵称请求

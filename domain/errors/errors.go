@@ -14,6 +14,7 @@ var (
 	ErrInvalidPomodoroID = errors.New("常用番茄工作 ID 无效")
 	ErrPasswordMismatch  = errors.New("密码错误")
 	ErrUserDeactivated   = errors.New("用户已注销")
+	ErrUserInCooldown    = errors.New("操作过于频繁，请30天后再试")
 	ErrProjectNotFound   = errors.New("清单不存在")
 	ErrUserNotFound      = errors.New("用户不存在")
 	ErrTokenExpired      = errors.New("凭证无效")

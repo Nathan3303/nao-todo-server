@@ -26,6 +26,7 @@ func UserEntity2Model(e *entities.User) *models.User {
 	m.Role = uint8(e.Role)
 	m.State = uint8(e.State)
 	m.DeactivedAt = e.DeactivedAt.ToSqlNullTime()
+	m.LastCancelRestoreAt = e.LastCancelRestoreAt.ToSqlNullTime()
 	return &m
 }
 
@@ -45,6 +46,7 @@ func UserModel2Entity(m *models.User) *entities.User {
 	e.Role = entities.UserRole(m.Role)
 	e.State = entities.UserState(m.State)
 	e.DeactivedAt = types.NewNullableTimeByTime(m.DeactivedAt.Time)
+	e.LastCancelRestoreAt = types.NewNullableTimeByTime(m.LastCancelRestoreAt.Time)
 	return &e
 }
 
