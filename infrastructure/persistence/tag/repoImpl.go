@@ -158,6 +158,34 @@ func (tagRepo *TagRepositoryImpl) Get(ctx context.Context, userId int64) ([]*ent
 	return es, nil
 }
 
+// GetByIds 根据标签ID列表获取标签列表
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagIds 标签ID列表
+// @return []*entities.Tag 标签实体列表
+// @return error 错误
+func (tagRepo *TagRepositoryImpl) GetByIds(
+	ctx context.Context,
+	userId int64,
+	tagIds []int64,
+) ([]*entities.Tag, error) {
+	// 1. 转换实体为模型
+	var findCond models.Tag
+	findCond.UserId = userId
+	// 2. 结果切片
+	var tags []*models.Tag
+	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
+		Preload("Preference").
+		Where(&findCond).
+		Find(&tags, tagIds)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	// 2. 转换为实体
+	es := TagModelList2EntityList(tags)
+	return es, nil
+}
+
 // GetMaxSortId 获取最大排序 ID
 // @param ctx 上下文
 // @param userId 用户ID

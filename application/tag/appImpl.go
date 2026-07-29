@@ -164,6 +164,38 @@ func (tagApp *TagAppImpl) ListTag(
 	return TagEntitiesToGetResList(tagEntities), nil
 }
 
+// ListTagByIds 根据标签ID列表获取标签列表
+// @param ctx 上下文
+// @param tagIds 标签 ID列表
+// @return 标签响应体列表
+// @return error
+func (tagApp *TagAppImpl) ListTagByIds(
+	ctx context.Context,
+	tagIds []string,
+) ([]*types.GetTagRes, error) {
+	// 获取用户 ID
+	userId := iCtx.GetUserId(ctx)
+	if userId <= 0 {
+		return nil, domerr.ErrInvalidUserID
+	}
+	// 转换 tagIds 为 int64 列表 - idutil.ParseID(tagId)
+	var tagIds64 []int64
+	for _, tagId := range tagIds {
+		tagId64, err := idutil.ParseID(tagId)
+		if err != nil {
+			return nil, domerr.ErrInvalidTagID
+		}
+		tagIds64 = append(tagIds64, tagId64)
+	}
+	// 获取标签信息
+	tagEntities, err := tagApp.tagRepo.GetByIds(ctx, userId, tagIds64)
+	if err != nil {
+		return nil, err
+	}
+	// 转换结果并返回
+	return TagEntitiesToGetResList(tagEntities), nil
+}
+
 // BatchUpdateTags 批量更新标签
 // @param ctx 上下文
 // @param req 批量更新标签请求体

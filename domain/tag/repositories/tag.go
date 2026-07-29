@@ -55,6 +55,14 @@ type TagRepository interface {
 	// @return error 错误
 	Get(ctx context.Context, userId int64) ([]*entities.Tag, error)
 
+	// 根据标签ID列表获取标签列表
+	// @param ctx 上下文
+	// @param userId 用户ID
+	// @param tagIds 标签ID列表
+	// @return []*entities.Tag 标签实体列表
+	// @return error 错误
+	GetByIds(ctx context.Context, userId int64, tagIds []int64) ([]*entities.Tag, error)
+
 	// 获取最大排序 ID
 	GetMaxSortId(ctx context.Context, userId int64) uint16
 

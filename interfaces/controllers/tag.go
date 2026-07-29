@@ -3,6 +3,7 @@ package controllers
 import (
 	tagApp "naotodoserver/application/tag"
 	"naotodoserver/interfaces/types"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -149,22 +150,52 @@ func (c *TagController) DeleteTag(ctx *gin.Context) {
 // ListTag 获取标签列表接入点
 // @code 3004x
 func (c *TagController) ListTag(ctx *gin.Context) {
-	// 1. 获取标签列表
-	res, err := c.tagApp.ListTag(ctx.Request.Context())
-	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30041,
-			Message: "获取标签列表失败",
-			Error:   err.Error(),
+	// 1. 获取标签 ID列表
+	tagIdString := ctx.Query("tagIds")
+	if tagIdString == "" {
+		// 1. 获取标签列表
+		res, err := c.tagApp.ListTag(ctx.Request.Context())
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    30041,
+				Message: "获取标签列表失败",
+				Error:   err.Error(),
+			})
+			return
+		}
+		// 2. 返回结果
+		Success(ctx, types.ResponseData{
+			Code:    30040,
+			Message: "获取标签列表成功",
+			Data:    res,
 		})
-		return
+	} else {
+		// 1. 转换标签 ID列表为字符串列表
+		tagIds := strings.Split(tagIdString, ",")
+		if len(tagIds) == 0 {
+			Failure(ctx, types.ResponseData{
+				Code:    30042,
+				Message: "标签 ID 无效",
+			})
+			return
+		}
+		// 2. 获取标签列表
+		res, err := c.tagApp.ListTagByIds(ctx.Request.Context(), tagIds)
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    30043,
+				Message: "获取标签列表失败",
+				Error:   err.Error(),
+			})
+			return
+		}
+		// 3. 返回结果
+		Success(ctx, types.ResponseData{
+			Code:    30040,
+			Message: "获取标签列表成功",
+			Data:    res,
+		})
 	}
-	// 2. 返回结果
-	Success(ctx, types.ResponseData{
-		Code:    30040,
-		Message: "获取标签列表成功",
-		Data:    res,
-	})
 }
 
 // GetTagPreference 获取标签偏好接入点
@@ -193,35 +224,6 @@ func (c *TagController) GetTagPreference(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    30050,
 		Message: "获取标签偏好成功",
-		Data:    res,
-	})
-}
-
-// BatchUpdateTags 批量更新标签接入点
-// @code 3007x
-func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
-	var req types.BatchUpdateTagReq
-	err := ctx.ShouldBindJSON(&req)
-	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30071,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
-		return
-	}
-	res, err := c.tagApp.BatchUpdateTags(ctx.Request.Context(), &req)
-	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30072,
-			Message: "批量更新标签失败",
-			Error:   err.Error(),
-		})
-		return
-	}
-	Success(ctx, types.ResponseData{
-		Code:    30070,
-		Message: "批量更新标签成功",
 		Data:    res,
 	})
 }
@@ -264,5 +266,34 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 		Code:    30060,
 		Message: "更新标签偏好成功",
 		Data:    tagId,
+	})
+}
+
+// BatchUpdateTags 批量更新标签接入点
+// @code 3007x
+func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
+	var req types.BatchUpdateTagReq
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30071,
+			Message: "请求参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	res, err := c.tagApp.BatchUpdateTags(ctx.Request.Context(), &req)
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    30072,
+			Message: "批量更新标签失败",
+			Error:   err.Error(),
+		})
+		return
+	}
+	Success(ctx, types.ResponseData{
+		Code:    30070,
+		Message: "批量更新标签成功",
+		Data:    res,
 	})
 }
