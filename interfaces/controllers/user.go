@@ -2,6 +2,7 @@ package controllers
 
 import (
 	userApp "naotodoserver/application/user"
+	userDto "naotodoserver/application/user/dto"
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
 
@@ -14,6 +15,98 @@ type UserController struct {
 
 func NewUserController(app userApp.UserApp) *UserController {
 	return &UserController{userApp: app}
+}
+
+// toUpdateNicknameInput 将更新用户昵称请求转换为应用层入参
+// @param req 更新用户昵称请求
+// @return 应用层更新用户昵称入参
+func toUpdateNicknameInput(req types.UpdateUserNicknameReq) userDto.UpdateNicknameInput {
+	return userDto.UpdateNicknameInput{
+		Nickname: req.Nickname,
+	}
+}
+
+// toUpdatePasswordInput 将更新用户密码请求转换为应用层入参
+// @param req 更新用户密码请求
+// @return 应用层更新用户密码入参
+func toUpdatePasswordInput(req types.UpdateUserPasswordReq) userDto.UpdatePasswordInput {
+	return userDto.UpdatePasswordInput{
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	}
+}
+
+// toUpdateAvatarInput 将更新用户头像请求转换为应用层入参
+// @param req 更新用户头像请求
+// @return 应用层更新用户头像入参
+func toUpdateAvatarInput(req types.UpdateUserAvatarReq) userDto.UpdateAvatarInput {
+	return userDto.UpdateAvatarInput{
+		AvatarURL: req.AvatarURL,
+	}
+}
+
+// toGetProfileRes 将应用层获取用户个人信息出参转换为获取用户个人信息响应
+// @param output 应用层获取用户个人信息出参
+// @return 获取用户个人信息响应
+func toGetProfileRes(output *userDto.GetProfileOutput) *types.GetUserProfileRes {
+	return &types.GetUserProfileRes{
+		Email:         output.Email,
+		Nickname:      output.Nickname,
+		Avatar:        output.Avatar,
+		CreatedFrom:   output.CreatedFrom,
+		Role:          output.Role,
+		State:         output.State,
+		DeactivedAt:   output.DeactivedAt,
+		LastRestoreAt: output.LastRestoreAt,
+		Config:        output.Config,
+		CreatedAt:     output.CreatedAt,
+		UpdatedAt:     output.UpdatedAt,
+	}
+}
+
+// toUpdateAvatarRes 将应用层更新用户头像出参转换为更新用户头像响应
+// @param output 应用层更新用户头像出参
+// @return 更新用户头像响应
+func toUpdateAvatarRes(output *userDto.UpdateAvatarOutput) *types.UpdateUserAvatarRes {
+	return &types.UpdateUserAvatarRes{
+		AvatarURL: output.AvatarURL,
+	}
+}
+
+// toDeleteUserInput 将删除用户请求转换为应用层入参
+// @param req 删除用户请求
+// @return 应用层删除用户入参
+func toDeleteUserInput(req types.DeleteUserReq) userDto.DeleteUserInput {
+	return userDto.DeleteUserInput{
+		Password: req.Password,
+	}
+}
+
+// toRestoreUserInput 将激活用户请求转换为应用层入参
+// @param req 激活用户请求
+// @return 应用层激活用户入参
+func toRestoreUserInput(req types.RestoreUserReq) userDto.RestoreUserInput {
+	return userDto.RestoreUserInput{
+		Password: req.Password,
+	}
+}
+
+// toGetConfigRes 将应用层获取用户配置出参转换为获取用户配置响应
+// @param output 应用层获取用户配置出参
+// @return 获取用户配置响应
+func toGetConfigRes(output *userDto.GetConfigOutput) *types.GetUserConfigRes {
+	return &types.GetUserConfigRes{
+		Appearance: output.Appearance,
+	}
+}
+
+// toUpdateConfigInput 将更新用户配置请求转换为应用层入参
+// @param req 更新用户配置请求
+// @return 应用层更新用户配置入参
+func toUpdateConfigInput(req types.UpdateUserConfigReq) userDto.UpdateConfigInput {
+	return userDto.UpdateConfigInput{
+		Appearance: req.Appearance,
+	}
 }
 
 // UpdateUserNickname 更新用户昵称控制器
@@ -35,7 +128,7 @@ func (c *UserController) UpdateUserNickname(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户昵称
-	err = c.userApp.UpdateNickname(ctx.Request.Context(), req)
+	err = c.userApp.UpdateNickname(ctx.Request.Context(), toUpdateNicknameInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{Code: 10053, Message: err.Error()})
 		return
@@ -61,7 +154,7 @@ func (c *UserController) GetUserProfile(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    10060,
 		Message: "获取用户详情成功",
-		Data:    res,
+		Data:    toGetProfileRes(res),
 	})
 }
 
@@ -84,7 +177,7 @@ func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用用户服务 - 更新用户密码
-	err = c.userApp.UpdatePassword(ctx.Request.Context(), req)
+	err = c.userApp.UpdatePassword(ctx.Request.Context(), toUpdatePasswordInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{Code: 10074, Message: err.Error()})
 		return
@@ -111,14 +204,46 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 			return
 		}
 		if req.AvatarURL != "" {
-			res, err = c.userApp.UpdateAvatar(ctx.Request.Context(), req)
+			var appRes *userDto.UpdateAvatarOutput
+			appRes, err = c.userApp.UpdateAvatar(ctx.Request.Context(), toUpdateAvatarInput(req))
+			if err == nil {
+				res = toUpdateAvatarRes(appRes)
+			}
 		} else {
 			Failure(ctx, types.ResponseData{Code: 10081, Message: "头像 URL 不能为空"})
 			return
 		}
 	case "multipart/form-data":
 		// 表单请求：通过文件上传更新
-		res, err = c.userApp.UpdateAvatarByFile(ctx, ctx.Request.Context())
+		fileHeader, formErr := ctx.FormFile("avatar")
+		if formErr != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    10082,
+				Message: "更新用户头像失败",
+				Error:   "文件上传失败 - " + formErr.Error(),
+			})
+			return
+		}
+		f, openErr := fileHeader.Open()
+		if openErr != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    10082,
+				Message: "更新用户头像失败",
+				Error:   "文件上传失败 - " + openErr.Error(),
+			})
+			return
+		}
+		defer f.Close()
+		var appRes *userDto.UpdateAvatarOutput
+		appRes, err = c.userApp.UpdateAvatarByFile(
+			ctx.Request.Context(),
+			f,
+			fileHeader.Filename,
+			fileHeader.Size,
+		)
+		if err == nil {
+			res = toUpdateAvatarRes(appRes)
+		}
 	default:
 		Failure(ctx, types.ResponseData{Code: 10081, Message: "不支持的请求类型"})
 		return
@@ -149,7 +274,7 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{Code: 10091, Message: "参数错误"})
 		return
 	}
-	err = c.userApp.DeleteUser(ctx.Request.Context(), &req)
+	err = c.userApp.DeleteUser(ctx.Request.Context(), toDeleteUserInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10092,
@@ -175,7 +300,7 @@ func (c *UserController) RestoreUser(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用用户服务 - 激活用户
-	err = c.userApp.RestoreUser(ctx.Request.Context(), &req)
+	err = c.userApp.RestoreUser(ctx.Request.Context(), toRestoreUserInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10102,
@@ -203,7 +328,7 @@ func (c *UserController) GetUserConfig(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    10110,
 		Message: "获取用户配置成功",
-		Data:    res,
+		Data:    toGetConfigRes(res),
 	})
 }
 
@@ -216,7 +341,7 @@ func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{Code: 10121, Message: "参数错误"})
 		return
 	}
-	err = c.userApp.UpdateConfig(ctx.Request.Context(), req)
+	err = c.userApp.UpdateConfig(ctx.Request.Context(), toUpdateConfigInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10123,

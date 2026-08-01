@@ -2,26 +2,26 @@ package auth
 
 import (
 	"context"
+	"naotodoserver/application/auth/dto"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
 	domaintypes "naotodoserver/domain/types"
-	"naotodoserver/interfaces/types"
 )
 
 // AuthApp 认证应用接口
 // @description 提供认证相关的应用服务
 type AuthApp interface {
 	// 处理用户登录
-	SignIn(ctx context.Context, signInReq *types.SignInReq) (*types.SignInRes, error)
+	SignIn(ctx context.Context, signInInput *dto.SignInInput) (*dto.SignInOutput, error)
 
 	// 处理用户注册
-	SignUp(ctx context.Context, signUpReq *types.SignUpReq) error
+	SignUp(ctx context.Context, signUpInput *dto.SignUpInput) error
 
 	// 处理用户检查登录状态
-	CheckIn(ctx context.Context, checkInReq *types.CheckInReq) (*types.CheckInRes, error)
+	CheckIn(ctx context.Context, checkInInput *dto.CheckInInput) (*dto.CheckInOutput, error)
 
 	// 处理用户登出
-	SignOut(ctx context.Context, signOutReq *types.SignOutReq) error
+	SignOut(ctx context.Context, signOutInput *dto.SignOutInput) error
 
 	// 处理用户令牌验证
 	Validate(ctx context.Context, token string) (domaintypes.UserID, error)

@@ -26,6 +26,7 @@ import (
 	tagRepo "naotodoserver/infrastructure/persistence/tag"
 	taskRepo "naotodoserver/infrastructure/persistence/task"
 	"naotodoserver/infrastructure/sse"
+	"naotodoserver/infrastructure/storage"
 )
 
 // LoadLogger 初始化日志记录器
@@ -44,6 +45,8 @@ func LoadDBs() {
 func LoadDomains() *application.Services {
 	// 初始化缓存辅助组件
 	cacheInst := cache.NewCache(dbs.RdsCli)
+	// 初始化事务管理器
+	txManager := dbs.NewTxManager(dbs.DB)
 	// 初始化身份领域模型
 	userRepoInst := identityRepo.NewUserRepo(dbs.DB, cacheInst)
 	sessionRepoInst := identityRepo.NewSessionRepo(dbs.DB, cacheInst)
@@ -82,6 +85,7 @@ func LoadDomains() *application.Services {
 	)
 	projectAppInst := projectApp.NewProjectApp(
 		projectDomain,
+		txManager,
 		projectRepoInst,
 		projectPreferenceRepoInst,
 		taskRepoInst, // 注入 Task 仓库，用于级联操作
@@ -109,6 +113,7 @@ func LoadDomains() *application.Services {
 			userRepoInst,
 			sessionRepoInst,
 			taskAppInst,
+			storage.NewAvatarStorage(),
 		),
 		Task:          taskAppInst,
 		TaskComment:   taskAppInst,

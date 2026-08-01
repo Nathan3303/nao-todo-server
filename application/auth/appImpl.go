@@ -3,12 +3,12 @@ package auth
 import (
 	"context"
 	"fmt"
+	"naotodoserver/application/auth/dto"
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
 	domaintypes "naotodoserver/domain/types"
-	"naotodoserver/interfaces/types"
 	"time"
 )
 
@@ -26,23 +26,23 @@ func NewAuthApp(
 }
 
 // 处理用户登录
-// @description 通过 signInReq 中的邮箱和密码验证用户身份，验证成功后生成 JWT 令牌并创建用户会话，最后返回 JWT 令牌
+// @description 通过 signInInput 中的邮箱和密码验证用户身份，验证成功后生成 JWT 令牌并创建用户会话，最后返回 JWT 令牌
 // @param ctx 上下文
-// @param signInReq 登录请求
-// @return 登录响应
+// @param signInInput 登录入参
+// @return 登录出参
 // @return error 错误
 func (as *authAppImpl) SignIn(
 	ctx context.Context,
-	signInReq *types.SignInReq,
-) (*types.SignInRes, error) {
+	signInInput *dto.SignInInput,
+) (*dto.SignInOutput, error) {
 	// 1. 通过 Email 查找用户记录
-	userEntity, err := as.userRepo.FindByEmail(ctx, signInReq.Email)
+	userEntity, err := as.userRepo.FindByEmail(ctx, signInInput.Email)
 	if err != nil {
 		return nil, fmt.Errorf("auth.SignIn.FindByEmail: %w", err)
 	}
 	// 2. 比对密码
 	isMatched := as.userRepo.PasswordCompare(
-		[]byte(signInReq.Password),
+		[]byte(signInInput.Password),
 		[]byte(userEntity.Password),
 	)
 	if !isMatched {
@@ -67,7 +67,7 @@ func (as *authAppImpl) SignIn(
 		deletedAt = userEntity.DeactivedAt.ToString(time.RFC3339)
 	}
 	// 5. 登录成功 返回 JWT
-	return &types.SignInRes{
+	return &dto.SignInOutput{
 		Token:           jwtString,
 		PendingDeletion: pendingDeletion,
 		DeletedAt:       deletedAt,
@@ -76,19 +76,19 @@ func (as *authAppImpl) SignIn(
 
 /*
  * SignUp 处理用户注册
- * 通过 signUpReq 中的用户信息，执行密码加密后用户信息落库
+ * 通过 signUpInput 中的用户信息，执行密码加密后用户信息落库
  */
 func (as *authAppImpl) SignUp(
 	ctx context.Context,
-	signUpReq *types.SignUpReq,
+	signUpInput *dto.SignUpInput,
 ) error {
 	// 通过 Email 查找用户记录
-	_, err := as.userRepo.FindByEmail(ctx, signUpReq.Email)
+	_, err := as.userRepo.FindByEmail(ctx, signUpInput.Email)
 	if err == nil {
 		return fmt.Errorf("auth.SignUp.FindByEmail: %w", err)
 	}
 	// 转换为 CreateUserValueObject
-	createUserValueObject, err := SignUpReqToCreateUserValueObject(signUpReq)
+	createUserValueObject, err := SignUpInputToCreateUserValueObject(signUpInput)
 	if err != nil {
 		return err
 	}
@@ -103,15 +103,15 @@ func (as *authAppImpl) SignUp(
 
 /*
  * CheckIn 处理用户检入
- * 通过 checkInReq 中的令牌信息，验证用户会话，并生成新的 JWT 并更新用户会话，最后返回新的 JWT
+ * 通过 checkInInput 中的令牌信息，验证用户会话，并生成新的 JWT 并更新用户会话，最后返回新的 JWT
  * 用于在 JWT 或会话期限内的免密登录
  */
 func (as *authAppImpl) CheckIn(
 	ctx context.Context,
-	checkInReq *types.CheckInReq,
-) (*types.CheckInRes, error) {
+	checkInInput *dto.CheckInInput,
+) (*dto.CheckInOutput, error) {
 	// 1. 解析 JWT 令牌
-	userId, err := as.identityDomain.ParseJWT(ctx, checkInReq.Token)
+	userId, err := as.identityDomain.ParseJWT(ctx, checkInInput.Token)
 	if err != nil {
 		return nil, fmt.Errorf("auth.CheckIn.ParseJWT: %w", err)
 	}
@@ -119,7 +119,7 @@ func (as *authAppImpl) CheckIn(
 	sessionEntity, err := as.identityDomain.FindSessionByUserIdAndToken(
 		ctx,
 		userId,
-		checkInReq.Token,
+		checkInInput.Token,
 	)
 	// 会话不存在：
 	if err != nil {
@@ -154,7 +154,7 @@ func (as *authAppImpl) CheckIn(
 		deletedAt = userEntity.DeactivedAt.ToString(time.RFC3339)
 	}
 	// 7. 返回
-	return &types.CheckInRes{
+	return &dto.CheckInOutput{
 		Token:           newJWT,
 		PendingDeletion: pendingDeletion,
 		DeletedAt:       deletedAt,
@@ -163,21 +163,21 @@ func (as *authAppImpl) CheckIn(
 
 /*
  * SignOut 处理用户登出
- * 通过 signOutReq 中的令牌信息，验证用户会话，并删除用户会话，最后返回成功结果
+ * 通过 signOutInput 中的令牌信息，验证用户会话，并删除用户会话，最后返回成功结果
  */
 func (as *authAppImpl) SignOut(
 	ctx context.Context,
-	signOutReq *types.SignOutReq,
+	signOutInput *dto.SignOutInput,
 ) error {
 	// 1. 解析 JWT 令牌
-	userId, err := as.identityDomain.ParseJWT(ctx, signOutReq.Token)
+	userId, err := as.identityDomain.ParseJWT(ctx, signOutInput.Token)
 	if err != nil {
 		return fmt.Errorf("auth.SignOut.ParseJWT: %w", err)
 	}
 	// 2. 通过 JWT 令牌和用户 ID 删除会话
 	err = as.identityDomain.DeleteSession(ctx, &entities.UserSession{
 		UserId: userId,
-		Token:  signOutReq.Token,
+		Token:  signOutInput.Token,
 	})
 	if err != nil {
 		return fmt.Errorf("auth.SignOut.DeleteSession: %w", err)

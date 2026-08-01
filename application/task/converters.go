@@ -3,42 +3,12 @@ package task
 import (
 	"naotodoserver/application/idutil"
 	"naotodoserver/conf"
-	"naotodoserver/consts"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
 	"time"
 )
-
-// weekdaysToBitmask 星期数组转换位掩码
-// @param weekdays 星期数组
-// @return uint8 位掩码
-func weekdaysToBitmask(weekdays []uint8) uint8 {
-	var mask uint8
-	for _, d := range weekdays {
-		if v, ok := consts.WeekdayBitmask[int(d)]; ok {
-			mask |= v
-		}
-	}
-	return mask
-}
-
-// bitmaskToWeekdays 位掩码转换星期数组
-// @param mask 位掩码
-// @return []uint8 星期数组
-func bitmaskToWeekdays(mask uint8) []uint8 {
-	var weekdays []uint8
-	for bit, day := range consts.WeekdayBitmaskReverse {
-		if mask&bit != 0 {
-			weekdays = append(weekdays, day)
-		}
-	}
-	if weekdays == nil {
-		weekdays = []uint8{}
-	}
-	return weekdays
-}
 
 // TaskEntityToGetRes 任务实体转换为获取任务响应
 func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
@@ -53,8 +23,8 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	}
 	res.Name = taskEntity.Name
 	res.Description = taskEntity.Description
-	res.State = consts.TodoStateMapReverse[uint8(taskEntity.State)]
-	res.Priority = consts.TodoPriorityMapReverse[uint8(taskEntity.Priority)]
+	res.State = taskEntity.State.String()
+	res.Priority = taskEntity.Priority.String()
 	res.StartAt = taskEntity.StartAt.ToString(time.RFC3339)
 	res.EndAt = taskEntity.EndAt.ToString(time.RFC3339)
 	res.ProjectId = idutil.FormatID(taskEntity.ProjectId)
@@ -63,9 +33,9 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 	res.StarMarkAt = taskEntity.StarMarkAt.ToString(time.RFC3339)
 	res.GivenUpAt = taskEntity.GivenUpAt.ToString(time.RFC3339)
 	res.RemindAt = taskEntity.RemindAt.ToString(time.RFC3339)
-	res.RemindRepeat = consts.RemindRepeatMapReverse[taskEntity.RemindRepeat]
+	res.RemindRepeat = entities.RemindRepeat(taskEntity.RemindRepeat).String()
 	res.RemindTime = taskEntity.RemindTime
-	res.RemindWeekdays = bitmaskToWeekdays(taskEntity.RemindWeekdays)
+	res.RemindWeekdays = entities.BitmaskToWeekdays(taskEntity.RemindWeekdays)
 	res.SortId = taskEntity.SortId
 	return res
 }
@@ -92,20 +62,23 @@ func CreateTaskReqToValueObject(
 			return nil, err
 		}
 	}
+	state, _ := entities.ParseTaskState(req.State)
+	priority, _ := entities.ParseTaskPriority(req.Priority)
+	remindRepeat, _ := entities.ParseRemindRepeat(req.RemindRepeat)
 	return valueobjects.NewCreateTask(
 		domaintypes.TaskID(parentTaskIdInt64),
 		req.Name,
 		req.Description,
-		entities.TaskState(consts.TodoStateMap[req.State]),
-		entities.TaskPriority(consts.TodoPriorityMap[req.Priority]),
+		state,
+		priority,
 		req.StartAt,
 		req.EndAt,
 		domaintypes.ProjectID(projectIdInt64),
 		req.Tags,
 		req.RemindAt,
-		consts.RemindRepeatMap[req.RemindRepeat],
+		uint8(remindRepeat),
 		req.RemindTime,
-		weekdaysToBitmask(req.RemindWeekdays),
+		entities.WeekdaysToBitmask(req.RemindWeekdays),
 	)
 }
 
@@ -136,19 +109,20 @@ func UpdateTaskReqToValueObject(
 		}
 	}
 	if req.State != nil {
-		iStateValue := entities.TaskState(consts.TodoStateMap[*req.State])
+		iStateValue, _ := entities.ParseTaskState(*req.State)
 		iState = &iStateValue
 	}
 	if req.Priority != nil {
-		iPriorityValue := entities.TaskPriority(consts.TodoPriorityMap[*req.Priority])
+		iPriorityValue, _ := entities.ParseTaskPriority(*req.Priority)
 		iPriority = &iPriorityValue
 	}
 	if req.RemindRepeat != nil {
-		iRemindRepeatValue := consts.RemindRepeatMap[*req.RemindRepeat]
+		remindRepeat, _ := entities.ParseRemindRepeat(*req.RemindRepeat)
+		iRemindRepeatValue := uint8(remindRepeat)
 		iRemindRepeat = &iRemindRepeatValue
 	}
 	if req.RemindWeekdays != nil {
-		iRemindWeekdaysValue := weekdaysToBitmask(req.RemindWeekdays)
+		iRemindWeekdaysValue := entities.WeekdaysToBitmask(req.RemindWeekdays)
 		iRemindWeekdays = &iRemindWeekdaysValue
 	}
 	return valueobjects.NewUpdateTask(

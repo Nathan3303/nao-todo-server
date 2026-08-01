@@ -5,6 +5,7 @@ import (
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
+	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
 	"time"
@@ -638,7 +639,7 @@ func (repo *TaskRepoImpl) SyncCommentUserProfile(
 // @param projectId 项目ID
 // @return error 错误
 func (repo *TaskRepoImpl) SoftDeleteByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return repo.db.WithContext(ctx).
+	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
 		Model(&models.Task{}).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
 		Update("deleted_at", time.Now()).Error
@@ -651,7 +652,7 @@ func (repo *TaskRepoImpl) SoftDeleteByProjectId(ctx context.Context, userId int6
 // @param projectId 项目ID
 // @return error 错误
 func (repo *TaskRepoImpl) RestoreByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return repo.db.WithContext(ctx).
+	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
 		Unscoped().
 		Model(&models.Task{}).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
@@ -665,7 +666,7 @@ func (repo *TaskRepoImpl) RestoreByProjectId(ctx context.Context, userId int64, 
 // @param projectId 项目ID
 // @return error 错误
 func (repo *TaskRepoImpl) ArchiveByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return repo.db.WithContext(ctx).
+	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
 		Model(&models.Task{}).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
 		Update("archived_at", time.Now()).Error
@@ -678,7 +679,7 @@ func (repo *TaskRepoImpl) ArchiveByProjectId(ctx context.Context, userId int64, 
 // @param projectId 项目ID
 // @return error 错误
 func (repo *TaskRepoImpl) UnarchiveByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return repo.db.WithContext(ctx).
+	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
 		Model(&models.Task{}).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
 		Update("archived_at", nil).Error

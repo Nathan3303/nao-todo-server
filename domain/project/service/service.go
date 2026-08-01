@@ -20,6 +20,12 @@ type ProjectDomain interface {
 
 	// 恢复任务清单
 	Restore(ctx context.Context, userId int64, projectId int64) error
+
+        // 归档任务清单
+        Archive(ctx context.Context, userId int64, projectId int64) error
+
+        // 取消归档任务清单
+        Unarchive(ctx context.Context, userId int64, projectId int64) error
 }
 
 // ProjectDomainImpl 任务清单领域服务实现

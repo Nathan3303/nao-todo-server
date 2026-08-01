@@ -5,6 +5,7 @@ import (
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	taskRepo "naotodoserver/domain/task/repositories"
+	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/types"
 )
 
@@ -27,9 +28,6 @@ type ProjectApp interface {
 
 	// 恢复任务清单
 	Restore(ctx context.Context, projectId string) error
-
-	// 硬删除任务清单
-	HardDelete(ctx context.Context, projectId string) error
 
 	// 归档任务清单
 	Archive(ctx context.Context, projectId string) error
@@ -63,6 +61,7 @@ type ProjectApp interface {
 // projectAppImpl 任务清单应用实现
 type projectAppImpl struct {
 	projectDomain  service.ProjectDomain
+        txManager      domaintypes.TxManager
 	repo           repositories.Project
 	preferenceRepo repositories.ProjectPreference
 	taskRepo       taskRepo.Task           // 用于级联操作

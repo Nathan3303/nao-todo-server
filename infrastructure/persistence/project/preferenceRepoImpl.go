@@ -5,6 +5,7 @@ import (
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
+	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"gorm.io/gorm"
@@ -99,7 +100,7 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Delete(
 	userId int64,
 	projectId int64,
 ) error {
-	return projectPreferenceRepo.db.WithContext(ctx).
+	return dbs.DBFrom(ctx, projectPreferenceRepo.db).WithContext(ctx).
 		Model(&models.ProjectPreference{}).
 		Where(&models.ProjectPreference{
 			UserId:    userId,
@@ -118,7 +119,7 @@ func (projectPreferenceRepo *ProjectPreferenceRepoImpl) Restore(
 	userId int64,
 	projectId int64,
 ) error {
-	return projectPreferenceRepo.db.WithContext(ctx).
+	return dbs.DBFrom(ctx, projectPreferenceRepo.db).WithContext(ctx).
 		Model(&models.ProjectPreference{}).
 		Where(&models.ProjectPreference{
 			UserId:    userId,

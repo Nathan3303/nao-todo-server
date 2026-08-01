@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"path/filepath"
 
 	taskApp "naotodoserver/application/task"
+	"naotodoserver/application/user/dto"
 	"naotodoserver/conf"
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/repositories"
 	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
-	"naotodoserver/interfaces/types"
-
-	"github.com/gin-gonic/gin"
 )
 
 // NewUserApp 创建用户应用层实例
@@ -23,11 +21,13 @@ func NewUserApp(
 	userRepo repositories.User,
 	sessionRepo repositories.UserSession,
 	taskApp taskApp.TaskCommentApp,
+	avatarStorage AvatarStorage,
 ) UserApp {
 	return &userAppImpl{
-		userRepo:    userRepo,
-		sessionRepo: sessionRepo,
-		taskApp:     taskApp,
+		userRepo:      userRepo,
+		sessionRepo:   sessionRepo,
+		taskApp:       taskApp,
+		avatarStorage: avatarStorage,
 	}
 }
 
@@ -37,7 +37,7 @@ func NewUserApp(
 // @return error 错误
 func (u *userAppImpl) UpdateNickname(
 	ctx context.Context,
-	req types.UpdateUserNicknameReq,
+	req dto.UpdateNicknameInput,
 ) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
@@ -56,9 +56,9 @@ func (u *userAppImpl) UpdateNickname(
 
 // GetProfile 获取用户个人信息
 // @param ctx 上下文
-// @return *types.GetUserProfileRes 用户个人信息
+// @return *dto.GetProfileOutput 用户个人信息
 // @return error 错误
-func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes, error) {
+func (u *userAppImpl) GetProfile(ctx context.Context) (*dto.GetProfileOutput, error) {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -79,7 +79,7 @@ func (u *userAppImpl) GetProfile(ctx context.Context) (*types.GetUserProfileRes,
 // @return error 错误
 func (u *userAppImpl) UpdatePassword(
 	ctx context.Context,
-	req types.UpdateUserPasswordReq,
+	req dto.UpdatePasswordInput,
 ) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
@@ -101,12 +101,12 @@ func (u *userAppImpl) UpdatePassword(
 // UpdateAvatar 更新用户头像
 // @param ctx 上下文
 // @param req 更新用户头像请求
-// @return *types.UpdateUserAvatarRes 更新用户头像响应
+// @return *dto.UpdateAvatarOutput 更新用户头像响应
 // @return error 错误
 func (u *userAppImpl) UpdateAvatar(
 	ctx context.Context,
-	req types.UpdateUserAvatarReq,
-) (*types.UpdateUserAvatarRes, error) {
+	req dto.UpdateAvatarInput,
+) (*dto.UpdateAvatarOutput, error) {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -120,77 +120,59 @@ func (u *userAppImpl) UpdateAvatar(
 	// 3. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", req.AvatarURL)
 	// 4. 返回结果
-	return &types.UpdateUserAvatarRes{
+	return &dto.UpdateAvatarOutput{
 		AvatarURL: conf.Conf.Uploads.AvatarURL(req.AvatarURL),
 	}, nil
 }
 
 // UpdateAvatarByFile 更新用户头像（通过文件上传）
-// @param ctx 原始上下文
-// @param iCtx 上下文
-// @return *types.UpdateUserAvatarRes 更新用户头像响应
+// @param ctx 上下文
+// @param file 文件内容
+// @param filename 文件名
+// @param size 文件大小（字节）
+// @return *dto.UpdateAvatarOutput 更新用户头像响应
 // @return error 错误
 func (u *userAppImpl) UpdateAvatarByFile(
-	ctxRaw *gin.Context,
 	ctx context.Context,
-) (*types.UpdateUserAvatarRes, error) {
+	file io.Reader,
+	filename string,
+	size int64,
+) (*dto.UpdateAvatarOutput, error) {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
 	}
-	// 2. 获取文件
-	file, err := ctxRaw.FormFile("avatar")
-	if err != nil {
-		return nil, errors.New("文件上传失败 - " + err.Error())
-	}
-	// 3. 验证文件大小和类型
+	// 2. 验证文件大小和类型
 	maxSize := conf.Conf.Uploads.MaxFileSize
 	if maxSize <= 0 {
 		maxSize = 1024 * 1024 * 2 // 默认 2MB
 	}
-	if file.Size > maxSize {
+	if size > maxSize {
 		return nil, fmt.Errorf("文件大小不能超过 %dMB", maxSize/1024/1024)
 	}
-	ext := filepath.Ext(file.Filename)
+	ext := filepath.Ext(filename)
 	allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
 	if !allowedExts[ext] {
 		return nil, errors.New("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
 	}
-	// 4. 确保上传目录存在
-	uploadDir := filepath.Join(conf.Conf.Uploads.UploadDir, conf.Conf.Uploads.AvatarDir)
-	if err = os.MkdirAll(uploadDir, os.ModePerm); err != nil {
-		return nil, errors.New("创建上传目录失败 - " + err.Error())
-	}
-	// 5. 生成唯一文件名
+	// 3. 生成唯一文件名并保存文件
 	uniqueFilename := fmt.Sprintf("%d%s", userId, ext)
-	savePath := filepath.Join(uploadDir, uniqueFilename)
-	// 6. 保存文件
-	if err = ctxRaw.SaveUploadedFile(file, savePath); err != nil {
-		return nil, errors.New("文件保存失败 - " + err.Error())
+	avatarURL, err := u.avatarStorage.Save(ctx, uniqueFilename, file)
+	if err != nil {
+		return nil, err
 	}
-	// 7. 构造可访问的 URL
-	staticPath := conf.Conf.Uploads.StaticPath
-	if staticPath == "" {
-		staticPath = "/static/uploads"
-	}
-	avatarURL := fmt.Sprintf(
-		"%s/%s/%s",
-		staticPath,
-		conf.Conf.Uploads.AvatarDir,
-		uniqueFilename,
-	)
-	// 8. 更新用户头像
+	// 4. 更新用户头像
 	err = u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), avatarURL)
 	if err != nil {
 		// 更新失败时删除已上传的文件
-		os.Remove(savePath)
+		_ = u.avatarStorage.Delete(ctx, uniqueFilename)
 		return nil, err
 	}
-	// 9. 同步评论中的用户头像
+	// 5. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", avatarURL)
-	// 10. 返回结果
-	return &types.UpdateUserAvatarRes{
+	// 6. 返回结果
+	return &dto.UpdateAvatarOutput{
 		AvatarURL: conf.Conf.Uploads.AvatarURL(avatarURL),
 	}, nil
 }
@@ -199,7 +181,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 // @param ctx 上下文
 // @param req 删除用户请求
 // @return error 错误
-func (u *userAppImpl) DeleteUser(ctx context.Context, req *types.DeleteUserReq) error {
+func (u *userAppImpl) DeleteUser(ctx context.Context, req dto.DeleteUserInput) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -249,7 +231,7 @@ func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8
 // @param ctx 上下文
 // @param req 激活用户请求
 // @return error 错误
-func (u *userAppImpl) RestoreUser(ctx context.Context, req *types.RestoreUserReq) error {
+func (u *userAppImpl) RestoreUser(ctx context.Context, req dto.RestoreUserInput) error {
 	// 1. 获取 User ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -281,9 +263,9 @@ func (u *userAppImpl) RestoreUser(ctx context.Context, req *types.RestoreUserReq
 
 // GetConfig 获取用户配置
 // @param ctx 上下文
-// @return *types.GetUserConfigRes 获取用户配置响应
+// @return *dto.GetConfigOutput 获取用户配置响应
 // @return error 错误
-func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, error) {
+func (u *userAppImpl) GetConfig(ctx context.Context) (*dto.GetConfigOutput, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -299,7 +281,7 @@ func (u *userAppImpl) GetConfig(ctx context.Context) (*types.GetUserConfigRes, e
 // @param ctx 上下文
 // @param req 更新用户配置请求
 // @return error 错误
-func (u *userAppImpl) UpdateConfig(ctx context.Context, req types.UpdateUserConfigReq) error {
+func (u *userAppImpl) UpdateConfig(ctx context.Context, req dto.UpdateConfigInput) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return domerr.ErrInvalidUserID

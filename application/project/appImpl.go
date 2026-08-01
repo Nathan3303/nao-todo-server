@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"naotodoserver/application/idutil"
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	taskRepo "naotodoserver/domain/task/repositories"
+        domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 )
@@ -18,12 +18,14 @@ import (
 // NewProjectApp 创建任务清单应用层实例
 func NewProjectApp(
 	projectDomain service.ProjectDomain,
+        txManager domaintypes.TxManager,
 	repo repositories.Project,
 	preferenceRepo repositories.ProjectPreference,
 	taskRepo taskRepo.Task,
 ) ProjectApp {
 	impl := &projectAppImpl{
 		projectDomain:  projectDomain,
+                txManager:      txManager,
 		repo:           repo,
 		preferenceRepo: preferenceRepo,
 		taskRepo:       taskRepo,
@@ -140,19 +142,22 @@ func (app *projectAppImpl) Delete(
 		return domerr.ErrInvalidProjectID
 	}
 
-	// 1. 删除 Project（领域服务负责 Project 自身 + Preference）
-	err = app.projectDomain.Delete(ctx, userId, projectIdInt64)
-	if err != nil {
-		return errors.New("删除任务清单失败")
-	}
-
-	// 2. 级联软删除归属于该 Project 的所有 Task
-	if err := app.taskRepo.SoftDeleteByProjectId(ctx, userId, projectIdInt64); err != nil {
-		// 级联失败记录日志但不阻塞返回
-		log.Printf("[ProjectApp] 级联删除Task失败 projectId=%d err=%v", projectIdInt64, err)
-	}
-
-	return nil
+        err = app.txManager.Do(ctx, func(ctx context.Context) error {
+                // 1. 删除 Project（领域服务负责 Project 自身 + Preference）
+                if err := app.projectDomain.Delete(ctx, userId, projectIdInt64); err != nil {
+                        return errors.New("删除任务清单失败")
+                }
+                // 2. 级联软删除归属于该 Project 的所有 Task
+                err = app.taskRepo.SoftDeleteByProjectId(ctx, userId, projectIdInt64)
+                if err != nil {
+                        return err
+                }
+                return nil
+        })
+        if err != nil {
+                return err
+        }
+        return nil
 }
 
 // 恢复任务清单
@@ -175,35 +180,27 @@ func (app *projectAppImpl) Restore(
 		return domerr.ErrInvalidProjectID
 	}
 
-	// 1. 恢复 Project
-	err = app.projectDomain.Restore(ctx, userId, projectIdInt64)
-	if err != nil {
-		return err
-	}
-
-	// 2. 级联恢复归属于该 Project 的所有 Task
-	if err := app.taskRepo.RestoreByProjectId(ctx, userId, projectIdInt64); err != nil {
-		log.Printf("[ProjectApp] 级联恢复Task失败 projectId=%d err=%v", projectIdInt64, err)
-	}
-
-	return nil
+        err = app.txManager.Do(ctx, func(ctx context.Context) error {
+                // 1. 恢复 Project
+                if err := app.projectDomain.Restore(ctx, userId, projectIdInt64); err != nil {
+                        return err
+                }
+                // 2. 级联恢复归属于该 Project 的所有 Task
+                if err := app.taskRepo.RestoreByProjectId(ctx, userId, projectIdInt64); err != nil {
+                        return err
+                }
+                return nil
+        })
+        if err != nil {
+                return err
+        }
+        return nil
 }
 
-// 硬删除任务清单
-// @param ctx 上下文
-// @param projectId 任务清单 ID
-// @return error 验证失败返回错误，否则返回 nil
 // DeleteDeactivatedProjects 删除已注销的任务清单（供定时任务调用）
 func (app *projectAppImpl) DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error {
 	_, err := app.repo.DeleteDeactivatedProjects(ctx, dayOffset)
 	return err
-}
-
-func (app *projectAppImpl) HardDelete(
-	ctx context.Context,
-	projectId string,
-) error {
-	panic("unimplemented")
 }
 
 // 归档任务清单
@@ -226,17 +223,21 @@ func (app *projectAppImpl) Archive(
 		return domerr.ErrInvalidProjectID
 	}
 
-	// 1. 归档 Project
-	if err := app.repo.Archive(ctx, userId, projectIdInt64); err != nil {
-		return err
-	}
-
-	// 2. 级联归档归属于该 Project 的所有 Task
-	if err := app.taskRepo.ArchiveByProjectId(ctx, userId, projectIdInt64); err != nil {
-		log.Printf("[ProjectApp] 级联归档Task失败 projectId=%d err=%v", projectIdInt64, err)
-	}
-
-	return nil
+        err = app.txManager.Do(ctx, func(ctx context.Context) error {
+                // 1. 归档 Project
+                if err := app.projectDomain.Archive(ctx, userId, projectIdInt64); err != nil {
+                        return err
+                }
+                // 2. 级联归档归属于该 Project 的所有 Task
+                if err := app.taskRepo.ArchiveByProjectId(ctx, userId, projectIdInt64); err != nil {
+                        return err
+                }
+                return nil
+        })
+        if err != nil {
+                return err
+        }
+        return nil
 }
 
 // 取消归档任务清单
@@ -259,17 +260,22 @@ func (app *projectAppImpl) Unarchive(
 		return domerr.ErrInvalidProjectID
 	}
 
-	// 1. 取消归档 Project
-	if err := app.repo.Unarchive(ctx, userId, projectIdInt64); err != nil {
-		return err
-	}
-
-	// 2. 级联取消归档归属于该 Project 的所有 Task
-	if err := app.taskRepo.UnarchiveByProjectId(ctx, userId, projectIdInt64); err != nil {
-		log.Printf("[ProjectApp] 级联取消归档Task失败 projectId=%d err=%v", projectIdInt64, err)
-	}
-
-	return nil
+        err = app.txManager.Do(ctx, func(ctx context.Context) error {
+                // 1. 取消归档 Project
+                if err := app.projectDomain.Unarchive(ctx, userId, projectIdInt64); err != nil {
+                        return err
+                }
+                // 2. 级联取消归档归属于该 Project 的所有 Task
+                err = app.taskRepo.UnarchiveByProjectId(ctx, userId, projectIdInt64)
+                if err != nil {
+                        return err
+                }
+                return nil
+        })
+        if err != nil {
+                return err
+        }
+        return nil
 }
 
 // 获取用户任务清单列表

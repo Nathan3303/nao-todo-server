@@ -1,17 +1,17 @@
 package user
 
 import (
+	"naotodoserver/application/user/dto"
 	"naotodoserver/conf"
 	"naotodoserver/domain/identity/entities"
-	"naotodoserver/interfaces/types"
 	"time"
 )
 
 // UserEntity2Res 用户实体转换为获取用户响应
 // @param e 用户实体
 // @return 获取用户响应
-func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
-	res := &types.GetUserProfileRes{}
+func UserEntity2Res(e *entities.User) *dto.GetProfileOutput {
+	res := &dto.GetProfileOutput{}
 	res.Email = e.Email
 	res.Nickname = e.Nickname
 	res.Avatar = conf.Conf.Uploads.AvatarURL(e.Avatar)
@@ -31,8 +31,8 @@ func UserEntity2Res(e *entities.User) *types.GetUserProfileRes {
 }
 
 // ConfigEntity2Res 用户配置实体转换为获取用户配置响应
-func ConfigEntity2Res(e *entities.UserConfig) *types.GetUserConfigRes {
-	return &types.GetUserConfigRes{
+func ConfigEntity2Res(e *entities.UserConfig) *dto.GetConfigOutput {
+	return &dto.GetConfigOutput{
 		Appearance: e.Appearance,
 	}
 }

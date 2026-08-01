@@ -7,6 +7,7 @@ import (
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/infrastructure/persistence/cache"
+	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	"time"
 
@@ -116,7 +117,7 @@ func (projectRepo *ProjectRepoImpl) Delete(
 	whereCond.UserId = userId
 	whereCond.ID = projectId
 	// 2. 更新 deactived_at 为当前时间
-	tx := projectRepo.db.WithContext(ctx).
+	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).
 		Model(&models.Project{}).
 		Where(&whereCond).
 		Update("deactived_at", time.Now())
@@ -144,7 +145,7 @@ func (projectRepo *ProjectRepoImpl) Restore(
 	whereCond.UserId = userId
 	whereCond.ID = projectId
 	// 2. 恢复 deactived_at 为 nil
-	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
+	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).Model(&models.Project{}).
 		Where(&whereCond).
 		Update("deactived_at", nil)
 	// 3. 返回结果
@@ -174,7 +175,7 @@ func (projectRepo *ProjectRepoImpl) Archive(
 	whereCond.UserId = userId
 	whereCond.ID = projectId
 	// 2. 归档数据库
-	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
+	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).Model(&models.Project{}).
 		Where(&whereCond).
 		Update("archived_at", time.Now())
 	// 3. 返回结果
@@ -204,7 +205,7 @@ func (projectRepo *ProjectRepoImpl) Unarchive(
 	whereCond.UserId = userId
 	whereCond.ID = projectId
 	// 2. 取消归档数据库
-	tx := projectRepo.db.WithContext(ctx).Model(&models.Project{}).
+	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).Model(&models.Project{}).
 		Where(&whereCond).
 		Update("archived_at", nil)
 	// 3. 返回结果

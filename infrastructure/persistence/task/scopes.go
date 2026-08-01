@@ -1,7 +1,7 @@
 package task
 
 import (
-	"naotodoserver/consts"
+	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 	"strings"
 	"time"
@@ -63,7 +63,7 @@ func ByTaskState(state string) func(db *gorm.DB) *gorm.DB {
 		}
 		var stateIDs []int
 		for s := range strings.SplitSeq(state, ",") {
-			if val, exists := consts.TodoStateMap[s]; exists {
+			if val, ok := entities.ParseTaskState(s); ok {
 				stateIDs = append(stateIDs, int(val))
 			}
 		}
@@ -83,7 +83,7 @@ func ByTaskPriority(priority string) func(db *gorm.DB) *gorm.DB {
 		}
 		var priorityIDs []int
 		for s := range strings.SplitSeq(priority, ",") {
-			if val, exists := consts.TodoPriorityMap[s]; exists {
+			if val, ok := entities.ParseTaskPriority(s); ok {
 				priorityIDs = append(priorityIDs, int(val))
 			}
 		}

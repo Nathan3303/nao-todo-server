@@ -83,3 +83,23 @@ func (p *ProjectDomainImpl) Restore(
 	// 恢复任务清单偏好
 	return p.preferenceRepo.Restore(ctx, userId, projectId)
 }
+
+// Archive 归档任务清单
+func (p *ProjectDomainImpl) Archive(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+) error {
+	// 归档任务清单
+	return p.repo.Archive(ctx, userId, projectId)
+}
+
+// Unarchive 取消归档任务清单
+func (p *ProjectDomainImpl) Unarchive(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+) error {
+	// 取消归档任务清单
+	return p.repo.Unarchive(ctx, userId, projectId)
+}

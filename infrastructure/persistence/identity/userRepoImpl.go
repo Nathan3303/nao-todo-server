@@ -289,78 +289,121 @@ func (r *UserRepoImpl) Delete(ctx context.Context, userId types.UserID) error {
 }
 
 // DeleteDeactivatedUsers 删除已注销用户
+// 用户本体与其 11 张关联表的删除在同一事务内完成，任一步失败即整体回滚，避免产生孤儿数据。
+// 缓存失效在事务提交成功之后执行，回滚时不会误清空缓存。
+// @param ctx 上下文
+// @param dayOffset 注销天数偏移，注销时间早于当前时间减去该天数的用户将被删除
+// @return int64 删除的用户行数
+// @return error 错误
 func (r *UserRepoImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error) {
 	cutoff := time.Now().AddDate(0, 0, -1*int(dayOffset))
 	var userIds []int64
-	r.db.
-		WithContext(ctx).
-		Model(&models.User{}).
-		Where("deactived_at < ?", cutoff).
-		Pluck("id", &userIds)
-	if len(userIds) > 0 {
-		r.db.
-			WithContext(ctx).
+	var rowsAffected int64
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Model(&models.User{}).
+			Where("deactived_at < ?", cutoff).
+			Pluck("id", &userIds).
+			Error; err != nil {
+			return err
+		}
+		// 无待删除用户时提前返回，避免空 IN 子句
+		if len(userIds) == 0 {
+			return nil
+		}
+		if err := tx.
 			Model(&models.UserSession{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.UserSession{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.UserSession{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.TaskComment{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.TaskComment{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.TaskComment{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.TaskCheckItem{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.TaskCheckItem{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.TaskCheckItem{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.Task{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.Task{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.Task{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.ProjectPreference{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.ProjectPreference{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.ProjectPreference{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.Project{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.Project{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.Project{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.TagPreference{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.TagPreference{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.TagPreference{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.Tag{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.Tag{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.Tag{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.PomodoroRecord{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.PomodoroRecord{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.PomodoroRecord{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.Pomodoro{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.Pomodoro{})
-		r.db.
-			WithContext(ctx).
+			Delete(&models.Pomodoro{}).
+			Error; err != nil {
+			return err
+		}
+		if err := tx.
 			Model(&models.UserConfig{}).
 			Where("user_id IN ?", userIds).
-			Delete(&models.UserConfig{})
-		for _, userId := range userIds {
-			r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
+			Delete(&models.UserConfig{}).
+			Error; err != nil {
+			return err
 		}
+		deleteTx := tx.
+			Model(&models.User{}).
+			Where("id IN ?", userIds).
+			Delete(&models.User{})
+		if deleteTx.Error != nil {
+			return deleteTx.Error
+		}
+		rowsAffected = deleteTx.RowsAffected
+		return nil
+	})
+	if err != nil {
+		return 0, err
 	}
-	tx := r.db.
-		WithContext(ctx).
-		Model(&models.User{}).
-		Where("id IN ?", userIds).
-		Delete(&models.User{})
-	return tx.RowsAffected, tx.Error
+	// 事务提交成功后失效资料与配置缓存
+	for _, userId := range userIds {
+		r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
+	}
+	return rowsAffected, nil
 }
