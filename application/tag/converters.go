@@ -2,18 +2,18 @@ package tag
 
 import (
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/tag/dto"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/valueobjects"
 	domaintypes "naotodoserver/domain/types"
-	"naotodoserver/interfaces/types"
 	"time"
 )
 
 // TagEntityToGetRes 标签实体转换响应体
 // @param tagEntity 标签实体
 // @return 标签响应体
-func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
-	res := &types.GetTagRes{}
+func TagEntityToGetRes(tagEntity *entities.Tag) *dto.GetTagRes {
+	res := &dto.GetTagRes{}
 	res.Id = idutil.FormatID(tagEntity.Id)
 	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
@@ -28,7 +28,7 @@ func TagEntityToGetRes(tagEntity *entities.Tag) *types.GetTagRes {
 // CreateTagReqToValueObject 创建标签请求体转换值对象
 // @param createTagReq 创建标签请求体
 // @return 创建标签值对象
-func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.CreateTag, error) {
+func CreateTagReqToValueObject(createTagReq *dto.CreateTagReq) (*valueobjects.CreateTag, error) {
 	return valueobjects.NewCreateTag(
 		createTagReq.Name,
 		createTagReq.Description,
@@ -39,8 +39,8 @@ func CreateTagReqToValueObject(createTagReq *types.CreateTagReq) (*valueobjects.
 // TagEntityToCreateRes 标签实体转换创建响应体
 // @param tagEntity 标签实体
 // @return 创建标签响应体
-func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
-	res := &types.CreateTagRes{}
+func TagEntityToCreateRes(tagEntity *entities.Tag) *dto.CreateTagRes {
+	res := &dto.CreateTagRes{}
 	res.Id = idutil.FormatID(tagEntity.Id)
 	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
@@ -55,7 +55,7 @@ func TagEntityToCreateRes(tagEntity *entities.Tag) *types.CreateTagRes {
 // UpdateTagReqToValueObject 更新标签请求体转换值对象
 // @param updateTagReq 更新标签请求体
 // @return 更新标签值对象
-func UpdateTagReqToValueObject(updateTagReq *types.UpdateTagReq) (*valueobjects.UpdateTag, error) {
+func UpdateTagReqToValueObject(updateTagReq *dto.UpdateTagReq) (*valueobjects.UpdateTag, error) {
 	return valueobjects.NewUpdateTag(
 		updateTagReq.Name,
 		updateTagReq.Description,
@@ -67,8 +67,8 @@ func UpdateTagReqToValueObject(updateTagReq *types.UpdateTagReq) (*valueobjects.
 // TagEntitiesToGetResList 标签实体列表转换响应体列表
 // @param tagEntities 标签实体列表
 // @return 标签响应体列表
-func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*types.GetTagRes {
-	getResList := []*types.GetTagRes{}
+func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*dto.GetTagRes {
+	getResList := []*dto.GetTagRes{}
 	for _, entity := range tagEntities {
 		getResList = append(getResList, TagEntityToGetRes(entity))
 	}
@@ -80,8 +80,8 @@ func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*types.GetTagRes {
 // @return 标签偏好设置响应体
 func TagPreferenceEntityToGetRes(
 	tagPreferenceEntity *entities.TagPreference,
-) *types.GetTagPreferenceRes {
-	var res types.GetTagPreferenceRes
+) *dto.GetTagPreferenceRes {
+	var res dto.GetTagPreferenceRes
 	res.Id = idutil.FormatID(tagPreferenceEntity.Id)
 	res.CreatedAt = tagPreferenceEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = tagPreferenceEntity.UpdatedAt.Format(time.RFC3339)
@@ -97,7 +97,7 @@ func TagPreferenceEntityToGetRes(
 // @param updateTagPreferenceReq 更新标签偏好设置请求体
 // @return 更新标签偏好设置值对象
 func UpdateTagPreferenceReqToValueObject(
-	updateTagPreferenceReq *types.UpdateTagPreferenceReq,
+	updateTagPreferenceReq *dto.UpdateTagPreferenceReq,
 ) (*valueobjects.SaveTagPreference, error) {
 	return valueobjects.NewSaveTagPreference(
 		domaintypes.ViewType(updateTagPreferenceReq.ViewType),
@@ -111,7 +111,7 @@ func UpdateTagPreferenceReqToValueObject(
 // @return 批量更新标签值对象列表
 // @return error 错误信息
 func BatchUpdateTagReqToValueObjects(
-	req *types.BatchUpdateTagReq,
+	req *dto.BatchUpdateTagReq,
 ) ([]*valueobjects.BatchUpdateTag, error) {
 	batchVOs := make([]*valueobjects.BatchUpdateTag, 0, len(req.Tags))
 	for _, tag := range req.Tags {

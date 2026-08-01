@@ -3,12 +3,13 @@ package pomodoro
 import (
 	"context"
 	"fmt"
-	domerr "naotodoserver/domain/errors"
+
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/pomodoro/dto"
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
 	iCtx "naotodoserver/infrastructure/context"
-	"naotodoserver/interfaces/types"
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
@@ -33,8 +34,8 @@ func NewPomodoroApp(
 // @return error 错误
 func (app *PomodoroAppImpl) Create(
 	ctx context.Context,
-	req *types.CreatePomodoroRecordReq,
-) (*types.CreatePomodoroRecordRes, error) {
+	req *dto.CreatePomodoroRecordReq,
+) (*dto.CreatePomodoroRecordRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -57,8 +58,8 @@ func (app *PomodoroAppImpl) Create(
 // @return error 错误
 func (app *PomodoroAppImpl) Get(
 	ctx context.Context,
-	req *types.GetPomodoroRecordReq,
-) (*types.GetPomodoroRecordRes, error) {
+	req *dto.GetPomodoroRecordReq,
+) (*dto.GetPomodoroRecordRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -81,8 +82,8 @@ func (app *PomodoroAppImpl) Get(
 // @return error 错误
 func (app *PomodoroAppImpl) List(
 	ctx context.Context,
-	req *types.ListPomodoroRecordReq,
-) ([]*types.GetPomodoroRecordRes, int64, error) {
+	req *dto.ListPomodoroRecordReq,
+) ([]*dto.GetPomodoroRecordRes, int64, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, 0, domerr.ErrInvalidUserID
@@ -105,8 +106,8 @@ func (app *PomodoroAppImpl) List(
 // @return error 错误
 func (app *PomodoroAppImpl) CreatePomodoro(
 	ctx context.Context,
-	req *types.CreatePomodoroReq,
-) (*types.CreatePomodoroRes, error) {
+	req *dto.CreatePomodoroReq,
+) (*dto.CreatePomodoroRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -129,8 +130,8 @@ func (app *PomodoroAppImpl) CreatePomodoro(
 // @return error 错误
 func (app *PomodoroAppImpl) GetPomodoro(
 	ctx context.Context,
-	req *types.GetPomodoroReq,
-) (*types.PomodoroRes, error) {
+	req *dto.GetPomodoroReq,
+) (*dto.PomodoroRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -154,7 +155,7 @@ func (app *PomodoroAppImpl) GetPomodoro(
 func (app *PomodoroAppImpl) UpdatePomodoro(
 	ctx context.Context,
 	id string,
-	req *types.UpdatePomodoroReq,
+	req *dto.UpdatePomodoroReq,
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -249,8 +250,8 @@ func (app *PomodoroAppImpl) UnarchivePomodoro(
 // @return error 错误
 func (app *PomodoroAppImpl) ListPomodoro(
 	ctx context.Context,
-	req *types.ListPomodoroReq,
-) (types.ListPomodoroRes, int64, error) {
+	req *dto.ListPomodoroReq,
+) (dto.ListPomodoroRes, int64, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, 0, domerr.ErrInvalidUserID

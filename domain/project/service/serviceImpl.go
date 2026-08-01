@@ -60,12 +60,25 @@ func (p *ProjectDomainImpl) Delete(
 	userId int64,
 	projectId int64,
 ) error {
-	// 删除任务清单
-	err := p.repo.Delete(ctx, userId, projectId)
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
 	if err != nil {
 		return err
 	}
-	// 删除任务清单偏好
+	// 2. 应用实体删除方法（软删除，设置停用时间）
+	projectEntity.Delete()
+	// 3. 持久化实体状态
+	err = p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
+	if err != nil {
+		return err
+	}
+	// 4. 删除任务清单偏好
 	return p.preferenceRepo.Delete(ctx, userId, projectId)
 }
 
@@ -75,12 +88,25 @@ func (p *ProjectDomainImpl) Restore(
 	userId int64,
 	projectId int64,
 ) error {
-	// 恢复任务清单
-	err := p.repo.Restore(ctx, userId, projectId)
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
 	if err != nil {
 		return err
 	}
-	// 恢复任务清单偏好
+	// 2. 应用实体恢复方法（清空停用时间）
+	projectEntity.Restore()
+	// 3. 持久化实体状态
+	err = p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
+	if err != nil {
+		return err
+	}
+	// 4. 恢复任务清单偏好
 	return p.preferenceRepo.Restore(ctx, userId, projectId)
 }
 
@@ -90,8 +116,21 @@ func (p *ProjectDomainImpl) Archive(
 	userId int64,
 	projectId int64,
 ) error {
-	// 归档任务清单
-	return p.repo.Archive(ctx, userId, projectId)
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 2. 应用实体归档方法（幂等重设归档时间）
+	projectEntity.Archive()
+	// 3. 持久化实体状态
+	return p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
 }
 
 // Unarchive 取消归档任务清单
@@ -100,6 +139,19 @@ func (p *ProjectDomainImpl) Unarchive(
 	userId int64,
 	projectId int64,
 ) error {
-	// 取消归档任务清单
-	return p.repo.Unarchive(ctx, userId, projectId)
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 2. 应用实体取消归档方法（清空归档时间）
+	projectEntity.Unarchive()
+	// 3. 持久化实体状态
+	return p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
 }

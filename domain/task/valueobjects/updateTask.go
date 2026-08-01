@@ -24,6 +24,7 @@ type UpdateTask struct {
 	ArchivedAt     types.NullableTime
 	StarMarkAt     types.NullableTime
 	GivenUpAt      types.NullableTime
+	CompletedAt    types.NullableTime
 	RemindAt       types.NullableTime
 	RemindRepeat   *uint8
 	RemindTime     *string
@@ -64,6 +65,27 @@ func (updateTask *UpdateTask) Trim() error {
 }
 
 // NewUpdateTask 创建更新任务值对象
+// @param userId 用户 ID
+// @param parentTaskId 父任务 ID
+// @param name 任务名称
+// @param description 任务描述
+// @param state 任务状态
+// @param priority 任务优先级
+// @param startAt 开始时间
+// @param endAt 结束时间
+// @param projectId 项目 ID
+// @param tags 标签
+// @param archivedAt 归档时间
+// @param starMarkAt 收藏时间
+// @param givenUpAt 放弃时间
+// @param completedAt 完成时间
+// @param remindAt 提醒时间
+// @param remindRepeat 提醒重复类型
+// @param remindTime 提醒时间字符串
+// @param remindWeekdays 提醒星期位掩码
+// @param sortId 排序 ID
+// @return *UpdateTask 更新任务值对象
+// @return error 错误信息
 func NewUpdateTask(
 	userId int64,
 	parentTaskId *int64,
@@ -78,6 +100,7 @@ func NewUpdateTask(
 	archivedAt *string,
 	starMarkAt *string,
 	givenUpAt *string,
+	completedAt *string,
 	remindAt *string,
 	remindRepeat *uint8,
 	remindTime *string,
@@ -98,6 +121,7 @@ func NewUpdateTask(
 	vo.ArchivedAt = types.NewNullableTimeByTimeStrPtr(archivedAt)
 	vo.StarMarkAt = types.NewNullableTimeByTimeStrPtr(starMarkAt)
 	vo.GivenUpAt = types.NewNullableTimeByTimeStrPtr(givenUpAt)
+	vo.CompletedAt = types.NewNullableTimeByTimeStrPtr(completedAt)
 	vo.RemindAt = types.NewNullableTimeByTimeStrPtr(remindAt)
 	vo.RemindRepeat = remindRepeat
 	vo.RemindTime = remindTime

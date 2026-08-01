@@ -2,6 +2,7 @@ package controllers
 
 import (
 	projectApp "naotodoserver/application/project"
+	projectDto "naotodoserver/application/project/dto"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,131 @@ type ProjectController struct {
 
 func NewProjectController(app projectApp.ProjectApp) *ProjectController {
 	return &ProjectController{projectApp: app}
+}
+
+// toGetProjectRes 将应用层获取任务清单出参转换为获取任务清单响应
+// @param output 应用层获取任务清单出参
+// @return 获取任务清单响应
+func toGetProjectRes(output *projectDto.GetProjectRes) *types.GetProjectRes {
+	res := &types.GetProjectRes{}
+	res.Id = output.Id
+	res.CreatedAt = output.CreatedAt
+	res.UpdatedAt = output.UpdatedAt
+	res.DeletedAt = output.DeletedAt
+	res.Name = output.Name
+	res.Description = output.Description
+	res.SortId = output.SortId
+	res.ArchivedAt = output.ArchivedAt
+	res.DeactivedAt = output.DeactivedAt
+	return res
+}
+
+// toGetProjectResList 将应用层任务清单列表出参转换为任务清单列表响应
+// @param outputList 应用层任务清单列表出参
+// @return 任务清单列表响应
+func toGetProjectResList(outputList []*projectDto.GetProjectRes) []*types.GetProjectRes {
+	resList := make([]*types.GetProjectRes, 0, len(outputList))
+	for _, output := range outputList {
+		resList = append(resList, toGetProjectRes(output))
+	}
+	return resList
+}
+
+// toCreateProjectInput 将创建任务清单请求转换为应用层入参
+// @param req 创建任务清单请求
+// @return 应用层创建任务清单入参
+func toCreateProjectInput(req *types.CreateProjectReq) *projectDto.CreateProjectReq {
+	return &projectDto.CreateProjectReq{
+		Name:        req.Name,
+		Description: req.Description,
+	}
+}
+
+// toCreateProjectRes 将应用层创建任务清单出参转换为创建任务清单响应
+// @param output 应用层创建任务清单出参
+// @return 创建任务清单响应
+func toCreateProjectRes(output *projectDto.CreateProjectRes) *types.CreateProjectRes {
+	res := &types.CreateProjectRes{}
+	res.Id = output.Id
+	res.CreatedAt = output.CreatedAt
+	res.UpdatedAt = output.UpdatedAt
+	res.DeletedAt = output.DeletedAt
+	res.Name = output.Name
+	res.Description = output.Description
+	res.SortId = output.SortId
+	res.ArchivedAt = output.ArchivedAt
+	res.DeactivedAt = output.DeactivedAt
+	return res
+}
+
+// toUpdateProjectInput 将更新任务清单请求转换为应用层入参
+// @param req 更新任务清单请求
+// @return 应用层更新任务清单入参
+func toUpdateProjectInput(req *types.UpdateProjectReq) *projectDto.UpdateProjectReq {
+	return &projectDto.UpdateProjectReq{
+		Name:        req.Name,
+		Description: req.Description,
+		SortId:      req.SortId,
+	}
+}
+
+// toBatchUpdateProjectInput 将批量更新任务清单请求转换为应用层入参
+// @param req 批量更新任务清单请求
+// @return 应用层批量更新任务清单入参
+func toBatchUpdateProjectInput(req *types.BatchUpdateProjectReq) *projectDto.BatchUpdateProjectReq {
+	projects := make([]*projectDto.BatchUpdateProjectItem, 0, len(req.Projects))
+	for _, project := range req.Projects {
+		projects = append(projects, &projectDto.BatchUpdateProjectItem{
+			Id:          project.Id,
+			Name:        project.Name,
+			Description: project.Description,
+			SortId:      project.SortId,
+		})
+	}
+	return &projectDto.BatchUpdateProjectReq{Projects: projects}
+}
+
+// toBatchUpdateProjectRes 将应用层批量更新任务清单出参转换为批量更新任务清单响应
+// @param output 应用层批量更新任务清单出参
+// @return 批量更新任务清单响应
+func toBatchUpdateProjectRes(
+	output *projectDto.BatchUpdateProjectRes,
+) *types.BatchUpdateProjectRes {
+	return &types.BatchUpdateProjectRes{
+		UpdatedCount: output.UpdatedCount,
+		Projects:     toGetProjectResList(output.Projects),
+	}
+}
+
+// toGetProjectPreferenceRes 将应用层获取任务清单偏好出参转换为获取任务清单偏好响应
+// @param output 应用层获取任务清单偏好出参
+// @return 获取任务清单偏好响应
+func toGetProjectPreferenceRes(
+	output *projectDto.GetProjectPreferenceRes,
+) *types.GetProjectPreferenceRes {
+	res := &types.GetProjectPreferenceRes{}
+	res.Id = output.Id
+	res.CreatedAt = output.CreatedAt
+	res.UpdatedAt = output.UpdatedAt
+	res.DeletedAt = output.DeletedAt
+	res.ProjectId = output.ProjectId
+	res.ViewType = output.ViewType
+	res.GetOptions = output.GetOptions
+	res.Columns = output.Columns
+	return res
+}
+
+// toUpdateProjectPreferenceInput 将更新任务清单偏好请求转换为应用层入参
+// @param req 更新任务清单偏好请求
+// @return 应用层更新任务清单偏好入参
+func toUpdateProjectPreferenceInput(
+	req *types.UpdateProjectPreferenceReq,
+) *projectDto.UpdateProjectPreferenceReq {
+	return &projectDto.UpdateProjectPreferenceReq{
+		ViewType:   req.ViewType,
+		GetOptions: req.GetOptions,
+		Columns:    req.Columns,
+	}
 }
 
 // GetProject 根据清单 ID 获取清单接入点
@@ -42,7 +168,7 @@ func (c *ProjectController) GetProject(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    20000,
 		Message: "获取清单成功",
-		Data:    res,
+		Data:    toGetProjectRes(res),
 	})
 }
 
@@ -61,7 +187,7 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 		return
 	}
 	// 创建清单
-	res, err := c.projectApp.Create(ctx.Request.Context(), &createProjectReq)
+	res, err := c.projectApp.Create(ctx.Request.Context(), toCreateProjectInput(&createProjectReq))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20012,
@@ -74,7 +200,7 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    20010,
 		Message: "创建清单成功",
-		Data:    res,
+		Data:    toCreateProjectRes(res),
 	})
 }
 
@@ -106,7 +232,7 @@ func (c *ProjectController) UpdateProject(ctx *gin.Context) {
 	err = c.projectApp.Update(
 		ctx.Request.Context(),
 		projectId,
-		&updateProjectReq,
+		toUpdateProjectInput(&updateProjectReq),
 	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
@@ -265,7 +391,7 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    20070,
 		Message: "获取清单列表成功",
-		Data:    res,
+		Data:    toGetProjectResList(res),
 	})
 }
 
@@ -296,7 +422,7 @@ func (c *ProjectController) GetProjectPreference(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    20080,
 		Message: "获取清单偏好成功",
-		Data:    res,
+		Data:    toGetProjectPreferenceRes(res),
 	})
 }
 
@@ -313,7 +439,7 @@ func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.projectApp.BatchUpdate(ctx.Request.Context(), &req)
+	res, err := c.projectApp.BatchUpdate(ctx.Request.Context(), toBatchUpdateProjectInput(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20102,
@@ -325,7 +451,7 @@ func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    20100,
 		Message: "批量更新清单成功",
-		Data:    res,
+		Data:    toBatchUpdateProjectRes(res),
 	})
 }
 
@@ -357,7 +483,7 @@ func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 	err = c.projectApp.SavePreference(
 		ctx.Request.Context(),
 		projectId,
-		&updatePreferenceReq,
+		toUpdateProjectPreferenceInput(&updatePreferenceReq),
 	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/tag/dto"
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
 	iCtx "naotodoserver/infrastructure/context"
-	"naotodoserver/interfaces/types"
 )
 
 // NewTagApp 创建标签应用层实例
@@ -33,7 +33,7 @@ func NewTagApp(
 func (tagApp *TagAppImpl) GetTag(
 	ctx context.Context,
 	tagId string,
-) (*types.GetTagRes, error) {
+) (*dto.GetTagRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -63,8 +63,8 @@ func (tagApp *TagAppImpl) GetTag(
 // @return error
 func (tagApp *TagAppImpl) CreateTag(
 	ctx context.Context,
-	createTagReq *types.CreateTagReq,
-) (*types.CreateTagRes, error) {
+	createTagReq *dto.CreateTagReq,
+) (*dto.CreateTagRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -92,7 +92,7 @@ func (tagApp *TagAppImpl) CreateTag(
 func (tagApp *TagAppImpl) UpdateTag(
 	ctx context.Context,
 	tagId string,
-	updateTagReq *types.UpdateTagReq,
+	updateTagReq *dto.UpdateTagReq,
 ) error {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -149,7 +149,7 @@ func (tagApp *TagAppImpl) DeleteTag(
 // @return error
 func (tagApp *TagAppImpl) ListTag(
 	ctx context.Context,
-) ([]*types.GetTagRes, error) {
+) ([]*dto.GetTagRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -172,7 +172,7 @@ func (tagApp *TagAppImpl) ListTag(
 func (tagApp *TagAppImpl) ListTagByIds(
 	ctx context.Context,
 	tagIds []string,
-) ([]*types.GetTagRes, error) {
+) ([]*dto.GetTagRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -203,8 +203,8 @@ func (tagApp *TagAppImpl) ListTagByIds(
 // @return error
 func (tagApp *TagAppImpl) BatchUpdateTags(
 	ctx context.Context,
-	req *types.BatchUpdateTagReq,
-) (*types.BatchUpdateTagRes, error) {
+	req *dto.BatchUpdateTagReq,
+) (*dto.BatchUpdateTagRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -222,7 +222,7 @@ func (tagApp *TagAppImpl) BatchUpdateTags(
 	// 实体转换响应体
 	tagResList := TagEntitiesToGetResList(updatedEntities)
 	// 返回结果
-	return &types.BatchUpdateTagRes{
+	return &dto.BatchUpdateTagRes{
 		UpdatedCount: int64(len(tagResList)),
 		Tags:         tagResList,
 	}, nil
@@ -236,7 +236,7 @@ func (tagApp *TagAppImpl) BatchUpdateTags(
 func (tagApp *TagAppImpl) GetTagPreference(
 	ctx context.Context,
 	tagId string,
-) (*types.GetTagPreferenceRes, error) {
+) (*dto.GetTagPreferenceRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -264,7 +264,7 @@ func (tagApp *TagAppImpl) GetTagPreference(
 func (tagApp *TagAppImpl) UpdateTagPreference(
 	ctx context.Context,
 	tagId string,
-	updateTagPreferenceReq *types.UpdateTagPreferenceReq,
+	updateTagPreferenceReq *dto.UpdateTagPreferenceReq,
 ) error {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)

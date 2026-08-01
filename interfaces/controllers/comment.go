@@ -41,7 +41,7 @@ func (c *CommentController) GetComment(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    60000,
 		Message: "获取评论详情成功",
-		Data:    comment,
+		Data:    toTaskCommentRes(comment),
 	})
 }
 
@@ -59,7 +59,7 @@ func (c *CommentController) CreateComment(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层新增评论
-	res, err := c.taskApp.CreateTaskComment(ctx.Request.Context(), &req)
+	res, err := c.taskApp.CreateTaskComment(ctx.Request.Context(), toCreateTaskCommentReq(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60012,
@@ -72,7 +72,7 @@ func (c *CommentController) CreateComment(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    60010,
 		Message: "新增评论成功",
-		Data:    res,
+		Data:    toTaskCommentRes(res),
 	})
 }
 
@@ -99,7 +99,11 @@ func (c *CommentController) UpdateComment(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新评论
-	err := c.taskApp.UpdateTaskComment(ctx.Request.Context(), commentId, &req)
+	err := c.taskApp.UpdateTaskComment(
+		ctx.Request.Context(),
+		commentId,
+		toUpdateTaskCommentReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60023,
@@ -172,6 +176,6 @@ func (c *CommentController) ListComment(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    60040,
 		Message: "获取评论列表成功",
-		Data:    comments,
+		Data:    toTaskCommentResList(comments),
 	})
 }

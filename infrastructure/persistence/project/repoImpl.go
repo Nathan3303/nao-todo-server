@@ -6,6 +6,7 @@ import (
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
@@ -102,112 +103,51 @@ func (projectRepo *ProjectRepoImpl) Update(
 	return nil
 }
 
-// Delete 删除清单（软删除，设置 deactived_at）
+// UpdateState 更新清单状态（归档/停用时间字段）
+// 根据实体状态写入归档时间/停用时间：
+// - ShouldUpdate 时更新（IsSetToNull 时置空）
+// - 字段为空（IsNull）时视为取消归档/恢复清单，置空对应列
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
+// @param archivedAt 归档时间
+// @param deactivedAt 停用时间
 // @return error 错误
-func (projectRepo *ProjectRepoImpl) Delete(
+func (projectRepo *ProjectRepoImpl) UpdateState(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
+	archivedAt types.NullableTime,
+	deactivedAt types.NullableTime,
 ) error {
-	// 1. 转换为模型
+	// 1. 构建更新 map
+	updateMap := make(map[string]any)
+	if archivedAt.ShouldUpdate() {
+		if archivedAt.IsSetToNull() {
+			updateMap["archived_at"] = nil
+		} else {
+			updateMap["archived_at"] = archivedAt.ToSqlNullTime()
+		}
+	} else if archivedAt.IsNull {
+		updateMap["archived_at"] = nil
+	}
+	if deactivedAt.ShouldUpdate() {
+		if deactivedAt.IsSetToNull() {
+			updateMap["deactived_at"] = nil
+		} else {
+			updateMap["deactived_at"] = deactivedAt.ToSqlNullTime()
+		}
+	} else if deactivedAt.IsNull {
+		updateMap["deactived_at"] = nil
+	}
+	// 2. 更新数据库
 	var whereCond models.Project
 	whereCond.UserId = userId
 	whereCond.ID = projectId
-	// 2. 更新 deactived_at 为当前时间
 	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).
 		Model(&models.Project{}).
 		Where(&whereCond).
-		Update("deactived_at", time.Now())
-	// 3. 返回结果
-	if tx.Error != nil {
-		return tx.Error
-	}
-	// 4. 失效项目列表缓存
-	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
-	return nil
-}
-
-// Restore 恢复清单（取消软删除，设置 deactived_at 为 nil）
-// @param ctx 上下文
-// @param userId 用户ID
-// @param projectId 项目ID
-// @return error 错误
-func (projectRepo *ProjectRepoImpl) Restore(
-	ctx context.Context,
-	userId int64,
-	projectId int64,
-) error {
-	// 1. 转换为模型
-	var whereCond models.Project
-	whereCond.UserId = userId
-	whereCond.ID = projectId
-	// 2. 恢复 deactived_at 为 nil
-	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).Model(&models.Project{}).
-		Where(&whereCond).
-		Update("deactived_at", nil)
-	// 3. 返回结果
-	if tx.Error != nil {
-		return tx.Error
-	}
-	if tx.RowsAffected == 0 {
-		return errors.New("清单不存在")
-	}
-	// 4. 失效项目列表缓存
-	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
-	return nil
-}
-
-// Archive 归档清单
-// @param ctx 上下文
-// @param userId 用户ID
-// @param projectId 项目ID
-// @return error 错误
-func (projectRepo *ProjectRepoImpl) Archive(
-	ctx context.Context,
-	userId int64,
-	projectId int64,
-) error {
-	// 1. 转换为模型
-	var whereCond models.Project
-	whereCond.UserId = userId
-	whereCond.ID = projectId
-	// 2. 归档数据库
-	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).Model(&models.Project{}).
-		Where(&whereCond).
-		Update("archived_at", time.Now())
-	// 3. 返回结果
-	if tx.Error != nil {
-		return tx.Error
-	}
-	if tx.RowsAffected == 0 {
-		return errors.New("清单不存在")
-	}
-	// 4. 失效项目列表缓存
-	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
-	return nil
-}
-
-// Unarchive 取消归档清单
-// @param ctx 上下文
-// @param userId 用户ID
-// @param projectId 项目ID
-// @return error 错误
-func (projectRepo *ProjectRepoImpl) Unarchive(
-	ctx context.Context,
-	userId int64,
-	projectId int64,
-) error {
-	// 1. 转换为模型
-	var whereCond models.Project
-	whereCond.UserId = userId
-	whereCond.ID = projectId
-	// 2. 取消归档数据库
-	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).Model(&models.Project{}).
-		Where(&whereCond).
-		Update("archived_at", nil)
+		Updates(updateMap)
 	// 3. 返回结果
 	if tx.Error != nil {
 		return tx.Error

@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/valueobjects"
+	"naotodoserver/domain/types"
 )
 
 // Project 任务清单仓库接口
@@ -25,17 +26,14 @@ type Project interface {
 		updateProjectValueObject *valueobjects.UpdateProject,
 	) error
 
-	// 删除任务清单
-	Delete(ctx context.Context, userId int64, projectId int64) error
-
-	// 恢复任务清单
-	Restore(ctx context.Context, userId int64, projectId int64) error
-
-	// 归档任务清单
-	Archive(ctx context.Context, userId int64, projectId int64) error
-
-	// 取消归档任务清单
-	Unarchive(ctx context.Context, userId int64, projectId int64) error
+	// 更新任务清单状态（归档/停用时间字段）
+	UpdateState(
+		ctx context.Context,
+		userId int64,
+		projectId int64,
+		archivedAt types.NullableTime,
+		deactivedAt types.NullableTime,
+	) error
 
 	// 根据用户ID获取任务清单列表
 	GetByUserId(ctx context.Context, userId int64) ([]*entities.Project, error)

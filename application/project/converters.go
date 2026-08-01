@@ -2,10 +2,10 @@ package project
 
 import (
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/project/dto"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/valueobjects"
 	domaintypes "naotodoserver/domain/types"
-	"naotodoserver/interfaces/types"
 	"time"
 )
 
@@ -16,7 +16,7 @@ import (
 // @return error 验证失败返回错误，否则返回 nil
 func CreateProjectReqToValueObject(
 	userId int64,
-	req *types.CreateProjectReq,
+	req *dto.CreateProjectReq,
 ) (*valueobjects.CreateProject, error) {
 	createProjectValueObject, err := valueobjects.NewCreateProject(
 		userId,
@@ -31,9 +31,9 @@ func CreateProjectReqToValueObject(
 
 // ProjectEntityToGetRes 任务清单实体转换响应体
 // @param projectEntity 任务清单实体
-// @return *types.GetProjectRes 获取任务清单响应体
-func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes {
-	var res types.GetProjectRes
+// @return *dto.GetProjectRes 获取任务清单响应体
+func ProjectEntityToGetRes(projectEntity *entities.Project) *dto.GetProjectRes {
+	var res dto.GetProjectRes
 	res.Id = idutil.FormatID(projectEntity.Id)
 	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
@@ -51,7 +51,7 @@ func ProjectEntityToGetRes(projectEntity *entities.Project) *types.GetProjectRes
 // @return *valueobjects.UpdateProject 更新任务清单值对象
 // @return error 验证失败返回错误，否则返回 nil
 func UpdateProjectReqToValueObject(
-	updateProjectReq *types.UpdateProjectReq,
+	updateProjectReq *dto.UpdateProjectReq,
 ) (*valueobjects.UpdateProject, error) {
 	updateProjectValueObject, err := valueobjects.NewUpdateProject(
 		updateProjectReq.Name,
@@ -66,9 +66,9 @@ func UpdateProjectReqToValueObject(
 
 // EntitiesToGetResList 任务清单实体列表转换响应体列表
 // @param projectEntities 任务清单实体列表
-// @return []*types.GetProjectRes 任务清单响应体列表
-func EntitiesToGetResList(projectEntities []*entities.Project) []*types.GetProjectRes {
-	getResList := make([]*types.GetProjectRes, 0, len(projectEntities))
+// @return []*dto.GetProjectRes 任务清单响应体列表
+func EntitiesToGetResList(projectEntities []*entities.Project) []*dto.GetProjectRes {
+	getResList := make([]*dto.GetProjectRes, 0, len(projectEntities))
 	for _, projectEntity := range projectEntities {
 		getResList = append(getResList, ProjectEntityToGetRes(projectEntity))
 	}
@@ -80,7 +80,7 @@ func EntitiesToGetResList(projectEntities []*entities.Project) []*types.GetProje
 // @return []*valueobjects.BatchUpdateProject 批量更新任务清单值对象列表
 // @return error 验证失败返回错误，否则返回 nil
 func BatchUpdateProjectReqToValueObjects(
-	req *types.BatchUpdateProjectReq,
+	req *dto.BatchUpdateProjectReq,
 ) ([]*valueobjects.BatchUpdateProject, error) {
 	batchVOs := make([]*valueobjects.BatchUpdateProject, 0, len(req.Projects))
 	for _, project := range req.Projects {
@@ -104,11 +104,11 @@ func BatchUpdateProjectReqToValueObjects(
 
 // ProjectPreferenceEntityToGetRes 任务清单偏好实体转换响应体
 // @param projectPreferenceEntity 任务清单偏好实体
-// @return *types.GetProjectPreferenceRes 获取任务清单偏好响应体
+// @return *dto.GetProjectPreferenceRes 获取任务清单偏好响应体
 func ProjectPreferenceEntityToGetRes(
 	projectPreferenceEntity *entities.ProjectPreference,
-) *types.GetProjectPreferenceRes {
-	var res types.GetProjectPreferenceRes
+) *dto.GetProjectPreferenceRes {
+	var res dto.GetProjectPreferenceRes
 	res.Id = idutil.FormatID(projectPreferenceEntity.Id)
 	res.CreatedAt = projectPreferenceEntity.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = projectPreferenceEntity.UpdatedAt.Format(time.RFC3339)
@@ -125,7 +125,7 @@ func ProjectPreferenceEntityToGetRes(
 // @return *valueobjects.SaveProjectPreference 更新任务清单偏好值对象
 // @return error 验证失败返回错误，否则返回 nil
 func UpdateProjectPreferenceReqToValueObject(
-	updateProjectPreferenceReq *types.UpdateProjectPreferenceReq,
+	updateProjectPreferenceReq *dto.UpdateProjectPreferenceReq,
 ) (*valueobjects.SaveProjectPreference, error) {
 	saveProjectPreferenceValueObject, err := valueobjects.NewSaveProjectPreference(
 		domaintypes.ViewType(updateProjectPreferenceReq.ViewType),

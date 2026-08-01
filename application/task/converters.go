@@ -2,17 +2,17 @@ package task
 
 import (
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/task/dto"
 	"naotodoserver/conf"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 	domaintypes "naotodoserver/domain/types"
-	"naotodoserver/interfaces/types"
 	"time"
 )
 
 // TaskEntityToGetRes 任务实体转换为获取任务响应
-func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
-	res := &types.GetTaskRes{}
+func TaskEntityToGetRes(taskEntity *entities.Task) *dto.GetTaskRes {
+	res := &dto.GetTaskRes{}
 	res.Id = idutil.FormatID(taskEntity.Id)
 	res.UpdatedAt = taskEntity.UpdatedAt.Format(time.RFC3339)
 	res.CreatedAt = taskEntity.CreatedAt.Format(time.RFC3339)
@@ -47,7 +47,7 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *types.GetTaskRes {
 // @error 错误
 func CreateTaskReqToValueObject(
 	userId int64,
-	req *types.CreateTaskReq,
+	req *dto.CreateTaskReq,
 ) (*valueobjects.CreateTask, error) {
 	parentTaskIdInt64, err := idutil.ParseID(req.ParentTaskId)
 	if err != nil {
@@ -89,7 +89,7 @@ func CreateTaskReqToValueObject(
 // @error 错误
 func UpdateTaskReqToValueObject(
 	userId int64,
-	req *types.UpdateTaskReq,
+	req *dto.UpdateTaskReq,
 ) (*valueobjects.UpdateTask, error) {
 	var iParentId, iProjectId *int64
 	var iState *entities.TaskState
@@ -139,6 +139,7 @@ func UpdateTaskReqToValueObject(
 		req.ArchivedAt,
 		req.StarMarkAt,
 		req.GivenUpAt,
+		nil,
 		req.RemindAt,
 		iRemindRepeat,
 		req.RemindTime,
@@ -154,7 +155,7 @@ func UpdateTaskReqToValueObject(
 // @error 错误
 func ListTaskReqToQueryTaskValueObject(
 	userId int64,
-	req *types.ListTaskReq,
+	req *dto.ListTaskReq,
 ) (*valueobjects.QueryTask, error) {
 	var projectIdInt64 int64
 	if req.ProjectId == "inbox" {
@@ -197,8 +198,8 @@ func ListTaskReqToQueryTaskValueObject(
 // TaskEntitiesToGetReses 任务实体转换为获取任务响应列表
 // @param taskEntities 任务实体列表
 // @return 任务响应列表
-func TaskEntitiesToGetReses(taskEntities []*entities.Task) []*types.GetTaskRes {
-	reses := make([]*types.GetTaskRes, 0, len(taskEntities))
+func TaskEntitiesToGetReses(taskEntities []*entities.Task) []*dto.GetTaskRes {
+	reses := make([]*dto.GetTaskRes, 0, len(taskEntities))
 	for _, item := range taskEntities {
 		reses = append(reses, TaskEntityToGetRes(item))
 	}
@@ -208,9 +209,9 @@ func TaskEntitiesToGetReses(taskEntities []*entities.Task) []*types.GetTaskRes {
 // PaginationValueObjectToRes 分页值对象转换为分页响应
 // @param paginationValueObject 分页值对象
 // @return 分页响应
-func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) *types.Pagination {
+func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) *dto.Pagination {
 	paginationValueObject.CalcMaxPage()
-	return &types.Pagination{
+	return &dto.Pagination{
 		Page:    paginationValueObject.Page,
 		Limit:   paginationValueObject.Limit,
 		Total:   paginationValueObject.Total,
@@ -223,8 +224,8 @@ func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) 
 // TaskCheckItemEntityToGetRes 任务检查项实体转换为获取任务检查项响应
 // @param e 任务检查项实体
 // @return 任务检查项响应
-func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *types.GetTaskCheckItemRes {
-	var res types.GetTaskCheckItemRes
+func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *dto.GetTaskCheckItemRes {
+	var res dto.GetTaskCheckItemRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
@@ -244,7 +245,7 @@ func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *types.GetTaskCheckI
 // @error 错误
 func CreateTaskCheckItemReqToVO(
 	userId int64,
-	req *types.CreateTaskCheckItemReq,
+	req *dto.CreateTaskCheckItemReq,
 ) (*valueobjects.CreateTaskCheckItem, error) {
 	taskId, err := idutil.ParseID(req.TaskId)
 	if err != nil {
@@ -261,8 +262,8 @@ func CreateTaskCheckItemReqToVO(
 // TaskCheckItemEntityToCreateRes 任务检查项实体转换为创建任务检查项响应
 // @param e 任务检查项实体
 // @return 创建任务检查项响应
-func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *types.CreateTaskCheckItemRes {
-	var res types.CreateTaskCheckItemRes
+func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *dto.CreateTaskCheckItemRes {
+	var res dto.CreateTaskCheckItemRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
@@ -280,7 +281,7 @@ func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *types.CreateTask
 // @return 更新任务检查项值对象
 // @error 错误
 func UpdateTaskCheckItemReqToVO(
-	req *types.UpdateTaskCheckItemReq,
+	req *dto.UpdateTaskCheckItemReq,
 ) (*valueobjects.UpdateTaskCheckItem, error) {
 	return valueobjects.NewUpdateTaskCheckItem(
 		req.Name,
@@ -293,8 +294,8 @@ func UpdateTaskCheckItemReqToVO(
 // TaskCheckItemEntitiesToReses 任务检查项实体转换为获取任务检查项响应列表
 // @param items 任务检查项实体列表
 // @return 任务检查项响应列表
-func TaskCheckItemEntitiesToReses(items []*entities.TaskCheckItem) types.ListTaskCheckItemRes {
-	res := make([]*types.GetTaskCheckItemRes, 0, len(items))
+func TaskCheckItemEntitiesToReses(items []*entities.TaskCheckItem) dto.ListTaskCheckItemRes {
+	res := make([]*dto.GetTaskCheckItemRes, 0, len(items))
 	for _, e := range items {
 		res = append(res, TaskCheckItemEntityToGetRes(e))
 	}
@@ -306,7 +307,7 @@ func TaskCheckItemEntitiesToReses(items []*entities.TaskCheckItem) types.ListTas
 // @return 批量更新任务检查项值对象列表
 // @error 错误
 func BatchUpdateTaskCheckItemReqToVOs(
-	req *types.BatchUpdateTaskCheckItemReq,
+	req *dto.BatchUpdateTaskCheckItemReq,
 ) ([]*valueobjects.BatchUpdateTaskCheckItem, error) {
 	vos := make([]*valueobjects.BatchUpdateTaskCheckItem, 0, len(req.Events))
 	for _, e := range req.Events {
@@ -334,8 +335,8 @@ func BatchUpdateTaskCheckItemReqToVOs(
 // TaskCommentEntityToRes 任务评论实体转换为获取任务评论响应
 // @param e 任务评论实体
 // @return 任务评论响应
-func TaskCommentEntityToRes(e *entities.TaskComment) *types.TaskCommentRes {
-	var res types.TaskCommentRes
+func TaskCommentEntityToRes(e *entities.TaskComment) *dto.TaskCommentRes {
+	var res dto.TaskCommentRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
 	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
@@ -356,7 +357,7 @@ func TaskCommentEntityToRes(e *entities.TaskComment) *types.TaskCommentRes {
 // @error 错误
 func CreateTaskCommentReqToVO(
 	userId int64,
-	req *types.CreateTaskCommentReq,
+	req *dto.CreateTaskCommentReq,
 ) (*valueobjects.CreateTaskComment, error) {
 	taskId, err := idutil.ParseID(req.TaskId)
 	if err != nil {
@@ -376,7 +377,7 @@ func CreateTaskCommentReqToVO(
 // @return 更新任务评论值对象
 // @error 错误
 func UpdateTaskCommentReqToVO(
-	req *types.UpdateTaskCommentReq,
+	req *dto.UpdateTaskCommentReq,
 ) (*valueobjects.UpdateTaskComment, error) {
 	return valueobjects.NewUpdateTaskComment(
 		req.Content,
@@ -388,8 +389,8 @@ func UpdateTaskCommentReqToVO(
 // TaskCommentEntitiesToListRes 任务评论实体列表转换为获取任务评论响应列表
 // @param list 任务评论实体列表
 // @return 任务评论响应列表
-func TaskCommentEntitiesToListRes(list []*entities.TaskComment) []*types.TaskCommentRes {
-	res := make([]*types.TaskCommentRes, 0, len(list))
+func TaskCommentEntitiesToListRes(list []*entities.TaskComment) []*dto.TaskCommentRes {
+	res := make([]*dto.TaskCommentRes, 0, len(list))
 	for _, e := range list {
 		res = append(res, TaskCommentEntityToRes(e))
 	}

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	tagApp "naotodoserver/application/tag"
+	tagDto "naotodoserver/application/tag/dto"
 	"naotodoserver/interfaces/types"
 	"strings"
 
@@ -14,6 +15,126 @@ type TagController struct {
 
 func NewTagController(app tagApp.TagApp) *TagController {
 	return &TagController{tagApp: app}
+}
+
+// toGetTagRes 将应用层获取标签出参转换为获取标签响应
+// @param output 应用层获取标签出参
+// @return 获取标签响应
+func toGetTagRes(output *tagDto.GetTagRes) *types.GetTagRes {
+	res := &types.GetTagRes{}
+	res.Id = output.Id
+	res.CreatedAt = output.CreatedAt
+	res.UpdatedAt = output.UpdatedAt
+	res.DeletedAt = output.DeletedAt
+	res.Name = output.Name
+	res.Description = output.Description
+	res.Color = output.Color
+	res.SortId = output.SortId
+	return res
+}
+
+// toGetTagResList 将应用层标签列表出参转换为标签列表响应
+// @param outputList 应用层标签列表出参
+// @return 标签列表响应
+func toGetTagResList(outputList []*tagDto.GetTagRes) []*types.GetTagRes {
+	resList := make([]*types.GetTagRes, 0, len(outputList))
+	for _, output := range outputList {
+		resList = append(resList, toGetTagRes(output))
+	}
+	return resList
+}
+
+// toCreateTagInput 将创建标签请求转换为应用层入参
+// @param req 创建标签请求
+// @return 应用层创建标签入参
+func toCreateTagInput(req *types.CreateTagReq) *tagDto.CreateTagReq {
+	return &tagDto.CreateTagReq{
+		Name:        req.Name,
+		Description: req.Description,
+		Color:       req.Color,
+	}
+}
+
+// toCreateTagRes 将应用层创建标签出参转换为创建标签响应
+// @param output 应用层创建标签出参
+// @return 创建标签响应
+func toCreateTagRes(output *tagDto.CreateTagRes) *types.CreateTagRes {
+	res := &types.CreateTagRes{}
+	res.Id = output.Id
+	res.CreatedAt = output.CreatedAt
+	res.UpdatedAt = output.UpdatedAt
+	res.DeletedAt = output.DeletedAt
+	res.Name = output.Name
+	res.Description = output.Description
+	res.Color = output.Color
+	res.SortId = output.SortId
+	return res
+}
+
+// toUpdateTagInput 将更新标签请求转换为应用层入参
+// @param req 更新标签请求
+// @return 应用层更新标签入参
+func toUpdateTagInput(req *types.UpdateTagReq) *tagDto.UpdateTagReq {
+	return &tagDto.UpdateTagReq{
+		Name:        req.Name,
+		Description: req.Description,
+		Color:       req.Color,
+		SortId:      req.SortId,
+	}
+}
+
+// toBatchUpdateTagInput 将批量更新标签请求转换为应用层入参
+// @param req 批量更新标签请求
+// @return 应用层批量更新标签入参
+func toBatchUpdateTagInput(req *types.BatchUpdateTagReq) *tagDto.BatchUpdateTagReq {
+	tags := make([]*tagDto.BatchUpdateTagItem, 0, len(req.Tags))
+	for _, tag := range req.Tags {
+		tags = append(tags, &tagDto.BatchUpdateTagItem{
+			Id:          tag.Id,
+			Name:        tag.Name,
+			Description: tag.Description,
+			Color:       tag.Color,
+			SortId:      tag.SortId,
+		})
+	}
+	return &tagDto.BatchUpdateTagReq{Tags: tags}
+}
+
+// toBatchUpdateTagRes 将应用层批量更新标签出参转换为批量更新标签响应
+// @param output 应用层批量更新标签出参
+// @return 批量更新标签响应
+func toBatchUpdateTagRes(output *tagDto.BatchUpdateTagRes) *types.BatchUpdateTagRes {
+	return &types.BatchUpdateTagRes{
+		UpdatedCount: output.UpdatedCount,
+		Tags:         toGetTagResList(output.Tags),
+	}
+}
+
+// toGetTagPreferenceRes 将应用层获取标签偏好出参转换为获取标签偏好响应
+// @param output 应用层获取标签偏好出参
+// @return 获取标签偏好响应
+func toGetTagPreferenceRes(output *tagDto.GetTagPreferenceRes) *types.GetTagPreferenceRes {
+	res := &types.GetTagPreferenceRes{}
+	res.Id = output.Id
+	res.CreatedAt = output.CreatedAt
+	res.UpdatedAt = output.UpdatedAt
+	res.DeletedAt = output.DeletedAt
+	res.TagId = output.TagId
+	res.ViewType = output.ViewType
+	res.GetOptions = output.GetOptions
+	res.Columns = output.Columns
+	return res
+}
+
+// toUpdateTagPreferenceInput 将更新标签偏好请求转换为应用层入参
+// @param req 更新标签偏好请求
+// @return 应用层更新标签偏好入参
+func toUpdateTagPreferenceInput(req *types.UpdateTagPreferenceReq) *tagDto.UpdateTagPreferenceReq {
+	return &tagDto.UpdateTagPreferenceReq{
+		ViewType:   req.ViewType,
+		GetOptions: req.GetOptions,
+		Columns:    req.Columns,
+	}
 }
 
 // GetTag 获取单个标签信息接入点
@@ -41,7 +162,7 @@ func (c *TagController) GetTag(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    30000,
 		Message: "获取标签信息成功",
-		Data:    res,
+		Data:    toGetTagRes(res),
 	})
 }
 
@@ -60,7 +181,7 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 		return
 	}
 	// 2. 创建标签
-	res, err := c.tagApp.CreateTag(ctx.Request.Context(), createTagReq)
+	res, err := c.tagApp.CreateTag(ctx.Request.Context(), toCreateTagInput(createTagReq))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30012,
@@ -73,7 +194,7 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    30010,
 		Message: "创建标签成功",
-		Data:    res,
+		Data:    toCreateTagRes(res),
 	})
 }
 
@@ -100,7 +221,7 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签
-	err := c.tagApp.UpdateTag(ctx.Request.Context(), tagId, &updateTagReq)
+	err := c.tagApp.UpdateTag(ctx.Request.Context(), tagId, toUpdateTagInput(&updateTagReq))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30023,
@@ -167,7 +288,7 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 		Success(ctx, types.ResponseData{
 			Code:    30040,
 			Message: "获取标签列表成功",
-			Data:    res,
+			Data:    toGetTagResList(res),
 		})
 	} else {
 		// 1. 转换标签 ID列表为字符串列表
@@ -193,7 +314,7 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 		Success(ctx, types.ResponseData{
 			Code:    30040,
 			Message: "获取标签列表成功",
-			Data:    res,
+			Data:    toGetTagResList(res),
 		})
 	}
 }
@@ -224,7 +345,7 @@ func (c *TagController) GetTagPreference(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    30050,
 		Message: "获取标签偏好成功",
-		Data:    res,
+		Data:    toGetTagPreferenceRes(res),
 	})
 }
 
@@ -252,7 +373,11 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 		return
 	}
 	// 3. 更新标签偏好
-	err = c.tagApp.UpdateTagPreference(ctx.Request.Context(), tagId, &req)
+	err = c.tagApp.UpdateTagPreference(
+		ctx.Request.Context(),
+		tagId,
+		toUpdateTagPreferenceInput(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30063,
@@ -282,7 +407,7 @@ func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.tagApp.BatchUpdateTags(ctx.Request.Context(), &req)
+	res, err := c.tagApp.BatchUpdateTags(ctx.Request.Context(), toBatchUpdateTagInput(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30072,
@@ -294,6 +419,6 @@ func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    30070,
 		Message: "批量更新标签成功",
-		Data:    res,
+		Data:    toBatchUpdateTagRes(res),
 	})
 }

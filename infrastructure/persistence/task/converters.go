@@ -104,6 +104,13 @@ func UpdateTaskValueObjectToMap(
 			updateMap["GivenUpAt"] = updateTaskValueObject.GivenUpAt.ToSqlNullTime()
 		}
 	}
+	if updateTaskValueObject.CompletedAt.ShouldUpdate() {
+		if updateTaskValueObject.CompletedAt.IsSetToNull() {
+			updateMap["CompletedAt"] = nil
+		} else {
+			updateMap["CompletedAt"] = updateTaskValueObject.CompletedAt.ToSqlNullTime()
+		}
+	}
 	if updateTaskValueObject.RemindAt.ShouldUpdate() {
 		if updateTaskValueObject.RemindAt.IsSetToNull() {
 			updateMap["RemindAt"] = nil

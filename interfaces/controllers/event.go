@@ -41,7 +41,7 @@ func (c *EventController) GetEvent(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    50000,
 		Message: "获取检查事项成功",
-		Data:    res,
+		Data:    toGetTaskCheckItemRes(res),
 	})
 }
 
@@ -60,7 +60,7 @@ func (c *EventController) CreateEvent(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层创建检查事项
-	res, err := c.taskApp.CreateTaskCheckItem(ctx.Request.Context(), &req)
+	res, err := c.taskApp.CreateTaskCheckItem(ctx.Request.Context(), toCreateTaskCheckItemReq(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50012,
@@ -73,7 +73,7 @@ func (c *EventController) CreateEvent(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    50010,
 		Message: "创建检查事项成功",
-		Data:    res,
+		Data:    toCreateTaskCheckItemRes(res),
 	})
 }
 
@@ -101,7 +101,11 @@ func (c *EventController) UpdateEvent(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层更新检查事项
-	err = c.taskApp.UpdateTaskCheckItem(ctx.Request.Context(), eventId, &req)
+	err = c.taskApp.UpdateTaskCheckItem(
+		ctx.Request.Context(),
+		eventId,
+		toUpdateTaskCheckItemReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50023,
@@ -174,7 +178,7 @@ func (c *EventController) ListEvent(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    50040,
 		Message: "获取检查事项列表成功",
-		Data:    res,
+		Data:    toGetTaskCheckItemResList(res),
 	})
 }
 
@@ -193,7 +197,10 @@ func (c *EventController) BatchUpdateEvent(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用服务层批量更新检查事项
-	res, err := c.taskApp.BatchUpdateTaskCheckItems(ctx.Request.Context(), &req)
+	res, err := c.taskApp.BatchUpdateTaskCheckItems(
+		ctx.Request.Context(),
+		toBatchUpdateTaskCheckItemReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    50062,
@@ -206,6 +213,6 @@ func (c *EventController) BatchUpdateEvent(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    50060,
 		Message: "批量更新检查事项成功",
-		Data:    res,
+		Data:    toBatchUpdateTaskCheckItemRes(res),
 	})
 }

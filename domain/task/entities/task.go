@@ -2,6 +2,8 @@ package entities
 
 import (
 	"errors"
+	"time"
+
 	"naotodoserver/domain/types"
 )
 
@@ -91,4 +93,48 @@ func (task *Task) IsDatesValid() error {
 		return errors.New("时间参数无效 - 放弃时间必须晚于开始时间")
 	}
 	return nil
+}
+
+// ChangeState 变更任务状态（状态机）
+// 迁移规则：
+// - 进入已完成（Completed）时写入完成时间
+// - 离开已完成时清空完成时间
+// - 同状态迁移幂等返回 nil
+// @param next 目标状态
+// @return error 非法状态返回错误
+func (task *Task) ChangeState(next TaskState) error {
+	if next.String() == "" {
+		return errors.New("非法的任务状态")
+	}
+	if task.State == next {
+		return nil
+	}
+	if next == TaskStateCompleted {
+		task.CompletedAt = types.NewNullableTimeByTime(time.Now())
+	}
+	if task.State == TaskStateCompleted {
+		task.CompletedAt = types.NewNullableTimeNull()
+	}
+	task.State = next
+	return nil
+}
+
+// Archive 归档任务（幂等重设归档时间）
+func (task *Task) Archive() {
+	task.ArchivedAt = types.NewNullableTimeByTime(time.Now())
+}
+
+// Unarchive 取消归档任务
+func (task *Task) Unarchive() {
+	task.ArchivedAt = types.NewNullableTimeNull()
+}
+
+// ToggleStar 切换收藏状态
+// 已收藏时取消收藏，未收藏时收藏
+func (task *Task) ToggleStar() {
+	if _, ok := task.StarMarkAt.Value(); ok {
+		task.StarMarkAt = types.NewNullableTimeNull()
+	} else {
+		task.StarMarkAt = types.NewNullableTimeByTime(time.Now())
+	}
 }

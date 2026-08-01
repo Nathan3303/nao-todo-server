@@ -2,6 +2,7 @@ package controllers
 
 import (
 	pomodoroApp "naotodoserver/application/pomodoro"
+	pomodoroDto "naotodoserver/application/pomodoro/dto"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,187 @@ func NewPomodoroController(app pomodoroApp.PomodoroApp) *PomodoroController {
 	return &PomodoroController{pomodoroApp: app}
 }
 
+// toCreatePomodoroRecordInput 将创建番茄工作记录请求转换为应用层入参
+// @param req 创建番茄工作记录请求
+// @return 应用层创建番茄工作记录入参
+func toCreatePomodoroRecordInput(
+	req types.CreatePomodoroRecordReq,
+) *pomodoroDto.CreatePomodoroRecordReq {
+	return &pomodoroDto.CreatePomodoroRecordReq{
+		SessionId:   req.SessionId,
+		PomodoroId:  req.PomodoroId,
+		Type:        req.Type,
+		TaskId:      req.TaskId,
+		TaskName:    req.TaskName,
+		Description: req.Description,
+		StartAt:     req.StartAt,
+		EndAt:       req.EndAt,
+		Duration:    req.Duration,
+		Note:        req.Note,
+	}
+}
+
+// toCreatePomodoroRecordRes 将应用层创建番茄工作记录出参转换为创建番茄工作记录响应
+// @param output 应用层创建番茄工作记录出参
+// @return 创建番茄工作记录响应
+func toCreatePomodoroRecordRes(
+	output *pomodoroDto.CreatePomodoroRecordRes,
+) *types.CreatePomodoroRecordRes {
+	return &types.CreatePomodoroRecordRes{
+		ResBase: types.ResBase{
+			Id:        output.Id,
+			CreatedAt: output.CreatedAt,
+			UpdatedAt: output.UpdatedAt,
+			DeletedAt: output.DeletedAt,
+		},
+		SessionId:   output.SessionId,
+		PomodoroId:  output.PomodoroId,
+		Type:        output.Type,
+		TaskId:      output.TaskId,
+		TaskName:    output.TaskName,
+		Description: output.Description,
+		StartAt:     output.StartAt,
+		EndAt:       output.EndAt,
+		Duration:    output.Duration,
+		Note:        output.Note,
+	}
+}
+
+// toGetPomodoroRecordInput 将获取番茄工作记录请求转换为应用层入参
+// @param req 获取番茄工作记录请求
+// @return 应用层获取番茄工作记录入参
+func toGetPomodoroRecordInput(req types.GetPomodoroRecordReq) *pomodoroDto.GetPomodoroRecordReq {
+	return &pomodoroDto.GetPomodoroRecordReq{
+		Id: req.Id,
+	}
+}
+
+// toGetPomodoroRecordRes 将应用层获取番茄工作记录出参转换为获取番茄工作记录响应
+// @param output 应用层获取番茄工作记录出参
+// @return 获取番茄工作记录响应
+func toGetPomodoroRecordRes(output *pomodoroDto.GetPomodoroRecordRes) *types.GetPomodoroRecordRes {
+	create := toCreatePomodoroRecordRes((*pomodoroDto.CreatePomodoroRecordRes)(output))
+	return (*types.GetPomodoroRecordRes)(create)
+}
+
+// toGetPomodoroRecordReses 将应用层获取番茄工作记录列表出参转换为获取番茄工作记录列表响应
+// @param output 应用层获取番茄工作记录列表出参
+// @return 获取番茄工作记录列表响应
+func toGetPomodoroRecordReses(
+	output []*pomodoroDto.GetPomodoroRecordRes,
+) []*types.GetPomodoroRecordRes {
+	res := make([]*types.GetPomodoroRecordRes, 0, len(output))
+	for _, item := range output {
+		res = append(res, toGetPomodoroRecordRes(item))
+	}
+	return res
+}
+
+// toListPomodoroRecordInput 将获取番茄工作记录列表请求转换为应用层入参
+// @param req 获取番茄工作记录列表请求
+// @return 应用层获取番茄工作记录列表入参
+func toListPomodoroRecordInput(req types.ListPomodoroRecordReq) *pomodoroDto.ListPomodoroRecordReq {
+	return &pomodoroDto.ListPomodoroRecordReq{
+		PomodoroId: req.PomodoroId,
+		SessionId:  req.SessionId,
+		StartTime:  req.StartTime,
+		EndTime:    req.EndTime,
+		TaskId:     req.TaskId,
+		TaskName:   req.TaskName,
+		Type:       req.Type,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		Sort:       req.Sort,
+	}
+}
+
+// toCreatePomodoroInput 将创建常用番茄工作请求转换为应用层入参
+// @param req 创建常用番茄工作请求
+// @return 应用层创建常用番茄工作入参
+func toCreatePomodoroInput(req types.CreatePomodoroReq) *pomodoroDto.CreatePomodoroReq {
+	return &pomodoroDto.CreatePomodoroReq{
+		Type:        req.Type,
+		Name:        req.Name,
+		Description: req.Description,
+		Duration:    req.Duration,
+	}
+}
+
+// toGetPomodoroInput 将获取常用番茄工作请求转换为应用层入参
+// @param req 获取常用番茄工作请求
+// @return 应用层获取常用番茄工作入参
+func toGetPomodoroInput(req types.GetPomodoroReq) *pomodoroDto.GetPomodoroReq {
+	return &pomodoroDto.GetPomodoroReq{
+		Id: req.Id,
+	}
+}
+
+// toUpdatePomodoroInput 将更新常用番茄工作请求转换为应用层入参
+// @param req 更新常用番茄工作请求
+// @return 应用层更新常用番茄工作入参
+func toUpdatePomodoroInput(req types.UpdatePomodoroReq) *pomodoroDto.UpdatePomodoroReq {
+	return &pomodoroDto.UpdatePomodoroReq{
+		Type:        req.Type,
+		Name:        req.Name,
+		Description: req.Description,
+		Duration:    req.Duration,
+		ArchivedAt:  req.ArchivedAt,
+	}
+}
+
+// toListPomodoroInput 将获取常用番茄工作列表请求转换为应用层入参
+// @param req 获取常用番茄工作列表请求
+// @return 应用层获取常用番茄工作列表入参
+func toListPomodoroInput(req types.ListPomodoroReq) *pomodoroDto.ListPomodoroReq {
+	return &pomodoroDto.ListPomodoroReq{
+		Type:       req.Type,
+		Name:       req.Name,
+		IsArchived: req.IsArchived,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		Sort:       req.Sort,
+	}
+}
+
+// toPomodoroRes 将应用层常用番茄工作出参转换为常用番茄工作响应
+// @param output 应用层常用番茄工作出参
+// @return 常用番茄工作响应
+func toPomodoroRes(output *pomodoroDto.PomodoroRes) *types.PomodoroRes {
+	return &types.PomodoroRes{
+		ResBase: types.ResBase{
+			Id:        output.Id,
+			CreatedAt: output.CreatedAt,
+			UpdatedAt: output.UpdatedAt,
+			DeletedAt: output.DeletedAt,
+		},
+		Type:          output.Type,
+		Name:          output.Name,
+		Description:   output.Description,
+		Duration:      output.Duration,
+		ArchivedAt:    output.ArchivedAt,
+		TotalDuration: output.TotalDuration,
+	}
+}
+
+// toCreatePomodoroRes 将应用层创建常用番茄工作出参转换为创建常用番茄工作响应
+// @param output 应用层创建常用番茄工作出参
+// @return 创建常用番茄工作响应
+func toCreatePomodoroRes(output *pomodoroDto.CreatePomodoroRes) *types.CreatePomodoroRes {
+	res := toPomodoroRes((*pomodoroDto.PomodoroRes)(output))
+	return (*types.CreatePomodoroRes)(res)
+}
+
+// toPomodoroReses 将应用层常用番茄工作列表出参转换为常用番茄工作列表响应
+// @param output 应用层常用番茄工作列表出参
+// @return 常用番茄工作列表响应
+func toPomodoroReses(output pomodoroDto.ListPomodoroRes) types.ListPomodoroRes {
+	res := make(types.ListPomodoroRes, 0, len(output))
+	for i := range output {
+		res = append(res, *toPomodoroRes(&output[i]))
+	}
+	return res
+}
+
 // CreatePomodoroRecord 创建番茄工作记录控制器
 // @code 7001x
 func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
@@ -30,7 +212,7 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.pomodoroApp.Create(ctx.Request.Context(), &req)
+	res, err := c.pomodoroApp.Create(ctx.Request.Context(), toCreatePomodoroRecordInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70012,
@@ -42,7 +224,7 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    70010,
 		Message: "创建专注记录成功",
-		Data:    res,
+		Data:    toCreatePomodoroRecordRes(res),
 	})
 }
 
@@ -59,7 +241,7 @@ func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
 	}
 	res, err := c.pomodoroApp.Get(
 		ctx.Request.Context(),
-		&types.GetPomodoroRecordReq{Id: id},
+		toGetPomodoroRecordInput(types.GetPomodoroRecordReq{Id: id}),
 	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
@@ -71,7 +253,7 @@ func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    70020,
 		Message: "获取专注记录成功",
-		Data:    res,
+		Data:    toGetPomodoroRecordRes(res),
 	})
 }
 
@@ -87,7 +269,7 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 		})
 		return
 	}
-	res, total, err := c.pomodoroApp.List(ctx.Request.Context(), &req)
+	res, total, err := c.pomodoroApp.List(ctx.Request.Context(), toListPomodoroRecordInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70032,
@@ -98,7 +280,7 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    70030,
 		Message: "获取专注记录列表成功",
-		Data:    res,
+		Data:    toGetPomodoroRecordReses(res),
 		Pagination: &types.Pagination{
 			Page:  req.Page,
 			Limit: req.Limit,
@@ -122,7 +304,7 @@ func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
 	}
 	res, err := c.pomodoroApp.GetPomodoro(
 		ctx.Request.Context(),
-		&types.GetPomodoroReq{Id: id},
+		toGetPomodoroInput(types.GetPomodoroReq{Id: id}),
 	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
@@ -134,7 +316,7 @@ func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    70040,
 		Message: "获取常用番茄工作成功",
-		Data:    res,
+		Data:    toPomodoroRes(res),
 	})
 }
 
@@ -151,7 +333,7 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), &req)
+	res, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), toCreatePomodoroInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70052,
@@ -163,7 +345,7 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    70050,
 		Message: "创建常用番茄工作成功",
-		Data:    res,
+		Data:    toCreatePomodoroRes(res),
 	})
 }
 
@@ -191,7 +373,7 @@ func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
 	err = c.pomodoroApp.UpdatePomodoro(
 		ctx.Request.Context(),
 		id,
-		&req,
+		toUpdatePomodoroInput(req),
 	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
@@ -301,7 +483,7 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	res, total, err := c.pomodoroApp.ListPomodoro(ctx.Request.Context(), &req)
+	res, total, err := c.pomodoroApp.ListPomodoro(ctx.Request.Context(), toListPomodoroInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70092,
@@ -312,7 +494,7 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    70090,
 		Message: "获取常用番茄工作列表成功",
-		Data:    res,
+		Data:    toPomodoroReses(res),
 		Pagination: &types.Pagination{
 			Page:  req.Page,
 			Limit: req.Limit,

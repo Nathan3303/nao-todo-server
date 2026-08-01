@@ -3,14 +3,16 @@ package task
 import (
 	"context"
 	"fmt"
-	domerr "naotodoserver/domain/errors"
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/task/dto"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/service"
 	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/sse"
-	"naotodoserver/interfaces/types"
 	"time"
 )
 
@@ -40,7 +42,7 @@ func (taskApp *TaskAppImpl) GetTaskById(
 	ctx context.Context,
 	taskId string,
 	includeDeleted bool,
-) (*types.GetTaskRes, error) {
+) (*dto.GetTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -68,8 +70,8 @@ func (taskApp *TaskAppImpl) GetTaskById(
 // @return error 错误信息
 func (taskApp *TaskAppImpl) CreateTask(
 	ctx context.Context,
-	req *types.CreateTaskReq,
-) (*types.GetTaskRes, error) {
+	req *dto.CreateTaskReq,
+) (*dto.GetTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -98,7 +100,7 @@ func (taskApp *TaskAppImpl) CreateTask(
 func (taskApp *TaskAppImpl) UpdateTask(
 	ctx context.Context,
 	taskId string,
-	req *types.UpdateTaskReq,
+	req *dto.UpdateTaskReq,
 ) error {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -114,6 +116,26 @@ func (taskApp *TaskAppImpl) UpdateTask(
 	updateTaskValueObject, err := UpdateTaskReqToValueObject(userId, req)
 	if err != nil {
 		return err
+	}
+	// 4. 状态迁移：读-改-写，由实体状态机维护状态与完成时间
+	if req.State != nil {
+		taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskIdInt64, false)
+		if err != nil {
+			return fmt.Errorf("UpdateTask: %w", err)
+		}
+		wasCompleted := taskEntity.State == entities.TaskStateCompleted
+		parsed, _ := entities.ParseTaskState(*req.State)
+		if err := taskEntity.ChangeState(parsed); err != nil {
+			return err
+		}
+		newState := taskEntity.State
+		updateTaskValueObject.State = &newState
+		switch {
+		case taskEntity.State == entities.TaskStateCompleted:
+			updateTaskValueObject.CompletedAt = taskEntity.CompletedAt
+		case wasCompleted:
+			updateTaskValueObject.CompletedAt = domaintypes.NullableTime{Valid: true, IsNull: true}
+		}
 	}
 	if err := taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject); err != nil {
 		return fmt.Errorf("UpdateTask: %w", err)
@@ -179,7 +201,7 @@ func (taskApp *TaskAppImpl) RestoreTask(
 func (taskApp *TaskAppImpl) CopyTask(
 	ctx context.Context,
 	taskId string,
-) (*types.GetTaskRes, error) {
+) (*dto.GetTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -207,8 +229,8 @@ func (taskApp *TaskAppImpl) CopyTask(
 // @return error 错误信息
 func (taskApp *TaskAppImpl) ListTask(
 	ctx context.Context,
-	req *types.ListTaskReq,
-) (types.ListTaskRes, *types.Pagination, error) {
+	req *dto.ListTaskReq,
+) (dto.ListTaskRes, *dto.Pagination, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -246,8 +268,8 @@ func (taskApp *TaskAppImpl) ListTask(
 func (taskApp *TaskAppImpl) SnoozeTask(
 	ctx context.Context,
 	taskId string,
-	req *types.SnoozeTaskReq,
-) (*types.SnoozeTaskRes, error) {
+	req *dto.SnoozeTaskReq,
+) (*dto.SnoozeTaskRes, error) {
 	// 1. 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -269,7 +291,7 @@ func (taskApp *TaskAppImpl) SnoozeTask(
 		return nil, fmt.Errorf("SnoozeTask: %w", err)
 	}
 	// 4. 返回结果
-	return &types.SnoozeTaskRes{
+	return &dto.SnoozeTaskRes{
 		RemindAt: newRemindAt,
 	}, nil
 }
@@ -305,7 +327,7 @@ func (taskApp *TaskAppImpl) ProcessReminders(ctx context.Context) error {
 func (impl *TaskAppImpl) GetTaskCheckItemById(
 	ctx context.Context,
 	itemId string,
-) (*types.GetTaskCheckItemRes, error) {
+) (*dto.GetTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -328,8 +350,8 @@ func (impl *TaskAppImpl) GetTaskCheckItemById(
 // @return error 错误信息
 func (impl *TaskAppImpl) CreateTaskCheckItem(
 	ctx context.Context,
-	req *types.CreateTaskCheckItemReq,
-) (*types.CreateTaskCheckItemRes, error) {
+	req *dto.CreateTaskCheckItemReq,
+) (*dto.CreateTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -353,7 +375,7 @@ func (impl *TaskAppImpl) CreateTaskCheckItem(
 func (impl *TaskAppImpl) UpdateTaskCheckItem(
 	ctx context.Context,
 	itemId string,
-	req *types.UpdateTaskCheckItemReq,
+	req *dto.UpdateTaskCheckItemReq,
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -366,6 +388,22 @@ func (impl *TaskAppImpl) UpdateTaskCheckItem(
 	vo, err := UpdateTaskCheckItemReqToVO(req)
 	if err != nil {
 		return err
+	}
+	// 状态迁移：读-改-写，复用实体 MarkDone/MarkUndone 保持状态一致
+	if vo.IsDone != nil {
+		item, err := impl.checkItemRepo.GetCheckItemById(ctx, userId, id64)
+		if err != nil {
+			return fmt.Errorf("UpdateCheckItem: %w", err)
+		}
+		if item.IsCompleted() != *vo.IsDone {
+			if *vo.IsDone {
+				item.MarkDone()
+			} else {
+				item.MarkUndone()
+			}
+		}
+		newIsDone := item.IsDone
+		vo.IsDone = &newIsDone
 	}
 	if err := impl.checkItemRepo.UpdateCheckItem(ctx, userId, id64, vo); err != nil {
 		return fmt.Errorf("UpdateCheckItem: %w", err)
@@ -403,7 +441,7 @@ func (impl *TaskAppImpl) DeleteTaskCheckItem(
 func (impl *TaskAppImpl) ListTaskCheckItems(
 	ctx context.Context,
 	taskId string,
-) (types.ListTaskCheckItemRes, error) {
+) (dto.ListTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -426,8 +464,8 @@ func (impl *TaskAppImpl) ListTaskCheckItems(
 // @return error 错误信息
 func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 	ctx context.Context,
-	req *types.BatchUpdateTaskCheckItemReq,
-) (*types.BatchUpdateTaskCheckItemRes, error) {
+	req *dto.BatchUpdateTaskCheckItemReq,
+) (*dto.BatchUpdateTaskCheckItemRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -436,12 +474,40 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 	if err != nil {
 		return nil, err
 	}
+	// 状态迁移：任一检查项携带 IsDone 时，先读-改-写复用实体方法
+	needReadWrite := false
+	for _, vo := range vos {
+		if vo.IsDone != nil {
+			needReadWrite = true
+			break
+		}
+	}
+	if needReadWrite {
+		for _, vo := range vos {
+			if vo.IsDone == nil {
+				continue
+			}
+			item, err := impl.checkItemRepo.GetCheckItemById(ctx, userId, vo.Id)
+			if err != nil {
+				return nil, fmt.Errorf("BatchUpdateCheckItems: %w", err)
+			}
+			if item.IsCompleted() != *vo.IsDone {
+				if *vo.IsDone {
+					item.MarkDone()
+				} else {
+					item.MarkUndone()
+				}
+			}
+			newIsDone := item.IsDone
+			vo.IsDone = &newIsDone
+		}
+	}
 	items, err := impl.checkItemRepo.BatchUpdateCheckItems(ctx, userId, vos)
 	if err != nil {
 		return nil, fmt.Errorf("BatchUpdateCheckItems: %w", err)
 	}
 	resList := TaskCheckItemEntitiesToReses(items)
-	return &types.BatchUpdateTaskCheckItemRes{
+	return &dto.BatchUpdateTaskCheckItemRes{
 		UpdatedCount: int64(len(resList)),
 		Events:       resList,
 	}, nil
@@ -457,7 +523,7 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 func (impl *TaskAppImpl) GetTaskCommentById(
 	ctx context.Context,
 	commentId string,
-) (*types.TaskCommentRes, error) {
+) (*dto.TaskCommentRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -480,8 +546,8 @@ func (impl *TaskAppImpl) GetTaskCommentById(
 // @return error 错误信息
 func (impl *TaskAppImpl) CreateTaskComment(
 	ctx context.Context,
-	req *types.CreateTaskCommentReq,
-) (*types.TaskCommentRes, error) {
+	req *dto.CreateTaskCommentReq,
+) (*dto.TaskCommentRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID
@@ -505,7 +571,7 @@ func (impl *TaskAppImpl) CreateTaskComment(
 func (impl *TaskAppImpl) UpdateTaskComment(
 	ctx context.Context,
 	commentId string,
-	req *types.UpdateTaskCommentReq,
+	req *dto.UpdateTaskCommentReq,
 ) error {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
@@ -555,7 +621,7 @@ func (impl *TaskAppImpl) DeleteTaskComment(
 func (impl *TaskAppImpl) ListTaskComments(
 	ctx context.Context,
 	taskId string,
-) ([]*types.TaskCommentRes, error) {
+) ([]*dto.TaskCommentRes, error) {
 	userId := iCtx.GetUserId(ctx)
 	if userId <= 0 {
 		return nil, domerr.ErrInvalidUserID

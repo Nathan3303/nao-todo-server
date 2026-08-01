@@ -6,13 +6,13 @@ import (
 	"fmt"
 
 	"naotodoserver/application/idutil"
+	"naotodoserver/application/project/dto"
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	taskRepo "naotodoserver/domain/task/repositories"
         domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
-	"naotodoserver/interfaces/types"
 )
 
 // NewProjectApp 创建任务清单应用层实例
@@ -36,12 +36,12 @@ func NewProjectApp(
 // 获取任务清单
 // @param ctx 上下文
 // @param projectId 任务清单 ID
-// @return *types.GetProjectRes 获取任务清单响应体
+// @return *dto.GetProjectRes 获取任务清单响应体
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) Get(
 	ctx context.Context,
 	projectId string,
-) (*types.GetProjectRes, error) {
+) (*dto.GetProjectRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
@@ -64,12 +64,12 @@ func (app *projectAppImpl) Get(
 // 创建任务清单
 // @param ctx 上下文
 // @param createProjectReq 创建任务清单请求体
-// @return *types.CreateProjectRes 创建任务清单响应体
+// @return *dto.CreateProjectRes 创建任务清单响应体
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) Create(
 	ctx context.Context,
-	createProjectReq *types.CreateProjectReq,
-) (*types.CreateProjectRes, error) {
+	createProjectReq *dto.CreateProjectReq,
+) (*dto.CreateProjectRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
@@ -86,7 +86,7 @@ func (app *projectAppImpl) Create(
 		return nil, fmt.Errorf("project.Create: %w", err)
 	}
 	// 实体转换响应体
-	createProjectRes := (*types.CreateProjectRes)(ProjectEntityToGetRes(projectEntity))
+	createProjectRes := (*dto.CreateProjectRes)(ProjectEntityToGetRes(projectEntity))
 	// 返回结果
 	return createProjectRes, nil
 }
@@ -99,7 +99,7 @@ func (app *projectAppImpl) Create(
 func (app *projectAppImpl) Update(
 	ctx context.Context,
 	projectId string,
-	updateProjectReq *types.UpdateProjectReq,
+	updateProjectReq *dto.UpdateProjectReq,
 ) error {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
@@ -280,9 +280,9 @@ func (app *projectAppImpl) Unarchive(
 
 // 获取用户任务清单列表
 // @param ctx 上下文
-// @return types.ListProjectRes 任务清单响应体列表
+// @return dto.ListProjectRes 任务清单响应体列表
 // @return error 验证失败返回错误，否则返回 nil
-func (app *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, error) {
+func (app *projectAppImpl) List(ctx context.Context) (dto.ListProjectRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
@@ -300,12 +300,12 @@ func (app *projectAppImpl) List(ctx context.Context) (types.ListProjectRes, erro
 // 批量更新任务清单
 // @param ctx 上下文
 // @param req 批量更新任务清单请求体
-// @return *types.BatchUpdateProjectRes 批量更新任务清单响应体
+// @return *dto.BatchUpdateProjectRes 批量更新任务清单响应体
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) BatchUpdate(
 	ctx context.Context,
-	req *types.BatchUpdateProjectReq,
-) (*types.BatchUpdateProjectRes, error) {
+	req *dto.BatchUpdateProjectReq,
+) (*dto.BatchUpdateProjectRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
@@ -322,7 +322,7 @@ func (app *projectAppImpl) BatchUpdate(
 	}
 	projectResList := EntitiesToGetResList(updatedEntities)
 	// 返回结果
-	return &types.BatchUpdateProjectRes{
+	return &dto.BatchUpdateProjectRes{
 		UpdatedCount: int64(len(projectResList)),
 		Projects:     projectResList,
 	}, nil
@@ -331,12 +331,12 @@ func (app *projectAppImpl) BatchUpdate(
 // 获取任务清单偏好
 // @param ctx 上下文
 // @param req 获取任务清单偏好请求体
-// @return *types.ProjectPreferenceRes 任务清单偏好响应体
+// @return *dto.GetProjectPreferenceRes 任务清单偏好响应体
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) GetPreference(
 	ctx context.Context,
 	projectId string,
-) (*types.GetProjectPreferenceRes, error) {
+) (*dto.GetProjectPreferenceRes, error) {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)
 	if userId == 0 {
@@ -364,12 +364,12 @@ func (app *projectAppImpl) GetPreference(
 // @param ctx 上下文
 // @param projectId 任务清单 ID
 // @param req 更新任务清单偏好请求体
-// @return *types.UpdateProjectPreferenceRes 更新任务清单偏好响应体
+// @return *dto.UpdateProjectPreferenceRes 更新任务清单偏好响应体
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) SavePreference(
 	ctx context.Context,
 	projectId string,
-	updateProjectPreferenceReq *types.UpdateProjectPreferenceReq,
+	updateProjectPreferenceReq *dto.UpdateProjectPreferenceReq,
 ) error {
 	// 获取用户 ID
 	userId := iCtx.GetUserId(ctx)

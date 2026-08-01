@@ -2,23 +2,23 @@ package task
 
 import (
 	"context"
-	"naotodoserver/interfaces/types"
+	"naotodoserver/application/task/dto"
 )
 
 // TaskCheckItemApp 任务检查项应用接口
 type TaskCheckItemApp interface {
 	GetTaskCheckItemById(
 		ctx context.Context, checkItemId string,
-	) (*types.GetTaskCheckItemRes, error)
+	) (*dto.GetTaskCheckItemRes, error)
 	CreateTaskCheckItem(
-		ctx context.Context, req *types.CreateTaskCheckItemReq,
-	) (*types.CreateTaskCheckItemRes, error)
+		ctx context.Context, req *dto.CreateTaskCheckItemReq,
+	) (*dto.CreateTaskCheckItemRes, error)
 	UpdateTaskCheckItem(
-		ctx context.Context, checkItemId string, req *types.UpdateTaskCheckItemReq,
+		ctx context.Context, checkItemId string, req *dto.UpdateTaskCheckItemReq,
 	) error
 	DeleteTaskCheckItem(ctx context.Context, checkItemId string) error
-	ListTaskCheckItems(ctx context.Context, taskId string) (types.ListTaskCheckItemRes, error)
+	ListTaskCheckItems(ctx context.Context, taskId string) (dto.ListTaskCheckItemRes, error)
 	BatchUpdateTaskCheckItems(
-		ctx context.Context, req *types.BatchUpdateTaskCheckItemReq,
-	) (*types.BatchUpdateTaskCheckItemRes, error)
+		ctx context.Context, req *dto.BatchUpdateTaskCheckItemReq,
+	) (*dto.BatchUpdateTaskCheckItemRes, error)
 }

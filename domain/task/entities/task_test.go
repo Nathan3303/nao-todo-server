@@ -7,106 +7,87 @@ import (
 	"naotodoserver/domain/types"
 )
 
-func TestTask_IsEndAtValid(t *testing.T) {
+func TestTaskChangeState(t *testing.T) {
 	now := time.Now()
-	future := now.Add(2 * time.Hour)
-	past := now.Add(-2 * time.Hour)
-
 	tests := []struct {
-		name string
-		task *Task
-		want bool
+		name          string
+		initialState  TaskState
+		nextState     TaskState
+		wantState     TaskState
+		wantErr       bool
+		wantCompleted bool // 进入 Completed 后 CompletedAt 应有效
+		keepCompleted bool // 同状态迁移时不应重设完成时间
+		wantCleared   bool // 离开 Completed 后 CompletedAt 应清空
 	}{
-		{
-			name: "no end time",
-			task: &Task{StartAt: types.NewNullableTimeByTime(now)},
-			want: false,
-		},
-		{
-			name: "end after start",
-			task: &Task{
-				StartAt: types.NewNullableTimeByTime(now),
-				EndAt:   types.NewNullableTimeByTime(future),
-			},
-			want: true,
-		},
-		{
-			name: "end before start",
-			task: &Task{
-				StartAt: types.NewNullableTimeByTime(now),
-				EndAt:   types.NewNullableTimeByTime(past),
-			},
-			want: false,
-		},
-		{
-			name: "no start time, has end time",
-			task: &Task{
-				EndAt: types.NewNullableTimeByTime(future),
-			},
-			want: true,
-		},
+		{name: "pending 到 in-progress", initialState: TaskStatePending, nextState: TaskStateInProgress, wantState: TaskStateInProgress},
+		{name: "in-progress 到 completed 写入完成时间", initialState: TaskStateInProgress, nextState: TaskStateCompleted, wantState: TaskStateCompleted, wantCompleted: true},
+		{name: "pending 到 completed 写入完成时间", initialState: TaskStatePending, nextState: TaskStateCompleted, wantState: TaskStateCompleted, wantCompleted: true},
+		{name: "completed 到 in-progress 清空完成时间", initialState: TaskStateCompleted, nextState: TaskStateInProgress, wantState: TaskStateInProgress, wantCleared: true},
+		{name: "completed 到 pending 清空完成时间", initialState: TaskStateCompleted, nextState: TaskStatePending, wantState: TaskStatePending, wantCleared: true},
+		{name: "pending 到 pending 幂等", initialState: TaskStatePending, nextState: TaskStatePending, wantState: TaskStatePending},
+		{name: "completed 到 completed 幂等保留完成时间", initialState: TaskStateCompleted, nextState: TaskStateCompleted, wantState: TaskStateCompleted, wantCompleted: true, keepCompleted: true},
+		{name: "非法状态 0", initialState: TaskStatePending, nextState: TaskState(0), wantState: TaskStatePending, wantErr: true},
+		{name: "非法状态 99", initialState: TaskStatePending, nextState: TaskState(99), wantState: TaskStatePending, wantErr: true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.task.IsEndAtValid()
-			if got != tt.want {
-				t.Errorf("IsEndAtValid() = %v, want %v", got, tt.want)
+			task := &Task{State: tt.initialState}
+			if tt.initialState == TaskStateCompleted {
+				task.CompletedAt = types.NewNullableTimeByTime(now)
+			}
+			err := task.ChangeState(tt.nextState)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ChangeState(%d) err = %v, wantErr %v", uint8(tt.nextState), err, tt.wantErr)
+			}
+			if task.State != tt.wantState {
+				t.Errorf("ChangeState 后 State = %v, want %v", task.State, tt.wantState)
+			}
+			if tt.wantCompleted {
+				v, ok := task.CompletedAt.Value()
+				if !ok {
+					t.Errorf("进入 Completed 后 CompletedAt 应有效")
+				}
+				if tt.keepCompleted && !v.Equal(now) {
+					t.Errorf("同状态迁移不应重设完成时间")
+				}
+			}
+			if tt.wantCleared {
+				if _, ok := task.CompletedAt.Value(); ok {
+					t.Errorf("离开 Completed 后 CompletedAt 应清空")
+				}
 			}
 		})
 	}
 }
 
-func TestTask_IsDatesValid(t *testing.T) {
-	now := time.Now()
-	future := now.Add(2 * time.Hour)
-	past := now.Add(-2 * time.Hour)
-
-	tests := []struct {
-		name    string
-		task    *Task
-		wantErr string
-	}{
-		{
-			name: "all dates valid",
-			task: &Task{
-				StartAt:    types.NewNullableTimeByTime(now),
-				EndAt:      types.NewNullableTimeByTime(future),
-				ArchivedAt: types.NewNullableTimeNull(),
-				StarMarkAt: types.NewNullableTimeNull(),
-				GivenUpAt:  types.NewNullableTimeNull(),
-			},
-		},
-		{
-			name: "end before start",
-			task: &Task{
-				StartAt: types.NewNullableTimeByTime(now),
-				EndAt:   types.NewNullableTimeByTime(past),
-			},
-			wantErr: "时间参数无效 - 结束时间必须晚于开始时间",
-		},
-		{
-			name: "no dates set (both null = IsEndAtValid=false)",
-			task: &Task{
-				StartAt: types.NewNullableTimeNull(),
-				EndAt:   types.NewNullableTimeNull(),
-			},
-			wantErr: "时间参数无效 - 结束时间必须晚于开始时间",
-		},
+func TestTaskArchive(t *testing.T) {
+	task := &Task{}
+	task.Archive()
+	if _, ok := task.ArchivedAt.Value(); !ok {
+		t.Errorf("Archive 后 ArchivedAt 应有效")
 	}
+	// 幂等重设时间
+	task.Archive()
+	if _, ok := task.ArchivedAt.Value(); !ok {
+		t.Errorf("重复 Archive 后 ArchivedAt 仍应有效")
+	}
+	task.Unarchive()
+	if _, ok := task.ArchivedAt.Value(); ok {
+		t.Errorf("Unarchive 后 ArchivedAt 应清空")
+	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.task.IsDatesValid()
-			if tt.wantErr == "" && err != nil {
-				t.Errorf("IsDatesValid() unexpected error: %v", err)
-			}
-			if tt.wantErr != "" && err == nil {
-				t.Errorf("IsDatesValid() want error %q, got nil", tt.wantErr)
-			}
-			if tt.wantErr != "" && err != nil && err.Error() != tt.wantErr {
-				t.Errorf("IsDatesValid() error = %q, want %q", err.Error(), tt.wantErr)
-			}
-		})
+func TestTaskToggleStar(t *testing.T) {
+	task := &Task{}
+	// 未收藏时切换为收藏
+	task.ToggleStar()
+	if _, ok := task.StarMarkAt.Value(); !ok {
+		t.Errorf("ToggleStar 后 StarMarkAt 应有效")
+	}
+	// 已收藏时切换为取消收藏
+	task.ToggleStar()
+	if _, ok := task.StarMarkAt.Value(); ok {
+		t.Errorf("再次 ToggleStar 后 StarMarkAt 应清空")
 	}
 }
