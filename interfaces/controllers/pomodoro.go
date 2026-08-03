@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	iCtx "naotodoserver/infrastructure/context"
 	pomodoroApp "naotodoserver/application/pomodoro"
 	pomodoroDto "naotodoserver/application/pomodoro/dto"
 	"naotodoserver/interfaces/types"
@@ -202,6 +203,15 @@ func toPomodoroReses(output pomodoroDto.ListPomodoroRes) types.ListPomodoroRes {
 // CreatePomodoroRecord 创建番茄工作记录控制器
 // @code 7001x
 func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70013,
+			Message: "用户未登录",
+		})
+		return
+	}
 	var req types.CreatePomodoroRecordReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -212,7 +222,11 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.pomodoroApp.Create(ctx.Request.Context(), toCreatePomodoroRecordInput(req))
+	res, err := c.pomodoroApp.Create(
+		ctx.Request.Context(),
+		userId,
+		toCreatePomodoroRecordInput(req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70012,
@@ -231,6 +245,15 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 // GetPomodoroRecord 获取专注记录详情控制器
 // @code 7002x
 func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70023,
+			Message: "用户未登录",
+		})
+		return
+	}
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -241,6 +264,7 @@ func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
 	}
 	res, err := c.pomodoroApp.Get(
 		ctx.Request.Context(),
+		userId,
 		toGetPomodoroRecordInput(types.GetPomodoroRecordReq{Id: id}),
 	)
 	if err != nil {
@@ -260,6 +284,15 @@ func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
 // ListPomodoroRecord 获取专注记录列表控制器
 // @code 7003x
 func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70033,
+			Message: "用户未登录",
+		})
+		return
+	}
 	var req types.ListPomodoroRecordReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -269,7 +302,11 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 		})
 		return
 	}
-	res, total, err := c.pomodoroApp.List(ctx.Request.Context(), toListPomodoroRecordInput(req))
+	res, total, err := c.pomodoroApp.List(
+		ctx.Request.Context(),
+		userId,
+		toListPomodoroRecordInput(req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70032,
@@ -294,6 +331,15 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 // GetPomodoro 获取常用番茄工作详情控制器
 // @code 7004x
 func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70043,
+			Message: "用户未登录",
+		})
+		return
+	}
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -304,6 +350,7 @@ func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
 	}
 	res, err := c.pomodoroApp.GetPomodoro(
 		ctx.Request.Context(),
+		userId,
 		toGetPomodoroInput(types.GetPomodoroReq{Id: id}),
 	)
 	if err != nil {
@@ -323,6 +370,15 @@ func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
 // CreatePomodoro 创建常用番茄工作控制器
 // @code 7005x
 func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70053,
+			Message: "用户未登录",
+		})
+		return
+	}
 	var req types.CreatePomodoroReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -333,7 +389,11 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), toCreatePomodoroInput(req))
+	res, err := c.pomodoroApp.CreatePomodoro(
+		ctx.Request.Context(),
+		userId,
+		toCreatePomodoroInput(req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70052,
@@ -352,6 +412,15 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 // UpdatePomodoro 更新常用番茄工作控制器
 // @code 7006x
 func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70063,
+			Message: "用户未登录",
+		})
+		return
+	}
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -372,6 +441,7 @@ func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
 	}
 	err = c.pomodoroApp.UpdatePomodoro(
 		ctx.Request.Context(),
+		userId,
 		id,
 		toUpdatePomodoroInput(req),
 	)
@@ -393,6 +463,15 @@ func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
 // DeletePomodoro 删除常用番茄工作控制器
 // @code 7010x
 func (c *PomodoroController) DeletePomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70103,
+			Message: "用户未登录",
+		})
+		return
+	}
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -401,7 +480,7 @@ func (c *PomodoroController) DeletePomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	err := c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), id)
+	err := c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), userId, id)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70102,
@@ -420,6 +499,15 @@ func (c *PomodoroController) DeletePomodoro(ctx *gin.Context) {
 // ArchivedPomodoro 归档常用番茄工作控制器
 // @code 7007x
 func (c *PomodoroController) ArchivedPomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70073,
+			Message: "用户未登录",
+		})
+		return
+	}
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -428,7 +516,7 @@ func (c *PomodoroController) ArchivedPomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	err := c.pomodoroApp.ArchivePomodoro(ctx.Request.Context(), id)
+	err := c.pomodoroApp.ArchivePomodoro(ctx.Request.Context(), userId, id)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70072,
@@ -447,6 +535,15 @@ func (c *PomodoroController) ArchivedPomodoro(ctx *gin.Context) {
 // UnarchivedPomodoro 取消归档常用番茄工作控制器
 // @code 7008x
 func (c *PomodoroController) UnarchivedPomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70083,
+			Message: "用户未登录",
+		})
+		return
+	}
 	id := ctx.Param("id")
 	if id == "" {
 		Failure(ctx, types.ResponseData{
@@ -455,7 +552,7 @@ func (c *PomodoroController) UnarchivedPomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	err := c.pomodoroApp.UnarchivePomodoro(ctx.Request.Context(), id)
+	err := c.pomodoroApp.UnarchivePomodoro(ctx.Request.Context(), userId, id)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70082,
@@ -474,6 +571,15 @@ func (c *PomodoroController) UnarchivedPomodoro(ctx *gin.Context) {
 // ListPomodoro 获取常用番茄工作列表控制器
 // @code 7009x
 func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    70093,
+			Message: "用户未登录",
+		})
+		return
+	}
 	var req types.ListPomodoroReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -483,7 +589,11 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	res, total, err := c.pomodoroApp.ListPomodoro(ctx.Request.Context(), toListPomodoroInput(req))
+	res, total, err := c.pomodoroApp.ListPomodoro(
+		ctx.Request.Context(),
+		userId,
+		toListPomodoroInput(req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    70092,

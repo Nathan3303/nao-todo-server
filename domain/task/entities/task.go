@@ -119,9 +119,14 @@ func (task *Task) ChangeState(next TaskState) error {
 	return nil
 }
 
-// Archive 归档任务（幂等重设归档时间）
-func (task *Task) Archive() {
-	task.ArchivedAt = types.NewNullableTimeByTime(time.Now())
+// Archive 归档任务（可指定归档时间，nil 表示使用当前时间）
+func (task *Task) Archive(at *time.Time) {
+	if at == nil {
+		now := time.Now()
+		task.ArchivedAt = types.NewNullableTimeByTime(now)
+		return
+	}
+	task.ArchivedAt = types.NewNullableTimeByTime(*at)
 }
 
 // Unarchive 取消归档任务
@@ -129,12 +134,28 @@ func (task *Task) Unarchive() {
 	task.ArchivedAt = types.NewNullableTimeNull()
 }
 
-// ToggleStar 切换收藏状态
-// 已收藏时取消收藏，未收藏时收藏
-func (task *Task) ToggleStar() {
-	if _, ok := task.StarMarkAt.Value(); ok {
-		task.StarMarkAt = types.NewNullableTimeNull()
-	} else {
-		task.StarMarkAt = types.NewNullableTimeByTime(time.Now())
+// ToggleStar 设置收藏时间（可指定收藏时间，nil 表示使用当前时间）
+// 由调用方决定是收藏还是取消收藏，本方法仅做赋值
+func (task *Task) ToggleStar(at *time.Time) {
+	if at == nil {
+		now := time.Now()
+		task.StarMarkAt = types.NewNullableTimeByTime(now)
+		return
 	}
+	task.StarMarkAt = types.NewNullableTimeByTime(*at)
+}
+
+// GiveUp 放弃任务（可指定放弃时间，nil 表示使用当前时间）
+func (task *Task) GiveUp(at *time.Time) {
+	if at == nil {
+		now := time.Now()
+		task.GivenUpAt = types.NewNullableTimeByTime(now)
+		return
+	}
+	task.GivenUpAt = types.NewNullableTimeByTime(*at)
+}
+
+// UngiveUp 取消放弃任务
+func (task *Task) UngiveUp() {
+	task.GivenUpAt = types.NewNullableTimeNull()
 }

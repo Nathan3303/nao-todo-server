@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	iCtx "naotodoserver/infrastructure/context"
 	userApp "naotodoserver/application/user"
 	userDto "naotodoserver/application/user/dto"
 	"naotodoserver/infrastructure/utils"
@@ -127,21 +128,39 @@ func (c *UserController) UpdateUserNickname(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 调用用户服务 - 更新用户昵称
-	err = c.userApp.UpdateNickname(ctx.Request.Context(), toUpdateNicknameInput(req))
-	if err != nil {
-		Failure(ctx, types.ResponseData{Code: 10053, Message: err.Error()})
+	// 3. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10053,
+			Message: "用户未登录",
+		})
 		return
 	}
-	// 4. 返回结果
+	// 4. 调用用户服务 - 更新用户昵称
+	err = c.userApp.UpdateNickname(ctx.Request.Context(), userId, toUpdateNicknameInput(req))
+	if err != nil {
+		Failure(ctx, types.ResponseData{Code: 10054, Message: err.Error()})
+		return
+	}
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{Code: 10050, Message: "更新用户昵称成功"})
 }
 
 // GetUserProfile 获取用户详情控制器
 // @code 1006x
 func (c *UserController) GetUserProfile(ctx *gin.Context) {
-	// 1. 调用用户服务 - 获取用户详情
-	res, err := c.userApp.GetProfile(ctx.Request.Context())
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10061,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 调用用户服务 - 获取用户详情
+	res, err := c.userApp.GetProfile(ctx.Request.Context(), userId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10065,
@@ -176,25 +195,43 @@ func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 调用用户服务 - 更新用户密码
-	err = c.userApp.UpdatePassword(ctx.Request.Context(), toUpdatePasswordInput(req))
-	if err != nil {
-		Failure(ctx, types.ResponseData{Code: 10074, Message: err.Error()})
+	// 3. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10074,
+			Message: "用户未登录",
+		})
 		return
 	}
-	// 4. 返回结果
+	// 4. 调用用户服务 - 更新用户密码
+	err = c.userApp.UpdatePassword(ctx.Request.Context(), userId, toUpdatePasswordInput(req))
+	if err != nil {
+		Failure(ctx, types.ResponseData{Code: 10075, Message: err.Error()})
+		return
+	}
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{Code: 10070, Message: "更新用户密码成功"})
 }
 
 // UpdateUserAvatar 更新用户头像控制器
 // @code 1008x
 func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
-	// 1. 判断请求类型
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10083,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 判断请求类型
 	contentType := ctx.ContentType()
 	var req types.UpdateUserAvatarReq
 	var res *types.UpdateUserAvatarRes
 	var err error
-	// 2. 根据请求类型处理
+	// 3. 根据请求类型处理
 	switch contentType {
 	case "application/json", "text/plain;charset=utf-8":
 		// JSON 请求：通过 URL 更新
@@ -205,7 +242,11 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 		}
 		if req.AvatarURL != "" {
 			var appRes *userDto.UpdateAvatarOutput
-			appRes, err = c.userApp.UpdateAvatar(ctx.Request.Context(), toUpdateAvatarInput(req))
+			appRes, err = c.userApp.UpdateAvatar(
+				ctx.Request.Context(),
+				userId,
+				toUpdateAvatarInput(req),
+			)
 			if err == nil {
 				res = toUpdateAvatarRes(appRes)
 			}
@@ -237,6 +278,7 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 		var appRes *userDto.UpdateAvatarOutput
 		appRes, err = c.userApp.UpdateAvatarByFile(
 			ctx.Request.Context(),
+			userId,
 			f,
 			fileHeader.Filename,
 			fileHeader.Size,
@@ -248,7 +290,7 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{Code: 10081, Message: "不支持的请求类型"})
 		return
 	}
-	// 3. 判断处理结果
+	// 4. 判断处理结果
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10082,
@@ -257,7 +299,7 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 		})
 		return
 	}
-	// 4. 返回结果
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    10080,
 		Message: "更新用户头像成功",
@@ -274,7 +316,16 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{Code: 10091, Message: "参数错误"})
 		return
 	}
-	err = c.userApp.DeleteUser(ctx.Request.Context(), toDeleteUserInput(req))
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10093,
+			Message: "用户未登录",
+		})
+		return
+	}
+	err = c.userApp.DeleteUser(ctx.Request.Context(), userId, toDeleteUserInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10092,
@@ -299,8 +350,17 @@ func (c *UserController) RestoreUser(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{Code: 10101, Message: "参数错误"})
 		return
 	}
-	// 2. 调用用户服务 - 激活用户
-	err = c.userApp.RestoreUser(ctx.Request.Context(), toRestoreUserInput(req))
+	// 2. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10103,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 3. 调用用户服务 - 激活用户
+	err = c.userApp.RestoreUser(ctx.Request.Context(), userId, toRestoreUserInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10102,
@@ -309,14 +369,23 @@ func (c *UserController) RestoreUser(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{Code: 10100, Message: "激活用户成功"})
 }
 
 // GetUserConfig 获取用户配置控制器
 // @code 1011x
 func (c *UserController) GetUserConfig(ctx *gin.Context) {
-	res, err := c.userApp.GetConfig(ctx.Request.Context())
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10112,
+			Message: "用户未登录",
+		})
+		return
+	}
+	res, err := c.userApp.GetConfig(ctx.Request.Context(), userId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10111,
@@ -341,7 +410,16 @@ func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{Code: 10121, Message: "参数错误"})
 		return
 	}
-	err = c.userApp.UpdateConfig(ctx.Request.Context(), toUpdateConfigInput(req))
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    10122,
+			Message: "用户未登录",
+		})
+		return
+	}
+	err = c.userApp.UpdateConfig(ctx.Request.Context(), userId, toUpdateConfigInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10123,

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	iCtx "naotodoserver/infrastructure/context"
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
 	"naotodoserver/interfaces/types"
@@ -323,7 +324,16 @@ func toUpdateTaskCommentReq(req *types.UpdateTaskCommentReq) *taskDto.UpdateTask
 // GetTask 获取待办任务详情控制器
 // @code 4000x
 func (c *TaskController) GetTask(ctx *gin.Context) {
-	// 1. 获取待办任务 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40003,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取待办任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -332,9 +342,14 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用应用层获取任务信息
+	// 3. 调用应用层获取任务信息
 	includeDeleted := ctx.Query("isDeleted") == "true"
-	res, err := c.taskApp.GetTaskById(ctx.Request.Context(), taskId, includeDeleted)
+	res, err := c.taskApp.GetTaskById(
+		ctx.Request.Context(),
+		userId,
+		taskId,
+		includeDeleted,
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40002,
@@ -342,7 +357,7 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40000,
 		Message: "获取待办任务详细成功",
@@ -353,7 +368,16 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 // CreateTask 创建待办任务控制器
 // @code 4001x
 func (c *TaskController) CreateTask(ctx *gin.Context) {
-	// 1. 绑定请求参数
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40013,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 绑定请求参数
 	var req types.CreateTaskReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -364,8 +388,8 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用应用层创建任务
-	res, err := c.taskApp.CreateTask(ctx.Request.Context(), toCreateTaskReq(&req))
+	// 3. 调用应用层创建任务
+	res, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40012,
@@ -374,7 +398,7 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40010,
 		Message: "创建待办任务成功",
@@ -385,7 +409,16 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 // UpdateTask 更新待办任务控制器
 // @code 4002x
 func (c *TaskController) UpdateTask(ctx *gin.Context) {
-	// 1. 绑定请求参数
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40024,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 绑定请求参数
 	var req types.UpdateTaskReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -395,7 +428,7 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 获取任务 ID
+	// 3. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -404,8 +437,8 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 调用应用层更新任务
-	err = c.taskApp.UpdateTask(ctx.Request.Context(), taskId, toUpdateTaskReq(&req))
+	// 4. 调用应用层更新任务
+	err = c.taskApp.UpdateTask(ctx.Request.Context(), userId, taskId, toUpdateTaskReq(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40023,
@@ -413,7 +446,7 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 4. 返回结果
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40020,
 		Message: "更新待办任务成功",
@@ -424,7 +457,16 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 // DeleteTask 删除待办任务控制器
 // @code 4003x
 func (c *TaskController) DeleteTask(ctx *gin.Context) {
-	// 1. 获取任务 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40033,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -433,8 +475,8 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用应用层删除任务
-	err := c.taskApp.DeleteTask(ctx.Request.Context(), taskId)
+	// 3. 调用应用层删除任务
+	err := c.taskApp.DeleteTask(ctx.Request.Context(), userId, taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40032,
@@ -442,7 +484,7 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40030,
 		Message: "删除待办任务成功",
@@ -453,7 +495,16 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 // RestoreTask 恢复待办任务控制器
 // @code 4004x
 func (c *TaskController) RestoreTask(ctx *gin.Context) {
-	// 1. 获取任务 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40043,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -462,8 +513,8 @@ func (c *TaskController) RestoreTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用应用层恢复任务
-	err := c.taskApp.RestoreTask(ctx.Request.Context(), taskId)
+	// 3. 调用应用层恢复任务
+	err := c.taskApp.RestoreTask(ctx.Request.Context(), userId, taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40042,
@@ -471,7 +522,7 @@ func (c *TaskController) RestoreTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40040,
 		Message: "恢复待办任务成功",
@@ -482,7 +533,16 @@ func (c *TaskController) RestoreTask(ctx *gin.Context) {
 // CopyTask 复制待办任务控制器
 // @code 4006x
 func (c *TaskController) CopyTask(ctx *gin.Context) {
-	// 1. 获取任务 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40063,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -491,8 +551,8 @@ func (c *TaskController) CopyTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用应用层复制任务
-	res, err := c.taskApp.CopyTask(ctx.Request.Context(), taskId)
+	// 3. 调用应用层复制任务
+	res, err := c.taskApp.CopyTask(ctx.Request.Context(), userId, taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40062,
@@ -500,7 +560,7 @@ func (c *TaskController) CopyTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40060,
 		Message: "复制待办任务成功",
@@ -511,7 +571,16 @@ func (c *TaskController) CopyTask(ctx *gin.Context) {
 // ListTask 获取待办任务列表控制器
 // @code 4005x
 func (c *TaskController) ListTask(ctx *gin.Context) {
-	// 1. 绑定请求参数
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40053,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 绑定请求参数
 	var req types.ListTaskReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
@@ -521,8 +590,12 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用应用层获取任务列表
-	tasks, paginationRes, err := c.taskApp.ListTask(ctx.Request.Context(), toListTaskReq(&req))
+	// 3. 调用应用层获取任务列表
+	tasks, paginationRes, err := c.taskApp.ListTask(
+		ctx.Request.Context(),
+		userId,
+		toListTaskReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40052,
@@ -530,7 +603,7 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:       40050,
 		Message:    "获取待办任务列表成功",
@@ -542,7 +615,16 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 // SnoozeTask 稍后提醒控制器
 // @code 4009x
 func (c *TaskController) SnoozeTask(ctx *gin.Context) {
-	// 1. 获取任务 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    40094,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取任务 ID
 	taskId := ctx.Param("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -551,7 +633,7 @@ func (c *TaskController) SnoozeTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 绑定请求参数
+	// 3. 绑定请求参数
 	var req types.SnoozeTaskReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -562,8 +644,13 @@ func (c *TaskController) SnoozeTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 调用应用层设置稍后提醒
-	res, err := c.taskApp.SnoozeTask(ctx.Request.Context(), taskId, toSnoozeTaskReq(&req))
+	// 4. 调用应用层设置稍后提醒
+	res, err := c.taskApp.SnoozeTask(
+		ctx.Request.Context(),
+		userId,
+		taskId,
+		toSnoozeTaskReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40093,
@@ -571,7 +658,7 @@ func (c *TaskController) SnoozeTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 4. 返回结果
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    40090,
 		Message: "稍后提醒已设置",

@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"database/sql"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
@@ -633,54 +634,119 @@ func (repo *TaskRepoImpl) SyncCommentUserProfile(
 }
 
 // SoftDeleteByProjectId 软删除指定项目下的所有任务
-// 用于项目删除时的级联操作，设置 deleted_at 为当前时间
+// 用于项目删除时的级联操作
+// 内部走实体 Delete() 维护状态语义，与单条删除路径一致
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
 // @return error 错误
-func (repo *TaskRepoImpl) SoftDeleteByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
-		Model(&models.Task{}).
+func (repo *TaskRepoImpl) SoftDeleteByProjectId(
+	ctx context.Context, userId int64, projectId int64,
+) error {
+	db := dbs.DBFrom(ctx, repo.db)
+	var taskModels []models.Task
+	if err := db.WithContext(ctx).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
-		Update("deleted_at", time.Now()).Error
+		Find(&taskModels).Error; err != nil {
+		return err
+	}
+	if len(taskModels) == 0 {
+		return nil
+	}
+	for i := range taskModels {
+		taskModels[i].DeletedAt = gorm.DeletedAt{
+			Time:  time.Now(),
+			Valid: true,
+		}
+	}
+	return db.WithContext(ctx).Save(&taskModels).Error
 }
 
 // RestoreByProjectId 恢复指定项目下的所有任务
-// 用于项目恢复时的级联操作，清除 deleted_at
+// 用于项目恢复时的级联操作
+// 内部逐条加载实体并恢复 deleted_at，与单条恢复路径一致
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
 // @return error 错误
-func (repo *TaskRepoImpl) RestoreByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
+func (repo *TaskRepoImpl) RestoreByProjectId(
+	ctx context.Context, userId int64, projectId int64,
+) error {
+	db := dbs.DBFrom(ctx, repo.db)
+	var taskModels []models.Task
+	if err := db.WithContext(ctx).
 		Unscoped().
-		Model(&models.Task{}).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
-		Update("deleted_at", nil).Error
+		Find(&taskModels).Error; err != nil {
+		return err
+	}
+	if len(taskModels) == 0 {
+		return nil
+	}
+	for i := range taskModels {
+		taskModels[i].DeletedAt = gorm.DeletedAt{Valid: false}
+	}
+	return db.WithContext(ctx).Unscoped().Save(&taskModels).Error
 }
 
 // ArchiveByProjectId 归档指定项目下的所有任务
-// 用于项目归档时的级联操作，设置 archived_at 为当前时间
+// 用于项目归档时的级联操作
+// 内部走实体 Archive() 维护状态语义，与单条归档路径一致
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
 // @return error 错误
-func (repo *TaskRepoImpl) ArchiveByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
-		Model(&models.Task{}).
+func (repo *TaskRepoImpl) ArchiveByProjectId(
+	ctx context.Context, userId int64, projectId int64,
+) error {
+	db := dbs.DBFrom(ctx, repo.db)
+	var taskModels []models.Task
+	if err := db.WithContext(ctx).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
-		Update("archived_at", time.Now()).Error
+		Find(&taskModels).Error; err != nil {
+		return err
+	}
+	if len(taskModels) == 0 {
+		return nil
+	}
+	for i := range taskModels {
+		entity := TaskModel2Entity(&taskModels[i])
+		entity.Archive(nil)
+		taskModels[i].ArchivedAt = sql.NullTime{
+			Time:  entity.ArchivedAt.Time,
+			Valid: true,
+		}
+	}
+	return db.WithContext(ctx).Save(&taskModels).Error
 }
 
 // UnarchiveByProjectId 取消归档指定项目下的所有任务
-// 用于项目取消归档时的级联操作，清除 archived_at
+// 用于项目取消归档时的级联操作
+// 内部走实体 Unarchive() 维护状态语义，与单条取消归档路径一致
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
 // @return error 错误
-func (repo *TaskRepoImpl) UnarchiveByProjectId(ctx context.Context, userId int64, projectId int64) error {
-	return dbs.DBFrom(ctx, repo.db).WithContext(ctx).
-		Model(&models.Task{}).
+func (repo *TaskRepoImpl) UnarchiveByProjectId(
+	ctx context.Context, userId int64, projectId int64,
+) error {
+	db := dbs.DBFrom(ctx, repo.db)
+	var taskModels []models.Task
+	if err := db.WithContext(ctx).
 		Where("user_id = ? AND project_id = ?", userId, projectId).
-		Update("archived_at", nil).Error
+		Find(&taskModels).Error; err != nil {
+		return err
+	}
+	if len(taskModels) == 0 {
+		return nil
+	}
+	for i := range taskModels {
+		entity := TaskModel2Entity(&taskModels[i])
+		entity.Unarchive()
+		taskModels[i].ArchivedAt = sql.NullTime{
+			Time:  entity.ArchivedAt.Time,
+			Valid: !entity.ArchivedAt.IsNull,
+		}
+	}
+	return db.WithContext(ctx).Save(&taskModels).Error
 }

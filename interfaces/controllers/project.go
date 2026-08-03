@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	iCtx "naotodoserver/infrastructure/context"
 	projectApp "naotodoserver/application/project"
 	projectDto "naotodoserver/application/project/dto"
 	"naotodoserver/interfaces/types"
@@ -144,6 +145,15 @@ func toUpdateProjectPreferenceInput(
 // GetProject 根据清单 ID 获取清单接入点
 // @code 2000x
 func (c *ProjectController) GetProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20003,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -155,7 +165,7 @@ func (c *ProjectController) GetProject(ctx *gin.Context) {
 		return
 	}
 	// 获取清单
-	res, err := c.projectApp.Get(ctx.Request.Context(), projectId)
+	res, err := c.projectApp.Get(ctx.Request.Context(), userId, projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20002,
@@ -175,6 +185,15 @@ func (c *ProjectController) GetProject(ctx *gin.Context) {
 // CreateProject 创建清单接入点
 // @code 2001x
 func (c *ProjectController) CreateProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20013,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取参数
 	var createProjectReq types.CreateProjectReq
 	err := ctx.ShouldBind(&createProjectReq)
@@ -187,7 +206,11 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 		return
 	}
 	// 创建清单
-	res, err := c.projectApp.Create(ctx.Request.Context(), toCreateProjectInput(&createProjectReq))
+	res, err := c.projectApp.Create(
+		ctx.Request.Context(),
+		userId,
+		toCreateProjectInput(&createProjectReq),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20012,
@@ -207,6 +230,15 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 // UpdateProject 更新清单接入点
 // @code 2002x
 func (c *ProjectController) UpdateProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20024,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -231,6 +263,7 @@ func (c *ProjectController) UpdateProject(ctx *gin.Context) {
 	// 更新清单
 	err = c.projectApp.Update(
 		ctx.Request.Context(),
+		userId,
 		projectId,
 		toUpdateProjectInput(&updateProjectReq),
 	)
@@ -253,6 +286,15 @@ func (c *ProjectController) UpdateProject(ctx *gin.Context) {
 // DeleteProject 删除清单接入点
 // @code 2003x
 func (c *ProjectController) DeleteProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20033,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -264,7 +306,7 @@ func (c *ProjectController) DeleteProject(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 删除清单
-	err := c.projectApp.Delete(ctx.Request.Context(), projectId)
+	err := c.projectApp.Delete(ctx.Request.Context(), userId, projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20032,
@@ -284,6 +326,15 @@ func (c *ProjectController) DeleteProject(ctx *gin.Context) {
 // RestoreProject 恢复清单接入点
 // @code 2004x
 func (c *ProjectController) RestoreProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20043,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -295,7 +346,7 @@ func (c *ProjectController) RestoreProject(ctx *gin.Context) {
 		return
 	}
 	// 恢复清单
-	err := c.projectApp.Restore(ctx.Request.Context(), projectId)
+	err := c.projectApp.Restore(ctx.Request.Context(), userId, projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20042,
@@ -315,6 +366,15 @@ func (c *ProjectController) RestoreProject(ctx *gin.Context) {
 // ArchiveProject 归档清单接入点
 // @code 2005x
 func (c *ProjectController) ArchiveProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20053,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -326,7 +386,7 @@ func (c *ProjectController) ArchiveProject(ctx *gin.Context) {
 		return
 	}
 	// 归档清单
-	err := c.projectApp.Archive(ctx.Request.Context(), projectId)
+	err := c.projectApp.Archive(ctx.Request.Context(), userId, projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20052,
@@ -346,6 +406,15 @@ func (c *ProjectController) ArchiveProject(ctx *gin.Context) {
 // UnarchiveProject 取消归档清单接入点
 // @code 2006x
 func (c *ProjectController) UnarchiveProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20063,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -357,7 +426,7 @@ func (c *ProjectController) UnarchiveProject(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 取消归档清单
-	err := c.projectApp.Unarchive(ctx.Request.Context(), projectId)
+	err := c.projectApp.Unarchive(ctx.Request.Context(), userId, projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20062,
@@ -377,8 +446,17 @@ func (c *ProjectController) UnarchiveProject(ctx *gin.Context) {
 // ListProject 获取清单列表接入点
 // @code 2007x
 func (c *ProjectController) ListProject(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20072,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单列表
-	res, err := c.projectApp.List(ctx.Request.Context())
+	res, err := c.projectApp.List(ctx.Request.Context(), userId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20071,
@@ -398,6 +476,15 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 // GetProjectPreference 获取清单偏好接入点
 // @code 2008x
 func (c *ProjectController) GetProjectPreference(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20083,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -409,7 +496,7 @@ func (c *ProjectController) GetProjectPreference(ctx *gin.Context) {
 		return
 	}
 	// 获取清单偏好
-	res, err := c.projectApp.GetPreference(ctx.Request.Context(), projectId)
+	res, err := c.projectApp.GetPreference(ctx.Request.Context(), userId, projectId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20082,
@@ -429,6 +516,15 @@ func (c *ProjectController) GetProjectPreference(ctx *gin.Context) {
 // BatchUpdateProjects 批量更新清单接入点
 // @code 2010x
 func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20103,
+			Message: "用户未登录",
+		})
+		return
+	}
 	var req types.BatchUpdateProjectReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -439,7 +535,11 @@ func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.projectApp.BatchUpdate(ctx.Request.Context(), toBatchUpdateProjectInput(&req))
+	res, err := c.projectApp.BatchUpdate(
+		ctx.Request.Context(),
+		userId,
+		toBatchUpdateProjectInput(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20102,
@@ -458,6 +558,15 @@ func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 // SaveProjectPreference 保存清单偏好接入点
 // @code 2009x
 func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    20094,
+			Message: "用户未登录",
+		})
+		return
+	}
 	// 获取清单 ID
 	projectId := ctx.Param("projectId")
 	if projectId == "" {
@@ -482,6 +591,7 @@ func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 	// 保存清单偏好
 	err = c.projectApp.SavePreference(
 		ctx.Request.Context(),
+		userId,
 		projectId,
 		toUpdateProjectPreferenceInput(&updatePreferenceReq),
 	)

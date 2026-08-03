@@ -15,18 +15,21 @@ type PomodoroApp interface {
 	// Create 创建番茄工作记录
 	Create(
 		ctx context.Context,
+		userId int64,
 		req *dto.CreatePomodoroRecordReq,
 	) (*dto.CreatePomodoroRecordRes, error)
 
 	// Get 获取番茄工作记录
 	Get(
 		ctx context.Context,
+		userId int64,
 		req *dto.GetPomodoroRecordReq,
 	) (*dto.GetPomodoroRecordRes, error)
 
 	// List 获取番茄工作记录列表
 	List(
 		ctx context.Context,
+		userId int64,
 		req *dto.ListPomodoroRecordReq,
 	) ([]*dto.GetPomodoroRecordRes, int64, error)
 
@@ -35,34 +38,38 @@ type PomodoroApp interface {
 	// CreatePomodoro 创建常用番茄工作
 	CreatePomodoro(
 		ctx context.Context,
+		userId int64,
 		req *dto.CreatePomodoroReq,
 	) (*dto.CreatePomodoroRes, error)
 
 	// GetPomodoro 获取常用番茄工作
 	GetPomodoro(
 		ctx context.Context,
+		userId int64,
 		req *dto.GetPomodoroReq,
 	) (*dto.PomodoroRes, error)
 
 	// UpdatePomodoro 更新常用番茄工作（PATCH 语义）
 	UpdatePomodoro(
 		ctx context.Context,
+		userId int64,
 		id string,
 		req *dto.UpdatePomodoroReq,
 	) error
 
 	// DeletePomodoro 删除常用番茄工作（软删除）
-	DeletePomodoro(ctx context.Context, id string) error
+	DeletePomodoro(ctx context.Context, userId int64, id string) error
 
 	// ArchivePomodoro 归档常用番茄工作
-	ArchivePomodoro(ctx context.Context, id string) error
+	ArchivePomodoro(ctx context.Context, userId int64, id string) error
 
 	// UnarchivePomodoro 取消归档常用番茄工作
-	UnarchivePomodoro(ctx context.Context, id string) error
+	UnarchivePomodoro(ctx context.Context, userId int64, id string) error
 
 	// ListPomodoro 获取常用番茄工作列表
 	ListPomodoro(
 		ctx context.Context,
+		userId int64,
 		req *dto.ListPomodoroReq,
 	) (dto.ListPomodoroRes, int64, error)
 }

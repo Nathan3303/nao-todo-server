@@ -9,7 +9,6 @@ import (
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
-	iCtx "naotodoserver/infrastructure/context"
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
@@ -29,17 +28,15 @@ func NewPomodoroApp(
 
 // Create 创建专注记录
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param req 创建专注记录请求
 // @return 创建专注记录响应
 // @return error 错误
 func (app *PomodoroAppImpl) Create(
 	ctx context.Context,
+	userId int64,
 	req *dto.CreatePomodoroRecordReq,
 ) (*dto.CreatePomodoroRecordRes, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, domerr.ErrInvalidUserID
-	}
 	vo, err := CreatePomodoroRecordReqToVO(userId, req)
 	if err != nil {
 		return nil, err
@@ -53,17 +50,15 @@ func (app *PomodoroAppImpl) Create(
 
 // Get 获取专注记录
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param req 获取专注记录请求
 // @return 获取专注记录响应
 // @return error 错误
 func (app *PomodoroAppImpl) Get(
 	ctx context.Context,
+	userId int64,
 	req *dto.GetPomodoroRecordReq,
 ) (*dto.GetPomodoroRecordRes, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, domerr.ErrInvalidUserID
-	}
 	id, err := idutil.ParseID(req.Id)
 	if err != nil {
 		return nil, domerr.ErrInvalidID
@@ -77,17 +72,15 @@ func (app *PomodoroAppImpl) Get(
 
 // List 获取专注记录列表
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param req 获取专注记录列表请求
 // @return 获取专注记录列表响应
 // @return error 错误
 func (app *PomodoroAppImpl) List(
 	ctx context.Context,
+	userId int64,
 	req *dto.ListPomodoroRecordReq,
 ) ([]*dto.GetPomodoroRecordRes, int64, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, 0, domerr.ErrInvalidUserID
-	}
 	q := ListPomodoroRecordReqToQueryVO(userId, req)
 	entities, total, err := app.pomodoroRecordRepo.List(ctx, userId, q)
 	if err != nil {
@@ -101,17 +94,15 @@ func (app *PomodoroAppImpl) List(
 
 // CreatePomodoro 创建常用番茄工作
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param req 创建常用番茄工作请求
 // @return 创建常用番茄工作响应
 // @return error 错误
 func (app *PomodoroAppImpl) CreatePomodoro(
 	ctx context.Context,
+	userId int64,
 	req *dto.CreatePomodoroReq,
 ) (*dto.CreatePomodoroRes, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, domerr.ErrInvalidUserID
-	}
 	vo, err := CreatePomodoroReqToVO(userId, req)
 	if err != nil {
 		return nil, err
@@ -125,17 +116,15 @@ func (app *PomodoroAppImpl) CreatePomodoro(
 
 // GetPomodoro 获取常用番茄工作
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param req 获取常用番茄工作请求
 // @return 常用番茄工作响应
 // @return error 错误
 func (app *PomodoroAppImpl) GetPomodoro(
 	ctx context.Context,
+	userId int64,
 	req *dto.GetPomodoroReq,
 ) (*dto.PomodoroRes, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, domerr.ErrInvalidUserID
-	}
 	id, err := idutil.ParseID(req.Id)
 	if err != nil {
 		return nil, domerr.ErrInvalidPomodoroID
@@ -149,18 +138,16 @@ func (app *PomodoroAppImpl) GetPomodoro(
 
 // UpdatePomodoro 更新常用番茄工作（PATCH 语义）
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param id 常用番茄工作 ID
 // @param req 更新常用番茄工作请求
 // @return error 错误
 func (app *PomodoroAppImpl) UpdatePomodoro(
 	ctx context.Context,
+	userId int64,
 	id string,
 	req *dto.UpdatePomodoroReq,
 ) error {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return domerr.ErrInvalidUserID
-	}
 	idInt64, err := idutil.ParseID(id)
 	if err != nil {
 		return domerr.ErrInvalidPomodoroID
@@ -178,16 +165,14 @@ func (app *PomodoroAppImpl) UpdatePomodoro(
 
 // DeletePomodoro 删除常用番茄工作（软删除）
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param id 常用番茄工作 ID
 // @return error 错误
 func (app *PomodoroAppImpl) DeletePomodoro(
 	ctx context.Context,
+	userId int64,
 	id string,
 ) error {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return domerr.ErrInvalidUserID
-	}
 	idInt64, err := idutil.ParseID(id)
 	if err != nil {
 		return domerr.ErrInvalidPomodoroID
@@ -200,16 +185,14 @@ func (app *PomodoroAppImpl) DeletePomodoro(
 
 // ArchivePomodoro 归档常用番茄工作
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param id 常用番茄工作 ID
 // @return error 错误
 func (app *PomodoroAppImpl) ArchivePomodoro(
 	ctx context.Context,
+	userId int64,
 	id string,
 ) error {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return domerr.ErrInvalidUserID
-	}
 	idInt64, err := idutil.ParseID(id)
 	if err != nil {
 		return domerr.ErrInvalidPomodoroID
@@ -222,16 +205,14 @@ func (app *PomodoroAppImpl) ArchivePomodoro(
 
 // UnarchivePomodoro 取消归档常用番茄工作
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param id 常用番茄工作 ID
 // @return error 错误
 func (app *PomodoroAppImpl) UnarchivePomodoro(
 	ctx context.Context,
+	userId int64,
 	id string,
 ) error {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return domerr.ErrInvalidUserID
-	}
 	idInt64, err := idutil.ParseID(id)
 	if err != nil {
 		return domerr.ErrInvalidPomodoroID
@@ -244,18 +225,16 @@ func (app *PomodoroAppImpl) UnarchivePomodoro(
 
 // ListPomodoro 获取常用番茄工作列表
 // @param ctx 上下文
+// @param userId 用户 ID
 // @param req 获取常用番茄工作列表请求
 // @return 常用番茄工作列表响应
 // @return total 总记录数
 // @return error 错误
 func (app *PomodoroAppImpl) ListPomodoro(
 	ctx context.Context,
+	userId int64,
 	req *dto.ListPomodoroReq,
 ) (dto.ListPomodoroRes, int64, error) {
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, 0, domerr.ErrInvalidUserID
-	}
 	q := ListPomodoroReqToQueryVO(userId, req)
 	entities, total, err := app.pomodoroRepo.List(ctx, userId, q)
 	if err != nil {

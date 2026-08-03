@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	iCtx "naotodoserver/infrastructure/context"
 	tagApp "naotodoserver/application/tag"
 	tagDto "naotodoserver/application/tag/dto"
 	"naotodoserver/interfaces/types"
@@ -140,7 +141,16 @@ func toUpdateTagPreferenceInput(req *types.UpdateTagPreferenceReq) *tagDto.Updat
 // GetTag 获取单个标签信息接入点
 // @code 3000x
 func (c *TagController) GetTag(ctx *gin.Context) {
-	// 1. 获取标签 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30003,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
 		Failure(ctx, types.ResponseData{
@@ -149,8 +159,8 @@ func (c *TagController) GetTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 获取标签信息
-	res, err := c.tagApp.GetTag(ctx.Request.Context(), tagId)
+	// 3. 获取标签信息
+	res, err := c.tagApp.GetTag(ctx.Request.Context(), userId, tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30002,
@@ -158,7 +168,7 @@ func (c *TagController) GetTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    30000,
 		Message: "获取标签信息成功",
@@ -169,7 +179,16 @@ func (c *TagController) GetTag(ctx *gin.Context) {
 // CreateTag 创建标签接入点
 // @code 3001x
 func (c *TagController) CreateTag(ctx *gin.Context) {
-	// 1. 获取请求参数
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30013,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取请求参数
 	createTagReq := &types.CreateTagReq{}
 	err := ctx.ShouldBindJSON(createTagReq)
 	if err != nil {
@@ -180,8 +199,8 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 创建标签
-	res, err := c.tagApp.CreateTag(ctx.Request.Context(), toCreateTagInput(createTagReq))
+	// 3. 创建标签
+	res, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(createTagReq))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30012,
@@ -190,7 +209,7 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    30010,
 		Message: "创建标签成功",
@@ -201,7 +220,16 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 // UpdateTag 更新标签接入点
 // @code 3002x
 func (c *TagController) UpdateTag(ctx *gin.Context) {
-	// 1. 获取标签 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30024,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
 		Failure(ctx, types.ResponseData{
@@ -210,7 +238,7 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 获取请求参数
+	// 3. 获取请求参数
 	var updateTagReq types.UpdateTagReq
 	if err := ctx.ShouldBindJSON(&updateTagReq); err != nil {
 		Failure(ctx, types.ResponseData{
@@ -220,8 +248,13 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 更新标签
-	err := c.tagApp.UpdateTag(ctx.Request.Context(), tagId, toUpdateTagInput(&updateTagReq))
+	// 4. 更新标签
+	err := c.tagApp.UpdateTag(
+		ctx.Request.Context(),
+		userId,
+		tagId,
+		toUpdateTagInput(&updateTagReq),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30023,
@@ -230,7 +263,7 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 4. 返回结果
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    30020,
 		Message: "更新标签成功",
@@ -241,7 +274,16 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 // DeleteTag 删除标签接入点
 // @code 3003x
 func (c *TagController) DeleteTag(ctx *gin.Context) {
-	// 1. 获取标签 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30033,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
 		Failure(ctx, types.ResponseData{
@@ -250,8 +292,8 @@ func (c *TagController) DeleteTag(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 删除标签
-	err := c.tagApp.DeleteTag(ctx.Request.Context(), tagId)
+	// 3. 删除标签
+	err := c.tagApp.DeleteTag(ctx.Request.Context(), userId, tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30032,
@@ -271,11 +313,20 @@ func (c *TagController) DeleteTag(ctx *gin.Context) {
 // ListTag 获取标签列表接入点
 // @code 3004x
 func (c *TagController) ListTag(ctx *gin.Context) {
-	// 1. 获取标签 ID列表
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30044,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取标签 ID列表
 	tagIdString := ctx.Query("tagIds")
 	if tagIdString == "" {
-		// 1. 获取标签列表
-		res, err := c.tagApp.ListTag(ctx.Request.Context())
+		// 3. 获取标签列表
+		res, err := c.tagApp.ListTag(ctx.Request.Context(), userId)
 		if err != nil {
 			Failure(ctx, types.ResponseData{
 				Code:    30041,
@@ -284,14 +335,14 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 			})
 			return
 		}
-		// 2. 返回结果
+		// 4. 返回结果
 		Success(ctx, types.ResponseData{
 			Code:    30040,
 			Message: "获取标签列表成功",
 			Data:    toGetTagResList(res),
 		})
 	} else {
-		// 1. 转换标签 ID列表为字符串列表
+		// 3. 转换标签 ID列表为字符串列表
 		tagIds := strings.Split(tagIdString, ",")
 		if len(tagIds) == 0 {
 			Failure(ctx, types.ResponseData{
@@ -300,8 +351,8 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 			})
 			return
 		}
-		// 2. 获取标签列表
-		res, err := c.tagApp.ListTagByIds(ctx.Request.Context(), tagIds)
+		// 4. 获取标签列表
+		res, err := c.tagApp.ListTagByIds(ctx.Request.Context(), userId, tagIds)
 		if err != nil {
 			Failure(ctx, types.ResponseData{
 				Code:    30043,
@@ -310,7 +361,7 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 			})
 			return
 		}
-		// 3. 返回结果
+		// 5. 返回结果
 		Success(ctx, types.ResponseData{
 			Code:    30040,
 			Message: "获取标签列表成功",
@@ -322,7 +373,16 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 // GetTagPreference 获取标签偏好接入点
 // @code 3005x
 func (c *TagController) GetTagPreference(ctx *gin.Context) {
-	// 1. 获取标签 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30053,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
 		Failure(ctx, types.ResponseData{
@@ -331,8 +391,8 @@ func (c *TagController) GetTagPreference(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 获取标签偏好
-	res, err := c.tagApp.GetTagPreference(ctx.Request.Context(), tagId)
+	// 3. 获取标签偏好
+	res, err := c.tagApp.GetTagPreference(ctx.Request.Context(), userId, tagId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30052,
@@ -341,7 +401,7 @@ func (c *TagController) GetTagPreference(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回结果
+	// 4. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    30050,
 		Message: "获取标签偏好成功",
@@ -352,7 +412,16 @@ func (c *TagController) GetTagPreference(ctx *gin.Context) {
 // UpdateTagPreference 更新标签偏好接入点
 // @code 3006x
 func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
-	// 1. 获取标签 ID
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30064,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取标签 ID
 	tagId := ctx.Param("tagId")
 	if tagId == "" {
 		Failure(ctx, types.ResponseData{
@@ -361,7 +430,7 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 绑定参数
+	// 3. 绑定参数
 	var req types.UpdateTagPreferenceReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -372,9 +441,10 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 更新标签偏好
+	// 4. 更新标签偏好
 	err = c.tagApp.UpdateTagPreference(
 		ctx.Request.Context(),
+		userId,
 		tagId,
 		toUpdateTagPreferenceInput(&req),
 	)
@@ -386,7 +456,7 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 		})
 		return
 	}
-	// 4. 返回结果
+	// 5. 返回结果
 	Success(ctx, types.ResponseData{
 		Code:    30060,
 		Message: "更新标签偏好成功",
@@ -397,6 +467,15 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 // BatchUpdateTags 批量更新标签接入点
 // @code 3007x
 func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
+	// 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    30073,
+			Message: "用户未登录",
+		})
+		return
+	}
 	var req types.BatchUpdateTagReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -407,7 +486,11 @@ func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.tagApp.BatchUpdateTags(ctx.Request.Context(), toBatchUpdateTagInput(&req))
+	res, err := c.tagApp.BatchUpdateTags(
+		ctx.Request.Context(),
+		userId,
+		toBatchUpdateTagInput(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30072,

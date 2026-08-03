@@ -55,6 +55,8 @@ func LoadDomains() *application.Services {
 		sessionRepoInst,
 		identityRepo.NewRateLimitRepo(dbs.RdsCli),
 	)
+	// 初始化通知发布端口(SSE Hub 适配)
+	notificationPublisher := sse.NewNotificationPublisher()
 	// 初始化任务领域模型
 	taskRepoInst := taskRepo.NewTaskRepo(dbs.DB)
 	taskDomain := taskService.NewTaskDomain(taskRepoInst, taskRepoInst)
@@ -63,6 +65,7 @@ func LoadDomains() *application.Services {
 		taskRepoInst,
 		taskRepoInst,
 		taskRepoInst,
+		notificationPublisher,
 	)
 	// 初始化番茄领域模型
 	pomodoroRecordRepoInst := pomodoroRepo.NewPomodoroRecordRepo(dbs.DB)
