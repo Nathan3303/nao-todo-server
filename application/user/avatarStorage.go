@@ -15,6 +15,13 @@ type AvatarStorage interface {
 	// @return error 错误
 	Save(ctx context.Context, filename string, src io.Reader) (string, error)
 
+	// Open 打开已存在的头像文件流，供 HTTP 响应
+	// @param ctx 上下文
+	// @param filename 目标文件名
+	// @return io.ReadCloser 头像文件流
+	// @return error 错误
+	Open(ctx context.Context, filename string) (io.ReadCloser, error)
+
 	// Delete 删除头像文件
 	// @param ctx 上下文
 	// @param filename 目标文件名

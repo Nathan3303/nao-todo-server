@@ -70,11 +70,8 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	// 配置静态文件服务器
-	// 映射 /static/uploads 到本地 uploads 目录
-	router.Static("/static/uploads", "./uploads")
-
 	// 创建 API v1 路由组 - 应用 ClientInfo 和 RequestLogger 中间件
+	userCtrl := controllers.NewUserController(svc.User)
 	v1 := router.Group(
 		"/api",
 		middlewares.ClientInfo,
@@ -83,7 +80,6 @@ func InitRouters(svc *application.Services) *gin.Engine {
 	{
 		v1.GET("/ping", controllers.PingHandler)
 		authCtrl := controllers.NewAuthController(svc.Auth)
-		userCtrl := controllers.NewUserController(svc.User)
 		projectCtrl := controllers.NewProjectController(svc.Project)
 		taskCtrl := controllers.NewTaskController(svc.Task)
 		eventCtrl := controllers.NewEventController(svc.TaskCheckItem)
@@ -102,6 +98,14 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		UsePomodoroRouter(v1, pomodoroCtrl, svc.Auth)
 		UseSSERouter(v1, sseCtrl, svc.Auth)
 	}
+
+	// 配置头像文件访问路由（替代原先的静态目录直出）
+	// 头像文件需登录（JWT 鉴权）后方可访问
+	router.GET(
+		"/static/uploads/avatars/:filename",
+		middlewares.JWTValidator(svc.Auth),
+		userCtrl.GetAvatar,
+	)
 
 	// 返回 Gin 引擎
 	return router

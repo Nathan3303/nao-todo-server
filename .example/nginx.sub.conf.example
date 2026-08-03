@@ -130,12 +130,10 @@ server {
     # ═══════════════════════════════════════════════════════════
     # 静态资源（用户上传文件）
     # ═══════════════════════════════════════════════════════════
-    # 当前配置：通过 Go 服务代理（nginx 容器未挂载 uploads 卷）
-    #
-    # 若想 nginx 直接服务静态文件（性能更优），在 docker-compose 中
-    # 为 nginx 服务添加 volumes:
-    #   - app-uploads-data:/app/uploads:ro
-    # 然后取消下方 alias 段的注释，注释掉 proxy 段。
+    # 注意：头像文件已改为需登录（JWT 鉴权）的接口提供（Go 侧路由
+    # /static/uploads/avatars/:filename），因此必须通过 proxy 转发到
+    # Go 服务进行鉴权，【严禁】启用下方 alias 直连静态目录，否则会
+    # 绕过 JWT 鉴权导致任意用户头像文件被公开访问。
     location ^~ /static/uploads {
         proxy_pass http://app:3302;
         proxy_http_version 1.1;
@@ -144,7 +142,7 @@ server {
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # 直接服务静态文件（需挂载 uploads 卷）：
+        # 禁止启用（会绕过鉴权）：
         # alias /app/uploads/;
         # expires 30d;
         # add_header Cache-Control "public, immutable";

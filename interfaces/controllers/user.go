@@ -1,6 +1,10 @@
 package controllers
 
 import (
+	"mime"
+	"net/http"
+	"path/filepath"
+
 	iCtx "naotodoserver/infrastructure/context"
 	userApp "naotodoserver/application/user"
 	userDto "naotodoserver/application/user/dto"
@@ -304,6 +308,32 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 		Code:    10080,
 		Message: "更新用户头像成功",
 		Data:    res,
+	})
+}
+
+// GetAvatar 获取头像文件控制器
+// @code 1008x
+// 需要登录（JWT 鉴权），登录用户可查看任意头像
+func (c *UserController) GetAvatar(ctx *gin.Context) {
+	// 1. 获取文件名
+	filename := ctx.Param("filename")
+	// 2. 打开头像文件
+	f, err := c.userApp.GetAvatar(ctx.Request.Context(), filename)
+	if err != nil {
+		FailureByHttpStatus(ctx, http.StatusNotFound, types.ResponseData{
+			Code:    10084,
+			Message: "头像文件不存在",
+		})
+		return
+	}
+	defer f.Close()
+	// 3. 设置响应头并输出文件内容
+	contentType := mime.TypeByExtension(filepath.Ext(filename))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	ctx.DataFromReader(http.StatusOK, -1, contentType, f, map[string]string{
+		"Cache-Control": "private, max-age=31536000, immutable",
 	})
 }
 

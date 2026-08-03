@@ -7,10 +7,22 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	userApp "naotodoserver/application/user"
 	"naotodoserver/conf"
 )
+
+// avatarFilenamePattern 头像文件名白名单：仅允许 {数字}.jpg/.jpeg/.png，
+// 同时杜绝路径穿越（..、/、\ 等字符均无法匹配）。
+var avatarFilenamePattern = regexp.MustCompile(`^[0-9]{1,20}\.(jpg|jpeg|png)$`)
+
+// isSafeAvatarFilename 判断文件名是否为合法的头像文件名
+// @param filename 目标文件名
+// @return bool 是否合法
+func isSafeAvatarFilename(filename string) bool {
+	return avatarFilenamePattern.MatchString(filename)
+}
 
 // avatarStorageImpl 头像存储实现（本地文件系统）
 type avatarStorageImpl struct{}
@@ -64,6 +76,24 @@ func (a *avatarStorageImpl) Save(
 		conf.Conf.Uploads.AvatarDir,
 		filename,
 	), nil
+}
+
+// Open 打开已存在的头像文件流
+// @param ctx 上下文
+// @param filename 目标文件名
+// @return io.ReadCloser 头像文件流
+// @return error 错误
+func (a *avatarStorageImpl) Open(_ context.Context, filename string) (io.ReadCloser, error) {
+	// 1. 校验文件名，防止路径穿越与非法访问
+	if !isSafeAvatarFilename(filename) {
+		return nil, errors.New("非法头像文件名")
+	}
+	// 2. 打开目标文件
+	f, err := os.Open(filepath.Join(avatarDir(), filename))
+	if err != nil {
+		return nil, errors.New("头像文件打开失败 - " + err.Error())
+	}
+	return f, nil
 }
 
 // Delete 删除头像文件

@@ -44,6 +44,9 @@ type UserApp interface {
 		size int64,
 	) (*dto.UpdateAvatarOutput, error)
 
+	// GetAvatar 获取头像文件流
+	GetAvatar(ctx context.Context, filename string) (io.ReadCloser, error)
+
 	// DeleteUser 删除用户（注销账户）
 	DeleteUser(ctx context.Context, userId int64, req dto.DeleteUserInput) error
 

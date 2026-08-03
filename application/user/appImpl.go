@@ -160,6 +160,15 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	}, nil
 }
 
+// GetAvatar 获取头像文件流
+// @param ctx 上下文
+// @param filename 目标文件名
+// @return io.ReadCloser 头像文件流
+// @return error 错误
+func (u *userAppImpl) GetAvatar(ctx context.Context, filename string) (io.ReadCloser, error) {
+	return u.avatarStorage.Open(ctx, filename)
+}
+
 // DeleteUser 删除用户（注销用户）
 // @param ctx 上下文
 // @param userId 用户 ID
