@@ -1,432 +1,264 @@
 # Nao Todo Server
 
-一个功能强大的任务管理系统后端服务，基于 Go 语言开发，提供完整的任务、项目、标签、事件和评论管理功能。
+一个基于 Go 与 DDD 架构的待办事项 / 清单 / 标签 / 番茄钟后端服务，提供 RESTful API 与 SSE 实时推送。
 
-## 项目介绍
+## 特性
 
-Nao Todo Server 是一个现代化的任务管理系统后端，采用 DDD（领域驱动设计）架构，提供 RESTful API 接口，支持用户认证、任务管理、项目协作等功能。
+- 完整的 DDD 四层架构：`interfaces` / `application` / `domain` / `infrastructure`
+- 用户认证：注册、登录、JWT 鉴权、刷新、注销
+- 待办任务、清单（项目）、标签、检查事项、评论的 CRUD
+- 番茄钟（自定义方案 + 实际记录）
+- 任务提醒：定时扫描 + SSE 实时推送
+- 文件上传：本地头像存储，`/static/uploads` 静态映射
+- 安全响应头、Gzip 压缩、CORS、IP 限流
+- MySQL + Redis 持久化与缓存
+- GORM AutoMigrate，自动建表
+- 滚动日志、单文件大小限制、自动压缩
 
 ## 技术栈
 
-### 核心技术
-- **语言**: Go 1.24.6
-- **Web 框架**: Gin 1.11.0
-- **ORM**: GORM 1.31.1
-- **数据库**: MySQL 8.0+
-- **缓存**: Redis 6.0+
-- **认证**: JWT (JSON Web Token)
-- **日志**: Logrus + 每日滚动日志
+| 类别 | 选型 |
+| ---- | ---- |
+| 语言 | Go 1.25 |
+| Web 框架 | [Gin](https://github.com/gin-gonic/gin) |
+| ORM | [GORM](https://gorm.io) v1.31 |
+| 数据库 | MySQL 8.0+ |
+| 缓存 | Redis 6.0+ |
+| 认证 | JWT (golang-jwt/jwt v4) |
+| 配置 | Viper |
+| 日志 | Logrus + file-rotatelogs |
+| 定时任务 | robfig/cron v3 |
+| ID 生成 | bwmarrin/snowflake |
+| IP 解析 | lionsoul2014/ip2region |
+| 实时推送 | Server-Sent Events (Gin SSE) |
 
-### 主要依赖
-- `github.com/gin-gonic/gin` - Web 框架
-- `gorm.io/gorm` - ORM 框架
-- `github.com/go-redis/redis/v8` - Redis 客户端
-- `github.com/golang-jwt/jwt/v4` - JWT 认证
-- `github.com/bwmarrin/snowflake` - 雪花 ID 生成
-- `github.com/robfig/cron/v3` - 定时任务
-
-## 项目架构
-
-项目采用分层架构设计：
+## 架构
 
 ```
-├── application/     # 应用服务层（用例）
-├── domain/          # 领域层（实体、值对象、领域服务、仓库接口）
-├── infrastructure/  # 基础设施层（数据库、缓存、外部 API 调用）
-├── interfaces/      # 接口层（HTTP 控制器、路由、请求响应类型）
-│   ├── controllers/ # 控制器
-│   ├── middlewares/ # 中间件
-│   ├── routers/     # 路由
-│   └── types/       # 请求响应类型
-├── cmd/             # 主程序入口
-├── conf/            # 配置文件
-├── consts/          # 常量定义
-├── docs/            # API 文档和架构设计
-└── .trae/           # Trae IDE 配置
+nao-todo-server/
+├── cmd/                # 入口（main.go）
+├── conf/               # 配置文件与配置加载
+├── application/        # 应用服务层（用例编排）
+│   ├── auth/           #   认证用例
+│   ├── user/           #   用户用例
+│   ├── project/        #   清单用例
+│   ├── task/           #   任务 / 检查事项 / 评论用例
+│   ├── tag/            #   标签用例
+│   └── pomodoro/       #   番茄钟用例
+├── domain/             # 领域层（核心业务）
+│   ├── identity/       #   用户与认证领域
+│   ├── project/        #   清单领域
+│   ├── task/           #   任务领域
+│   ├── tag/            #   标签领域
+│   ├── pomodoro/       #   番茄钟领域
+│   ├── errors/         #   领域错误定义
+│   └── types/          #   通用类型
+├── infrastructure/     # 基础设施层
+│   ├── persistence/    #   MySQL / Redis 实现
+│   ├── auth/           #   JWT 实现
+│   ├── cron/           #   定时任务
+│   ├── ip2region/      #   IP 地理解析
+│   ├── logging/        #   日志
+│   ├── sse/            #   事件总线
+│   └── storage/        #   头像本地存储
+├── interfaces/         # 接口层
+│   ├── controllers/    #   HTTP 控制器
+│   ├── middlewares/    #   中间件（JWT、限流、日志…）
+│   ├── routers/        #   路由注册
+│   └── types/          #   请求 / 响应 DTO
+├── docs/               # 架构文档与开发计划
+└── .trae/              # Trae IDE 规则与计划
 ```
+
+依赖方向：`interfaces` → `application` → `domain` ← `infrastructure`。
 
 ## 快速开始
 
-### 1. 环境准备
+### 环境要求
 
-- Go 1.24.6+
+- Go 1.25+
 - MySQL 8.0+
 - Redis 6.0+
-- Git
 
-### 2. 克隆项目
+### 1. 获取代码
 
 ```bash
-git clone <项目地址>
+git clone https://github.com/<your-org>/nao-todo-server.git
 cd nao-todo-server
 ```
 
-### 3. 配置文件
+### 2. 配置
 
-复制并修改配置文件：
+复制示例配置并按需修改：
 
 ```bash
-cp conf/config.yaml.example conf/config.yaml
+cp .example/.env.example .env
+cp .example/app.config.yaml.example conf/config.yaml
 ```
 
-编辑 `conf/config.yaml` 文件，根据您的环境修改数据库、Redis 和服务器配置。
+`conf/config.yaml` 关键字段：
 
-### 4. 数据库初始化
+| 节点 | 说明 |
+| ---- | ---- |
+| `server.port` | HTTP(S) 端口（默认 3302） |
+| `server.certFile` / `keyFile` | 同时配置时启用 HTTPS |
+| `mysql.*` | MySQL 连接信息 |
+| `redis.*` | Redis 连接信息 |
+| `log.*` | 日志级别、文件路径、滚动策略 |
+| `uploads.*` | 头像 / 附件存储目录与大小限制 |
 
-确保 MySQL 服务已启动，创建数据库并配置正确的用户权限。
+### 3. 启动依赖
 
-### 5. 安装依赖
+最简单的方式是使用项目自带的 Docker Compose：
+
+```bash
+docker compose -f docker-compose-dev.yml up -d
+```
+
+或参考 `.example/` 下 `my.cnf.example` / `redis.conf.example` 在本机直接启动。
+
+### 4. 启动服务
 
 ```bash
 go mod tidy
-```
-
-### 6. 运行项目
-
-#### 方式一：直接运行
-
-```bash
 go run cmd/main.go
 ```
 
-#### 方式二：使用 fresh（热重载）
+或使用 `fresh` 实现热重载：
 
 ```bash
-# 安装 fresh
 go install github.com/pilu/fresh@latest
-
-# 运行项目
 fresh
 ```
 
-### 7. 访问项目
+### 5. 健康检查
 
-项目启动后，访问以下地址：
+```bash
+curl http://localhost:3302/api/ping
+```
 
-- 健康检查：http://localhost:3000/api/ping
-- API 文档：查看 `/docs/api.md` 文件
-- Postman 集合：`/docs/Nao Todo Server API.postman_collection.json`
+## 配置项说明
 
-## 功能特性
+```yaml
+server:
+  ip: ""              # 留空表示监听 0.0.0.0
+  port: 3302          # HTTP/HTTPS 端口
+  version: 1.0
+  jwtSecret: <密钥>    # JWT 签名密钥
+  goMaxProc: 2        # Go 运行时最大 P 数
+  certFile: ""        # TLS 证书；与 keyFile 同时存在时启用 HTTPS
+  keyFile: ""
+  debug: true         # false 时切换为 Release 模式
+```
 
-### 用户管理
-- 用户注册、登录、退出
-- 用户信息查询和更新
-- 密码修改
-- 头像上传和更新
-- 用户激活/禁用
+> 当 `certFile` 与 `keyFile` 都配置时，服务以 HTTPS 启动，并启用 TLS 1.2 + 现代加密套件。
 
-### 任务管理
-- 任务的增删改查
-- 任务状态管理（待办、进行中、已完成、已放弃等）
-- 任务优先级设置
-- 任务标签管理
-- 任务搜索和过滤
-- 分页查询
-- 任务恢复（从删除状态恢复）
+## API 概览
 
-### 项目管理
-- 项目的增删改查
-- 项目归档/取消归档
-- 项目偏好设置（视图类型、列配置等）
+所有接口均挂在 `/api` 前缀下，统一使用 `ClientInfo` + `RequestLogger` 中间件；除 `ping` 与认证接口外，其余都需经过 `JWTValidator` 与 `RateLimiter` 中间件。
 
-### 标签管理
-- 标签的增删改查
-- 标签颜色管理
-- 标签偏好设置
-
-### 事件管理（检查事项）
-- 事件的增删改查
-- 事件完成状态管理
-- 事件排序
-
-### 评论管理
-- 任务评论的增删改查
-- 评论置顶
-- 评论用户信息展示
-
-### 系统功能
-- 请求日志记录
-- 客户端信息收集
-- IP 地址解析（地理位置）
-- 频率限制
-- JWT 认证和刷新
-
-## API 文档
-
-详细的 API 文档请查看 [API 文档](./docs/api.md)。
-
-### 文档结构
-- 认证接口 (/auth)
-- 用户接口 (/user)
-- 项目接口 (/projects)
-- 标签接口 (/tags)
-- 任务接口 (/tasks)
-- 事件接口 (/events)
-- 评论接口 (/comments)
+| 模块 | 路径前缀 | 说明 |
+| ---- | -------- | ---- |
+| 健康检查 | `GET /api/ping` | 无需鉴权 |
+| 认证 | `/api/auth/*` | 注册、登录、刷新、注销 |
+| 用户 | `/api/user/*` | 用户信息、密码、头像 |
+| 清单 | `/api/projects/*` | 清单 CRUD、归档、偏好 |
+| 标签 | `/api/tags/*` | 标签 CRUD、偏好 |
+| 任务 | `/api/tasks/*` | 任务 CRUD、状态、优先级、恢复 |
+| 检查事项 | `/api/events/*` | 子事项的 CRUD 与排序 |
+| 评论 | `/api/comments/*` | 评论 CRUD、置顶 |
+| 番茄钟 | `/api/pomodoros/*` `/api/pomodoro-records/*` | 方案与实际记录 |
+| 实时推送 | `GET /api/sse/reminders` | 任务到期提醒 |
 
 ### 响应格式
 
-#### 成功响应
+成功：
+
 ```json
 {
   "code": 10000,
   "message": "操作成功",
   "data": {},
-  "pagination": {}
+  "pagination": { "total": 0, "page": 1, "limit": 20, "maxPage": 0 }
 }
 ```
 
-#### 错误响应
+失败：
+
 ```json
 {
   "code": 10001,
-  "message": "错误信息",
   "error": "详细错误描述"
 }
 ```
 
-### 错误码范围
+### 错误码分段
 
-| 范围 | 模块 | 说明 |
-|------|------|------|
-| 10000-19999 | 用户认证 | 登录、注册、权限验证 |
-| 20000-29999 | 项目管理 | 项目相关操作 |
-| 30000-39999 | 标签管理 | 标签相关操作 |
-| 40000-49999 | 任务管理 | 任务相关操作 |
-| 50000-59999 | 事件管理 | 事件相关操作 |
-| 60000-69999 | 评论管理 | 评论相关操作 |
-
-## 数据库设计
-
-### 主要表结构
-
-#### 用户表 (users)
-- id (雪花 ID)
-- email (邮箱)
-- nickname (昵称)
-- avatar (头像 URL)
-- role (角色)
-- state (状态)
-- config (用户配置)
-- created_at, updated_at
-
-#### 任务表 (tasks)
-- id (雪花 ID)
-- parent_task_id (父任务 ID)
-- project_id (项目 ID)
-- name (任务名称)
-- description (任务描述)
-- state (任务状态)
-- priority (任务优先级)
-- start_at, end_at (开始/结束时间)
-- tags (标签列表)
-- deleted_at, archived_at, star_mark_at, given_up_at
-
-#### 项目表 (projects)
-- id (雪花 ID)
-- name (项目名称)
-- description (项目描述)
-- archived_at (归档时间)
-
-#### 标签表 (tags)
-- id (雪花 ID)
-- name (标签名称)
-- description (标签描述)
-- color (标签颜色)
-
-#### 事件表 (events)
-- id (雪花 ID)
-- task_id (所属任务 ID)
-- name (事件名称)
-- description (事件描述)
-- is_done (完成状态)
-- sort_id (排序 ID)
-
-#### 评论表 (comments)
-- id (雪花 ID)
-- task_id (所属任务 ID)
-- content (评论内容)
-- attachments (附件)
-- is_top_up (是否置顶)
-- comment_user (评论用户信息)
-
-## 开发规范
-
-### 代码规范
-- 遵循 Go 官方代码规范
-- 使用 `go fmt` 格式化代码
-- 使用 `golangci-lint` 进行代码检查
-
-### 提交规范
-- 提交信息应清晰描述修改内容
-- 使用语义化提交信息（feat: 新功能, fix: 修复 bug, docs: 文档更新等）
-
-### 分支规范
-- `main` - 主分支（生产环境）
-- `develop` - 开发分支（测试环境）
-- `feature/*` - 功能开发分支
-- `hotfix/*` - 紧急修复分支
+| 区间 | 模块 |
+| ---- | ---- |
+| 10000–19999 | 用户与认证 |
+| 20000–29999 | 清单 / 项目 |
+| 30000–39999 | 标签 |
+| 40000–49999 | 任务 |
+| 50000–59999 | 检查事项 |
+| 60000–69999 | 评论 |
+| 70000–79999 | 番茄钟 |
 
 ## 部署
 
-### 生产环境部署
-
-#### 1. 编译二进制文件
+### 直接部署
 
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o nao-todo-server cmd/main.go
 ```
 
-#### 2. 创建服务配置
+推荐使用 `systemd` 托管，可参考 `docs/plans/server-deploy.md`。
 
-```systemd
-[Unit]
-Description=Nao Todo Server
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-Group=www-data
-WorkingDirectory=/path/to/project
-ExecStart=/path/to/project/nao-todo-server
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-#### 3. 启动服务
+### Docker
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl start nao-todo-server
-sudo systemctl enable nao-todo-server
+docker build -t nao-todo-server:latest .
+docker run -d \
+  --name nao-todo-server \
+  -p 3302:3302 \
+  -v $(pwd)/conf:/app/conf \
+  -v $(pwd)/infrastructure/ip2region:/app/infrastructure/ip2region \
+  -v $(pwd)/uploads:/app/uploads \
+  nao-todo-server:latest
 ```
 
-### Docker 部署
+## 日志与监控
 
-```dockerfile
-FROM golang:1.24-alpine AS builder
-
-WORKDIR /app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o nao-todo-server ./cmd
-
-FROM alpine:latest
-
-WORKDIR /app
-
-COPY --from=builder /app/nao-todo-server .
-COPY --from=builder /app/conf/config.yaml.example conf/config.yaml
-COPY --from=builder /app/infrastructure/ip2region/ip2region.xdb infrastructure/ip2region/ip2region.xdb
-
-EXPOSE 3000
-
-CMD ["./nao-todo-server"]
-```
-
-## 监控和日志
-
-### 日志配置
-
-日志文件默认保存在 `logs/app.log`，每日自动滚动：
-
-- 单个日志文件最大 100MB
-- 保留 30 天的历史日志
-- 压缩历史日志文件
-
-### 日志级别
-
-支持以下日志级别（从低到高）：
-- debug
-- info
-- warn
-- error
-- fatal
-- panic
-
-### 健康检查
-
-可以通过以下接口检查服务健康状态：
-
-```
-GET /api/ping
-```
+- 日志文件：`logs/app.log`
+- 单文件最大 100MB，保留 30 天，压缩归档
+- 支持级别：`debug` / `info` / `warn` / `error` / `fatal` / `panic`
+- 健康检查：`GET /api/ping`
 
 ## 常见问题
 
-### 1. 启动失败
+- **启动失败 / 端口占用**：检查 `conf/config.yaml` 的 `server.port`、MySQL / Redis 是否可达。
+- **JWT 鉴权失败**：确认 `jwtSecret` 与签发端一致、Token 未过期、请求头携带 `Authorization: Bearer <token>`。
+- **数据库未建表**：项目使用 GORM AutoMigrate，首次启动会自动建表；如需手动控制请自行管理 migration。
+- **IP 解析失败**：确认 `infrastructure/ip2region/ip2region.xdb` 存在且可读。
+- **SSE 不工作**：当前在 Nginx 反代时需关闭缓冲，可参考 `.example/nginx.sub.conf.example`。
 
-- 检查数据库连接配置是否正确
-- 检查 Redis 连接配置
-- 确保端口 3000 未被占用
+## 开发规范
 
-### 2. 认证失败
+- 遵循 Go 官方代码风格，`gofmt` / `goimports` 格式化
+- 提交前运行 `golangci-lint run`
+- 分支策略：`main`（生产）/ `develop`（集成）/ `feature/*` / `hotfix/*`
+- 领域代码不依赖任何框架（仅可引用 `domain` 内部包）
 
-- 检查 JWT 密钥配置
-- 确保 Token 格式正确
-- 检查 Token 是否过期
+## 路线图
 
-### 3. 数据库迁移
-
-项目使用 GORM 的自动迁移功能，第一次启动时会自动创建表。如果需要手动迁移：
-
-```bash
-go run cmd/migrate.go
-```
-
-### 4. IP 解析失败
-
-确保 `infrastructure/ip2region/ip2region.xdb` 文件存在且可读取。
-
-## 开发路线图
-
-- [ ] 添加任务提醒功能
-- [ ] 支持任务协作和共享
-- [ ] 添加任务附件管理
-- [ ] 实现任务统计和图表
-- [ ] 支持多语言
-- [ ] 添加 API 文档自动生成 (Swagger)
-- [ ] 实现服务监控和报警
-- [ ] 优化查询性能
-
-## 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交修改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
+- [ ] Swagger / OpenAPI 文档自动生成
+- [ ] 任务附件管理
+- [ ] 任务统计与图表数据接口
+- [ ] 多语言支持
+- [ ] 服务指标暴露（Prometheus）
 
 ## 许可证
 
-本项目采用 MIT 许可证，详情请查看 [LICENSE](./LICENSE) 文件。
+本项目基于 [MIT](./LICENSE) 许可证发布。
 
-MIT License 是一种宽松的开源许可证，允许您：
-- 免费使用、复制、修改、合并、出版、分发、再授权和销售本软件
-- 在任何个人或商业项目中使用本软件
-- 无需向原作者支付任何费用
-
-唯一的条件是，您必须在所有副本或重要部分的软件中保留原始版权声明和许可证声明。
-
-有关 MIT 许可证的完整内容，请查看 LICENSE 文件。
-
-## 联系方式
-
-如有问题或建议，欢迎通过以下方式联系：
-
-- 邮箱: [your-email@example.com]
-- GitHub: [项目地址]
-- 文档: `/docs/` 目录下的架构设计和 API 文档
-
----
-
-**注**: 这是一个持续开发中的项目，功能和文档会定期更新。
+Copyright (c) 2026 Nathan Lee
