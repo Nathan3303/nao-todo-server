@@ -53,13 +53,18 @@ func (r *UserRepoImpl) CreateByVO(
 // FindByEmail 根据邮箱查找用户
 func (r *UserRepoImpl) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
 	user := &models.User{}
-	r.db.
+	err := r.db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where(&models.User{Email: email}).
-		First(user)
-	if user.ID == 0 {
-		return nil, errors.New("用户不存在")
+		First(user).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("用户不存在")
+		}
+		// DB 故障时透传真实错误，避免被误判为"用户不存在"
+		return nil, err
 	}
 	return UserModel2Entity(user), nil
 }

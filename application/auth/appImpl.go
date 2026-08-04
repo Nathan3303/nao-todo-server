@@ -85,7 +85,8 @@ func (as *authAppImpl) SignUp(
 	// 通过 Email 查找用户记录
 	_, err := as.userRepo.FindByEmail(ctx, signUpInput.Email)
 	if err == nil {
-		return fmt.Errorf("auth.SignUp.FindByEmail: %w", err)
+		// 邮箱已存在，返回明确的领域错误（不包装 nil，避免错误信息损坏）
+		return domerr.ErrEmailExists
 	}
 	// 转换为 CreateUserValueObject
 	createUserValueObject, err := SignUpInputToCreateUserValueObject(signUpInput)
@@ -139,9 +140,9 @@ func (as *authAppImpl) CheckIn(
 	if err != nil {
 		return nil, fmt.Errorf("auth.CheckIn.GenerateJWT: %w", err)
 	}
-	// 5. 更新会话中的 Token 字段
+	// 5. 更新会话中的 Token 字段（CAS：仅当该用户仍持有旧 Token 时更新，避免并发轮换互相覆盖）
 	sessionEntity.Token = newJWT
-	err = as.sessionRepo.UpdateToken(ctx, sessionEntity)
+	err = as.sessionRepo.UpdateToken(ctx, sessionEntity, checkInInput.Token)
 	if err != nil {
 		return nil, fmt.Errorf("auth.CheckIn.UpdateToken: %w", err)
 	}
@@ -194,19 +195,15 @@ func (as *authAppImpl) Validate(
 	ctx context.Context,
 	token string,
 ) (domaintypes.UserID, error) {
-	// 1. 解析 JWT
+	// 1. 解析 JWT（仅验签，不校验过期）
 	userId, err := as.identityDomain.ParseJWT(ctx, token)
 	if err != nil {
 		return 0, fmt.Errorf("auth.Validate.ParseJWT: %w", err)
 	}
-	// 2. 检查用户是否存在且未注销
-	// userEntity, err := as.userRepo.FindById(ctx, userId)
-	// if err != nil {
-	// 	return 0, fmt.Errorf("auth.Validate.FindById: %w", err)
-	// }
-	// if userEntity.IsDeactived() {
-	// 	return 0, domerr.ErrUserDeactivated
-	// }
+	// 2. 检查 JWT 是否过期（会话有效期长于 JWT 有效期，须单独校验）
+	if as.identityDomain.IsJWTExpired(ctx, token) {
+		return 0, domerr.ErrTokenExpired
+	}
 	// 3. 检查会话
 	session, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, token)
 	if err != nil {

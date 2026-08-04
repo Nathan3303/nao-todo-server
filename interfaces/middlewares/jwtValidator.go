@@ -28,10 +28,10 @@ func JWTValidator(auth authApp.AuthApp) gin.HandlerFunc {
 		jwtString := getJwtString(ctx)
 		userId, err := auth.Validate(ctx, jwtString)
 		if err != nil {
+			// 不向客户端暴露内部错误细节（会话不存在、token 过期等）
 			controllers.Failure(ctx, types.ResponseData{
 				Code:    10041,
 				Message: "用户凭证验证失败",
-				Data:    err.Error(),
 			})
 			ctx.Abort()
 			return

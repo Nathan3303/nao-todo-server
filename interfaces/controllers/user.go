@@ -355,7 +355,10 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 		})
 		return
 	}
-	err = c.userApp.DeleteUser(ctx.Request.Context(), userId, toDeleteUserInput(req))
+	// 注入当前请求的会话令牌，供注销成功后删除当次 Token
+	input := toDeleteUserInput(req)
+	input.Token = iCtx.GetToken(ctx.Request.Context())
+	err = c.userApp.DeleteUser(ctx.Request.Context(), userId, input)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10092,

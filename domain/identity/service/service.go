@@ -18,6 +18,7 @@ type IdentityDomain interface {
 	DeleteSession(ctx context.Context, sessionEntity *entities.UserSession) error
 	GenerateJWT(ctx context.Context, userEntity *entities.User) (string, error)
 	ParseJWT(ctx context.Context, token string) (types.UserID, error)
+	IsJWTExpired(ctx context.Context, token string) bool
 	CheckRateLimit(ctx context.Context, key string, limit int8) error
 }
 

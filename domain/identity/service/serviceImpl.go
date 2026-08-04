@@ -78,6 +78,11 @@ func (d *identityDomainImpl) ParseJWT(ctx context.Context, token string) (types.
 	return types.UserID(jwtClaims.UserId), nil
 }
 
+// IsJWTExpired 检查 JWT 令牌是否已过期
+func (d *identityDomainImpl) IsJWTExpired(ctx context.Context, token string) bool {
+	return d.jwtRepo.IsExpired(ctx, token)
+}
+
 // CheckRateLimit 检查用户请求次数是否超过限流阈值
 func (d *identityDomainImpl) CheckRateLimit(ctx context.Context, key string, limit int8) error {
 	if d.rateLimitRepo.Get(ctx, key) >= limit {

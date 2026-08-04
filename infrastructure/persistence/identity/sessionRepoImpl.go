@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"errors"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/types"
@@ -34,11 +35,16 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 	// 1. 查找现存记录
 	currentSession := &models.UserSession{}
 	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId)}
-	sr.db.
+	err := sr.db.
 		WithContext(ctx).
 		Model(&models.UserSession{}).
 		Where("user_id = ?", findCond.UserId).
-		First(currentSession)
+		First(currentSession).
+		Error
+	// DB 故障时直接返回，避免误走插入分支产生重复会话
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
 	// 2. 获取上下文 ClientInfo
 	clientInfo := iCtx.GetClientInfo(ctx)
 	// 2. 执行结果存在逻辑 - 更新记录
@@ -152,33 +158,31 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 ) *entities.UserSession {
 	// 1. 创建结果模型
 	session := &models.UserSession{}
-	// 2. 创建查找模型（携带区域信息）
+	// 2. 创建查找模型（仅按用户 ID 与令牌匹配；Region/DeviceType 仅为记录字段，不参与匹配）
 	findCond := &models.UserSession{UserId: int64(userId), Token: token}
-	// 3. 填充 区域信息和设备类型
-	clientInfo := iCtx.GetClientInfo(ctx)
-	findCond.Region = clientInfo.IPRegion
-	findCond.DeviceType = clientInfo.DeviceType
-	// 4. 执行查找
+	// 3. 执行查找
 	sr.db.
 		WithContext(ctx).
 		Model(&models.UserSession{}).
 		Where(findCond).
 		First(&session)
-	// 5. 模型转换并返回
+	// 4. 模型转换并返回
 	return SessionModel2Entity(session)
 }
 
 // UpdateToken 更新会话令牌
 // @param ctx 上下文
-// @param sessionEntity 会话实体
+// @param sessionEntity 会话实体（含新令牌）
+// @param oldToken 更新前的旧令牌
 // @return error 错误
 func (sr *sessionRepoImpl) UpdateToken(
 	ctx context.Context,
 	sessionEntity *entities.UserSession,
+	oldToken string,
 ) error {
-	// 1. 创建模型
+	// 1. 创建模型（CAS：仅当该用户仍持有 oldToken 时才更新，避免并发轮换互相覆盖）
 	updateCond := &models.UserSession{Token: sessionEntity.Token}
-	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId)}
+	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId), Token: oldToken}
 	// 2. 执行更新
 	tx := sr.db.
 		WithContext(ctx).
@@ -187,6 +191,10 @@ func (sr *sessionRepoImpl) UpdateToken(
 		Updates(updateCond)
 	if tx.Error != nil {
 		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		// 会话已被其他请求轮换或删除，拒绝本次换发
+		return errors.New("会话令牌已失效，请重新登录")
 	}
 	// 3. 失效该会话缓存
 	sr.cache.Del(ctx, cache.SessionKey(

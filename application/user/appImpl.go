@@ -200,6 +200,12 @@ func (u *userAppImpl) DeleteUser(ctx context.Context, userId int64, req dto.Dele
 	if err := u.userRepo.Deactive(ctx, domaintypes.UserID(userId)); err != nil {
 		return fmt.Errorf("user.Deactive: %w", err)
 	}
+	// 6. 删除当次会话 Token（注销后当次登录立即失效；等待期内仍可重新登录读取数据/反悔）
+	if req.Token != "" {
+		if err := u.sessionRepo.Delete(ctx, domaintypes.UserID(userId), req.Token); err != nil {
+			return fmt.Errorf("user.DeleteUser.DeleteSession: %w", err)
+		}
+	}
 	return nil
 }
 

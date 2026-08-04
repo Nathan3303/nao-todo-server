@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"errors"
+
 	authApp "naotodoserver/application/auth"
 	authDto "naotodoserver/application/auth/dto"
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -96,10 +99,10 @@ func (c *AuthController) UserSignIn(ctx *gin.Context) {
 	// @step 2. 调用用户服务 - 登录
 	signInOutput, err := c.authApp.SignIn(ctx.Request.Context(), toSignInInput(&req))
 	if err != nil {
+		// 统一提示，避免泄露邮箱是否已注册（防用户枚举）
 		Failure(ctx, types.ResponseData{
 			Code:    10012,
-			Message: "登录失败",
-			Data:    err.Error(),
+			Message: "邮箱或密码错误",
 		})
 		return
 	}
@@ -128,10 +131,13 @@ func (c *AuthController) UserSignUp(ctx *gin.Context) {
 	// @step 2. 调用用户服务 - 注册
 	err = c.authApp.SignUp(ctx.Request.Context(), toSignUpInput(&req))
 	if err != nil {
+		msg := "注册失败"
+		if errors.Is(err, domerr.ErrEmailExists) {
+			msg = "该邮箱已被注册"
+		}
 		Failure(ctx, types.ResponseData{
 			Code:    10002,
-			Message: "注册失败",
-			Data:    err.Error(),
+			Message: msg,
 		})
 		return
 	}
@@ -162,7 +168,6 @@ func (c *AuthController) UserCheckIn(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    10022,
 			Message: "检入失败",
-			Data:    err.Error(),
 		})
 		return
 	}
@@ -194,7 +199,6 @@ func (c *AuthController) UserSignOut(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    10032,
 			Message: "登出失败",
-			Data:    err.Error(),
 		})
 		return
 	}

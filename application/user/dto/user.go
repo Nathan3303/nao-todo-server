@@ -41,6 +41,7 @@ type UpdateAvatarOutput struct {
 // DeleteUserInput 删除用户（注销账户）入参
 type DeleteUserInput struct {
 	Password string
+	Token    string // 当前请求的会话令牌（注销成功后删除当次 Token）
 }
 
 // RestoreUserInput 激活用户入参

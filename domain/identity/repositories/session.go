@@ -14,7 +14,7 @@ type UserSession interface {
 		userId types.UserID,
 		token string,
 	) *entities.UserSession
-	UpdateToken(ctx context.Context, sessionEntity *entities.UserSession) error
+	UpdateToken(ctx context.Context, sessionEntity *entities.UserSession, oldToken string) error
 	Delete(ctx context.Context, userId types.UserID, token string) error
 	DeleteByUserId(ctx context.Context, userId types.UserID) error
 	IsSessionValid(ctx context.Context, userId types.UserID, token string) bool

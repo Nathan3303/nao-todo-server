@@ -98,12 +98,17 @@ func (jwtService *JWTServiceImpl) Generate(
 func (jwtService *JWTServiceImpl) Parse(jwtString string) (*Claims, error) {
 	claims := &Claims{}
 	// 解析 JWT 字符串
+	// - WithValidMethods：仅接受 HS256 签名算法，防止算法混淆攻击
+	// - WithoutClaimsValidation：不自动校验 exp 等声明，过期判断由业务层负责
+	//   （会话有效期长于 JWT 有效期，CheckIn 需在 JWT 过期但会话有效时换发新令牌）
 	token, err := jwt.ParseWithClaims(
 		jwtString,
 		claims,
 		func(token *jwt.Token) (any, error) {
 			return jwtService.Secret, nil
 		},
+		jwt.WithValidMethods([]string{"HS256"}),
+		jwt.WithoutClaimsValidation(),
 	)
 	// 检查解析结果是否有效
 	if err != nil || !token.Valid {

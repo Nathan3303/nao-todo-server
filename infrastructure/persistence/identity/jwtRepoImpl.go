@@ -2,7 +2,6 @@ package identity
 
 import (
 	"context"
-	"errors"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
 	"naotodoserver/infrastructure/auth"
@@ -30,7 +29,8 @@ func (r *JWTRepoImpl) Generate(
 	return token, nil
 }
 
-func (r *JWTRepoImpl) Validate(ctx context.Context, jwtString string) bool {
+// IsExpired 检查 JWT 是否已过期（解析失败视为已过期）
+func (r *JWTRepoImpl) IsExpired(ctx context.Context, jwtString string) bool {
 	return auth.GetJWTService().IsTokenExpired(jwtString)
 }
 
@@ -38,12 +38,10 @@ func (r *JWTRepoImpl) Parse(
 	ctx context.Context,
 	jwtString string,
 ) (*valueobjects.JWTClaims, error) {
+	// 仅验签与解析；过期判断由业务层负责（Validate 检查过期、CheckIn 依赖会话有效期）
 	claims, err := auth.GetJWTService().Parse(jwtString)
 	if err != nil {
 		return nil, err
-	}
-	if auth.GetJWTService().IsExpired(claims) {
-		return nil, errors.New("token is expired")
 	}
 	return Claims2JWTClaimsVO(claims), nil
 }

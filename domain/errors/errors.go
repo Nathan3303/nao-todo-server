@@ -13,6 +13,7 @@ var (
 	ErrInvalidItemID     = errors.New("检查事项 ID 格式错误")
 	ErrInvalidPomodoroID = errors.New("常用番茄工作 ID 无效")
 	ErrPasswordMismatch  = errors.New("密码错误")
+	ErrEmailExists       = errors.New("该邮箱已被注册")
 	ErrUserDeactivated   = errors.New("用户已注销")
 	ErrUserInCooldown    = errors.New("操作过于频繁，请30天后再试")
 	ErrProjectNotFound   = errors.New("清单不存在")
