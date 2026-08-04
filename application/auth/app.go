@@ -27,7 +27,7 @@ type AuthApp interface {
 	Validate(ctx context.Context, token string) (domaintypes.UserID, error)
 
 	// 处理用户限流
-	RateLimit(ctx context.Context, clientIP string, limit int8) error
+	RateLimit(ctx context.Context, clientIP string, limit int64) error
 }
 
 // authAppImpl 认证应用实现

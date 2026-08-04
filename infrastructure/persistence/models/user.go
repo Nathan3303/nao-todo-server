@@ -78,7 +78,8 @@ type UserSession struct {
 
 	// 用户 ID
 	// 用于关联用户表，获取用户会话信息
-	UserId int64 `gorm:"not null;index:idx_user_session_user_id"`
+	// 唯一：一用户同时只保留一个会话（重新登录覆盖旧会话）
+	UserId int64 `gorm:"not null;uniqueIndex:idx_user_session_user_id"`
 
 	// 会话令牌
 	// 用于验证用户会话，防止未授权访问

@@ -19,7 +19,7 @@ type IdentityDomain interface {
 	GenerateJWT(ctx context.Context, userEntity *entities.User) (string, error)
 	ParseJWT(ctx context.Context, token string) (types.UserID, error)
 	IsJWTExpired(ctx context.Context, token string) bool
-	CheckRateLimit(ctx context.Context, key string, limit int8) error
+	CheckRateLimit(ctx context.Context, key string, limit int64) error
 }
 
 type identityDomainImpl struct {

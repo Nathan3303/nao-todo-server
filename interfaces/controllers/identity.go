@@ -6,6 +6,7 @@ import (
 	authApp "naotodoserver/application/auth"
 	authDto "naotodoserver/application/auth/dto"
 	domerr "naotodoserver/domain/errors"
+	"naotodoserver/infrastructure/logging"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -100,6 +101,13 @@ func (c *AuthController) UserSignIn(ctx *gin.Context) {
 	signInOutput, err := c.authApp.SignIn(ctx.Request.Context(), toSignInInput(&req))
 	if err != nil {
 		// 统一提示，避免泄露邮箱是否已注册（防用户枚举）
+		// 服务端记录真实原因，便于排查与安全监控（仅记录邮箱，不记录密码）
+		switch {
+		case errors.Is(err, domerr.ErrUserNotFound), errors.Is(err, domerr.ErrPasswordMismatch):
+			logging.Warnf("UserSignIn rejected: email=%s err=%v", req.Email, err)
+		default:
+			logging.Errorf("UserSignIn failed: email=%s err=%v", req.Email, err)
+		}
 		Failure(ctx, types.ResponseData{
 			Code:    10012,
 			Message: "邮箱或密码错误",

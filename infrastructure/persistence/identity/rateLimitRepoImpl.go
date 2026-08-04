@@ -3,8 +3,7 @@ package identity
 import (
 	"context"
 	"naotodoserver/domain/identity/repositories"
-	"strconv"
-	"time"
+	"naotodoserver/infrastructure/logging"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -19,29 +18,44 @@ func NewRateLimitRepo(rds *redis.Client) repositories.RateLimit {
 	}
 }
 
-func (rateLimitRepo *RateLimitRepoImpl) Get(ctx context.Context, key string) int8 {
-	val, err := rateLimitRepo.rds.Get(ctx, key).Result()
-	var count int8
-	switch err {
-	case redis.Nil:
-		// key 不存在
-		count = -1
-	default:
-		// key 存在时解析真实计数；其余错误（如 Redis 不可用）解析失败归 0，不误拦请求
-		parsed, _ := strconv.ParseInt(val, 10, 8)
-		count = int8(parsed)
-	}
-	return count
-}
+// allowScript 原子执行"检查 + 计数"：
+// - 窗口内计数达到 limit 时返回 -1（拒绝），超限请求不计数
+// - 否则计数 +1 并返回当前计数（放行）
+// - 首次计数时设置窗口过期时间（60 秒）
+const allowScript = `
+local c = redis.call('GET', KEYS[1])
+if c and tonumber(c) >= tonumber(ARGV[1]) then
+  return -1
+end
+local n = redis.call('INCR', KEYS[1])
+if n == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+return n
+`
 
-func (rateLimitRepo *RateLimitRepoImpl) Incr(ctx context.Context, key string) error {
-	// 原子递增并设置过期时间（1 分钟）
-	_, err := rateLimitRepo.rds.Incr(ctx, key).Result()
+// Allow 原子地检查并计数（避免 Get + Incr 两步操作的并发竞态）
+// Redis 不可用时放行（fail-open），避免限流服务故障导致全站请求被拒
+func (rateLimitRepo *RateLimitRepoImpl) Allow(
+	ctx context.Context,
+	key string,
+	limit int64,
+) (bool, error) {
+	val, err := rateLimitRepo.rds.Eval(
+		ctx,
+		allowScript,
+		[]string{key},
+		limit,
+		60,
+	).Result()
 	if err != nil {
-		// Redis 不可用时放行（fail-open），避免限流服务故障导致全站请求被拒
-		return nil
+		// Redis 不可用时放行（fail-open），避免限流服务故障导致全站请求被拒；记录告警以便发现限流失效
+		logging.Warnf("rate limit skipped (redis unavailable): key=%s err=%v", key, err)
+		return true, nil
 	}
-	// 设置 TTL（只在首次设置时生效，避免覆盖已有 TTL）
-	rateLimitRepo.rds.ExpireNX(ctx, key, time.Minute)
-	return nil
+	count, ok := val.(int64)
+	if !ok {
+		return true, nil
+	}
+	return count >= 0, nil
 }

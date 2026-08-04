@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
@@ -83,10 +84,14 @@ func (d *identityDomainImpl) IsJWTExpired(ctx context.Context, token string) boo
 	return d.jwtRepo.IsExpired(ctx, token)
 }
 
-// CheckRateLimit 检查用户请求次数是否超过限流阈值
-func (d *identityDomainImpl) CheckRateLimit(ctx context.Context, key string, limit int8) error {
-	if d.rateLimitRepo.Get(ctx, key) >= limit {
+// CheckRateLimit 检查用户请求次数是否超过限流阈值（原子检查 + 计数）
+func (d *identityDomainImpl) CheckRateLimit(ctx context.Context, key string, limit int64) error {
+	allowed, err := d.rateLimitRepo.Allow(ctx, key, limit)
+	if err != nil {
+		return fmt.Errorf("identity.CheckRateLimit: %w", err)
+	}
+	if !allowed {
 		return errors.New("用户请求次数超过限流阈值")
 	}
-	return d.rateLimitRepo.Incr(ctx, key)
+	return nil
 }

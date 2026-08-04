@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type sessionRepoImpl struct {
@@ -32,7 +33,7 @@ func NewSessionRepo(db *gorm.DB, c *cache.Cache) repositories.UserSession {
 // @param sessionEntity 会话实体
 // @return error 错误
 func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.UserSession) error {
-	// 1. 查找现存记录
+	// 1. 查找现存记录（仅用于清理旧 token 的会话缓存）
 	currentSession := &models.UserSession{}
 	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId)}
 	err := sr.db.
@@ -47,45 +48,29 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 	}
 	// 2. 获取上下文 ClientInfo
 	clientInfo := iCtx.GetClientInfo(ctx)
-	// 2. 执行结果存在逻辑 - 更新记录
-	if currentSession.ID != 0 {
-		tx := sr.db.WithContext(ctx).Model(&models.UserSession{}).
-			Where(findCond).
-			UpdateColumns(&models.UserSession{
-				Token:      sessionEntity.Token,
-				ExpiredAt:  time.Now().Add(time.Hour * 24 * 7),
-				IP4:        clientInfo.IP4,
-				Region:     clientInfo.IPRegion,
-				DeviceType: clientInfo.DeviceType,
-			})
-		if tx.Error != nil {
-			return tx.Error
-		}
-		// 3. 失效旧 token 与新 token 的会话缓存
-		if currentSession.Token != "" {
-			sr.cache.Del(ctx, cache.SessionKey(
-				int64(sessionEntity.UserId),
-				currentSession.Token,
-			))
-		}
-		sr.cache.Del(ctx, cache.SessionKey(
-			int64(sessionEntity.UserId),
-			sessionEntity.Token,
-		))
-		return nil
-	}
-	// 3. 执行结果不存在逻辑 - 创建记录
+	// 3. 写入会话（一用户一会话：依赖 user_id 唯一索引）
+	//    OnConflict 保证并发登录时冲突走更新而非插入，避免产生孤儿会话行
 	createCond := SessionEntity2Model(sessionEntity)
 	createCond.IP4 = clientInfo.IP4
 	createCond.Region = clientInfo.IPRegion
 	createCond.DeviceType = clientInfo.DeviceType
 	createCond.ExpiredAt = time.Now().Add(time.Hour * 24 * 7)
-	tx := sr.db.WithContext(ctx).Model(&models.UserSession{}).
+	tx := sr.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"token", "expired_at", "ip4", "region", "device_type"}),
+		}).
 		Create(createCond)
 	if tx.Error != nil {
 		return tx.Error
 	}
-	// 4. 失效新 token 的会话缓存
+	// 4. 失效旧 token 与新 token 的会话缓存
+	if currentSession.Token != "" {
+		sr.cache.Del(ctx, cache.SessionKey(
+			int64(sessionEntity.UserId),
+			currentSession.Token,
+		))
+	}
 	sr.cache.Del(ctx, cache.SessionKey(
 		int64(sessionEntity.UserId),
 		sessionEntity.Token,
@@ -99,8 +84,8 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 // @param token 会话令牌
 // @return error 错误
 func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, token string) error {
-	// 1. 创建删除模型
-	deleteCond := &models.UserSession{Token: token}
+	// 1. 创建删除模型（同时限定 user_id 与 token，避免误删其他用户会话）
+	deleteCond := &models.UserSession{UserId: int64(userId), Token: token}
 	// 2. 执行删除
 	tx := sr.db.
 		WithContext(ctx).

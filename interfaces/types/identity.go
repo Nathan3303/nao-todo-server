@@ -2,7 +2,7 @@ package types
 
 // SignInReq 登录请求结构体
 type SignInReq struct {
-	Email    string `json:"email" form:"email" binding:"required"`
+	Email    string `json:"email" form:"email" binding:"required,email"`
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
@@ -15,7 +15,7 @@ type SignInRes struct {
 
 // SignUpReq 注册请求结构体
 type SignUpReq struct {
-	Email    string `json:"email" form:"email" binding:"required"`
+	Email    string `json:"email" form:"email" binding:"required,email"`
 	Password string `json:"password" form:"password" binding:"required"`
 	Nickname string `json:"nickname" form:"nickname"`
 }

@@ -16,10 +16,13 @@ func getJwtString(ctx *gin.Context) string {
 		return token
 	}
 	// 其次从 Authorization header 获取
-	jwtRaw := ctx.GetHeader("Authorization")
-	jwtString := strings.Split(jwtRaw, "Bearer ")
-	jwtString = append(jwtString, "")
-	return jwtString[1]
+	// RFC 7235：scheme 大小写不敏感，兼容 "Bearer xxx" / "bearer xxx"；容忍多余空白
+	authHeader := ctx.GetHeader("Authorization")
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return strings.TrimSpace(parts[1])
+	}
+	return ""
 }
 
 func JWTValidator(auth authApp.AuthApp) gin.HandlerFunc {

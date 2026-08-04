@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"naotodoserver/application/auth/dto"
 	domerr "naotodoserver/domain/errors"
@@ -84,9 +85,13 @@ func (as *authAppImpl) SignUp(
 ) error {
 	// 通过 Email 查找用户记录
 	_, err := as.userRepo.FindByEmail(ctx, signUpInput.Email)
-	if err == nil {
+	switch {
+	case err == nil:
 		// 邮箱已存在，返回明确的领域错误（不包装 nil，避免错误信息损坏）
 		return domerr.ErrEmailExists
+	case !errors.Is(err, domerr.ErrUserNotFound):
+		// DB 故障等真实错误直接透传，避免被误判为"邮箱可用"而继续走创建分支
+		return fmt.Errorf("auth.SignUp.FindByEmail: %w", err)
 	}
 	// 转换为 CreateUserValueObject
 	createUserValueObject, err := SignUpInputToCreateUserValueObject(signUpInput)
@@ -96,6 +101,10 @@ func (as *authAppImpl) SignUp(
 	// 创建
 	_, err = as.userRepo.CreateByVO(ctx, createUserValueObject)
 	if err != nil {
+		// 并发注册下唯一索引冲突，识别为邮箱已存在
+		if errors.Is(err, domerr.ErrEmailExists) {
+			return domerr.ErrEmailExists
+		}
 		return fmt.Errorf("auth.SignUp.Create: %w", err)
 	}
 	// 注册成功
@@ -223,7 +232,7 @@ func (as *authAppImpl) Validate(
 func (as *authAppImpl) RateLimit(
 	ctx context.Context,
 	clientIP string,
-	limit int8,
+	limit int64,
 ) error {
 	// 1. 构造限流 key
 	key := "rate_limit:" + clientIP

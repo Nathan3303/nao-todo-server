@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RateLimiter(auth authApp.AuthApp, limit int8, tag string) gin.HandlerFunc {
+func RateLimiter(auth authApp.AuthApp, limit int64, tag string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 1. 构建 Key
 		key := ctx.ClientIP() + ":" + tag
