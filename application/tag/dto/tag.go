@@ -19,6 +19,9 @@ type CreateTagReq struct {
 	Name        string
 	Description string
 	Color       string
+	Id          *string // 同步元数据：客户端预置 id
+	CreatedAt   *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 }
 
 // CreateTagRes 创建标签出参
@@ -39,6 +42,7 @@ type UpdateTagReq struct {
 	Description *string
 	Color       *string
 	SortId      *uint16
+	UpdatedAt   *string // 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
 }
 
 // BatchUpdateTagItem 批量更新标签项

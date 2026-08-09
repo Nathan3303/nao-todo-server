@@ -19,6 +19,9 @@ type GetProjectRes struct {
 type CreateProjectReq struct {
 	Name        string
 	Description string
+	Id          *string // 同步元数据：客户端预置 id
+	CreatedAt   *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 }
 
 // CreateProjectRes 创建任务清单出参
@@ -39,6 +42,7 @@ type UpdateProjectReq struct {
 	Name        *string
 	Description *string
 	SortId      *uint16
+	UpdatedAt   *string // 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
 }
 
 // BatchUpdateProjectItem 批量更新任务清单项

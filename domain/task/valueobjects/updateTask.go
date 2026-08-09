@@ -3,6 +3,7 @@ package valueobjects
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/textutils"
@@ -30,6 +31,8 @@ type UpdateTask struct {
 	RemindTime     *string
 	RemindWeekdays *uint8
 	SortId         *uint16
+	// UpdatedAt 乐观锁时间戳（零值=未提供）：早于服务端当前版本时不更新（LWW）
+	UpdatedAt time.Time
 }
 
 // Validate 验证更新任务值对象

@@ -17,6 +17,7 @@ func CreateTaskValueObjectToModel(
 	createTaskValueObject *valueobjects.CreateTask,
 ) *models.Task {
 	return &models.Task{
+		ModelBase:      models.ModelBase{ID: createTaskValueObject.Id, CreatedAt: createTaskValueObject.CreatedAt, UpdatedAt: createTaskValueObject.UpdatedAt},
 		UserId:         userId,
 		ParentTaskId:   int64(createTaskValueObject.ParentTaskId),
 		Name:           createTaskValueObject.Name,
@@ -35,11 +36,52 @@ func CreateTaskValueObjectToModel(
 	}
 }
 
+// CreateTaskVOToUpdateMap 创建任务值对象转换为全量更新映射（Upsert 覆盖用）
+// 仅包含 Create VO 表达的字段，不触碰 archived_at/star_mark_at/given_up_at/completed_at 等列
+func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
+	tagsJSON, _ := json.Marshal(vo.Tags)
+	return map[string]any{
+		"ParentTaskId":   int64(vo.ParentTaskId),
+		"Name":           vo.Name,
+		"Description":    vo.Description,
+		"State":          uint8(vo.State),
+		"Priority":       uint8(vo.Priority),
+		"StartAt":        vo.StartAt.ToSqlNullTime(),
+		"EndAt":          vo.EndAt.ToSqlNullTime(),
+		"ProjectId":      int64(vo.ProjectId),
+		"Tags":           string(tagsJSON),
+		"RemindAt":       vo.RemindAt.ToSqlNullTime(),
+		"RemindRepeat":   vo.RemindRepeat,
+		"RemindTime":     vo.RemindTime,
+		"RemindWeekdays": vo.RemindWeekdays,
+		"SortId":         vo.SortId,
+	}
+}
+
+// TaskCheckItemVOToUpdateMap 创建检查项值对象转换为全量更新映射（Upsert 覆盖用）
+func TaskCheckItemVOToUpdateMap(vo *valueobjects.CreateTaskCheckItem) map[string]any {
+	return map[string]any{
+		"TaskId":      vo.TaskId,
+		"Name":        vo.Name,
+		"Description": vo.Description,
+		"SortId":      vo.SortId,
+	}
+}
+
+// TaskCommentVOToUpdateMap 创建评论值对象转换为全量更新映射（Upsert 覆盖用）
+func TaskCommentVOToUpdateMap(vo *valueobjects.CreateTaskComment) map[string]any {
+	attachmentsJSON, _ := json.Marshal(vo.Attachments)
+	return map[string]any{
+		"Content":     vo.Content,
+		"Attachments": string(attachmentsJSON),
+		"IsTopUp":     vo.IsTopUp,
+	}
+}
+
 // UpdateTaskValueObjectToMap 更新任务值对象转换为任务映射
 // @param updateTaskValueObject 更新任务值对象
 // @return 任务映射
-func UpdateTaskValueObjectToMap(
-	updateTaskValueObject *valueobjects.UpdateTask,
+func UpdateTaskValueObjectToMap(	updateTaskValueObject *valueobjects.UpdateTask,
 ) map[string]any {
 	updateMap := make(map[string]any)
 	if updateTaskValueObject.UserId != 0 {
@@ -179,7 +221,8 @@ func TaskModels2Entities(mList []*models.Task) []*entities.Task {
 // TaskCheckItemValueObjectToModel 创建检查项值对象转换为检查项模型
 func TaskCheckItemValueObjectToModel(vo *valueobjects.CreateTaskCheckItem) *models.TaskCheckItem {
 	return &models.TaskCheckItem{
-		UserId:      vo.UserId,
+		ModelBase: models.ModelBase{ID: vo.Id, CreatedAt: vo.CreatedAt, UpdatedAt: vo.UpdatedAt},
+		UserId:    vo.UserId,
 		TaskId:      vo.TaskId,
 		Name:        vo.Name,
 		Description: vo.Description,
@@ -261,7 +304,8 @@ func TaskCheckItemModels2Entities(list []*models.TaskCheckItem) []*entities.Task
 // CreateTaskCommentValueObjectToModel 创建任务评论值对象转换为任务评论模型
 func CreateTaskCommentValueObjectToModel(vo *valueobjects.CreateTaskComment) *models.TaskComment {
 	return &models.TaskComment{
-		UserId:      int64(vo.UserId),
+		ModelBase: models.ModelBase{ID: vo.Id, CreatedAt: vo.CreatedAt, UpdatedAt: vo.UpdatedAt},
+		UserId:    int64(vo.UserId),
 		TaskId:      int64(vo.TaskId),
 		Content:     vo.Content,
 		Attachments: vo.Attachments,

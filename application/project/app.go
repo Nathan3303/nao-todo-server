@@ -40,6 +40,14 @@ type ProjectApp interface {
 
 	// 获取任务清单列表
 	List(ctx context.Context, userId int64) (dto.ListProjectRes, error)
+	// ListSync 增量同步任务清单列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		updatedAt string,
+		cursorId string,
+		limit int,
+	) (dto.ListProjectRes, error)
 
 	// 批量更新任务清单
 	BatchUpdate(

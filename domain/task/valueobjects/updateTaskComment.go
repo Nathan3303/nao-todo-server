@@ -2,6 +2,7 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
@@ -11,6 +12,8 @@ type UpdateTaskComment struct {
 	Content     *string
 	Attachments *[]string
 	IsTopUp     *bool
+	// UpdatedAt 乐观锁时间戳（零值=未提供）：早于服务端当前版本时不更新（LWW）
+	UpdatedAt time.Time
 }
 
 // Validate 验证更新评论 Value Object 是否符合要求

@@ -2,7 +2,8 @@ package models
 
 import (
 	"os"
-	"time"
+
+	"naotodoserver/consts"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
@@ -16,16 +17,8 @@ var SnowNode *snowflake.Node
 // @return 返回初始化后的 Snowflake 节点
 func InitSnowflake(machineID int64) *snowflake.Node {
 	// 设置纪元时间（可选，避免2039问题）
-	snowflake.Epoch = time.Date(
-		2023,
-		3,
-		1,
-		0,
-		0,
-		0,
-		0,
-		time.UTC,
-	).Unix() * 1000
+	// 跨端契约常量，见 consts.SnowflakeEpochMS
+	snowflake.Epoch = consts.SnowflakeEpochMS
 
 	// 初始化 Snowflake 节点
 	var err error

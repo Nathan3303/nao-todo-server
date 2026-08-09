@@ -271,6 +271,35 @@ func (app *projectAppImpl) List(ctx context.Context, userId int64) (dto.ListProj
 	return EntitiesToGetResList(projectEntities), nil
 }
 
+// ListSync 增量同步任务清单列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
+func (app *projectAppImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	updatedAt string,
+	cursorId string,
+	limit int,
+) (dto.ListProjectRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if cursorId != "" {
+		cursorID, err = idutil.ParseID(cursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	projectEntities, err := app.repo.ListSync(ctx, userId, cursor, cursorID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("project.ListSync: %w", err)
+	}
+	return EntitiesToGetResList(projectEntities), nil
+}
+
 // 批量更新任务清单
 // @param ctx 上下文
 // @param userId 用户 ID

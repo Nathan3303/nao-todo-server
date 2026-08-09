@@ -32,6 +32,14 @@ type TagApp interface {
 
 	// 获取标签列表
 	ListTag(ctx context.Context, userId int64) ([]*dto.GetTagRes, error)
+	// ListTagSync 增量同步标签列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
+	ListTagSync(
+		ctx context.Context,
+		userId int64,
+		updatedAt string,
+		cursorId string,
+		limit int,
+	) ([]*dto.GetTagRes, error)
 
 	// 根据标签ID列表获取标签列表
 	ListTagByIds(ctx context.Context, userId int64, tagIds []string) ([]*dto.GetTagRes, error)

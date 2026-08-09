@@ -26,6 +26,13 @@ func CreateProjectReqToValueObject(
 	if err != nil {
 		return nil, err
 	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	createProjectValueObject.Id = id
+	createProjectValueObject.CreatedAt = createdAt
+	createProjectValueObject.UpdatedAt = updatedAt
 	return createProjectValueObject, nil
 }
 
@@ -36,7 +43,7 @@ func ProjectEntityToGetRes(projectEntity *entities.Project) *dto.GetProjectRes {
 	var res dto.GetProjectRes
 	res.Id = idutil.FormatID(projectEntity.Id)
 	res.CreatedAt = projectEntity.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = projectEntity.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = projectEntity.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = projectEntity.DeletedAt.ToString(time.RFC3339)
 	res.Name = projectEntity.Name
 	res.Description = projectEntity.Description
@@ -60,6 +67,13 @@ func UpdateProjectReqToValueObject(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if updateProjectReq.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*updateProjectReq.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		updateProjectValueObject.UpdatedAt = t
 	}
 	return updateProjectValueObject, nil
 }
@@ -111,7 +125,7 @@ func ProjectPreferenceEntityToGetRes(
 	var res dto.GetProjectPreferenceRes
 	res.Id = idutil.FormatID(projectPreferenceEntity.Id)
 	res.CreatedAt = projectPreferenceEntity.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = projectPreferenceEntity.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = projectPreferenceEntity.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = projectPreferenceEntity.DeletedAt.ToString(time.RFC3339)
 	res.ProjectId = idutil.FormatID(projectPreferenceEntity.ProjectId)
 	res.ViewType = projectPreferenceEntity.ViewType

@@ -11,6 +11,9 @@ import (
 
 // CreateTask 创建任务值对象
 type CreateTask struct {
+	Id             int64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 	ParentTaskId   types.TaskID
 	Name           string
 	Description    string

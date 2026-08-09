@@ -26,10 +26,18 @@ func (p *ProjectDomainImpl) Create(
 ) (*entities.Project, error) {
 	// 设置排序 ID
 	createProjectValueObject.SortId = p.repo.GetMaxSortId(ctx, createProjectValueObject.UserId) + 1
-	// 创建任务清单
-	projectEntity, err := p.repo.Create(ctx, createProjectValueObject)
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	projectEntity, created, err := p.repo.Upsert(
+		ctx,
+		createProjectValueObject.UserId,
+		createProjectValueObject,
+	)
 	if err != nil {
 		return nil, err
+	}
+	// 仅首次新建时初始化基础偏好；覆盖/重试场景保留用户已有偏好
+	if !created {
+		return projectEntity, nil
 	}
 	// 创建任务清单基础偏好值对象
 	projectPreferenceValueObject, err := valueobjects.NewSaveProjectPreference(

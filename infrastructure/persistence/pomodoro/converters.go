@@ -12,6 +12,11 @@ import (
 // CreatePomodoroRecordVOToModel 转换创建待办任务番茄工作记录为数据库模型
 func CreatePomodoroRecordVOToModel(vo *valueobjects.CreatePomodoroRecord) *models.PomodoroRecord {
 	var m models.PomodoroRecord
+	m.ModelBase = models.ModelBase{
+		ID:        vo.Id,
+		CreatedAt: vo.CreatedAt,
+		UpdatedAt: vo.UpdatedAt,
+	}
 	m.UserId = int64(vo.UserId)
 	m.SessionId = vo.SessionId
 	m.PomodoroId = int64(vo.PomodoroId)
@@ -62,12 +67,45 @@ func PomodoroRecordModels2Entities(list []*models.PomodoroRecord) []*entities.Po
 // CreatePomodoroVOToModel 转换创建常用番茄工作值对象为数据库模型
 func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 	var m models.Pomodoro
+	m.ModelBase = models.ModelBase{
+		ID:        vo.Id,
+		CreatedAt: vo.CreatedAt,
+		UpdatedAt: vo.UpdatedAt,
+	}
 	m.UserId = int64(vo.UserId)
 	m.Type = uint8(vo.Type)
 	m.Name = vo.Name
 	m.Description = vo.Description
 	m.Duration = vo.Duration
 	return &m
+}
+
+// CreatePomodoroVOToUpdateMap 创建常用番茄工作值对象转换为全量更新映射（Upsert 覆盖用）
+// 仅包含 Create VO 表达的字段，不触碰 archived_at/total_duration 等列
+func CreatePomodoroVOToUpdateMap(vo *valueobjects.CreatePomodoro) map[string]any {
+	return map[string]any{
+		"Type":        uint8(vo.Type),
+		"Name":        vo.Name,
+		"Description": vo.Description,
+		"Duration":    vo.Duration,
+	}
+}
+
+// CreatePomodoroRecordVOToUpdateMap 创建番茄工作记录值对象转换为全量更新映射（Upsert 覆盖用）
+// 仅包含 Create VO 表达的字段，不触碰 archived_at
+func CreatePomodoroRecordVOToUpdateMap(vo *valueobjects.CreatePomodoroRecord) map[string]any {
+	return map[string]any{
+		"SessionId":   vo.SessionId,
+		"PomodoroId":  int64(vo.PomodoroId),
+		"Type":        uint8(vo.Type),
+		"TaskId":      int64(vo.TaskId),
+		"TaskName":    vo.TaskName,
+		"Description": vo.Description,
+		"StartAt":     vo.StartAt.Time,
+		"EndAt":       vo.EndAt.Time,
+		"Duration":    vo.Duration,
+		"Note":        vo.Note,
+	}
 }
 
 // UpdatePomodoroVOToMap 转换更新常用番茄工作值对象为 map

@@ -90,6 +90,36 @@ func (app *PomodoroAppImpl) List(
 	return resList, total, nil
 }
 
+// ListSync 增量同步番茄工作记录列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序）
+func (app *PomodoroAppImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	req *dto.ListPomodoroRecordReq,
+) ([]*dto.GetPomodoroRecordRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if req.CursorId != "" {
+		cursorID, err = idutil.ParseID(req.CursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	entities, err := app.pomodoroDomain.ListPomodoroRecordSync(
+		ctx, userId, cursor, cursorID, limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("pomodoroRecord.ListSync: %w", err)
+	}
+	return PomodoroRecordEntitiesToGetReses(entities), nil
+}
+
 // --- Pomodoro ---
 
 // CreatePomodoro 创建常用番茄工作
@@ -242,4 +272,34 @@ func (app *PomodoroAppImpl) ListPomodoro(
 	}
 	resList := PomodoroEntitiesToGetReses(entities)
 	return resList, total, nil
+}
+
+// ListPomodoroSync 增量同步常用番茄工作列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序）
+func (app *PomodoroAppImpl) ListPomodoroSync(
+	ctx context.Context,
+	userId int64,
+	req *dto.ListPomodoroReq,
+) (dto.ListPomodoroRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if req.CursorId != "" {
+		cursorID, err = idutil.ParseID(req.CursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	entities, err := app.pomodoroDomain.ListPomodoroSync(
+		ctx, userId, cursor, cursorID, limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("pomodoro.ListSync: %w", err)
+	}
+	return PomodoroEntitiesToGetReses(entities), nil
 }

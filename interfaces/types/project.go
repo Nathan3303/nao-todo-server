@@ -6,6 +6,10 @@ package types
 type CreateProjectReq struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
+	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
+	Id        *string `json:"id"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // CreateProjectRes 创建项目响应
@@ -26,6 +30,8 @@ type UpdateProjectReq struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	SortId      *uint16 `json:"sortId"`
+	// UpdatedAt 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // BatchUpdateProjectReq 批量更新项目请求

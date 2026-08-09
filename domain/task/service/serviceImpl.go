@@ -26,7 +26,9 @@ func (d *TaskDomainImpl) CreateTask(
 	vo *valueobjects.CreateTask,
 ) (*entities.Task, error) {
 	vo.SortId = d.taskRepo.GetMaxSortId(ctx, userId) + 1
-	return d.taskRepo.Create(ctx, userId, vo)
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	entity, _, err := d.taskRepo.Upsert(ctx, userId, vo)
+	return entity, err
 }
 
 // Copy 复制任务
@@ -84,7 +86,20 @@ func (d *TaskDomainImpl) CreateCheckItem(
 	vo *valueobjects.CreateTaskCheckItem,
 ) (*entities.TaskCheckItem, error) {
 	vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
-	return d.checkItemRepo.CreateCheckItem(ctx, userId, vo)
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	entity, _, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
+	return entity, err
+}
+
+// ListSync 增量同步任务列表（包含软删墓碑，keyset 游标稳定排序分页）
+func (d *TaskDomainImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.Task, error) {
+	return d.taskRepo.ListSync(ctx, userId, cursor, cursorID, limit)
 }
 
 // --- 任务提醒相关 ---

@@ -21,4 +21,5 @@ var (
 	ErrTokenExpired      = errors.New("凭证无效")
 	ErrCreateFailed      = errors.New("创建失败")
 	ErrDeleteFailed      = errors.New("删除失败")
+	ErrIDConflict        = errors.New("ID 冲突：本地生成 ID 与远程已存在实体碰撞，请重新分配")
 )

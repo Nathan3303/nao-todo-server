@@ -2,11 +2,14 @@ package tag
 
 import (
 	"context"
+	"errors"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
+	query "naotodoserver/infrastructure/utils/query"
 	"time"
 
 	"gorm.io/gorm"
@@ -75,6 +78,93 @@ func (tagRepo *TagRepositoryImpl) Create(
 	return entity, nil
 }
 
+// Upsert 幂等写入标签：客户端指定 id 时创建或覆盖
+// 语义与 Task.Upsert 一致（LWW + create 冲突检测）
+func (tagRepo *TagRepositoryImpl) Upsert(
+	ctx context.Context,
+	userId int64,
+	createTagValueObject *valueobjects.CreateTag,
+) (*entities.Tag, bool, error) {
+	if createTagValueObject.Id == 0 {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		createTagValueObject.UpdatedAt = time.Now()
+		entity, err := tagRepo.Create(ctx, userId, createTagValueObject)
+		return entity, true, err
+	}
+	var existing models.Tag
+	err := tagRepo.db.WithContext(ctx).Unscoped().
+		Preload("Preference").
+		Where("id = ? AND user_id = ?", createTagValueObject.Id, userId).
+		First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		createTagValueObject.UpdatedAt = time.Now()
+		entity, createErr := tagRepo.Create(ctx, userId, createTagValueObject)
+		return entity, true, createErr
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	outcome, err := types.DecideUpsert(
+		existing.CreatedAt, existing.UpdatedAt,
+		createTagValueObject.CreatedAt, createTagValueObject.UpdatedAt,
+		time.Minute,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	if outcome == types.UpsertNoop {
+		return TagModel2Entity(&existing), false, nil
+	}
+	updateMap := CreateTagVOToUpdateMap(createTagValueObject)
+	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
+	updateMap["updated_at"] = time.Now()
+	if err := tagRepo.db.WithContext(ctx).Unscoped().
+		Model(&models.Tag{}).
+		Where("id = ? AND user_id = ?", createTagValueObject.Id, userId).
+		UpdateColumns(updateMap).Error; err != nil {
+		return nil, false, err
+	}
+	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
+	var updated models.Tag
+	if err := tagRepo.db.WithContext(ctx).Unscoped().
+		Preload("Preference").
+		Where("id = ? AND user_id = ?", createTagValueObject.Id, userId).
+		First(&updated).Error; err != nil {
+		return nil, false, err
+	}
+	return TagModel2Entity(&updated), false, nil
+}
+
+// ListSync 增量同步标签列表：包含软删墓碑，(updated_at, id) keyset 游标 + 稳定排序 + limit（绕过缓存）
+func (tagRepo *TagRepositoryImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.Tag, error) {
+	tx := tagRepo.db.WithContext(ctx).Unscoped().
+		Model(&models.Tag{}).
+		Where("user_id = ?", userId).
+		Scopes(
+			query.ByKeysetCursor(cursor, cursorID),
+			query.SyncOrder(),
+		)
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	var modelsList []*models.Tag
+	tx = tx.Limit(limit).Find(&modelsList)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return TagModelList2EntityList(modelsList), nil
+}
+
 // Update 更新标签
 // @param ctx 上下文
 // @param userId 用户ID
@@ -92,14 +182,18 @@ func (tagRepo *TagRepositoryImpl) Update(
 	whereCond.UserId = userId
 	whereCond.ID = tagId
 	updateCond := UpdateTagValueObjectToMap(updateTagValueObject)
-	// 2. 更新数据
+	// 2. LWW 乐观锁：请求 updatedAt 早于库中版本时不更新
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
-		Where(&whereCond).
-		Updates(updateCond)
+		Where(&whereCond)
+	if !updateTagValueObject.UpdatedAt.IsZero() {
+		tx = tx.Where("updated_at <= ?", updateTagValueObject.UpdatedAt)
+	}
+	// 3. 更新数据
+	tx = tx.Updates(updateCond)
 	if tx.Error != nil {
 		return tx.Error
 	}
-	// 3. 失效标签列表缓存
+	// 4. 失效标签列表缓存
 	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
 	return nil
 }
@@ -110,14 +204,13 @@ func (tagRepo *TagRepositoryImpl) Update(
 // @param tagId 标签ID
 // @return error 错误
 func (tagRepo *TagRepositoryImpl) Delete(ctx context.Context, userId int64, tagId int64) error {
-	// 1. 转换实体为模型
-	var whereCond models.Tag
-	whereCond.UserId = userId
-	whereCond.ID = tagId
-	// 2. 删除
+	// 1. 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
-		Where(&whereCond).
-		Delete(&models.Tag{})
+		Where("id = ? AND user_id = ?", tagId, userId).
+		UpdateColumns(map[string]any{
+			"deleted_at": time.Now(),
+			"updated_at": time.Now(),
+		})
 	if tx.Error != nil {
 		return tx.Error
 	}

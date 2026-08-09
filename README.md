@@ -10,6 +10,7 @@
 - 番茄钟（自定义方案 + 实际记录）
 - 任务提醒：定时扫描 + SSE 实时推送
 - 文件上传：本地头像存储，头像访问需登录（JWT）鉴权，不再开放静态目录直出
+- 数据同步：客户端指定 ID 的幂等 upsert（LWW）、增量拉取（keyset 游标 + 删除墓碑）、服务器时间校准、批量 push/pull
 - 安全响应头、Gzip 压缩、CORS、IP 限流
 - MySQL + Redis 持久化与缓存
 - GORM AutoMigrate，自动建表
@@ -169,6 +170,8 @@ server:
 | 评论     | `/api/comments/*`                            | 评论 CRUD、置顶                           |
 | 番茄钟   | `/api/pomodoros/*` `/api/pomodoro-records/*` | 方案与实际记录                            |
 | 实时推送 | `GET /api/sse/reminders`                     | 任务到期提醒                              |
+| 系统配置 | `GET /api/system/config`                     | 雪花 Epoch 等跨端同步契约常量下发         |
+| 数据同步 | `POST /api/sync/push` `/api/sync/pull`       | 批量幂等推送 / 多表增量拉取               |
 | 头像访问 | `GET /static/uploads/avatars/:filename`      | 头像文件读取，需 JWT 鉴权，`private` 缓存 |
 
 ### 响应格式
@@ -204,6 +207,20 @@ server:
 | 50000–59999 | 检查事项    |
 | 60000–69999 | 评论        |
 | 70000–79999 | 番茄钟      |
+| 80000–89999 | 系统配置    |
+| 90000–99999 | 数据同步    |
+
+### 数据同步
+
+面向桌面端离线场景的双向同步（LWW 冲突解决，服务器时间为唯一时间基准）：
+
+- **跨端契约**：`GET /api/system/config` 下发雪花 `snowflakeEpoch`（字符串毫秒）；`PUT /api/auth/checkin` 响应含 `serverTime`（毫秒）供客户端校准时钟偏移。
+- **客户端指定 ID**：各资源 create 请求可携带可选 `id` / `createdAt` / `updatedAt`——id 不存在则创建，存在则按 `updatedAt` 幂等覆盖（更旧请求不覆盖新数据）；create 语义下 `createdAt` 与库中相差过大返回冲突错误（ID 碰撞）。判定通过后落库的 `updatedAt` 恒为**服务器时间**（LWW 判定用客户端时间，写入用服务器时间），保证库中时间单调、各设备增量可见。
+- **时间精度**：`updatedAt` / `nextCursor` / `serverUpdatedAt` 为毫秒精度 RFC3339（如 `2026-01-01T10:20:30.123Z`），解析兼容秒级旧格式；游标毫秒精度保证 keyset `(updated_at, id)` 不重复、不遗漏。
+- **增量拉取**：各资源 list 接口支持 `updatedAt` + `cursorId`（keyset 游标 `(updated_at, id) > (cursor, cursorId)`）+ `limit`，按 `updated_at ASC, id ASC` 稳定排序，并包含软删墓碑（`deletedAt` 置位且 `updatedAt` 前进）；keyset 语义下不再返回全量 `total`（当页条数以 `items` 长度为准，`len == limit` 表示可能还有下一页）。
+- **批量接口**：`POST /api/sync/push`（多表批量 upsert + `deletions` 软删，响应逐条 `serverUpdatedAt` + `serverTime`；**部分成功语义**——失败条目携带 `error` 字段，前端按客户端 id 精确重试，`pomodoroRecords` 删除请求返回 `skipped: true` 表示忽略）；`POST /api/sync/pull`（按表增量拉取，响应 `nextCursor` / `nextCursorId` / `serverTime`）。
+
+详细设计见 `docs/plans/data-sync/`。
 
 ## 部署
 

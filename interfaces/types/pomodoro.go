@@ -19,6 +19,10 @@ type CreatePomodoroReq struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	Duration    uint16 `json:"duration" binding:"required"`
+	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
+	Id        *string `json:"id"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // CreatePomodoroRes 创建常用番茄工作响应
@@ -32,6 +36,8 @@ type UpdatePomodoroReq struct {
 	Description *string `json:"description"`
 	Duration    *uint16 `json:"duration"`
 	ArchivedAt  string  `json:"archivedAt"`
+	// UpdatedAt 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // GetPomodoroReq 获取常用番茄工作请求
@@ -44,6 +50,10 @@ type ListPomodoroReq struct {
 	Type       uint8  `json:"type"`
 	Name       string `json:"name"`
 	IsArchived bool   `json:"isArchived"`
+	// UpdatedAt 增量同步游标（RFC3339，updated_at > 该值）
+	UpdatedAt string `json:"updatedAt" form:"updatedAt"`
+	// CursorId keyset 游标辅助：与 UpdatedAt 组合 (updated_at, id) > (cursor, cursorId)
+	CursorId string `json:"cursorId" form:"cursorId"`
 	// ArchivedAt string `json:"archivedAt"`
 	ListReqBase
 }
@@ -65,6 +75,10 @@ type CreatePomodoroRecordReq struct {
 	EndAt       string `json:"endAt" binding:"required"`
 	Duration    uint16 `json:"duration" binding:"required"`
 	Note        string `json:"note"`
+	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
+	Id        *string `json:"id"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // CreatePomodoroRecordRes 创建番茄工作记录响应
@@ -99,6 +113,10 @@ type ListPomodoroRecordReq struct {
 	TaskId     string `form:"taskId"`
 	TaskName   string `form:"taskName"`
 	Type       uint8  `form:"type"`
+	// UpdatedAt 增量同步游标（RFC3339，updated_at > 该值）
+	UpdatedAt string `form:"updatedAt"`
+	// CursorId keyset 游标辅助：与 UpdatedAt 组合 (updated_at, id) > (cursor, cursorId)
+	CursorId string `form:"cursorId"`
 	ListReqBase
 }
 

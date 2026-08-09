@@ -16,12 +16,27 @@ func CreateTagValueObjectToModel(
 	createTagValueObject *valueobjects.CreateTag,
 ) *models.Tag {
 	var m models.Tag
+	m.ModelBase = models.ModelBase{
+		ID:        createTagValueObject.Id,
+		CreatedAt: createTagValueObject.CreatedAt,
+		UpdatedAt: createTagValueObject.UpdatedAt,
+	}
 	m.UserId = userId
 	m.Name = createTagValueObject.Name
 	m.Description = createTagValueObject.Description
 	m.Color = createTagValueObject.Color
 	m.SortId = createTagValueObject.SortId
 	return &m
+}
+
+// CreateTagVOToUpdateMap 创建标签值对象转换为全量更新映射（Upsert 覆盖用）
+func CreateTagVOToUpdateMap(vo *valueobjects.CreateTag) map[string]any {
+	return map[string]any{
+		"Name":        vo.Name,
+		"Description": vo.Description,
+		"Color":       vo.Color,
+		"SortId":      vo.SortId,
+	}
 }
 
 // UpdateTagValueObjectToModel 更新标签值对象转换为标签模型

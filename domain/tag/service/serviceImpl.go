@@ -32,10 +32,14 @@ func (tagDomain *TagDomainImpl) Create(
 ) (*entities.Tag, error) {
 	// 设置排序 ID
 	createTagValueObject.SortId = tagDomain.tagRepo.GetMaxSortId(ctx, userId) + 1
-	// 创建标签
-	tagEntity, err := tagDomain.tagRepo.Create(ctx, userId, createTagValueObject)
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	tagEntity, created, err := tagDomain.tagRepo.Upsert(ctx, userId, createTagValueObject)
 	if err != nil {
 		return nil, err
+	}
+	// 仅首次新建时初始化基础偏好；覆盖/重试场景保留用户已有偏好
+	if !created {
+		return tagEntity, nil
 	}
 	// 创建标签基础偏好
 	tagPreferenceValueObject, err := valueobjects.NewSaveTagPreference(

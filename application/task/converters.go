@@ -14,7 +14,7 @@ import (
 func TaskEntityToGetRes(taskEntity *entities.Task) *dto.GetTaskRes {
 	res := &dto.GetTaskRes{}
 	res.Id = idutil.FormatID(taskEntity.Id)
-	res.UpdatedAt = taskEntity.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = taskEntity.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.CreatedAt = taskEntity.CreatedAt.Format(time.RFC3339)
 	res.DeletedAt = taskEntity.DeletedAt.ToString(time.RFC3339)
 	res.ParentTaskId = idutil.FormatID(taskEntity.ParentTaskId)
@@ -65,7 +65,7 @@ func CreateTaskReqToValueObject(
 	state, _ := entities.ParseTaskState(req.State)
 	priority, _ := entities.ParseTaskPriority(req.Priority)
 	remindRepeat, _ := entities.ParseRemindRepeat(req.RemindRepeat)
-	return valueobjects.NewCreateTask(
+	vo, err := valueobjects.NewCreateTask(
 		domaintypes.TaskID(parentTaskIdInt64),
 		req.Name,
 		req.Description,
@@ -80,6 +80,17 @@ func CreateTaskReqToValueObject(
 		req.RemindTime,
 		entities.WeekdaysToBitmask(req.RemindWeekdays),
 	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	return vo, nil
 }
 
 // UpdateTaskReqToValueObject 更新任务请求转换为更新任务值对象
@@ -125,7 +136,7 @@ func UpdateTaskReqToValueObject(
 		iRemindWeekdaysValue := entities.WeekdaysToBitmask(req.RemindWeekdays)
 		iRemindWeekdays = &iRemindWeekdaysValue
 	}
-	return valueobjects.NewUpdateTask(
+	vo, err := valueobjects.NewUpdateTask(
 		0,
 		iParentId,
 		req.Name,
@@ -146,6 +157,17 @@ func UpdateTaskReqToValueObject(
 		iRemindWeekdays,
 		req.SortId,
 	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
 }
 
 // ListTaskReqToQueryTaskValueObject 列表任务请求转换为查询任务值对象
@@ -169,7 +191,7 @@ func ListTaskReqToQueryTaskValueObject(
 		}
 	}
 	parentTaskIdInt64, _ := idutil.ParseID(req.ParentTaskId)
-	return valueobjects.NewQueryTask(
+	vo, err := valueobjects.NewQueryTask(
 		userId,
 		parentTaskIdInt64,
 		projectIdInt64,
@@ -193,6 +215,15 @@ func ListTaskReqToQueryTaskValueObject(
 		req.RelativeDate,
 		req.Sort,
 	)
+	if err != nil {
+		return nil, err
+	}
+	cursor, err := idutil.ParseUpdatedAtCursor(req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.UpdatedAt = cursor
+	return vo, nil
 }
 
 // TaskEntitiesToGetReses 任务实体转换为获取任务响应列表
@@ -228,7 +259,7 @@ func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *dto.GetTaskCheckIte
 	var res dto.GetTaskCheckItemRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
 	res.TaskId = idutil.FormatID(e.TaskId)
 	res.Name = e.Name
@@ -251,12 +282,23 @@ func CreateTaskCheckItemReqToVO(
 	if err != nil {
 		return nil, err
 	}
-	return valueobjects.NewCreateTaskCheckItem(
+	vo, err := valueobjects.NewCreateTaskCheckItem(
 		userId,
 		taskId,
 		req.Name,
 		req.Description,
 	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	return vo, nil
 }
 
 // TaskCheckItemEntityToCreateRes 任务检查项实体转换为创建任务检查项响应
@@ -266,7 +308,7 @@ func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *dto.CreateTaskCh
 	var res dto.CreateTaskCheckItemRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
 	res.TaskId = idutil.FormatID(e.TaskId)
 	res.Name = e.Name
@@ -283,12 +325,23 @@ func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *dto.CreateTaskCh
 func UpdateTaskCheckItemReqToVO(
 	req *dto.UpdateTaskCheckItemReq,
 ) (*valueobjects.UpdateTaskCheckItem, error) {
-	return valueobjects.NewUpdateTaskCheckItem(
+	vo, err := valueobjects.NewUpdateTaskCheckItem(
 		req.Name,
 		req.Description,
 		req.IsDone,
 		req.SortId,
 	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
 }
 
 // TaskCheckItemEntitiesToReses 任务检查项实体转换为获取任务检查项响应列表
@@ -339,7 +392,7 @@ func TaskCommentEntityToRes(e *entities.TaskComment) *dto.TaskCommentRes {
 	var res dto.TaskCommentRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
 	res.TaskId = idutil.FormatID(e.TaskId)
 	res.Content = e.Content
@@ -363,13 +416,24 @@ func CreateTaskCommentReqToVO(
 	if err != nil {
 		return nil, err
 	}
-	return valueobjects.NewCreateTaskComment(
+	vo, err := valueobjects.NewCreateTaskComment(
 		userId,
 		taskId,
 		req.Content,
 		nil,
 		false,
 	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	return vo, nil
 }
 
 // UpdateTaskCommentReqToVO 更新任务评论请求转换为更新任务评论值对象
@@ -379,11 +443,22 @@ func CreateTaskCommentReqToVO(
 func UpdateTaskCommentReqToVO(
 	req *dto.UpdateTaskCommentReq,
 ) (*valueobjects.UpdateTaskComment, error) {
-	return valueobjects.NewUpdateTaskComment(
+	vo, err := valueobjects.NewUpdateTaskComment(
 		req.Content,
 		req.Attachments,
 		req.IsTopUp,
 	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
 }
 
 // TaskCommentEntitiesToListRes 任务评论实体列表转换为获取任务评论响应列表

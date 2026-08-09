@@ -2,11 +2,14 @@ package pomodoro
 
 import (
 	"context"
+	"errors"
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -45,6 +48,62 @@ func (r *PomodoroRecordRepoImpl) Create(
 		return nil, err
 	}
 	return PomodoroRecordModel2Entity(m), nil
+}
+
+// Upsert 幂等写入番茄工作记录：客户端指定 id 时创建或覆盖
+// 语义与 Task.Upsert 一致（LWW + create 冲突检测）。
+// 覆盖分支仅更新 Create VO 表达的字段，不触碰 archived_at，也不调整 totalDuration 累加。
+func (r *PomodoroRecordRepoImpl) Upsert(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreatePomodoroRecord,
+) (*entities.PomodoroRecord, bool, error) {
+	if vo.Id == 0 {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		vo.UpdatedAt = time.Now()
+		entity, err := r.Create(ctx, vo)
+		return entity, true, err
+	}
+	var existing models.PomodoroRecord
+	err := r.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		vo.UpdatedAt = time.Now()
+		entity, createErr := r.Create(ctx, vo)
+		return entity, true, createErr
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	outcome, err := types.DecideUpsert(
+		existing.CreatedAt, existing.UpdatedAt,
+		vo.CreatedAt, vo.UpdatedAt,
+		time.Minute,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	if outcome == types.UpsertNoop {
+		return PomodoroRecordModel2Entity(&existing), false, nil
+	}
+	updateMap := CreatePomodoroRecordVOToUpdateMap(vo)
+	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
+	updateMap["updated_at"] = time.Now()
+	if err := r.db.WithContext(ctx).Unscoped().
+		Model(&models.PomodoroRecord{}).
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		UpdateColumns(updateMap).Error; err != nil {
+		return nil, false, err
+	}
+	var updated models.PomodoroRecord
+	if err := r.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		First(&updated).Error; err != nil {
+		return nil, false, err
+	}
+	return PomodoroRecordModel2Entity(&updated), false, nil
 }
 
 // GetById 获取 PomodoroRecord
@@ -102,4 +161,33 @@ func (r *PomodoroRecordRepoImpl) List(
 	}
 
 	return PomodoroRecordModels2Entities(modelsList), total, nil
+}
+
+// ListSync 增量同步番茄工作记录列表：包含软删墓碑，(updated_at, id) keyset 游标 + 稳定排序 + limit
+func (r *PomodoroRecordRepoImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.PomodoroRecord, error) {
+	tx := r.db.WithContext(ctx).Unscoped().
+		Model(&models.PomodoroRecord{}).
+		Where("user_id = ?", userId).
+		Scopes(
+			query.ByKeysetCursor(cursor, cursorID),
+			query.SyncOrder(),
+		)
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	var modelsList []*models.PomodoroRecord
+	tx = tx.Limit(limit).Find(&modelsList)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return PomodoroRecordModels2Entities(modelsList), nil
 }

@@ -37,6 +37,10 @@ type CreateTaskReq struct {
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
 	RemindWeekdays []uint8  `json:"remindWeekdays"`
+	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
+	Id        *string `json:"id"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // UpdateTaskReq 更新任务请求
@@ -58,6 +62,8 @@ type UpdateTaskReq struct {
 	RemindTime     *string  `json:"remindTime"`
 	RemindWeekdays []uint8  `json:"remindWeekdays"`
 	SortId         *uint16  `json:"sortId"`
+	// UpdatedAt 乐观锁时间戳（RFC3339，可空）：早于服务端当前版本时不更新（LWW 防旧数据回滚）
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // ListTaskReq 列表任务请求
@@ -80,6 +86,8 @@ type ListTaskReq struct {
 	IsStarMarked bool   `form:"isStarMarked"`
 	IsGivenUp    bool   `form:"isGivenUp"`
 	RelativeDate string `form:"relativeDate"`
+	UpdatedAt    string `form:"updatedAt"`
+	CursorId     string `form:"cursorId"`
 	ListReqBase
 }
 
@@ -103,6 +111,10 @@ type CreateTaskCheckItemReq struct {
 	TaskId      string `json:"taskId" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
+	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
+	Id        *string `json:"id"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // CreateTaskCheckItemRes 创建任务检查项响应
@@ -114,6 +126,8 @@ type UpdateTaskCheckItemReq struct {
 	Description *string `json:"description"`
 	IsDone      *bool   `json:"isDone"`
 	SortId      *uint16 `json:"sortId"`
+	// UpdatedAt 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // ListTaskCheckItemRes 列表任务检查项响应
@@ -166,6 +180,10 @@ type TaskCommentRes struct {
 type CreateTaskCommentReq struct {
 	TaskId  string `json:"taskId" binding:"required"`
 	Content string `json:"content" binding:"required"`
+	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
+	Id        *string `json:"id"`
+	CreatedAt *string `json:"createdAt"`
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // CreateTaskCommentRes 创建任务评论响应
@@ -176,6 +194,8 @@ type UpdateTaskCommentReq struct {
 	Content     *string   `json:"content"`
 	Attachments *[]string `json:"attachments"`
 	IsTopUp     *bool     `json:"isTopUp"`
+	// UpdatedAt 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
+	UpdatedAt *string `json:"updatedAt"`
 }
 
 // ListTaskCommentRes 列表任务评论响应

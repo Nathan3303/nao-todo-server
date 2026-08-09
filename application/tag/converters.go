@@ -16,7 +16,7 @@ func TagEntityToGetRes(tagEntity *entities.Tag) *dto.GetTagRes {
 	res := &dto.GetTagRes{}
 	res.Id = idutil.FormatID(tagEntity.Id)
 	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = tagEntity.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = tagEntity.DeletedAt.ToString(time.RFC3339)
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
@@ -29,11 +29,26 @@ func TagEntityToGetRes(tagEntity *entities.Tag) *dto.GetTagRes {
 // @param createTagReq 创建标签请求体
 // @return 创建标签值对象
 func CreateTagReqToValueObject(createTagReq *dto.CreateTagReq) (*valueobjects.CreateTag, error) {
-	return valueobjects.NewCreateTag(
+	vo, err := valueobjects.NewCreateTag(
 		createTagReq.Name,
 		createTagReq.Description,
 		createTagReq.Color,
 	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(
+		createTagReq.Id,
+		createTagReq.CreatedAt,
+		createTagReq.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	return vo, nil
 }
 
 // TagEntityToCreateRes 标签实体转换创建响应体
@@ -43,7 +58,7 @@ func TagEntityToCreateRes(tagEntity *entities.Tag) *dto.CreateTagRes {
 	res := &dto.CreateTagRes{}
 	res.Id = idutil.FormatID(tagEntity.Id)
 	res.CreatedAt = tagEntity.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = tagEntity.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = tagEntity.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = tagEntity.DeletedAt.ToString(time.RFC3339)
 	res.Name = tagEntity.Name
 	res.Description = tagEntity.Description
@@ -56,12 +71,23 @@ func TagEntityToCreateRes(tagEntity *entities.Tag) *dto.CreateTagRes {
 // @param updateTagReq 更新标签请求体
 // @return 更新标签值对象
 func UpdateTagReqToValueObject(updateTagReq *dto.UpdateTagReq) (*valueobjects.UpdateTag, error) {
-	return valueobjects.NewUpdateTag(
+	vo, err := valueobjects.NewUpdateTag(
 		updateTagReq.Name,
 		updateTagReq.Description,
 		updateTagReq.Color,
 		updateTagReq.SortId,
 	)
+	if err != nil {
+		return nil, err
+	}
+	if updateTagReq.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*updateTagReq.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
 }
 
 // TagEntitiesToGetResList 标签实体列表转换响应体列表
@@ -84,7 +110,7 @@ func TagPreferenceEntityToGetRes(
 	var res dto.GetTagPreferenceRes
 	res.Id = idutil.FormatID(tagPreferenceEntity.Id)
 	res.CreatedAt = tagPreferenceEntity.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = tagPreferenceEntity.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = tagPreferenceEntity.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = tagPreferenceEntity.DeletedAt.ToString(time.RFC3339)
 	res.TagId = idutil.FormatID(tagPreferenceEntity.TagId)
 	res.ViewType = tagPreferenceEntity.ViewType

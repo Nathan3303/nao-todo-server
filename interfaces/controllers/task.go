@@ -75,6 +75,9 @@ func toCreateTaskReq(req *types.CreateTaskReq) *taskDto.CreateTaskReq {
 		RemindRepeat:   req.RemindRepeat,
 		RemindTime:     req.RemindTime,
 		RemindWeekdays: req.RemindWeekdays,
+		Id:             req.Id,
+		CreatedAt:      req.CreatedAt,
+		UpdatedAt:      req.UpdatedAt,
 	}
 }
 
@@ -100,6 +103,7 @@ func toUpdateTaskReq(req *types.UpdateTaskReq) *taskDto.UpdateTaskReq {
 		RemindTime:     req.RemindTime,
 		RemindWeekdays: req.RemindWeekdays,
 		SortId:         req.SortId,
+		UpdatedAt:      req.UpdatedAt,
 	}
 }
 
@@ -206,6 +210,9 @@ func toCreateTaskCheckItemReq(req *types.CreateTaskCheckItemReq) *taskDto.Create
 		TaskId:      req.TaskId,
 		Name:        req.Name,
 		Description: req.Description,
+		Id:          req.Id,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -237,6 +244,7 @@ func toUpdateTaskCheckItemReq(req *types.UpdateTaskCheckItemReq) *taskDto.Update
 		Description: req.Description,
 		IsDone:      req.IsDone,
 		SortId:      req.SortId,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -305,8 +313,11 @@ func toTaskCommentResList(outputList []*taskDto.TaskCommentRes) []*types.TaskCom
 // @return 应用层创建任务评论入参
 func toCreateTaskCommentReq(req *types.CreateTaskCommentReq) *taskDto.CreateTaskCommentReq {
 	return &taskDto.CreateTaskCommentReq{
-		TaskId:  req.TaskId,
-		Content: req.Content,
+		TaskId:    req.TaskId,
+		Content:   req.Content,
+		Id:        req.Id,
+		CreatedAt: req.CreatedAt,
+		UpdatedAt: req.UpdatedAt,
 	}
 }
 
@@ -318,6 +329,7 @@ func toUpdateTaskCommentReq(req *types.UpdateTaskCommentReq) *taskDto.UpdateTask
 		Content:     req.Content,
 		Attachments: req.Attachments,
 		IsTopUp:     req.IsTopUp,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -590,7 +602,33 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 调用应用层获取任务列表
+	// 3. 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序）
+	if req.UpdatedAt != "" {
+		tasks, err := c.taskApp.ListTaskSync(
+			ctx.Request.Context(),
+			userId,
+			toListTaskReq(&req),
+		)
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    40052,
+				Message: err.Error(),
+			})
+			return
+		}
+		Success(ctx, types.ResponseData{
+			Code:    40050,
+			Message: "获取待办任务列表成功",
+			Data:    toGetTaskResList(tasks),
+			Pagination: &types.Pagination{
+				Page:  1,
+				Limit: req.Limit,
+				Total: int64(len(tasks)),
+			},
+		})
+		return
+	}
+	// 4. 调用应用层获取任务列表
 	tasks, paginationRes, err := c.taskApp.ListTask(
 		ctx.Request.Context(),
 		userId,

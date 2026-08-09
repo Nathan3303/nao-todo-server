@@ -3,9 +3,11 @@ package task
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
+	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
@@ -80,6 +82,59 @@ func (taskRepo *TaskRepoImpl) Create(
 	return TaskModel2Entity(createModel), nil
 }
 
+// Upsert 幂等写入任务：客户端指定 id 时创建或覆盖
+// - 记录不存在：带 id 创建
+// - 记录存在：create 语义冲突检测（请求携带 createdAt 且与库中 created_at 相差 > 1 分钟 → ErrIDConflict）；
+//   LWW 判定：请求 updatedAt 更旧则 no-op 返回当前版本，否则覆盖（仅更新 Create VO 表达的字段 + updated_at）
+func (taskRepo *TaskRepoImpl) Upsert(
+	ctx context.Context,
+	userId int64,
+	createTaskValueObject *valueobjects.CreateTask,
+) (*entities.Task, bool, error) {
+	if createTaskValueObject.Id == 0 {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now（createdAt 保留客户端值供冲突检测）
+		createTaskValueObject.UpdatedAt = time.Now()
+		entity, err := taskRepo.Create(ctx, userId, createTaskValueObject)
+		return entity, true, err
+	}
+	var existing models.Task
+	err := taskRepo.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).
+		First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		createTaskValueObject.UpdatedAt = time.Now()
+		entity, createErr := taskRepo.Create(ctx, userId, createTaskValueObject)
+		return entity, true, createErr
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	existingEntity := TaskModel2Entity(&existing)
+	outcome, err := types.DecideUpsert(
+		existing.CreatedAt, existingEntity.UpdatedAt,
+		createTaskValueObject.CreatedAt, createTaskValueObject.UpdatedAt,
+		time.Minute,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	if outcome == types.UpsertNoop {
+		return existingEntity, false, nil
+	}
+	updateMap := CreateTaskVOToUpdateMap(createTaskValueObject)
+	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now（LWW 判定仍用客户端时间）
+	updateMap["updated_at"] = time.Now()
+	if err := taskRepo.db.WithContext(ctx).Unscoped().
+		Model(&models.Task{}).
+		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).
+		UpdateColumns(updateMap).Error; err != nil {
+		return nil, false, err
+	}
+	entity, err := taskRepo.GetById(ctx, userId, createTaskValueObject.Id, true)
+	return entity, false, err
+}
+
 // GetMaxSortId 获取任务最大排序 ID
 // @param ctx 上下文
 // @param userId 用户ID
@@ -111,10 +166,14 @@ func (taskRepo *TaskRepoImpl) Update(
 	whereCond.ID = taskId
 	// 2. 转换更新实体到 map
 	updateMap := UpdateTaskValueObjectToMap(updateTaskValueObject)
-	// 3. 更新
+	// 3. LWW 乐观锁：请求 updatedAt 早于库中版本时不更新（防旧数据回滚）
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where(whereCond).
-		Updates(updateMap)
+		Where(whereCond)
+	if !updateTaskValueObject.UpdatedAt.IsZero() {
+		tx = tx.Where("updated_at <= ?", updateTaskValueObject.UpdatedAt)
+	}
+	// 4. 更新（map 不含 UpdatedAt，gorm 自动刷新为 now）
+	tx = tx.Updates(updateMap)
 	return tx.Error
 }
 
@@ -124,14 +183,14 @@ func (taskRepo *TaskRepoImpl) Update(
 // @param taskId 任务ID
 // @return error 错误
 func (taskRepo *TaskRepoImpl) Delete(ctx context.Context, userId int64, taskId int64) error {
-	// 1. 转换查询实体到模型
-	var whereCond models.Task
-	whereCond.UserId = userId
-	whereCond.ID = taskId
-	// 2. 删除
-	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where(whereCond).
-		Delete(&models.Task{})
+	// 1. 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
+	tx := taskRepo.db.WithContext(ctx).
+		Model(&models.Task{}).
+		Where("id = ? AND user_id = ?", taskId, userId).
+		UpdateColumns(map[string]any{
+			"deleted_at": time.Now(),
+			"updated_at": time.Now(),
+		})
 	return tx.Error
 }
 
@@ -230,6 +289,35 @@ func (taskRepo *TaskRepoImpl) List(
 	}
 	pagination.Total = total
 	return TaskModels2Entities(taskModels), pagination, nil
+}
+
+// ListSync 增量同步列表：包含软删墓碑（Unscoped），(updated_at, id) keyset 游标 + 稳定排序 + limit
+func (taskRepo *TaskRepoImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.Task, error) {
+	scopes := []func(db *gorm.DB) *gorm.DB{
+		query.ByKeysetCursor(cursor, cursorID),
+		query.SyncOrder(),
+	}
+	tx := taskRepo.db.WithContext(ctx).Unscoped().
+		Model(&models.Task{}).
+		Where("user_id = ?", userId).
+		Scopes(scopes...)
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	var taskModels []*models.Task
+	tx = tx.Limit(limit).Find(&taskModels)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return TaskModels2Entities(taskModels), nil
 }
 
 // --- 任务提醒相关 ---
@@ -376,6 +464,62 @@ func (repo *TaskRepoImpl) CreateCheckItem(
 	return TaskCheckItemModel2Entity(m), nil
 }
 
+// UpsertCheckItem 幂等写入任务检查项：客户端指定 id 时创建或覆盖
+// 语义与 Task.Upsert 一致（LWW + create 冲突检测）
+func (repo *TaskRepoImpl) UpsertCheckItem(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTaskCheckItem,
+) (*entities.TaskCheckItem, bool, error) {
+	if vo.Id == 0 {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		vo.UpdatedAt = time.Now()
+		entity, err := repo.CreateCheckItem(ctx, userId, vo)
+		return entity, true, err
+	}
+	var existing models.TaskCheckItem
+	err := repo.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		vo.UpdatedAt = time.Now()
+		entity, createErr := repo.CreateCheckItem(ctx, userId, vo)
+		return entity, true, createErr
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	existingEntity := TaskCheckItemModel2Entity(&existing)
+	outcome, err := types.DecideUpsert(
+		existing.CreatedAt, existingEntity.UpdatedAt,
+		vo.CreatedAt, vo.UpdatedAt,
+		time.Minute,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	if outcome == types.UpsertNoop {
+		return existingEntity, false, nil
+	}
+	updateMap := TaskCheckItemVOToUpdateMap(vo)
+	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
+	updateMap["updated_at"] = time.Now()
+	if err := repo.db.WithContext(ctx).Unscoped().
+		Model(&models.TaskCheckItem{}).
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		UpdateColumns(updateMap).Error; err != nil {
+		return nil, false, err
+	}
+	var updated models.TaskCheckItem
+	if err := repo.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		First(&updated).Error; err != nil {
+		return nil, false, err
+	}
+	return TaskCheckItemModel2Entity(&updated), false, nil
+}
+
 // UpdateCheckItem 更新任务检查项
 // @param ctx 上下文
 // @param userId 用户ID
@@ -388,12 +532,15 @@ func (repo *TaskRepoImpl) UpdateCheckItem(
 	checkItemId int64,
 	vo *valueobjects.UpdateTaskCheckItem,
 ) error {
-	return repo.db.
+	tx := repo.db.
 		WithContext(ctx).
 		Model(&models.TaskCheckItem{}).
-		Where("id = ? AND user_id = ?", checkItemId, userId).
-		Updates(UpdateTaskCheckItemValueObjectToMap(vo)).
-		Error
+		Where("id = ? AND user_id = ?", checkItemId, userId)
+	// LWW 乐观锁：请求 updatedAt 早于库中版本时不更新
+	if !vo.UpdatedAt.IsZero() {
+		tx = tx.Where("updated_at <= ?", vo.UpdatedAt)
+	}
+	return tx.Updates(UpdateTaskCheckItemValueObjectToMap(vo)).Error
 }
 
 // DeleteCheckItem 删除任务检查项
@@ -402,12 +549,15 @@ func (repo *TaskRepoImpl) UpdateCheckItem(
 // @param checkItemId 检查项ID
 // @return error 错误
 func (repo *TaskRepoImpl) DeleteCheckItem(ctx context.Context, userId, checkItemId int64) error {
+	// 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
 	return repo.db.
 		WithContext(ctx).
 		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", checkItemId, userId).
-		Delete(&models.TaskCheckItem{}).
-		Error
+		UpdateColumns(map[string]any{
+			"deleted_at": time.Now(),
+			"updated_at": time.Now(),
+		}).Error
 }
 
 // ListCheckItems 获取任务检查项列表
@@ -547,6 +697,65 @@ func (repo *TaskRepoImpl) CreateComment(
 	return TaskCommentModel2Entity(m), nil
 }
 
+// UpsertComment 幂等写入任务评论：客户端指定 id 时创建或覆盖
+// 语义与 Task.Upsert 一致（LWW + create 冲突检测）
+func (repo *TaskRepoImpl) UpsertComment(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTaskComment,
+) (*entities.TaskComment, bool, error) {
+	if vo.Id == 0 {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		vo.UpdatedAt = time.Now()
+		entity, err := repo.CreateComment(ctx, userId, vo)
+		return entity, true, err
+	}
+	var existing models.TaskComment
+	err := repo.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
+		vo.UpdatedAt = time.Now()
+		entity, createErr := repo.CreateComment(ctx, userId, vo)
+		return entity, true, createErr
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	existingEntity := TaskCommentModel2Entity(&existing)
+	outcome, err := types.DecideUpsert(
+		existing.CreatedAt, existingEntity.UpdatedAt,
+		vo.CreatedAt, vo.UpdatedAt,
+		time.Minute,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	if outcome == types.UpsertNoop {
+		return existingEntity, false, nil
+	}
+	updatedAt := vo.UpdatedAt
+	if updatedAt.IsZero() {
+		updatedAt = time.Now()
+	}
+	updateMap := TaskCommentVOToUpdateMap(vo)
+	updateMap["UpdatedAt"] = updatedAt
+	if err := repo.db.WithContext(ctx).Unscoped().
+		Model(&models.TaskComment{}).
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		UpdateColumns(updateMap).Error; err != nil {
+		return nil, false, err
+	}
+	var updated models.TaskComment
+	if err := repo.db.WithContext(ctx).Unscoped().
+		Where("id = ? AND user_id = ?", vo.Id, userId).
+		First(&updated).Error; err != nil {
+		return nil, false, err
+	}
+	return TaskCommentModel2Entity(&updated), false, nil
+}
+
 // UpdateComment 更新任务评论
 // @param ctx 上下文
 // @param userId 用户ID
@@ -559,12 +768,15 @@ func (repo *TaskRepoImpl) UpdateComment(
 	commentId int64,
 	vo *valueobjects.UpdateTaskComment,
 ) error {
-	return repo.db.
+	tx := repo.db.
 		WithContext(ctx).
 		Model(&models.TaskComment{}).
-		Where("user_id = ? AND id = ?", userId, commentId).
-		Updates(UpdateTaskCommentValueObjectToMap(vo)).
-		Error
+		Where("user_id = ? AND id = ?", userId, commentId)
+	// LWW 乐观锁：请求 updatedAt 早于库中版本时不更新
+	if !vo.UpdatedAt.IsZero() {
+		tx = tx.Where("updated_at <= ?", vo.UpdatedAt)
+	}
+	return tx.Updates(UpdateTaskCommentValueObjectToMap(vo)).Error
 }
 
 // DeleteComment 删除任务评论
@@ -573,12 +785,15 @@ func (repo *TaskRepoImpl) UpdateComment(
 // @param commentId 评论ID
 // @return error 错误
 func (repo *TaskRepoImpl) DeleteComment(ctx context.Context, userId, commentId int64) error {
+	// 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
 	return repo.db.
 		WithContext(ctx).
 		Model(&models.TaskComment{}).
 		Where("user_id = ? AND id = ?", userId, commentId).
-		Delete(&models.TaskComment{}).
-		Error
+		UpdateColumns(map[string]any{
+			"deleted_at": time.Now(),
+			"updated_at": time.Now(),
+		}).Error
 }
 
 // ListComments 获取任务评论列表
@@ -658,6 +873,8 @@ func (repo *TaskRepoImpl) SoftDeleteByProjectId(
 			Time:  time.Now(),
 			Valid: true,
 		}
+		// 显式推进 updated_at：Save 对非零 UpdatedAt 不覆盖，需手动置位以保证墓碑可增量发现
+		taskModels[i].UpdatedAt = time.Now()
 	}
 	return db.WithContext(ctx).Save(&taskModels).Error
 }
@@ -685,6 +902,8 @@ func (repo *TaskRepoImpl) RestoreByProjectId(
 	}
 	for i := range taskModels {
 		taskModels[i].DeletedAt = gorm.DeletedAt{Valid: false}
+		// 显式推进 updated_at，保证恢复事件可增量发现
+		taskModels[i].UpdatedAt = time.Now()
 	}
 	return db.WithContext(ctx).Unscoped().Save(&taskModels).Error
 }

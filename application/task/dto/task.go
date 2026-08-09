@@ -44,6 +44,9 @@ type CreateTaskReq struct {
 	RemindRepeat   string   // 提醒重复规则
 	RemindTime     string   // 提醒具体时间
 	RemindWeekdays []uint8  // 提醒星期
+	Id             *string  // 同步元数据：客户端预置 id
+	CreatedAt      *string  // 同步元数据：客户端预置 createdAt
+	UpdatedAt      *string  // 同步元数据：客户端预置 updatedAt
 }
 
 // UpdateTaskReq 更新任务入参
@@ -65,6 +68,7 @@ type UpdateTaskReq struct {
 	RemindTime     *string  // 提醒具体时间
 	RemindWeekdays []uint8  // 提醒星期
 	SortId         *uint16  // 排序值
+	UpdatedAt      *string  // 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
 }
 
 // ListTaskReq 列表任务入参
@@ -87,6 +91,8 @@ type ListTaskReq struct {
 	IsStarMarked bool   // 是否已星标
 	IsGivenUp    bool   // 是否已放弃
 	RelativeDate string // 相对日期
+	UpdatedAt    string // 增量同步游标（RFC3339，updated_at > 该值）
+	CursorId     string // keyset 游标辅助：与 UpdatedAt 组合 (updated_at, id) > (cursor, cursorId)
 	Page         int    // 当前页数
 	Limit        int    // 每页条数
 	Sort         string // 排序字段
@@ -133,6 +139,9 @@ type CreateTaskCheckItemReq struct {
 	TaskId      string // 所属任务 ID
 	Name        string // 检查项名称
 	Description string // 检查项描述
+	Id          *string // 同步元数据：客户端预置 id
+	CreatedAt   *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 }
 
 // CreateTaskCheckItemRes 创建任务检查项出参
@@ -154,6 +163,7 @@ type UpdateTaskCheckItemReq struct {
 	Description *string // 检查项描述
 	IsDone      *bool   // 是否已完成
 	SortId      *uint16 // 排序值
+	UpdatedAt   *string // 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
 }
 
 // ListTaskCheckItemRes 列表任务检查项出参
@@ -197,8 +207,11 @@ type TaskCommentRes struct {
 
 // CreateTaskCommentReq 创建任务评论入参
 type CreateTaskCommentReq struct {
-	TaskId  string // 所属任务 ID
-	Content string // 评论内容
+	TaskId    string // 所属任务 ID
+	Content   string // 评论内容
+	Id        *string // 同步元数据：客户端预置 id
+	CreatedAt *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt *string // 同步元数据：客户端预置 updatedAt
 }
 
 // UpdateTaskCommentReq 更新任务评论入参
@@ -206,4 +219,5 @@ type UpdateTaskCommentReq struct {
 	Content     *string   // 评论内容
 	Attachments *[]string // 附件列表
 	IsTopUp     *bool     // 是否置顶
+	UpdatedAt   *string   // 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
 }

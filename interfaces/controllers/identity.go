@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"errors"
+	"strconv"
+	"time"
 
 	authApp "naotodoserver/application/auth"
 	authDto "naotodoserver/application/auth/dto"
@@ -70,6 +72,8 @@ func toCheckInRes(output *authDto.CheckInOutput) *types.CheckInRes {
 		Token:           output.Token,
 		PendingDeletion: output.PendingDeletion,
 		DeletedAt:       output.DeletedAt,
+		// 服务器当前时间（毫秒），作为同步时钟基准
+		ServerTime: strconv.FormatInt(time.Now().UnixMilli(), 10),
 	}
 }
 

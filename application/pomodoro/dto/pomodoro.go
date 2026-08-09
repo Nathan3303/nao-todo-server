@@ -24,6 +24,9 @@ type CreatePomodoroRecordReq struct {
 	EndAt       string // 结束时间（RFC3339）
 	Duration    uint16 // 时长（秒）
 	Note        string // 备注
+	Id          *string // 同步元数据：客户端预置 id
+	CreatedAt   *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 }
 
 // CreatePomodoroRecordRes 创建番茄工作记录出参
@@ -58,6 +61,8 @@ type ListPomodoroRecordReq struct {
 	TaskId     string // 关联的任务 ID
 	TaskName   string // 任务名称
 	Type       uint8  // 番茄工作类型
+	UpdatedAt  string // 增量同步游标（RFC3339，updated_at > 该值）
+	CursorId   string // keyset 游标辅助：与 UpdatedAt 组合 (updated_at, id) > (cursor, cursorId)
 	Page       int    // 当前页数
 	Limit      int    // 每页条数
 	Sort       string // 排序规则
@@ -71,6 +76,9 @@ type CreatePomodoroReq struct {
 	Name        string // 名称
 	Description string // 描述
 	Duration    uint16 // 时长（秒）
+	Id          *string // 同步元数据：客户端预置 id
+	CreatedAt   *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 }
 
 // PomodoroRes 常用番茄工作出参
@@ -100,6 +108,7 @@ type UpdatePomodoroReq struct {
 	Description *string // 描述
 	Duration    *uint16 // 时长（秒）
 	ArchivedAt  string  // 归档时间（RFC3339）
+	UpdatedAt   *string // 乐观锁时间戳（RFC3339，可空）：早于服务端版本时不更新
 }
 
 // ListPomodoroReq 获取常用番茄工作列表入参
@@ -107,6 +116,8 @@ type ListPomodoroReq struct {
 	Type       uint8  // 番茄工作类型
 	Name       string // 名称
 	IsArchived bool   // 是否已归档
+	UpdatedAt  string // 增量同步游标（RFC3339，updated_at > 该值）
+	CursorId   string // keyset 游标辅助：与 UpdatedAt 组合 (updated_at, id) > (cursor, cursorId)
 	Page       int    // 当前页数
 	Limit      int    // 每页条数
 	Sort       string // 排序规则

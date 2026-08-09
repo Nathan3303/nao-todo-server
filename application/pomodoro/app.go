@@ -33,6 +33,13 @@ type PomodoroApp interface {
 		req *dto.ListPomodoroRecordReq,
 	) ([]*dto.GetPomodoroRecordRes, int64, error)
 
+	// ListSync 增量同步番茄工作记录列表（包含软删墓碑，updated_at 游标稳定排序分页）
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		req *dto.ListPomodoroRecordReq,
+	) ([]*dto.GetPomodoroRecordRes, error)
+
 	// --- Pomodoro ---
 
 	// CreatePomodoro 创建常用番茄工作
@@ -72,6 +79,13 @@ type PomodoroApp interface {
 		userId int64,
 		req *dto.ListPomodoroReq,
 	) (dto.ListPomodoroRes, int64, error)
+
+	// ListPomodoroSync 增量同步常用番茄工作列表（包含软删墓碑，updated_at 游标稳定排序分页）
+	ListPomodoroSync(
+		ctx context.Context,
+		userId int64,
+		req *dto.ListPomodoroReq,
+	) (dto.ListPomodoroRes, error)
 }
 
 // PomodoroAppImpl 专注应用应用层实现

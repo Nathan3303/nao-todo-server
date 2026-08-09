@@ -29,7 +29,10 @@ type ModelBase struct {
 
 // BeforeCreate Hook
 // 雪花 ID 的创建前钩子函数
+// 仅当 ID 为空（0）时自动生成，允许客户端（如桌面端同步）预置指定 ID
 func (mb *ModelBase) BeforeCreate(tx *gorm.DB) error {
-	mb.ID = SnowNode.Generate().Int64()
+	if mb.ID == 0 {
+		mb.ID = SnowNode.Generate().Int64()
+	}
 	return nil
 }

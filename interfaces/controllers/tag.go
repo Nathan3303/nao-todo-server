@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"strconv"
+	"strings"
+
 	iCtx "naotodoserver/infrastructure/context"
 	tagApp "naotodoserver/application/tag"
 	tagDto "naotodoserver/application/tag/dto"
 	"naotodoserver/interfaces/types"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,6 +55,9 @@ func toCreateTagInput(req *types.CreateTagReq) *tagDto.CreateTagReq {
 		Name:        req.Name,
 		Description: req.Description,
 		Color:       req.Color,
+		Id:          req.Id,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -81,6 +86,7 @@ func toUpdateTagInput(req *types.UpdateTagReq) *tagDto.UpdateTagReq {
 		Description: req.Description,
 		Color:       req.Color,
 		SortId:      req.SortId,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -325,6 +331,31 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 	// 2. 获取标签 ID列表
 	tagIdString := ctx.Query("tagIds")
 	if tagIdString == "" {
+		// 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序、绕过缓存）
+		if updatedAt := ctx.Query("updatedAt"); updatedAt != "" {
+			cursorId := ctx.Query("cursorId")
+			limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "100"))
+			res, err := c.tagApp.ListTagSync(ctx.Request.Context(), userId, updatedAt, cursorId, limit)
+			if err != nil {
+				Failure(ctx, types.ResponseData{
+					Code:    30041,
+					Message: "获取标签列表失败",
+					Error:   err.Error(),
+				})
+				return
+			}
+			Success(ctx, types.ResponseData{
+				Code:    30040,
+				Message: "获取标签列表成功",
+				Data:    toGetTagResList(res),
+				Pagination: &types.Pagination{
+					Page:  1,
+					Limit: limit,
+					Total: int64(len(res)),
+				},
+			})
+			return
+		}
 		// 3. 获取标签列表
 		res, err := c.tagApp.ListTag(ctx.Request.Context(), userId)
 		if err != nil {

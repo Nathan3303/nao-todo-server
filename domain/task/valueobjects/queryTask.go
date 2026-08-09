@@ -1,5 +1,7 @@
 package valueobjects
 
+import "time"
+
 type QueryTask struct {
 	UserId       int64
 	ParentTaskId int64
@@ -23,6 +25,8 @@ type QueryTask struct {
 	Limit        int
 	RelativeDate string
 	Sort         string
+	// UpdatedAt 增量同步游标：updated_at >= 该值；零值表示普通查询
+	UpdatedAt time.Time
 }
 
 func (queryTask *QueryTask) Validate() error {

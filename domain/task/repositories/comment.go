@@ -18,6 +18,14 @@ type TaskComment interface {
 		vo *valueobjects.CreateTaskComment,
 	) (*entities.TaskComment, error)
 
+	// UpsertComment 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
+	// created=true 表示本次为新建
+	UpsertComment(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreateTaskComment,
+	) (*entities.TaskComment, bool, error)
+
 	// UpdateComment 更新任务评论
 	UpdateComment(
 		ctx context.Context,

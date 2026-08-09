@@ -2,12 +2,16 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
 
 // CreateTaskCheckItem 创建任务检查项值对象
 type CreateTaskCheckItem struct {
+	Id          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	UserId      int64
 	TaskId      int64
 	Name        string

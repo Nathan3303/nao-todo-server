@@ -2,12 +2,16 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
 
 // CreateProject 创建项目值对象
 type CreateProject struct {
+	Id          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	UserId      int64
 	Name        string
 	Description string

@@ -22,6 +22,14 @@ type TaskCheckItem interface {
 		vo *valueobjects.CreateTaskCheckItem,
 	) (*entities.TaskCheckItem, error)
 
+	// UpsertCheckItem 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
+	// created=true 表示本次为新建
+	UpsertCheckItem(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreateTaskCheckItem,
+	) (*entities.TaskCheckItem, bool, error)
+
 	// UpdateCheckItem 更新任务检查项
 	UpdateCheckItem(
 		ctx context.Context,

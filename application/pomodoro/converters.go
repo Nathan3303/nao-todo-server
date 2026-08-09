@@ -33,7 +33,7 @@ func CreatePomodoroRecordReqToVO(
 			return nil, err
 		}
 	}
-	return valueobjects.NewCreatePomodoroRecord(
+	vo, err := valueobjects.NewCreatePomodoroRecord(
 		userId,
 		req.SessionId,
 		pomodoroId,
@@ -46,6 +46,17 @@ func CreatePomodoroRecordReqToVO(
 		req.Duration,
 		req.Note,
 	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	return vo, nil
 }
 
 // PomodoroRecordEntityToCreateRes 将 PomodoroRecordEntity 转换为 CreatePomodoroRecordRes
@@ -53,7 +64,7 @@ func PomodoroRecordEntityToCreateRes(e *entities.PomodoroRecord) *dto.CreatePomo
 	var res dto.CreatePomodoroRecordRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.SessionId = e.SessionId
 	res.PomodoroId = idutil.FormatID(e.PomodoroId)
 	if e.PomodoroId == 0 {
@@ -78,7 +89,7 @@ func PomodoroRecordEntityToGetRes(e *entities.PomodoroRecord) *dto.GetPomodoroRe
 	var res dto.GetPomodoroRecordRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.SessionId = e.SessionId
 	res.PomodoroId = idutil.FormatID(e.PomodoroId)
 	if e.PomodoroId == 0 {
@@ -168,13 +179,24 @@ func CreatePomodoroReqToVO(
 	userId int64,
 	req *dto.CreatePomodoroReq,
 ) (*valueobjects.CreatePomodoro, error) {
-	return valueobjects.NewCreatePomodoro(
+	vo, err := valueobjects.NewCreatePomodoro(
 		userId,
 		entities.PomodoroType(req.Type),
 		req.Name,
 		req.Description,
 		req.Duration,
 	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	return vo, nil
 }
 
 // UpdatePomodoroReqToVO 将 UpdatePomodoroReq 转换为 UpdatePomodoro 值对象
@@ -186,13 +208,24 @@ func UpdatePomodoroReqToVO(
 		t := entities.PomodoroType(*req.Type)
 		voType = &t
 	}
-	return valueobjects.NewUpdatePomodoro(
+	vo, err := valueobjects.NewUpdatePomodoro(
 		voType,
 		req.Name,
 		req.Description,
 		req.Duration,
 		req.ArchivedAt,
 	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
 }
 
 // PomodoroEntityToCreateRes 将 Pomodoro 实体转换为 CreatePomodoroRes
@@ -200,7 +233,7 @@ func PomodoroEntityToCreateRes(e *entities.Pomodoro) *dto.CreatePomodoroRes {
 	var res dto.CreatePomodoroRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
 	res.Type = uint8(e.Type)
 	res.Name = e.Name
@@ -216,7 +249,7 @@ func PomodoroEntityToGetRes(e *entities.Pomodoro) *dto.PomodoroRes {
 	var res dto.PomodoroRes
 	res.Id = idutil.FormatID(e.Id)
 	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
-	res.UpdatedAt = e.UpdatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
 	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
 	res.Type = uint8(e.Type)
 	res.Name = e.Name

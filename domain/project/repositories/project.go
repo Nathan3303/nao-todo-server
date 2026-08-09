@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/domain/types"
@@ -15,8 +17,25 @@ type Project interface {
 		createProjectValueObject *valueobjects.CreateProject,
 	) (*entities.Project, error)
 
+	// Upsert 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
+	// created=true 表示本次为新建（调用方需初始化偏好等附属记录）
+	Upsert(
+		ctx context.Context,
+		userId int64,
+		createProjectValueObject *valueobjects.CreateProject,
+	) (*entities.Project, bool, error)
+
 	// 根据用户ID和任务清单ID获取任务清单
 	GetById(ctx context.Context, userId int64, projectId int64) (*entities.Project, error)
+
+	// ListSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页（不缓存）
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.Project, error)
 
 	// 更新任务清单
 	Update(

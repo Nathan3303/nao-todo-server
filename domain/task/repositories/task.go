@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 )
@@ -24,6 +26,14 @@ type Task interface {
 		createTaskValueObject *valueobjects.CreateTask,
 	) (*entities.Task, error)
 
+	// Upsert 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
+	// created=true 表示本次为新建（调用方需初始化偏好等附属记录）
+	Upsert(
+		ctx context.Context,
+		userId int64,
+		createTaskValueObject *valueobjects.CreateTask,
+	) (*entities.Task, bool, error)
+
 	// Update 更新任务
 	Update(
 		ctx context.Context,
@@ -45,6 +55,15 @@ type Task interface {
 		query *valueobjects.QueryTask,
 		pagination *valueobjects.Pagination,
 	) ([]*entities.Task, *valueobjects.Pagination, error)
+
+	// ListSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.Task, error)
 
 	// Snooze 稍后提醒
 	Snooze(ctx context.Context, userId int64, taskId int64, remindAt string) error

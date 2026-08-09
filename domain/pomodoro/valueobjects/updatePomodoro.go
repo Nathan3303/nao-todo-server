@@ -2,6 +2,7 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/types"
@@ -15,6 +16,8 @@ type UpdatePomodoro struct {
 	Description *string
 	Duration    *uint16
 	ArchivedAt  types.NullableTime
+	// UpdatedAt 乐观锁时间戳（零值=未提供）：早于服务端当前版本时不更新（LWW）
+	UpdatedAt time.Time
 }
 
 // Validate 验证更新常用番茄工作值对象是否有效

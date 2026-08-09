@@ -2,6 +2,7 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/types"
@@ -9,6 +10,9 @@ import (
 
 // CreatePomodoroRecord 创建待办任务番茄工作记录值对象
 type CreatePomodoroRecord struct {
+	Id          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	UserId      int64
 	SessionId   string
 	PomodoroId  int64

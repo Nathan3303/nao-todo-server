@@ -87,6 +87,15 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		tagCtrl := controllers.NewTagController(svc.Tag)
 		pomodoroCtrl := controllers.NewPomodoroController(svc.Pomodoro)
 		sseCtrl := controllers.NewSSEController()
+		systemCtrl := controllers.NewSystemController()
+		syncCtrl := controllers.NewSyncController(
+			svc.Task,
+			svc.TaskCheckItem,
+			svc.TaskComment,
+			svc.Project,
+			svc.Tag,
+			svc.Pomodoro,
+		)
 
 		UseAuthRouter(v1, authCtrl, svc.Auth)
 		UseUserRouter(v1, userCtrl, svc.Auth)
@@ -97,6 +106,8 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		UseCommentRouter(v1, commentCtrl, svc.Auth)
 		UsePomodoroRouter(v1, pomodoroCtrl, svc.Auth)
 		UseSSERouter(v1, sseCtrl, svc.Auth)
+		UseSystemRouter(v1, systemCtrl, svc.Auth)
+		UseSyncRouter(v1, syncCtrl, svc.Auth)
 	}
 
 	// 配置头像文件访问路由（替代原先的静态目录直出）

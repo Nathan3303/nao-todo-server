@@ -36,6 +36,9 @@ func toCreatePomodoroRecordInput(
 		EndAt:       req.EndAt,
 		Duration:    req.Duration,
 		Note:        req.Note,
+		Id:          req.Id,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -122,6 +125,9 @@ func toCreatePomodoroInput(req types.CreatePomodoroReq) *pomodoroDto.CreatePomod
 		Name:        req.Name,
 		Description: req.Description,
 		Duration:    req.Duration,
+		Id:          req.Id,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -144,6 +150,7 @@ func toUpdatePomodoroInput(req types.UpdatePomodoroReq) *pomodoroDto.UpdatePomod
 		Description: req.Description,
 		Duration:    req.Duration,
 		ArchivedAt:  req.ArchivedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -299,6 +306,32 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    70031,
 			Message: err.Error(),
+		})
+		return
+	}
+	// 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序）
+	if req.UpdatedAt != "" {
+		res, err := c.pomodoroApp.ListSync(
+			ctx.Request.Context(),
+			userId,
+			toListPomodoroRecordInput(req),
+		)
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    70032,
+				Message: err.Error(),
+			})
+			return
+		}
+		Success(ctx, types.ResponseData{
+			Code:    70030,
+			Message: "获取专注记录列表成功",
+			Data:    toGetPomodoroRecordReses(res),
+			Pagination: &types.Pagination{
+				Page:  req.Page,
+				Limit: req.Limit,
+				Total: int64(len(res)),
+			},
 		})
 		return
 	}
@@ -586,6 +619,32 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    70091,
 			Message: err.Error(),
+		})
+		return
+	}
+	// 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序）
+	if req.UpdatedAt != "" {
+		res, err := c.pomodoroApp.ListPomodoroSync(
+			ctx.Request.Context(),
+			userId,
+			toListPomodoroInput(req),
+		)
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    70092,
+				Message: err.Error(),
+			})
+			return
+		}
+		Success(ctx, types.ResponseData{
+			Code:    70090,
+			Message: "获取常用番茄工作列表成功",
+			Data:    toPomodoroReses(res),
+			Pagination: &types.Pagination{
+				Page:  req.Page,
+				Limit: req.Limit,
+				Total: int64(len(res)),
+			},
 		})
 		return
 	}

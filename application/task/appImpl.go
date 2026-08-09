@@ -301,6 +301,35 @@ func (taskApp *TaskAppImpl) ListTask(
 	return tasks, paginationRes, nil
 }
 
+// ListTaskSync 增量同步任务列表
+// 包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+func (taskApp *TaskAppImpl) ListTaskSync(
+	ctx context.Context,
+	userId int64,
+	req *dto.ListTaskReq,
+) (dto.ListTaskRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if req.CursorId != "" {
+		cursorID, err = idutil.ParseID(req.CursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	taskEntities, err := taskApp.taskDomain.ListSync(ctx, userId, cursor, cursorID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ListTaskSync: %w", err)
+	}
+	return TaskEntitiesToGetReses(taskEntities), nil
+}
+
 // SnoozeTask 稍后提醒
 // @param ctx 上下文
 // @param userId 用户 ID
@@ -584,7 +613,8 @@ func (impl *TaskAppImpl) CreateTaskComment(
 	if err != nil {
 		return nil, err
 	}
-	e, err := impl.commentRepo.CreateComment(ctx, userId, vo)
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	e, _, err := impl.commentRepo.UpsertComment(ctx, userId, vo)
 	if err != nil {
 		return nil, fmt.Errorf("CreateComment: %w", err)
 	}

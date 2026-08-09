@@ -22,6 +22,10 @@ type TaskApp interface {
 	ListTask(
 		ctx context.Context, userId int64, req *dto.ListTaskReq,
 	) (dto.ListTaskRes, *dto.Pagination, error)
+	// ListTaskSync 增量同步任务列表（包含软删墓碑，updated_at 游标稳定排序分页）
+	ListTaskSync(
+		ctx context.Context, userId int64, req *dto.ListTaskReq,
+	) (dto.ListTaskRes, error)
 	SnoozeTask(
 		ctx context.Context, userId int64, taskId string, req *dto.SnoozeTaskReq,
 	) (*dto.SnoozeTaskRes, error)

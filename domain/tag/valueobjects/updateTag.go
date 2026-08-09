@@ -2,6 +2,7 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
@@ -12,6 +13,8 @@ type UpdateTag struct {
 	Description *string
 	Color       *string
 	SortId      *uint16
+	// UpdatedAt 乐观锁时间戳（零值=未提供）：早于服务端当前版本时不更新（LWW）
+	UpdatedAt time.Time
 }
 
 // Validate 校验更新标签值对象

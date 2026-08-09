@@ -148,6 +148,35 @@ func (tagApp *TagAppImpl) ListTag(
 	return TagEntitiesToGetResList(tagEntities), nil
 }
 
+// ListTagSync 增量同步标签列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
+func (tagApp *TagAppImpl) ListTagSync(
+	ctx context.Context,
+	userId int64,
+	updatedAt string,
+	cursorId string,
+	limit int,
+) ([]*dto.GetTagRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if cursorId != "" {
+		cursorID, err = idutil.ParseID(cursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	tagEntities, err := tagApp.tagRepo.ListSync(ctx, userId, cursor, cursorID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("tag.ListSync: %w", err)
+	}
+	return TagEntitiesToGetResList(tagEntities), nil
+}
+
 // ListTagByIds 根据标签ID列表获取标签列表
 // @param ctx 上下文
 // @param userId 用户 ID

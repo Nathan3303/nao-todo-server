@@ -15,12 +15,28 @@ import (
 func CreateProjectValueObject2Model(
 	createProjectValueObject *valueobjects.CreateProject,
 ) *models.Project {
-	m := &models.Project{}
+	m := &models.Project{
+		ModelBase: models.ModelBase{
+			ID:        createProjectValueObject.Id,
+			CreatedAt: createProjectValueObject.CreatedAt,
+			UpdatedAt: createProjectValueObject.UpdatedAt,
+		},
+	}
 	m.UserId = createProjectValueObject.UserId
 	m.Name = createProjectValueObject.Name
 	m.Description = createProjectValueObject.Description
 	m.SortId = createProjectValueObject.SortId
 	return m
+}
+
+// CreateProjectVOToUpdateMap 创建项目值对象转换为全量更新映射（Upsert 覆盖用）
+// 仅包含 Create VO 表达的字段，不触碰 archived_at/deactived_at 等列
+func CreateProjectVOToUpdateMap(vo *valueobjects.CreateProject) map[string]any {
+	return map[string]any{
+		"Name":        vo.Name,
+		"Description": vo.Description,
+		"SortId":      vo.SortId,
+	}
 }
 
 // UpdateProjectValueObject2Model 更新项目 valueobject 转 model

@@ -2,6 +2,7 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
@@ -10,6 +11,9 @@ import (
 // 评论内容最多 1000 个字符
 // 最多拥有 8 个附件
 type CreateTaskComment struct {
+	Id          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	UserId      int64
 	TaskId      int64
 	Content     string

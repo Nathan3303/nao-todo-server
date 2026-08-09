@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
@@ -22,6 +24,15 @@ type TaskDomain interface {
 		query *valueobjects.QueryTask,
 		pagination *valueobjects.Pagination,
 	) ([]*entities.Task, *valueobjects.Pagination, error)
+
+	// ListSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.Task, error)
 
 	// --- CheckItem ---
 	CreateCheckItem(

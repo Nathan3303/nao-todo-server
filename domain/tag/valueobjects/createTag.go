@@ -2,12 +2,16 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
 
 // CreateTag 创建标签值对象
 type CreateTag struct {
+	Id          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	Name        string
 	Description string
 	Color       string

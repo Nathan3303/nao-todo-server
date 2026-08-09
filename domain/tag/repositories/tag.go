@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/valueobjects"
 )
@@ -16,6 +18,15 @@ type TagRepository interface {
 	// @return error 错误
 	GetById(ctx context.Context, userId int64, tagId int64) (*entities.Tag, error)
 
+	// ListSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页（不缓存）
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.Tag, error)
+
 	// 创建标签
 	// @param ctx 上下文
 	// @param userId 用户ID
@@ -27,6 +38,14 @@ type TagRepository interface {
 		userId int64,
 		createTagValueObject *valueobjects.CreateTag,
 	) (*entities.Tag, error)
+
+	// Upsert 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
+	// created=true 表示本次为新建（调用方需初始化偏好等附属记录）
+	Upsert(
+		ctx context.Context,
+		userId int64,
+		createTagValueObject *valueobjects.CreateTag,
+	) (*entities.Tag, bool, error)
 
 	// 更新标签
 	// @param ctx 上下文

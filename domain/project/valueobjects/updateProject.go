@@ -2,6 +2,7 @@ package valueobjects
 
 import (
 	"errors"
+	"time"
 
 	"naotodoserver/domain/textutils"
 )
@@ -11,6 +12,8 @@ type UpdateProject struct {
 	Name        *string
 	Description *string
 	SortId      *uint16
+	// UpdatedAt 乐观锁时间戳（零值=未提供）：早于服务端当前版本时不更新（LWW）
+	UpdatedAt time.Time
 }
 
 // Validate 验证更新项目值对象是否符合要求

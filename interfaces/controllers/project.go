@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	iCtx "naotodoserver/infrastructure/context"
 	projectApp "naotodoserver/application/project"
 	projectDto "naotodoserver/application/project/dto"
@@ -52,6 +54,9 @@ func toCreateProjectInput(req *types.CreateProjectReq) *projectDto.CreateProject
 	return &projectDto.CreateProjectReq{
 		Name:        req.Name,
 		Description: req.Description,
+		Id:          req.Id,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -80,6 +85,7 @@ func toUpdateProjectInput(req *types.UpdateProjectReq) *projectDto.UpdateProject
 		Name:        req.Name,
 		Description: req.Description,
 		SortId:      req.SortId,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 
@@ -452,6 +458,31 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 		Failure(ctx, types.ResponseData{
 			Code:    20072,
 			Message: "用户未登录",
+		})
+		return
+	}
+	// 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序、绕过缓存）
+	if updatedAt := ctx.Query("updatedAt"); updatedAt != "" {
+		cursorId := ctx.Query("cursorId")
+		limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "100"))
+		res, err := c.projectApp.ListSync(ctx.Request.Context(), userId, updatedAt, cursorId, limit)
+		if err != nil {
+			Failure(ctx, types.ResponseData{
+				Code:    20073,
+				Message: "获取清单列表失败",
+				Error:   err.Error(),
+			})
+			return
+		}
+		Success(ctx, types.ResponseData{
+			Code:    20070,
+			Message: "获取清单列表成功",
+			Data:    toGetProjectResList(res),
+			Pagination: &types.Pagination{
+				Page:  1,
+				Limit: limit,
+				Total: int64(len(res)),
+			},
 		})
 		return
 	}
