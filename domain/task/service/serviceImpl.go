@@ -133,6 +133,10 @@ func (d *TaskDomainImpl) ProcessReminders(ctx context.Context) ([]*entities.Task
 	}
 	// 处理每个任务的提醒时间
 	for _, task := range tasks {
+		// CAS 期望值：扫描时的 remind_at（毫秒截断与 DATETIME(3) 精度对齐）。
+		// 若用户在扫描与更新之间 Snooze/改期，remind_at 已变化，条件更新不生效，
+		// 返回 false 时跳过，避免覆盖用户新设置的提醒。
+		expectedRemindAt := task.RemindAt.Time.Truncate(time.Millisecond)
 		if task.RemindRepeat != 0 {
 			next := d.calculateNextRemindAt(
 				task.RemindAt.Time,
@@ -142,24 +146,36 @@ func (d *TaskDomainImpl) ProcessReminders(ctx context.Context) ([]*entities.Task
 				&task.EndAt.Time,
 			)
 			if next != nil {
-				err := d.taskRepo.UpdateRemindAt(
+				changed, err := d.taskRepo.UpdateRemindAt(
 					ctx,
 					task.Id,
+					expectedRemindAt,
 					next.Format(time.RFC3339),
 				)
 				if err != nil {
 					return nil, err
 				}
+				if !changed {
+					continue
+				}
 			} else {
-				err := d.taskRepo.ClearRemindRepeat(ctx, task.Id)
+				changed, err := d.taskRepo.ClearRemindRepeat(ctx, task.Id, expectedRemindAt)
 				if err != nil {
 					return nil, err
 				}
+				if !changed {
+					continue
+				}
 			}
 		} else {
-			err := d.taskRepo.UpdateRemindAt(ctx, task.Id, "")
+			// 不重复提醒触发后整体复位提醒配置（与重复提醒自然终止一致），
+			// 避免 remind_time/remind_weekdays 残留被后续重复提醒规则复用
+			changed, err := d.taskRepo.ClearRemindRepeat(ctx, task.Id, expectedRemindAt)
 			if err != nil {
 				return nil, err
+			}
+			if !changed {
+				continue
 			}
 		}
 	}

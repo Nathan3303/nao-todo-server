@@ -119,6 +119,8 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 	updateMap := CreateTagVOToUpdateMap(createTagValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
 	updateMap["updated_at"] = time.Now()
+	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at
+	updateMap["deleted_at"] = gorm.Expr("NULL")
 	if err := tagRepo.db.WithContext(ctx).Unscoped().
 		Model(&models.Tag{}).
 		Where("id = ? AND user_id = ?", createTagValueObject.Id, userId).

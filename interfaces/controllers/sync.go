@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"naotodoserver/application/idutil"
 	pomodoroApp "naotodoserver/application/pomodoro"
 	pomodoroDto "naotodoserver/application/pomodoro/dto"
 	projectApp "naotodoserver/application/project"
@@ -159,7 +160,7 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, Error: err.Error()})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, ServerUpdatedAt: now.Format(time.RFC3339)})
+		results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, ServerUpdatedAt: idutil.FormatTimeMilli(now)})
 	}
 
 	// 5. 返回结果

@@ -125,6 +125,8 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	updateMap := CreateTaskVOToUpdateMap(createTaskValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now（LWW 判定仍用客户端时间）
 	updateMap["updated_at"] = time.Now()
+	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at，否则增量拉取仍视为删除
+	updateMap["deleted_at"] = gorm.Expr("NULL")
 	if err := taskRepo.db.WithContext(ctx).Unscoped().
 		Model(&models.Task{}).
 		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).
@@ -338,10 +340,16 @@ func (taskRepo *TaskRepoImpl) Snooze(
 	var whereCond models.Task
 	whereCond.UserId = userId
 	whereCond.ID = taskId
-	// 2. 更新 remind_at
+	// 2. 解析为 time.Time 绑定：RFC3339 字符串（如 UTC 下的 "...Z"）会被 MySQL 拒绝，
+	//    由 driver 按 DATETIME 格式序列化则无此问题
+	t, err := time.Parse(time.RFC3339, remindAt)
+	if err != nil {
+		return err
+	}
+	// 3. 更新 remind_at
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where(whereCond).
-		Update("remind_at", remindAt)
+		Update("remind_at", t)
 	return tx.Error
 }
 
@@ -370,55 +378,69 @@ func (taskRepo *TaskRepoImpl) GetDueReminders(ctx context.Context) ([]*entities.
 // ClearRemindRepeat 清除提醒重复规则
 // @param ctx 上下文
 // @param taskId 任务ID
+// @param expectedRemindAt 期望的当前提醒时间（CAS：仅当 remind_at 仍为该值时清空，防与 Snooze 竞态）
+// @return 是否实际变更（false 表示提醒已被改期/删除，调用方应跳过）
 // @return error 错误
-func (taskRepo *TaskRepoImpl) ClearRemindRepeat(ctx context.Context, taskId int64) error {
+func (taskRepo *TaskRepoImpl) ClearRemindRepeat(
+	ctx context.Context,
+	taskId int64,
+	expectedRemindAt time.Time,
+) (bool, error) {
 	// 1. 确保上下文非空
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	// 2. 构建查询条件
-	var whereCond models.Task
-	whereCond.ID = taskId
-	// 3. 更新
+	// 2. CAS 更新：remind_at 仍是扫描时的值才清空（毫秒截断与 DATETIME(3) 精度对齐）
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where(whereCond).
+		Where("id = ? AND remind_at = ?", taskId, expectedRemindAt.Truncate(time.Millisecond)).
 		Updates(map[string]interface{}{
 			"remind_repeat":   0,
 			"remind_at":       nil,
 			"remind_time":     "",
 			"remind_weekdays": 0,
 		})
-	return tx.Error
+	if tx.Error != nil {
+		return false, tx.Error
+	}
+	return tx.RowsAffected > 0, nil
 }
 
 // UpdateRemindAt 更新提醒时间
 // @param ctx 上下文
 // @param taskId 任务ID
+// @param expectedRemindAt 期望的当前提醒时间（CAS：仅当 remind_at 仍为该值时更新，防与 Snooze 竞态）
 // @param remindAt 新提醒时间，空字符串表示清除
+// @return 是否实际变更（false 表示提醒已被改期/删除，调用方应跳过）
 // @return error 错误
 func (taskRepo *TaskRepoImpl) UpdateRemindAt(
 	ctx context.Context,
 	taskId int64,
+	expectedRemindAt time.Time,
 	remindAt string,
-) error {
+) (bool, error) {
 	// 1. 确保上下文非空
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	// 2. 构建查询条件
-	var whereCond models.Task
-	whereCond.ID = taskId
-	// 3. 更新
+	// 2. CAS 更新：remind_at 仍是扫描时的值才更新
+	//    RFC3339 字符串（如 UTC 下的 "...Z"）会被 MySQL 拒绝，解析为 time.Time 由 driver 序列化
+	var value any
 	if remindAt == "" {
-		tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-			Where(whereCond).
-			Update("remind_at", nil)
-		return tx.Error
+		value = nil
+	} else {
+		t, err := time.Parse(time.RFC3339, remindAt)
+		if err != nil {
+			return false, err
+		}
+		value = t
 	}
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
-		Where(whereCond).
-		Update("remind_at", remindAt)
-	return tx.Error
+		Where("id = ? AND remind_at = ?", taskId, expectedRemindAt.Truncate(time.Millisecond)).
+		Update("remind_at", value)
+	if tx.Error != nil {
+		return false, tx.Error
+	}
+	return tx.RowsAffected > 0, nil
 }
 
 // --- 任务检查项相关 ---
@@ -505,6 +527,8 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 	updateMap := TaskCheckItemVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
 	updateMap["updated_at"] = time.Now()
+	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at
+	updateMap["deleted_at"] = gorm.Expr("NULL")
 	if err := repo.db.WithContext(ctx).Unscoped().
 		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
@@ -735,12 +759,11 @@ func (repo *TaskRepoImpl) UpsertComment(
 	if outcome == types.UpsertNoop {
 		return existingEntity, false, nil
 	}
-	updatedAt := vo.UpdatedAt
-	if updatedAt.IsZero() {
-		updatedAt = time.Now()
-	}
 	updateMap := TaskCommentVOToUpdateMap(vo)
-	updateMap["UpdatedAt"] = updatedAt
+	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
+	updateMap["updated_at"] = time.Now()
+	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at
+	updateMap["deleted_at"] = gorm.Expr("NULL")
 	if err := repo.db.WithContext(ctx).Unscoped().
 		Model(&models.TaskComment{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
