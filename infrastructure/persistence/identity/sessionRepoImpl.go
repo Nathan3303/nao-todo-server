@@ -2,7 +2,9 @@ package identity
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/types"
@@ -33,42 +35,48 @@ func NewSessionRepo(db *gorm.DB, c *cache.Cache) repositories.UserSession {
 // @param sessionEntity 会话实体
 // @return error 错误
 func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.UserSession) error {
-	// 1. 查找现存记录（仅用于清理旧 token 的会话缓存）
-	currentSession := &models.UserSession{}
-	findCond := &models.UserSession{UserId: int64(sessionEntity.UserId)}
-	err := sr.db.
-		WithContext(ctx).
-		Model(&models.UserSession{}).
-		Where("user_id = ?", findCond.UserId).
-		First(currentSession).
-		Error
-	// DB 故障时直接返回，避免误走插入分支产生重复会话
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
-	}
-	// 2. 获取上下文 ClientInfo
+	// 1. 获取上下文 ClientInfo
 	clientInfo := iCtx.GetClientInfo(ctx)
-	// 3. 写入会话（一用户一会话：依赖 user_id 唯一索引）
-	//    OnConflict 保证并发登录时冲突走更新而非插入，避免产生孤儿会话行
+	deviceId := clientInfo.DeviceId
+	// 2. 构建会话模型（deviceId 为空时写入 NULL，不参与去重）
 	createCond := SessionEntity2Model(sessionEntity)
+	createCond.DeviceId = sql.NullString{String: deviceId, Valid: deviceId != ""}
 	createCond.IP4 = clientInfo.IP4
 	createCond.Region = clientInfo.IPRegion
 	createCond.DeviceType = clientInfo.DeviceType
 	createCond.ExpiredAt = time.Now().Add(time.Hour * 24 * 7)
-	tx := sr.db.WithContext(ctx).
-		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "user_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"token", "expired_at", "ip4", "region", "device_type"}),
-		}).
-		Create(createCond)
-	if tx.Error != nil {
-		return tx.Error
+	// 3. deviceId 非空：同设备重复登录覆盖旧会话（先取旧 token 用于失效缓存）
+	var oldToken string
+	if deviceId != "" {
+		var existing models.UserSession
+		err := sr.db.
+			WithContext(ctx).
+			Model(&models.UserSession{}).
+			Where("user_id = ? AND device_id = ?", int64(sessionEntity.UserId), deviceId).
+			First(&existing).
+			Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		oldToken = existing.Token
 	}
-	// 4. 失效旧 token 与新 token 的会话缓存
-	if currentSession.Token != "" {
+	// 4. 写入会话；deviceId 非空时依赖 (user_id, device_id) 唯一索引做 upsert，避免并发产生孤儿行
+	//    updated_at 一并刷新，与 CheckIn 换发（GORM 自动更新）保持行为一致
+	tx := sr.db.WithContext(ctx)
+	if deviceId != "" {
+		tx = tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "device_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"token", "expired_at", "ip4", "region", "device_type", "updated_at"}),
+		})
+	}
+	if err := tx.Create(createCond).Error; err != nil {
+		return err
+	}
+	// 5. 失效旧 token（同设备覆盖）与新 token 的会话缓存
+	if oldToken != "" {
 		sr.cache.Del(ctx, cache.SessionKey(
 			int64(sessionEntity.UserId),
-			currentSession.Token,
+			oldToken,
 		))
 	}
 	sr.cache.Del(ctx, cache.SessionKey(
@@ -101,6 +109,41 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, toke
 	return nil
 }
 
+// DeleteById 根据会话 ID 删除指定会话
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param sessionId 会话 ID
+// @return error 错误
+func (sr *sessionRepoImpl) DeleteById(ctx context.Context, userId types.UserID, sessionId int64) error {
+	// 1. 查询会话（限定 user_id + id，避免越权删除他人会话），拿 token 用于失效缓存
+	session := &models.UserSession{}
+	err := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ? AND id = ?", int64(userId), sessionId).
+		First(session).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domerr.ErrSessionNotFound
+		}
+		return err
+	}
+	// 2. 执行删除（仍限定 user_id + id）
+	tx := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ? AND id = ?", int64(userId), sessionId).
+		Delete(&models.UserSession{})
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// 3. 失效该会话缓存
+	sr.cache.Del(ctx, cache.SessionKey(int64(userId), session.Token))
+	// 4. 返回结果
+	return nil
+}
+
 // DeleteByUserId 删除用户所有会话
 // @param ctx 上下文
 // @param userId 用户 ID
@@ -108,11 +151,13 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, toke
 func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.UserID) error {
 	// 1. 获取用户所有会话的 token
 	var tokens []string
-	sr.db.
+	if err := sr.db.
 		WithContext(ctx).
 		Model(&models.UserSession{}).
 		Where("user_id = ?", int64(userId)).
-		Pluck("token", &tokens)
+		Pluck("token", &tokens).Error; err != nil {
+		return err
+	}
 	// 2. 执行删除
 	tx := sr.db.
 		WithContext(ctx).
@@ -123,6 +168,38 @@ func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.User
 		return tx.Error
 	}
 	// 3. 失效所有会话缓存
+	for _, token := range tokens {
+		sr.cache.Del(ctx, cache.SessionKey(int64(userId), token))
+	}
+	// 4. 返回结果
+	return nil
+}
+
+// DeleteByUserIdExceptToken 删除用户除指定 token 外的所有会话（退出其他全部设备）
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param keepToken 保留的会话令牌
+// @return error 错误
+func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(ctx context.Context, userId types.UserID, keepToken string) error {
+	// 1. 获取待删除会话的 token（用于失效缓存）
+	var tokens []string
+	if err := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ? AND token <> ?", int64(userId), keepToken).
+		Pluck("token", &tokens).Error; err != nil {
+		return err
+	}
+	// 2. 执行删除
+	tx := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ? AND token <> ?", int64(userId), keepToken).
+		Delete(&models.UserSession{})
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// 3. 失效所有被删会话缓存
 	for _, token := range tokens {
 		sr.cache.Del(ctx, cache.SessionKey(int64(userId), token))
 	}
@@ -153,6 +230,33 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 		First(&session)
 	// 4. 模型转换并返回
 	return SessionModel2Entity(session)
+}
+
+// FindByUserId 根据用户 ID 查找现存会话（未过期）
+// @param ctx 上下文
+// @param userId 用户 ID
+// @return 会话实体切片
+// @return error 错误
+func (sr *sessionRepoImpl) FindByUserId(
+	ctx context.Context,
+	userId types.UserID,
+) ([]*entities.UserSession, error) {
+	var sessions []*models.UserSession
+	err := sr.db.
+		WithContext(ctx).
+		Model(&models.UserSession{}).
+		Where("user_id = ? AND expired_at > ?", int64(userId), time.Now()).
+		Order("created_at DESC").
+		Find(&sessions).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*entities.UserSession, 0, len(sessions))
+	for _, s := range sessions {
+		result = append(result, SessionModel2Entity(s))
+	}
+	return result, nil
 }
 
 // UpdateToken 更新会话令牌

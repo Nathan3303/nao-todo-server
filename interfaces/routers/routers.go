@@ -58,7 +58,7 @@ func InitRouters(svc *application.Services) *gin.Engine {
 			"https://todobe.nathanao.space",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Device-Id"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		// AllowOriginFunc: func(origin string) bool {
@@ -80,6 +80,7 @@ func InitRouters(svc *application.Services) *gin.Engine {
 	{
 		v1.GET("/ping", controllers.PingHandler)
 		authCtrl := controllers.NewAuthController(svc.Auth)
+		sessionCtrl := controllers.NewSessionController(svc.Auth)
 		projectCtrl := controllers.NewProjectController(svc.Project)
 		taskCtrl := controllers.NewTaskController(svc.Task)
 		eventCtrl := controllers.NewEventController(svc.TaskCheckItem)
@@ -98,7 +99,7 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		)
 
 		UseAuthRouter(v1, authCtrl, svc.Auth)
-		UseUserRouter(v1, userCtrl, svc.Auth)
+		UseUserRouter(v1, userCtrl, sessionCtrl, svc.Auth)
 		UseProjectRouter(v1, projectCtrl, svc.Auth)
 		UseTagRouter(v1, tagCtrl, svc.Auth)
 		UseTaskRouter(v1, taskCtrl, svc.Auth)

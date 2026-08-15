@@ -7,13 +7,14 @@ import (
 
 // UserSession 用户会话实体
 // 用于表示用户登录后的会话信息
-// 包含用户 ID、会话令牌、过期时间、设备类型等属性
+// 包含用户 ID、会话令牌、过期时间、设备类型、设备 ID 等属性
 type UserSession struct {
 	types.EntityBase
 	UserId     types.UserID
 	Token      string
 	ExpiredAt  time.Time
 	DeviceType string
+	DeviceId   string
 	IP4        string
 	Region     string
 }

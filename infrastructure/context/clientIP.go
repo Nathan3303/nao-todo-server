@@ -11,6 +11,7 @@ type ClientInfo struct {
 	IP6        string
 	IPRegion   string
 	DeviceType string
+	DeviceId   string
 }
 
 func GetClientInfo(ctx context.Context) ClientInfo {

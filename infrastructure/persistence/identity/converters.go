@@ -1,6 +1,8 @@
 package identity
 
 import (
+	"database/sql"
+
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/valueobjects"
 	"naotodoserver/domain/types"
@@ -85,6 +87,7 @@ func SessionModel2Entity(m *models.UserSession) *entities.UserSession {
 	e.Token = m.Token
 	e.ExpiredAt = m.ExpiredAt
 	e.DeviceType = m.DeviceType
+	e.DeviceId = m.DeviceId.String
 	e.IP4 = m.IP4
 	e.Region = m.Region
 	return &e
@@ -101,6 +104,7 @@ func SessionEntity2Model(e *entities.UserSession) *models.UserSession {
 	m.Token = e.Token
 	m.ExpiredAt = e.ExpiredAt
 	m.DeviceType = e.DeviceType
+	m.DeviceId = sql.NullString{String: e.DeviceId, Valid: e.DeviceId != ""}
 	m.IP4 = e.IP4
 	m.Region = e.Region
 	return &m

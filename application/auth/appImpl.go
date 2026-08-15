@@ -226,6 +226,64 @@ func (as *authAppImpl) Validate(
 }
 
 /*
+ * ListSessions 获取用户现存会话列表
+ * 通过 userId 查询该用户所有未过期会话，并标记当前会话
+ */
+func (as *authAppImpl) ListSessions(
+	ctx context.Context,
+	userId int64,
+	currentToken string,
+) ([]*dto.SessionItem, error) {
+	sessions, err := as.identityDomain.ListSessions(ctx, domaintypes.UserID(userId))
+	if err != nil {
+		return nil, fmt.Errorf("auth.ListSessions: %w", err)
+	}
+	items := make([]*dto.SessionItem, 0, len(sessions))
+	for _, s := range sessions {
+		items = append(items, SessionEntity2Item(s, currentToken))
+	}
+	return items, nil
+}
+
+/*
+ * LogoutSession 下线指定会话
+ * 通过 sessionId 删除该用户的一条会话
+ */
+func (as *authAppImpl) LogoutSession(
+	ctx context.Context,
+	userId int64,
+	sessionId int64,
+) error {
+	if err := as.identityDomain.DeleteSessionById(
+		ctx,
+		domaintypes.UserID(userId),
+		sessionId,
+	); err != nil {
+		return fmt.Errorf("auth.LogoutSession: %w", err)
+	}
+	return nil
+}
+
+/*
+ * LogoutOtherSessions 退出其他全部设备
+ * 删除该用户除当前 token 外的所有会话
+ */
+func (as *authAppImpl) LogoutOtherSessions(
+	ctx context.Context,
+	userId int64,
+	currentToken string,
+) error {
+	if err := as.identityDomain.DeleteOtherSessions(
+		ctx,
+		domaintypes.UserID(userId),
+		currentToken,
+	); err != nil {
+		return fmt.Errorf("auth.LogoutOtherSessions: %w", err)
+	}
+	return nil
+}
+
+/*
  * RateLimit 处理用户限流
  * 通过 clientIP 检查用户请求次数是否超过限流阈值
  */

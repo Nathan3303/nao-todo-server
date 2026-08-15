@@ -40,3 +40,15 @@ type CheckInOutput struct {
 	PendingDeletion bool
 	DeletedAt       string
 }
+
+// SessionItem 会话列表项
+type SessionItem struct {
+	Id         string
+	DeviceId   string
+	DeviceType string
+	IP4        string
+	Region     string
+	CreatedAt  string
+	UpdatedAt  string
+	Current    bool
+}

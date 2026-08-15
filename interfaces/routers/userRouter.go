@@ -11,6 +11,7 @@ import (
 func UseUserRouter(
 	router *gin.RouterGroup,
 	ctrl *controllers.UserController,
+	sessionCtrl *controllers.SessionController,
 	auth authApp.AuthApp,
 ) {
 	userGroup := router.Group(
@@ -27,5 +28,8 @@ func UseUserRouter(
 		userGroup.PUT("/restore", ctrl.RestoreUser)
 		userGroup.GET("/config", ctrl.GetUserConfig)
 		userGroup.PUT("/config", ctrl.UpdateUserConfig)
+		userGroup.GET("/sessions", sessionCtrl.ListUserSessions)
+		userGroup.DELETE("/sessions", sessionCtrl.LogoutOtherSessions)
+		userGroup.DELETE("/sessions/:sessionId", sessionCtrl.LogoutUserSession)
 	}
 }

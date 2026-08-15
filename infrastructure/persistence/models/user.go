@@ -78,8 +78,8 @@ type UserSession struct {
 
 	// 用户 ID
 	// 用于关联用户表，获取用户会话信息
-	// 唯一：一用户同时只保留一个会话（重新登录覆盖旧会话）
-	UserId int64 `gorm:"not null;uniqueIndex:idx_user_session_user_id"`
+	// 一用户可同时保留多个会话（多设备登录）
+	UserId int64 `gorm:"not null;uniqueIndex:idx_user_session_user_device,priority:1;index:idx_user_session_user"`
 
 	// 会话令牌
 	// 用于验证用户会话，防止未授权访问
@@ -92,8 +92,12 @@ type UserSession struct {
 
 	// 设备类型
 	// 用于记录用户会话的设备类型，例如 PC、移动端、Web 等
-	// 目标用于多设备登录
 	DeviceType string `gorm:"not null;size:32"`
+
+	// 设备 ID
+	// 客户端持久化生成的可选稳定标识；同一用户同一设备重复登录时覆盖旧会话
+	// 为空（NULL）时不参与去重（老客户端每次登录新增会话）
+	DeviceId sql.NullString `gorm:"null;size:64;uniqueIndex:idx_user_session_user_device,priority:2"`
 
 	// IP4 地址
 	IP4 string `gorm:"not null;size:64"`

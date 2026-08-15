@@ -26,6 +26,15 @@ type AuthApp interface {
 	// 处理用户令牌验证
 	Validate(ctx context.Context, token string) (domaintypes.UserID, error)
 
+	// 获取用户现存会话列表
+	ListSessions(ctx context.Context, userId int64, currentToken string) ([]*dto.SessionItem, error)
+
+	// 下线指定会话
+	LogoutSession(ctx context.Context, userId int64, sessionId int64) error
+
+	// 退出其他全部设备（除当前 token 外）
+	LogoutOtherSessions(ctx context.Context, userId int64, currentToken string) error
+
 	// 处理用户限流
 	RateLimit(ctx context.Context, clientIP string, limit int64) error
 }

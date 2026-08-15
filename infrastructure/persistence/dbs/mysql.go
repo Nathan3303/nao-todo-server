@@ -75,6 +75,24 @@ func DoMigration() {
 		return
 	}
 
+	// 移除旧版「一用户一会话」唯一索引，支持多会话（幂等）
+	var legacyUniqueCnt int64
+	DB.Raw(
+		"SELECT COUNT(*) FROM information_schema.statistics "+
+			"WHERE table_schema = DATABASE() AND table_name = 'user_sessions' "+
+			"AND index_name = 'idx_user_session_user_id' AND non_unique = 0",
+	).Scan(&legacyUniqueCnt)
+	if legacyUniqueCnt > 0 {
+		if err := DB.Exec(
+			"ALTER TABLE user_sessions DROP INDEX idx_user_session_user_id",
+		).Error; err != nil {
+			logging.Logger.Errorf(
+				"移除 user_sessions 旧唯一索引失败，多设备登录将失效（请检查索引是否已被其他实例移除或权限不足）: %v",
+				err,
+			)
+		}
+	}
+
 	// 增量同步复合索引 (user_id, updated_at, id)
 	// 支持增量拉取的 WHERE user_id = ? AND (updated_at, id) > (?, ?) + ORDER BY updated_at ASC, id ASC；
 	// 含 id 列使 keyset 同秒排序走索引，避免 filesort。

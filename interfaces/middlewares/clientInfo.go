@@ -45,11 +45,18 @@ func ClientInfo(ctx *gin.Context) {
 	}
 	// 3. 获取客户端设备类型
 	deviceType := getClientType(ctx.Request.UserAgent())
-	// 4. 构建 ClientInfo
+	// 4. 获取客户端设备 ID（可选，客户端持久化生成；截断到 64 字符以内）
+	//    按 rune 截断，避免切出半个 UTF-8 字符导致入库报错
+	deviceId := strings.TrimSpace(ctx.GetHeader("X-Device-Id"))
+	if r := []rune(deviceId); len(r) > 64 {
+		deviceId = string(r[:64])
+	}
+	// 5. 构建 ClientInfo
 	clientInfo := iCtx.ClientInfo{
 		IP4:        clientIp,
 		IPRegion:   clientRegion,
 		DeviceType: deviceType,
+		DeviceId:   deviceId,
 	}
 	// 2. 写入到上下文
 	ctx.Request = ctx.Request.WithContext(

@@ -19,6 +19,7 @@ var (
 	ErrProjectNotFound   = errors.New("清单不存在")
 	ErrUserNotFound      = errors.New("用户不存在")
 	ErrTokenExpired      = errors.New("凭证无效")
+	ErrSessionNotFound   = errors.New("会话不存在")
 	ErrCreateFailed      = errors.New("创建失败")
 	ErrDeleteFailed      = errors.New("删除失败")
 	ErrIDConflict        = errors.New("ID 冲突：本地生成 ID 与远程已存在实体碰撞，请重新分配")

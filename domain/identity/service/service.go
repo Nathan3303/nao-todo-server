@@ -16,6 +16,9 @@ type IdentityDomain interface {
 		token string,
 	) (*entities.UserSession, error)
 	DeleteSession(ctx context.Context, sessionEntity *entities.UserSession) error
+	ListSessions(ctx context.Context, userId types.UserID) ([]*entities.UserSession, error)
+	DeleteSessionById(ctx context.Context, userId types.UserID, sessionId int64) error
+	DeleteOtherSessions(ctx context.Context, userId types.UserID, keepToken string) error
 	GenerateJWT(ctx context.Context, userEntity *entities.User) (string, error)
 	ParseJWT(ctx context.Context, token string) (types.UserID, error)
 	IsJWTExpired(ctx context.Context, token string) bool

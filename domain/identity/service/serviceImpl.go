@@ -55,6 +55,32 @@ func (d *identityDomainImpl) DeleteSession(
 	return d.userSessionRepo.Delete(ctx, sessionEntity.UserId, sessionEntity.Token)
 }
 
+// ListSessions 获取用户现存会话列表
+func (d *identityDomainImpl) ListSessions(
+	ctx context.Context,
+	userId types.UserID,
+) ([]*entities.UserSession, error) {
+	return d.userSessionRepo.FindByUserId(ctx, userId)
+}
+
+// DeleteSessionById 根据会话 ID 删除指定会话
+func (d *identityDomainImpl) DeleteSessionById(
+	ctx context.Context,
+	userId types.UserID,
+	sessionId int64,
+) error {
+	return d.userSessionRepo.DeleteById(ctx, userId, sessionId)
+}
+
+// DeleteOtherSessions 删除用户除指定 token 外的所有会话
+func (d *identityDomainImpl) DeleteOtherSessions(
+	ctx context.Context,
+	userId types.UserID,
+	keepToken string,
+) error {
+	return d.userSessionRepo.DeleteByUserIdExceptToken(ctx, userId, keepToken)
+}
+
 // GenerateJWT 生成JWT令牌
 func (d *identityDomainImpl) GenerateJWT(
 	ctx context.Context,
