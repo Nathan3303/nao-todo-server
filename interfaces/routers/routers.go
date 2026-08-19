@@ -52,8 +52,7 @@ func InitRouters(svc *application.Services) *gin.Engine {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",
-			"http://localhost:5273",
-			"http://localhost:4173",
+			"http://localhost:5174",
 			"https://todo.nathanao.space",
 			"https://todobe.nathanao.space",
 		},
