@@ -47,6 +47,7 @@ type CreateTaskReq struct {
 	Id             *string  // 同步元数据：客户端预置 id
 	CreatedAt      *string  // 同步元数据：客户端预置 createdAt
 	UpdatedAt      *string  // 同步元数据：客户端预置 updatedAt
+	DeletedAt      *string  // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
 }
 
 // UpdateTaskReq 更新任务入参

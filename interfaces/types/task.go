@@ -41,6 +41,8 @@ type CreateTaskReq struct {
 	Id        *string `json:"id"`
 	CreatedAt *string `json:"createdAt"`
 	UpdatedAt *string `json:"updatedAt"`
+	// DeletedAt 同步元数据：客户端本地删除时间（可空，推送墓碑时携带，服务端 upsert 写入 deleted_at）
+	DeletedAt *string `json:"deletedAt"`
 }
 
 // UpdateTaskReq 更新任务请求

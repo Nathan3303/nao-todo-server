@@ -231,6 +231,59 @@ func TestUpsertReviveTombstone(t *testing.T) {
 	}
 }
 
+// TestUpsertTombstoneWithDeletedAt 推送携带 deletedAt（本地墓碑）不复活；未携带则复活
+func TestUpsertTombstoneWithDeletedAt(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1006
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	// 1. 先创建正常任务
+	if _, _, err := repo.Upsert(ctx, userID, newTaskVO(9006, "任务", now, now)); err != nil {
+		t.Fatalf("初始 Upsert: %v", err)
+	}
+
+	// 2. 推送本地墓碑（携带 DeletedAt，updatedAt 更新）→ 不复活，deleted_at 保留
+	tombVO := newTaskVO(9006, "任务", now, now.Add(time.Hour))
+	tombVO.DeletedAt = types.NewNullableTimeByTime(now.Add(30 * time.Minute))
+	entity, created, err := repo.Upsert(ctx, userID, tombVO)
+	if err != nil {
+		t.Fatalf("墓碑 Upsert: %v", err)
+	}
+	if created {
+		t.Fatal("墓碑 Upsert 应返回 created=false")
+	}
+	if got := entity.DeletedAt.ToString(time.RFC3339); got == "" {
+		t.Fatal("墓碑 Upsert 后 DeletedAt 为空, want 保留删除时间（不应复活）")
+	}
+	var tomb models.Task
+	if err := testDB.Unscoped().First(&tomb, "id = ? AND user_id = ?", 9006, userID).Error; err != nil {
+		t.Fatalf("查询: %v", err)
+	}
+	if !tomb.DeletedAt.Valid {
+		t.Fatal("DB deleted_at 被清空, want 保留墓碑删除时间")
+	}
+
+	// 3. 推送正常记录（不携带 DeletedAt，updatedAt 更新）→ 复活
+	reviveVO := newTaskVO(9006, "任务", now, now.Add(2*time.Hour))
+	entity2, _, err := repo.Upsert(ctx, userID, reviveVO)
+	if err != nil {
+		t.Fatalf("复活 Upsert: %v", err)
+	}
+	if got := entity2.DeletedAt.ToString(time.RFC3339); got != "" {
+		t.Fatalf("复活 Upsert 后 DeletedAt = %q, want 空（已复活）", got)
+	}
+	// 注意：gorm 复用已填充结构体时不会刷新 DeletedAt 字段，故每次查询用新变量
+	var revived models.Task
+	if err := testDB.Unscoped().First(&revived, "id = ? AND user_id = ?", 9006, userID).Error; err != nil {
+		t.Fatalf("查询: %v", err)
+	}
+	if revived.DeletedAt.Valid {
+		t.Fatal("复活 Upsert 后 DB deleted_at 仍有效, want NULL")
+	}
+}
+
 // TestListSyncKeyset 同秒多记录 keyset 分页推进不重复不遗漏，墓碑在增量中可见
 func TestListSyncKeyset(t *testing.T) {
 	cleanTasks(t)

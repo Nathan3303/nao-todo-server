@@ -33,6 +33,7 @@ func CreateProjectReqToValueObject(
 	createProjectValueObject.Id = id
 	createProjectValueObject.CreatedAt = createdAt
 	createProjectValueObject.UpdatedAt = updatedAt
+	createProjectValueObject.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
 	return createProjectValueObject, nil
 }
 

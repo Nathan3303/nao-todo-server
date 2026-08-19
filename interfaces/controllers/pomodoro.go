@@ -128,6 +128,7 @@ func toCreatePomodoroInput(req types.CreatePomodoroReq) *pomodoroDto.CreatePomod
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
+		DeletedAt:   req.DeletedAt,
 	}
 }
 

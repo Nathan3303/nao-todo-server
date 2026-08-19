@@ -20,6 +20,7 @@ func CreateProjectValueObject2Model(
 			ID:        createProjectValueObject.Id,
 			CreatedAt: createProjectValueObject.CreatedAt,
 			UpdatedAt: createProjectValueObject.UpdatedAt,
+			DeletedAt: gorm.DeletedAt(createProjectValueObject.DeletedAt.ToSqlNullTime()),
 		},
 	}
 	m.UserId = createProjectValueObject.UserId
@@ -31,12 +32,17 @@ func CreateProjectValueObject2Model(
 
 // CreateProjectVOToUpdateMap 创建项目值对象转换为全量更新映射（Upsert 覆盖用）
 // 仅包含 Create VO 表达的字段，不触碰 archived_at/deactived_at 等列
+// 客户端携带删除时间（本地墓碑）时写入 deleted_at；未携带时由 Upsert 兜底清空复活
 func CreateProjectVOToUpdateMap(vo *valueobjects.CreateProject) map[string]any {
-	return map[string]any{
+	updateMap := map[string]any{
 		"Name":        vo.Name,
 		"Description": vo.Description,
 		"SortId":      vo.SortId,
 	}
+	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
+		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()
+	}
+	return updateMap
 }
 
 // UpdateProjectValueObject2Model 更新项目 valueobject 转 model

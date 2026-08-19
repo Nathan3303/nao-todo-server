@@ -14,6 +14,7 @@ type CreateTask struct {
 	Id             int64
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	DeletedAt      types.NullableTime
 	ParentTaskId   types.TaskID
 	Name           string
 	Description    string

@@ -57,6 +57,7 @@ func toCreateProjectInput(req *types.CreateProjectReq) *projectDto.CreateProject
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
+		DeletedAt:   req.DeletedAt,
 	}
 }
 

@@ -75,10 +75,11 @@ type CreatePomodoroReq struct {
 	Type        uint8  // 番茄工作类型
 	Name        string // 名称
 	Description string // 描述
-	Duration    uint16 // 时长（秒）
+	Duration    uint16  // 时长（秒）
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
+	DeletedAt   *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
 }
 
 // PomodoroRes 常用番茄工作出参

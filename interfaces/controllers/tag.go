@@ -58,6 +58,7 @@ func toCreateTagInput(req *types.CreateTagReq) *tagDto.CreateTagReq {
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
+		DeletedAt:   req.DeletedAt,
 	}
 }
 

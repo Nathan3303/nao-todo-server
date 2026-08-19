@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"naotodoserver/domain/textutils"
+	"naotodoserver/domain/types"
 )
 
 // CreateTag 创建标签值对象
@@ -12,6 +13,7 @@ type CreateTag struct {
 	Id          int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	DeletedAt   types.NullableTime
 	Name        string
 	Description string
 	Color       string

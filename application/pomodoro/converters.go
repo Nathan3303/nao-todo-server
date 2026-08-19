@@ -7,6 +7,7 @@ import (
 	"naotodoserver/application/pomodoro/dto"
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/pomodoro/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // --- PomodoroRecord Converters ---
@@ -196,6 +197,7 @@ func CreatePomodoroReqToVO(
 	vo.Id = id
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
+	vo.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
 	return vo, nil
 }
 

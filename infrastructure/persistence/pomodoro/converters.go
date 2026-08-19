@@ -5,6 +5,8 @@ import (
 	"naotodoserver/domain/pomodoro/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
+
+	"gorm.io/gorm"
 )
 
 // --- PomodoroRecord Converters ---
@@ -71,6 +73,7 @@ func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 		ID:        vo.Id,
 		CreatedAt: vo.CreatedAt,
 		UpdatedAt: vo.UpdatedAt,
+		DeletedAt: gorm.DeletedAt(vo.DeletedAt.ToSqlNullTime()),
 	}
 	m.UserId = int64(vo.UserId)
 	m.Type = uint8(vo.Type)
@@ -82,13 +85,18 @@ func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 
 // CreatePomodoroVOToUpdateMap 创建常用番茄工作值对象转换为全量更新映射（Upsert 覆盖用）
 // 仅包含 Create VO 表达的字段，不触碰 archived_at/total_duration 等列
+// 客户端携带删除时间（本地墓碑）时写入 deleted_at；未携带时由 Upsert 兜底清空复活
 func CreatePomodoroVOToUpdateMap(vo *valueobjects.CreatePomodoro) map[string]any {
-	return map[string]any{
+	updateMap := map[string]any{
 		"Type":        uint8(vo.Type),
 		"Name":        vo.Name,
 		"Description": vo.Description,
 		"Duration":    vo.Duration,
 	}
+	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
+		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()
+	}
+	return updateMap
 }
 
 // CreatePomodoroRecordVOToUpdateMap 创建番茄工作记录值对象转换为全量更新映射（Upsert 覆盖用）

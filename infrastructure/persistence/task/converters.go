@@ -6,6 +6,8 @@ import (
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
+
+	"gorm.io/gorm"
 )
 
 // CreateTaskValueObjectToModel 创建任务值对象转换为任务模型
@@ -17,7 +19,12 @@ func CreateTaskValueObjectToModel(
 	createTaskValueObject *valueobjects.CreateTask,
 ) *models.Task {
 	return &models.Task{
-		ModelBase:      models.ModelBase{ID: createTaskValueObject.Id, CreatedAt: createTaskValueObject.CreatedAt, UpdatedAt: createTaskValueObject.UpdatedAt},
+		ModelBase: models.ModelBase{
+			ID:        createTaskValueObject.Id,
+			CreatedAt: createTaskValueObject.CreatedAt,
+			UpdatedAt: createTaskValueObject.UpdatedAt,
+			DeletedAt: gorm.DeletedAt(createTaskValueObject.DeletedAt.ToSqlNullTime()),
+		},
 		UserId:         userId,
 		ParentTaskId:   int64(createTaskValueObject.ParentTaskId),
 		Name:           createTaskValueObject.Name,
@@ -38,9 +45,10 @@ func CreateTaskValueObjectToModel(
 
 // CreateTaskVOToUpdateMap 创建任务值对象转换为全量更新映射（Upsert 覆盖用）
 // 仅包含 Create VO 表达的字段，不触碰 archived_at/star_mark_at/given_up_at/completed_at 等列
+// 客户端携带删除时间（本地墓碑）时写入 deleted_at；未携带时由 Upsert 兜底清空复活
 func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
 	tagsJSON, _ := json.Marshal(vo.Tags)
-	return map[string]any{
+	updateMap := map[string]any{
 		"ParentTaskId":   int64(vo.ParentTaskId),
 		"Name":           vo.Name,
 		"Description":    vo.Description,
@@ -56,6 +64,10 @@ func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
 		"RemindWeekdays": vo.RemindWeekdays,
 		"SortId":         vo.SortId,
 	}
+	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
+		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()
+	}
+	return updateMap
 }
 
 // TaskCheckItemVOToUpdateMap 创建检查项值对象转换为全量更新映射（Upsert 覆盖用）

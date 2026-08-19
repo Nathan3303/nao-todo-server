@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"naotodoserver/domain/pomodoro/entities"
+	"naotodoserver/domain/types"
 )
 
 // CreatePomodoro 创建常用番茄工作值对象
@@ -12,6 +13,7 @@ type CreatePomodoro struct {
 	Id          int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	DeletedAt   types.NullableTime
 	UserId      int64
 	Type        entities.PomodoroType
 	Name        string

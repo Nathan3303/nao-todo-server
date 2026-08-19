@@ -5,6 +5,8 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/models"
+
+	"gorm.io/gorm"
 )
 
 // CreateTagValueObjectToModel 创建标签值对象转换为标签模型
@@ -20,6 +22,7 @@ func CreateTagValueObjectToModel(
 		ID:        createTagValueObject.Id,
 		CreatedAt: createTagValueObject.CreatedAt,
 		UpdatedAt: createTagValueObject.UpdatedAt,
+		DeletedAt: gorm.DeletedAt(createTagValueObject.DeletedAt.ToSqlNullTime()),
 	}
 	m.UserId = userId
 	m.Name = createTagValueObject.Name
@@ -30,13 +33,18 @@ func CreateTagValueObjectToModel(
 }
 
 // CreateTagVOToUpdateMap 创建标签值对象转换为全量更新映射（Upsert 覆盖用）
+// 客户端携带删除时间（本地墓碑）时写入 deleted_at；未携带时由 Upsert 兜底清空复活
 func CreateTagVOToUpdateMap(vo *valueobjects.CreateTag) map[string]any {
-	return map[string]any{
+	updateMap := map[string]any{
 		"Name":        vo.Name,
 		"Description": vo.Description,
 		"Color":       vo.Color,
 		"SortId":      vo.SortId,
 	}
+	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
+		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()
+	}
+	return updateMap
 }
 
 // UpdateTagValueObjectToModel 更新标签值对象转换为标签模型
@@ -133,6 +141,7 @@ func TagModel2Entity(m *models.Tag) *entities.Tag {
 	e.SortId = m.SortId
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	return e
 }
 
@@ -152,6 +161,7 @@ func TagPreferenceModel2Entity(m *models.TagPreference) *entities.TagPreference 
 	e.Columns = m.Columns
 	e.CreatedAt = m.CreatedAt
 	e.UpdatedAt = m.UpdatedAt
+	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	return e
 }
 

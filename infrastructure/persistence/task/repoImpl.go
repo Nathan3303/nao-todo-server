@@ -125,8 +125,10 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	updateMap := CreateTaskVOToUpdateMap(createTaskValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now（LWW 判定仍用客户端时间）
 	updateMap["updated_at"] = time.Now()
-	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at，否则增量拉取仍视为删除
-	updateMap["deleted_at"] = gorm.Expr("NULL")
+	// 覆盖已软删记录（墓碑）时复活：未携带删除时间时显式清 deleted_at，否则增量拉取仍视为删除
+	if _, ok := updateMap["deleted_at"]; !ok {
+		updateMap["deleted_at"] = gorm.Expr("NULL")
+	}
 	if err := taskRepo.db.WithContext(ctx).Unscoped().
 		Model(&models.Task{}).
 		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"naotodoserver/domain/textutils"
+	"naotodoserver/domain/types"
 )
 
 // CreateProject 创建项目值对象
@@ -12,6 +13,7 @@ type CreateProject struct {
 	Id          int64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	DeletedAt   types.NullableTime
 	UserId      int64
 	Name        string
 	Description string

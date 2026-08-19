@@ -48,6 +48,7 @@ func CreateTagReqToValueObject(createTagReq *dto.CreateTagReq) (*valueobjects.Cr
 	vo.Id = id
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
+	vo.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(createTagReq.DeletedAt)
 	return vo, nil
 }
 

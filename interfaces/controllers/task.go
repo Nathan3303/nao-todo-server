@@ -78,6 +78,7 @@ func toCreateTaskReq(req *types.CreateTaskReq) *taskDto.CreateTaskReq {
 		Id:             req.Id,
 		CreatedAt:      req.CreatedAt,
 		UpdatedAt:      req.UpdatedAt,
+		DeletedAt:      req.DeletedAt,
 	}
 }
 
