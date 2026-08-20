@@ -149,3 +149,24 @@ func TestTaskUngiveUp(t *testing.T) {
 		t.Errorf("重复 UngiveUp 后 GivenUpAt 仍应为空")
 	}
 }
+
+// TestTaskUnstar 取消收藏：清空收藏时间，且不再校验与开始时间的关系
+func TestTaskUnstar(t *testing.T) {
+	now := time.Now()
+	startAt := now.Add(24 * time.Hour) // 开始时间在未来
+	task := &Task{
+		StarMarkAt: types.NewNullableTimeByTime(now),
+		StartAt:    types.NewNullableTimeByTime(startAt),
+	}
+	// 收藏时间早于开始时间时，收藏状态本身无效
+	if task.IsStarMarkAtValid() {
+		t.Fatal("收藏时间早于开始时间时应判无效")
+	}
+	task.Unstar()
+	if _, ok := task.StarMarkAt.Value(); ok {
+		t.Fatal("Unstar 后 StarMarkAt 应清空")
+	}
+	if !task.IsStarMarkAtValid() {
+		t.Fatal("Unstar 后不应再校验与开始时间的关系，应判有效")
+	}
+}

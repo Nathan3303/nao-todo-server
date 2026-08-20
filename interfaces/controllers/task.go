@@ -41,8 +41,33 @@ func toGetTaskRes(output *taskDto.GetTaskRes) *types.GetTaskRes {
 	res.RemindAt = output.RemindAt
 	res.RemindRepeat = output.RemindRepeat
 	res.RemindTime = output.RemindTime
-	res.RemindWeekdays = output.RemindWeekdays
+	res.RemindWeekdays = toIntWeekdays(output.RemindWeekdays)
 	res.SortId = output.SortId
+	return res
+}
+
+// toIntWeekdays 将内部星期数组（[]uint8）转换为接口层类型（[]int）
+// 内部表示与序列化表示分离：[]uint8 即 []byte，JSON 序列化会被编码为 base64 而非数字数组
+func toIntWeekdays(weekdays []uint8) []int {
+	if weekdays == nil {
+		return nil
+	}
+	res := make([]int, len(weekdays))
+	for i, d := range weekdays {
+		res[i] = int(d)
+	}
+	return res
+}
+
+// toUint8Weekdays 将接口层星期数组（[]int）转换回内部类型（[]uint8）
+func toUint8Weekdays(weekdays []int) []uint8 {
+	if weekdays == nil {
+		return nil
+	}
+	res := make([]uint8, len(weekdays))
+	for i, d := range weekdays {
+		res[i] = uint8(d)
+	}
 	return res
 }
 
@@ -74,7 +99,7 @@ func toCreateTaskReq(req *types.CreateTaskReq) *taskDto.CreateTaskReq {
 		RemindAt:       req.RemindAt,
 		RemindRepeat:   req.RemindRepeat,
 		RemindTime:     req.RemindTime,
-		RemindWeekdays: req.RemindWeekdays,
+		RemindWeekdays: toUint8Weekdays(req.RemindWeekdays),
 		Id:             req.Id,
 		CreatedAt:      req.CreatedAt,
 		UpdatedAt:      req.UpdatedAt,
@@ -102,7 +127,7 @@ func toUpdateTaskReq(req *types.UpdateTaskReq) *taskDto.UpdateTaskReq {
 		RemindAt:       req.RemindAt,
 		RemindRepeat:   req.RemindRepeat,
 		RemindTime:     req.RemindTime,
-		RemindWeekdays: req.RemindWeekdays,
+		RemindWeekdays: toUint8Weekdays(req.RemindWeekdays),
 		SortId:         req.SortId,
 		UpdatedAt:      req.UpdatedAt,
 	}
@@ -214,6 +239,8 @@ func toCreateTaskCheckItemReq(req *types.CreateTaskCheckItemReq) *taskDto.Create
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
+		IsDone:      req.IsDone,
+		SortId:      req.SortId,
 	}
 }
 

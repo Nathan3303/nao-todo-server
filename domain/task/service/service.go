@@ -41,6 +41,10 @@ type TaskDomain interface {
 		vo *valueobjects.CreateTaskCheckItem,
 	) (*entities.TaskCheckItem, error)
 
+	// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
+	// 同时推进任务 updated_at，保证清理结果可被增量同步发现
+	RemoveTagFromTasks(ctx context.Context, userId int64, tagId int64) error
+
 	// --- Snooze ---
 	Snooze(ctx context.Context, userId int64, taskId int64, durationMinutes int) (string, error)
 	ProcessReminders(ctx context.Context) ([]*entities.Task, error)

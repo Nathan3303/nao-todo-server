@@ -76,6 +76,7 @@ func TaskCheckItemVOToUpdateMap(vo *valueobjects.CreateTaskCheckItem) map[string
 		"TaskId":      vo.TaskId,
 		"Name":        vo.Name,
 		"Description": vo.Description,
+		"IsDone":      vo.IsDone,
 		"SortId":      vo.SortId,
 	}
 }
@@ -238,6 +239,7 @@ func TaskCheckItemValueObjectToModel(vo *valueobjects.CreateTaskCheckItem) *mode
 		TaskId:      vo.TaskId,
 		Name:        vo.Name,
 		Description: vo.Description,
+		IsDone:      vo.IsDone,
 		SortId:      vo.SortId,
 	}
 }

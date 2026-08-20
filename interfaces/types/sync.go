@@ -50,6 +50,8 @@ type SyncPullTableReq struct {
 // SyncPullReq 批量增量拉取请求
 type SyncPullReq struct {
 	Tasks           *SyncPullTableReq `json:"tasks"`
+	TaskCheckItems  *SyncPullTableReq `json:"taskCheckItems"`
+	TaskComments    *SyncPullTableReq `json:"taskComments"`
 	Projects        *SyncPullTableReq `json:"projects"`
 	Tags            *SyncPullTableReq `json:"tags"`
 	Pomodoros       *SyncPullTableReq `json:"pomodoros"`

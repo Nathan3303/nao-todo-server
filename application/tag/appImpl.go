@@ -8,18 +8,30 @@ import (
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
+	taskService "naotodoserver/domain/task/service"
+	"naotodoserver/domain/types"
 )
 
 // NewTagApp 创建标签应用层实例
+// @param tagDomain 标签领域服务
+// @param tagRepo 标签仓储
+// @param preferenceRepo 标签偏好仓储
+// @param txManager 事务管理器
+// @param taskDomain 任务领域服务（删除标签时级联清理任务引用）
+// @return TagApp 标签应用层接口
 func NewTagApp(
 	tagDomain service.TagDomain,
 	tagRepo repositories.TagRepository,
 	preferenceRepo repositories.TagPreference,
+	txManager types.TxManager,
+	taskDomain taskService.TaskDomain,
 ) TagApp {
 	impl := &TagAppImpl{
 		tagDomain:      tagDomain,
 		tagRepo:        tagRepo,
 		preferenceRepo: preferenceRepo,
+		txManager:      txManager,
+		taskDomain:     taskDomain,
 	}
 	return impl
 }
@@ -121,8 +133,15 @@ func (tagApp *TagAppImpl) DeleteTag(
 	if err != nil {
 		return domerr.ErrInvalidTagID
 	}
-	// 删除标签信息
-	err = tagApp.tagDomain.Delete(ctx, userId, tagId64)
+	// 事务内级联删除：软删标签 + 从所有任务中移除该标签引用
+	err = tagApp.txManager.Do(ctx, func(ctx context.Context) error {
+		// 1. 软删标签（领域服务负责 Tag 自身 + Preference）
+		if err := tagApp.tagDomain.Delete(ctx, userId, tagId64); err != nil {
+			return err
+		}
+		// 2. 级联清理任务中的标签引用（推进任务 updated_at，增量同步可发现）
+		return tagApp.taskDomain.RemoveTagFromTasks(ctx, userId, tagId64)
+	})
 	if err != nil {
 		return fmt.Errorf("tag.Delete: %w", err)
 	}

@@ -145,6 +145,12 @@ func (task *Task) ToggleStar(at *time.Time) {
 	task.StarMarkAt = types.NewNullableTimeByTime(*at)
 }
 
+// Unstar 取消收藏任务
+// 清空收藏时间（置 null），取消收藏后不再参与与开始时间的关系校验
+func (task *Task) Unstar() {
+	task.StarMarkAt = types.NewNullableTimeNull()
+}
+
 // GiveUp 放弃任务（可指定放弃时间，nil 表示使用当前时间）
 func (task *Task) GiveUp(at *time.Time) {
 	if at == nil {

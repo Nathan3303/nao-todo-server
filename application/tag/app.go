@@ -5,6 +5,8 @@ import (
 	"naotodoserver/application/tag/dto"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
+	taskService "naotodoserver/domain/task/service"
+	"naotodoserver/domain/types"
 )
 
 // TagApp 标签应用服务接口
@@ -72,4 +74,6 @@ type TagAppImpl struct {
 	tagDomain      service.TagDomain
 	tagRepo        repositories.TagRepository
 	preferenceRepo repositories.TagPreference
+	txManager      types.TxManager
+	taskDomain     taskService.TaskDomain
 }

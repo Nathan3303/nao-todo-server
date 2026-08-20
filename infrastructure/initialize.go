@@ -104,6 +104,8 @@ func LoadDomains() *application.Services {
 		tagDomain,
 		tagRepoInst,
 		tagPreferenceRepoInst,
+		txManager,
+		taskDomain, // 注入 Task 领域服务，用于删除标签时级联清理任务引用
 	)
 	// 初始化项目领域模型
 	return &application.Services{

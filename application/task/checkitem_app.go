@@ -20,6 +20,9 @@ type TaskCheckItemApp interface {
 	ListTaskCheckItems(
 		ctx context.Context, userId int64, taskId string,
 	) (dto.ListTaskCheckItemRes, error)
+	ListTaskCheckItemSync(
+		ctx context.Context, userId int64, updatedAt, cursorId string, limit int,
+	) (dto.ListTaskCheckItemRes, error)
 	BatchUpdateTaskCheckItems(
 		ctx context.Context, userId int64, req *dto.BatchUpdateTaskCheckItemReq,
 	) (*dto.BatchUpdateTaskCheckItemRes, error)

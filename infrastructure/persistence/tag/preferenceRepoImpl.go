@@ -5,6 +5,7 @@ import (
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
+	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 
 	"gorm.io/gorm"
@@ -107,7 +108,8 @@ func (t *TagPreferenceRepoImpl) Delete(
 	userId int64,
 	tagId int64,
 ) error {
-	return t.db.WithContext(ctx).
+	// 用 dbs.DBFrom 取事务句柄：DeleteTag 级联删除时与 tag 软删同事务
+	return dbs.DBFrom(ctx, t.db).WithContext(ctx).
 		Model(&models.TagPreference{}).
 		Where(&models.TagPreference{UserId: userId, TagId: tagId}).
 		Delete(&models.TagPreference{}).Error

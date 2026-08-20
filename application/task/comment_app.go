@@ -20,5 +20,8 @@ type TaskCommentApp interface {
 	ListTaskComments(
 		ctx context.Context, userId int64, taskId string,
 	) ([]*dto.TaskCommentRes, error)
+	ListTaskCommentSync(
+		ctx context.Context, userId int64, updatedAt, cursorId string, limit int,
+	) ([]*dto.TaskCommentRes, error)
 	SyncTaskCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
 }

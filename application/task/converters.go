@@ -299,6 +299,8 @@ func CreateTaskCheckItemReqToVO(
 	vo.Id = id
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
+	vo.IsDone = req.IsDone
+	vo.SortId = req.SortId
 	return vo, nil
 }
 

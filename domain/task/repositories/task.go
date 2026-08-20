@@ -87,6 +87,10 @@ type Task interface {
 	// SoftDeleteByProjectId 软删除指定项目下的所有任务（级联删除用）
 	SoftDeleteByProjectId(ctx context.Context, userId int64, projectId int64) error
 
+	// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
+	// 同时推进任务 updated_at，保证清理结果可被增量同步发现
+	RemoveTagFromTasks(ctx context.Context, userId int64, tagId int64) error
+
 	// RestoreByProjectId 恢复指定项目下的所有任务（级联恢复用）
 	RestoreByProjectId(ctx context.Context, userId int64, projectId int64) error
 

@@ -157,7 +157,13 @@ func (taskApp *TaskAppImpl) UpdateTask(
 		}
 		// 3.3 收藏时间
 		if req.StarMarkAt != nil {
-			if *req.StarMarkAt != "" {
+			if *req.StarMarkAt == "" {
+				// 空串：取消收藏（清空实体，置 null 落库，不再校验与开始时间的关系）
+				taskEntity.Unstar()
+				updateTaskValueObject.StarMarkAt = domaintypes.NewNullableTimeByTimeStrPtr(
+					req.StarMarkAt,
+				)
+			} else {
 				parsedTime, _ := time.Parse(time.RFC3339, *req.StarMarkAt)
 				if parsedTime.IsZero() {
 					parsedTime, _ = time.Parse("2006-01-02T15:04", *req.StarMarkAt)
@@ -520,6 +526,36 @@ func (impl *TaskAppImpl) ListTaskCheckItems(
 	return TaskCheckItemEntitiesToReses(items), nil
 }
 
+// ListTaskCheckItemSync 增量同步检查事项列表
+// 包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+func (impl *TaskAppImpl) ListTaskCheckItemSync(
+	ctx context.Context,
+	userId int64,
+	updatedAt string,
+	cursorId string,
+	limit int,
+) (dto.ListTaskCheckItemRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if cursorId != "" {
+		cursorID, err = idutil.ParseID(cursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	items, err := impl.checkItemRepo.ListCheckItemsSync(ctx, userId, cursor, cursorID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ListTaskCheckItemSync: %w", err)
+	}
+	return TaskCheckItemEntitiesToReses(items), nil
+}
+
 // BatchUpdateTaskCheckItems 批量更新检查事项
 // @param ctx 上下文
 // @param userId 用户 ID
@@ -687,6 +723,36 @@ func (impl *TaskAppImpl) ListTaskComments(
 		return nil, fmt.Errorf("ListComments: %w", err)
 	}
 	return TaskCommentEntitiesToListRes(entities), nil
+}
+
+// ListTaskCommentSync 增量同步评论列表
+// 包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+func (impl *TaskAppImpl) ListTaskCommentSync(
+	ctx context.Context,
+	userId int64,
+	updatedAt string,
+	cursorId string,
+	limit int,
+) ([]*dto.TaskCommentRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if cursorId != "" {
+		cursorID, err = idutil.ParseID(cursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	commentEntities, err := impl.commentRepo.ListCommentsSync(ctx, userId, cursor, cursorID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ListTaskCommentSync: %w", err)
+	}
+	return TaskCommentEntitiesToListRes(commentEntities), nil
 }
 
 // SyncTaskCommentUserProfile 同步评论用户信息

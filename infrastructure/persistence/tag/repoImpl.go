@@ -8,6 +8,7 @@ import (
 	"naotodoserver/domain/tag/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/cache"
+	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
 	"time"
@@ -209,7 +210,8 @@ func (tagRepo *TagRepositoryImpl) Update(
 // @return error 错误
 func (tagRepo *TagRepositoryImpl) Delete(ctx context.Context, userId int64, tagId int64) error {
 	// 1. 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
-	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).
+	// 用 dbs.DBFrom 取事务句柄：DeleteTag 级联删除时与任务引用清理同事务
+	tx := dbs.DBFrom(ctx, tagRepo.db).WithContext(ctx).Model(&models.Tag{}).
 		Where("id = ? AND user_id = ?", tagId, userId).
 		UpdateColumns(map[string]any{
 			"deleted_at": time.Now(),

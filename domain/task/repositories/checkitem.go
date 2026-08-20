@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 )
@@ -43,6 +45,15 @@ type TaskCheckItem interface {
 
 	// ListCheckItems 获取任务检查项列表
 	ListCheckItems(ctx context.Context, userId, taskId int64) ([]*entities.TaskCheckItem, error)
+
+	// ListCheckItemsSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+	ListCheckItemsSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.TaskCheckItem, error)
 
 	// GetMaxCheckItemSortId 获取任务检查项最大排序 ID
 	GetMaxCheckItemSortId(ctx context.Context, userId, taskId int64) uint16

@@ -18,7 +18,7 @@ type GetTaskRes struct {
 	RemindAt       string   `json:"remindAt"`
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
-	RemindWeekdays []uint8  `json:"remindWeekdays"`
+	RemindWeekdays []int    `json:"remindWeekdays"`
 	SortId         uint16   `json:"sortId"`
 }
 
@@ -36,7 +36,7 @@ type CreateTaskReq struct {
 	RemindAt       string   `json:"remindAt"`
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
-	RemindWeekdays []uint8  `json:"remindWeekdays"`
+	RemindWeekdays []int    `json:"remindWeekdays"`
 	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
 	Id        *string `json:"id"`
 	CreatedAt *string `json:"createdAt"`
@@ -62,7 +62,7 @@ type UpdateTaskReq struct {
 	RemindAt       *string  `json:"remindAt"`
 	RemindRepeat   *string  `json:"remindRepeat"`
 	RemindTime     *string  `json:"remindTime"`
-	RemindWeekdays []uint8  `json:"remindWeekdays"`
+	RemindWeekdays []int    `json:"remindWeekdays"`
 	SortId         *uint16  `json:"sortId"`
 	// UpdatedAt 乐观锁时间戳（RFC3339，可空）：早于服务端当前版本时不更新（LWW 防旧数据回滚）
 	UpdatedAt *string `json:"updatedAt"`
@@ -117,6 +117,10 @@ type CreateTaskCheckItemReq struct {
 	Id        *string `json:"id"`
 	CreatedAt *string `json:"createdAt"`
 	UpdatedAt *string `json:"updatedAt"`
+	// IsDone 是否完成（可选，默认 false；push 增量同步时用于更新完成状态）
+	IsDone bool `json:"isDone"`
+	// SortId 排序值（可选，默认 0 由服务端自动生成；push 增量同步时用于保持排序）
+	SortId uint16 `json:"sortId"`
 }
 
 // CreateTaskCheckItemRes 创建任务检查项响应

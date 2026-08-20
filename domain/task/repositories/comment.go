@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 )
@@ -39,6 +41,15 @@ type TaskComment interface {
 
 	// ListComments 获取任务评论列表
 	ListComments(ctx context.Context, userId, taskId int64) ([]*entities.TaskComment, error)
+
+	// ListCommentsSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+	ListCommentsSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.TaskComment, error)
 
 	// SyncCommentUserProfile 同步任务评论用户信息
 	SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error

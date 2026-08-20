@@ -137,12 +137,14 @@ type GetTaskCheckItemRes struct {
 
 // CreateTaskCheckItemReq 创建任务检查项入参
 type CreateTaskCheckItemReq struct {
-	TaskId      string // 所属任务 ID
-	Name        string // 检查项名称
-	Description string // 检查项描述
+	TaskId      string  // 所属任务 ID
+	Name        string  // 检查项名称
+	Description string  // 检查项描述
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
+	IsDone      bool    // 是否已完成（可选，默认 false；push 同步时更新完成状态）
+	SortId      uint16  // 排序值（可选，默认 0 由服务端自动生成；push 同步时保持排序）
 }
 
 // CreateTaskCheckItemRes 创建任务检查项出参

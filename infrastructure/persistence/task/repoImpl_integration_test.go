@@ -51,6 +51,8 @@ func TestMain(m *testing.M) {
 		fmt.Printf("迁移失败: %v\n", err)
 		os.Exit(1)
 	}
+	// 初始化雪花 ID 节点：服务端生成 id 的路径（如新建检查项）依赖 BeforeCreate 触发
+	models.InitSnowflake(1)
 	testDB = db
 	os.Exit(m.Run())
 }
@@ -393,5 +395,305 @@ func TestReminderCAS(t *testing.T) {
 	}
 	if m.RemindAt.Time.Truncate(time.Second) != snoozedAt.Truncate(time.Second) {
 		t.Fatalf("remind_at 应保留 Snooze 值, got %v", m.RemindAt.Time)
+	}
+}
+
+// newCheckItemVO 构造最小 CreateTaskCheckItem（绕过校验，直接设公开字段）
+func newCheckItemVO(userId int64, id int64, taskId int64, name string, isDone bool, sortId uint16, created, updated time.Time) *valueobjects.CreateTaskCheckItem {
+	return &valueobjects.CreateTaskCheckItem{
+		UserId:    userId,
+		Id:        id,
+		CreatedAt: created,
+		UpdatedAt: updated,
+		TaskId:    taskId,
+		Name:      name,
+		IsDone:    isDone,
+		SortId:    sortId,
+	}
+}
+
+// TestUpsertCheckItemOverridesIsDoneAndSortId 前端 push 携带 isDone/sortId 覆盖时正确落库
+// 回归：此前 Create 链路无 IsDone 字段，push 更新的完成状态被静默丢弃
+func TestUpsertCheckItemOverridesIsDoneAndSortId(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1003
+	const taskID = 9003
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	// 首次创建：未完成、sortId 未提供（0，由领域层生成，repo 层原样落库）
+	first, created1, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, 0, taskID, "How are you ?", false, 0, now, now))
+	if err != nil {
+		t.Fatalf("首次 UpsertCheckItem: %v", err)
+	}
+	if !created1 {
+		t.Fatal("首次 UpsertCheckItem 应返回 created=true")
+	}
+	if first.IsDone {
+		t.Fatal("首次创建 isDone 应为 false")
+	}
+
+	// 客户端 push 更新：同 id 携带 isDone=true、sortId=263（模拟前端请求体字段）
+	second, created2, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, first.Id, taskID, "How are you ?", true, 263, now, now.Add(2*time.Second)))
+	if err != nil {
+		t.Fatalf("覆盖 UpsertCheckItem: %v", err)
+	}
+	if created2 {
+		t.Fatal("同 id 覆盖应返回 created=false")
+	}
+	if !second.IsDone {
+		t.Fatal("覆盖后 isDone 应为 true")
+	}
+	if second.SortId != 263 {
+		t.Fatalf("覆盖后 sortId 应为 263，实际 %d", second.SortId)
+	}
+
+	// 校验数据库落库
+	var m models.TaskCheckItem
+	if err := testDB.WithContext(ctx).Where("id = ?", first.Id).First(&m).Error; err != nil {
+		t.Fatalf("查询落库记录: %v", err)
+	}
+	if !m.IsDone {
+		t.Fatal("数据库 is_done 应为 true")
+	}
+	if m.SortId != 263 {
+		t.Fatalf("数据库 sort_id 应为 263，实际 %d", m.SortId)
+	}
+}
+
+// TestRemoveTagFromTasks 标签删除时级联清理任务引用：
+// 仅移除精确匹配的 tagId；其他标签与任务字段（如 Name）不被触碰；updated_at 被推进
+func TestRemoveTagFromTasks(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1004
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	// 任务 A：含目标 tagId=1 与相似 tagId=11（子串回归：不应误删）
+	taskA, _, err := repo.Upsert(ctx, userID, &valueobjects.CreateTask{
+		Id:        9101,
+		CreatedAt: now,
+		UpdatedAt: now,
+		Name:      "任务A",
+		State:     entities.TaskStatePending,
+		Priority:  entities.TaskPriorityMedium,
+		Tags:      []string{"1", "11", "2"},
+	})
+	if err != nil {
+		t.Fatalf("创建任务A: %v", err)
+	}
+	// 任务 B：不含目标 tagId，不应被触碰
+	if _, _, err := repo.Upsert(ctx, userID, &valueobjects.CreateTask{
+		Id:        9102,
+		CreatedAt: now,
+		UpdatedAt: now,
+		Name:      "任务B",
+		State:     entities.TaskStatePending,
+		Priority:  entities.TaskPriorityMedium,
+		Tags:      []string{"3"},
+	}); err != nil {
+		t.Fatalf("创建任务B: %v", err)
+	}
+
+	if err := repo.RemoveTagFromTasks(ctx, userID, 1); err != nil {
+		t.Fatalf("RemoveTagFromTasks: %v", err)
+	}
+
+	var mA, mB models.Task
+	if err := testDB.WithContext(ctx).First(&mA, "id = ?", taskA.Id).Error; err != nil {
+		t.Fatalf("查询任务A: %v", err)
+	}
+	if err := testDB.WithContext(ctx).First(&mB, "id = ?", 9102).Error; err != nil {
+		t.Fatalf("查询任务B: %v", err)
+	}
+
+	// 精确移除 tagId=1，保留 11（子串不误删）与 2
+	wantTags := []string{"11", "2"}
+	if len(mA.Tags) != len(wantTags) {
+		t.Fatalf("任务A tags = %v, want %v", mA.Tags, wantTags)
+	}
+	for i, id := range wantTags {
+		if mA.Tags[i] != id {
+			t.Fatalf("任务A tags = %v, want %v", mA.Tags, wantTags)
+		}
+	}
+	// 其他字段未被覆盖
+	if mA.Name != "任务A" {
+		t.Fatalf("任务A Name 被意外覆盖: %q", mA.Name)
+	}
+	// 任务B 不受影响
+	if len(mB.Tags) != 1 || mB.Tags[0] != "3" {
+		t.Fatalf("任务B tags = %v, want [3]", mB.Tags)
+	}
+	// updated_at 被推进（清理事件可被增量同步发现）
+	if !mA.UpdatedAt.After(now) && !mA.UpdatedAt.Equal(now.Add(time.Millisecond)) {
+		t.Fatalf("任务A updated_at 应被推进, got %v (base %v)", mA.UpdatedAt, now)
+	}
+}
+
+// TestListCheckItemsSyncTombstone 检查项增量拉取包含软删墓碑
+func TestListCheckItemsSyncTombstone(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1005
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	// 正常检查项
+	if _, _, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, 9301, 9001, "正常项", false, 1, now, now)); err != nil {
+		t.Fatalf("创建正常检查项: %v", err)
+	}
+	// 墓碑检查项（软删，updated_at 更晚保证排序在后）
+	if err := testDB.WithContext(ctx).Unscoped().Create(&models.TaskCheckItem{
+		ModelBase: models.ModelBase{
+			ID:        9302,
+			CreatedAt: now,
+			UpdatedAt: now.Add(time.Second),
+			DeletedAt: gorm.DeletedAt{Time: now.Add(time.Second), Valid: true},
+		},
+		UserId: userID,
+		TaskId: 9001,
+		Name:   "已删项",
+		SortId: 2,
+	}).Error; err != nil {
+		t.Fatalf("创建墓碑检查项: %v", err)
+	}
+
+	list, err := repo.ListCheckItemsSync(ctx, userID, time.Time{}, 0, 100)
+	if err != nil {
+		t.Fatalf("ListCheckItemsSync: %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("应拉取到 2 条（含墓碑）, got %d", len(list))
+	}
+	var tombstone, normal *entities.TaskCheckItem
+	for _, e := range list {
+		switch e.Id {
+		case 9302:
+			tombstone = e
+		case 9301:
+			normal = e
+		}
+	}
+	if tombstone == nil || normal == nil {
+		t.Fatal("正常检查项与墓碑都应被拉取到")
+	}
+	if _, ok := tombstone.DeletedAt.Value(); !ok {
+		t.Fatal("墓碑 DeletedAt 应有值")
+	}
+	if _, ok := normal.DeletedAt.Value(); ok {
+		t.Fatal("正常检查项 DeletedAt 应为空")
+	}
+}
+
+// TestListCommentsSyncTombstone 评论增量拉取包含软删墓碑
+func TestListCommentsSyncTombstone(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1006
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	if err := testDB.WithContext(ctx).Unscoped().Create(&models.TaskComment{
+		ModelBase: models.ModelBase{
+			ID:        9401,
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		UserId:   userID,
+		TaskId:   9001,
+		Content:  "正常评论",
+		Nickname: "用户",
+		Avatar:   "",
+	}).Error; err != nil {
+		t.Fatalf("创建正常评论: %v", err)
+	}
+	if err := testDB.WithContext(ctx).Unscoped().Create(&models.TaskComment{
+		ModelBase: models.ModelBase{
+			ID:        9402,
+			CreatedAt: now,
+			UpdatedAt: now.Add(time.Second),
+			DeletedAt: gorm.DeletedAt{Time: now.Add(time.Second), Valid: true},
+		},
+		UserId:   userID,
+		TaskId:   9001,
+		Content:  "已删评论",
+		Nickname: "用户",
+		Avatar:   "",
+	}).Error; err != nil {
+		t.Fatalf("创建墓碑评论: %v", err)
+	}
+
+	list, err := repo.ListCommentsSync(ctx, userID, time.Time{}, 0, 100)
+	if err != nil {
+		t.Fatalf("ListCommentsSync: %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("应拉取到 2 条（含墓碑）, got %d", len(list))
+	}
+	var tombstone, normal *entities.TaskComment
+	for _, e := range list {
+		switch e.Id {
+		case 9402:
+			tombstone = e
+		case 9401:
+			normal = e
+		}
+	}
+	if tombstone == nil || normal == nil {
+		t.Fatal("正常评论与墓碑都应被拉取到")
+	}
+	if _, ok := tombstone.DeletedAt.Value(); !ok {
+		t.Fatal("墓碑 DeletedAt 应有值")
+	}
+	if _, ok := normal.DeletedAt.Value(); ok {
+		t.Fatal("正常评论 DeletedAt 应为空")
+	}
+}
+
+// TestListCheckItemsSyncKeyset 检查项增量拉取 keyset 游标分页不重不漏
+func TestListCheckItemsSyncKeyset(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1007
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	// 同秒 5 条：updated_at 相同，靠 id 二级推进
+	for i, id := range []int64{9501, 9502, 9503, 9504, 9505} {
+		if _, _, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, id, 9001, "项", false, uint16(i+1), now, now)); err != nil {
+			t.Fatalf("创建检查项 %d: %v", id, err)
+		}
+	}
+
+	var got []int64
+	cursor, cursorID := time.Time{}, int64(0)
+	for {
+		page, err := repo.ListCheckItemsSync(ctx, userID, cursor, cursorID, 2)
+		if err != nil {
+			t.Fatalf("ListCheckItemsSync: %v", err)
+		}
+		if len(page) == 0 {
+			break
+		}
+		for _, e := range page {
+			got = append(got, e.Id)
+		}
+		last := page[len(page)-1]
+		cursor, cursorID = last.UpdatedAt, last.Id
+		if len(got) > 5 {
+			t.Fatalf("keyset 推进出现重复: %v", got)
+		}
+	}
+	if len(got) != 5 {
+		t.Fatalf("keyset 推进遗漏: got %d, want 5 (%v)", len(got), got)
+	}
+	want := []int64{9501, 9502, 9503, 9504, 9505}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("顺序不一致: got %v, want %v", got, want)
+		}
 	}
 }

@@ -16,6 +16,7 @@ type CreateTaskCheckItem struct {
 	TaskId      int64
 	Name        string
 	Description string
+	IsDone      bool
 	SortId      uint16
 }
 

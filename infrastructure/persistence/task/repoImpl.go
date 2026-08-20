@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
@@ -11,6 +12,7 @@ import (
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -609,6 +611,36 @@ func (repo *TaskRepoImpl) ListCheckItems(
 	return TaskCheckItemModels2Entities(list), nil
 }
 
+// ListCheckItemsSync 增量同步任务检查项列表
+// 包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+func (repo *TaskRepoImpl) ListCheckItemsSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.TaskCheckItem, error) {
+	scopes := []func(db *gorm.DB) *gorm.DB{
+		query.ByKeysetCursor(cursor, cursorID),
+		query.SyncOrder(),
+	}
+	tx := repo.db.WithContext(ctx).Unscoped().
+		Model(&models.TaskCheckItem{}).
+		Where("user_id = ?", userId).
+		Scopes(scopes...)
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	var itemModels []*models.TaskCheckItem
+	tx = tx.Limit(limit).Find(&itemModels)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return TaskCheckItemModels2Entities(itemModels), nil
+}
+
 // GetMaxCheckItemSortId 获取任务检查项最大排序ID
 // @param ctx 上下文
 // @param userId 用户ID
@@ -844,6 +876,36 @@ func (repo *TaskRepoImpl) ListComments(
 	return TaskCommentModels2Entities(list), nil
 }
 
+// ListCommentsSync 增量同步任务评论列表
+// 包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+func (repo *TaskRepoImpl) ListCommentsSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.TaskComment, error) {
+	scopes := []func(db *gorm.DB) *gorm.DB{
+		query.ByKeysetCursor(cursor, cursorID),
+		query.SyncOrder(),
+	}
+	tx := repo.db.WithContext(ctx).Unscoped().
+		Model(&models.TaskComment{}).
+		Where("user_id = ?", userId).
+		Scopes(scopes...)
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	var commentModels []*models.TaskComment
+	tx = tx.Limit(limit).Find(&commentModels)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return TaskCommentModels2Entities(commentModels), nil
+}
+
 // SyncCommentUserProfile 同步任务评论用户属性
 // @param ctx 上下文
 // @param userId 用户ID
@@ -931,6 +993,60 @@ func (repo *TaskRepoImpl) RestoreByProjectId(
 		taskModels[i].UpdatedAt = time.Now()
 	}
 	return db.WithContext(ctx).Unscoped().Save(&taskModels).Error
+}
+
+// RemoveTagFromTasks 从所有任务中移除指定标签引用
+// 用于标签删除时的级联清理：粗筛 tags JSON 数组命中后，Go 侧按字符串精确比对过滤，
+// 仅更新实际受影响的记录，并显式推进 updated_at 保证清理结果可被增量同步发现
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return error 错误
+func (repo *TaskRepoImpl) RemoveTagFromTasks(
+	ctx context.Context, userId int64, tagId int64,
+) error {
+	db := dbs.DBFrom(ctx, repo.db)
+	tagIdStr := strconv.FormatInt(tagId, 10)
+	var taskModels []models.Task
+	if err := db.WithContext(ctx).
+		Where("user_id = ? AND tags LIKE ?", userId, `%"`+tagIdStr+`"%`).
+		Find(&taskModels).Error; err != nil {
+		return err
+	}
+	if len(taskModels) == 0 {
+		return nil
+	}
+	// 仅更新 tags 与 updated_at 两列，避免 Save 全量写回覆盖并发修改的其他字段（如 Name/State）
+	// Tags 为 serializer:json 列，UpdateColumns 需手动序列化（与 TaskCheckItemVOToUpdateMap 约定一致）
+	now := time.Now()
+	for i := range taskModels {
+		filtered := make([]string, 0, len(taskModels[i].Tags))
+		itemChanged := false
+		for _, id := range taskModels[i].Tags {
+			if id == tagIdStr {
+				itemChanged = true
+				continue
+			}
+			filtered = append(filtered, id)
+		}
+		if !itemChanged {
+			continue
+		}
+		tagsJSON, err := json.Marshal(filtered)
+		if err != nil {
+			return err
+		}
+		// 显式推进 updated_at，保证清理事件可增量发现
+		if err := db.WithContext(ctx).Model(&models.Task{}).
+			Where("id = ?", taskModels[i].ID).
+			UpdateColumns(map[string]any{
+				"Tags":      string(tagsJSON),
+				"UpdatedAt": now,
+			}).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ArchiveByProjectId 归档指定项目下的所有任务

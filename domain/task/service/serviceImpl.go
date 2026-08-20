@@ -85,7 +85,10 @@ func (d *TaskDomainImpl) CreateCheckItem(
 	userId int64,
 	vo *valueobjects.CreateTaskCheckItem,
 ) (*entities.TaskCheckItem, error) {
-	vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
+	// 客户端未提供 sortId（0）时由服务端自动生成，保持既有创建语义
+	if vo.SortId == 0 {
+		vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
+	}
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
 	entity, _, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
 	return entity, err
@@ -100,6 +103,16 @@ func (d *TaskDomainImpl) ListSync(
 	limit int,
 ) ([]*entities.Task, error) {
 	return d.taskRepo.ListSync(ctx, userId, cursor, cursorID, limit)
+}
+
+// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
+// 同时推进任务 updated_at，保证清理结果可被增量同步发现
+func (d *TaskDomainImpl) RemoveTagFromTasks(
+	ctx context.Context,
+	userId int64,
+	tagId int64,
+) error {
+	return d.taskRepo.RemoveTagFromTasks(ctx, userId, tagId)
 }
 
 // --- 任务提醒相关 ---

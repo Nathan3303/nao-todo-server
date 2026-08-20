@@ -211,6 +211,24 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 		res := toGetTaskResList(items)
 		data["tasks"] = types.SyncPullTableRes{Items: res, Total: int64(len(res)), NextCursor: lastUpdatedAt(res), NextCursorId: lastIdOf(res)}
 	}
+	if t := req.TaskCheckItems; t != nil {
+		items, err := c.checkItemApp.ListTaskCheckItemSync(ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit)
+		if err != nil {
+			Failure(ctx, types.ResponseData{Code: 90022, Message: "检查项增量拉取失败", Error: err.Error()})
+			return
+		}
+		res := toGetTaskCheckItemResList(items)
+		data["taskCheckItems"] = types.SyncPullTableRes{Items: res, Total: int64(len(res)), NextCursor: lastCheckItemUpdatedAt(res), NextCursorId: lastCheckItemIdOf(res)}
+	}
+	if t := req.TaskComments; t != nil {
+		items, err := c.commentApp.ListTaskCommentSync(ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit)
+		if err != nil {
+			Failure(ctx, types.ResponseData{Code: 90022, Message: "评论增量拉取失败", Error: err.Error()})
+			return
+		}
+		res := toTaskCommentResList(items)
+		data["taskComments"] = types.SyncPullTableRes{Items: res, Total: int64(len(res)), NextCursor: lastCommentUpdatedAt(res), NextCursorId: lastCommentIdOf(res)}
+	}
 	if t := req.Projects; t != nil {
 		items, err := c.projectApp.ListSync(ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit)
 		if err != nil {
@@ -269,6 +287,38 @@ func lastUpdatedAt(resList []*types.GetTaskRes) string {
 		return ""
 	}
 	return resList[len(resList)-1].UpdatedAt
+}
+
+// lastCheckItemUpdatedAt 取检查项列表最后一条 updatedAt
+func lastCheckItemUpdatedAt(resList []*types.GetTaskCheckItemRes) string {
+	if len(resList) == 0 {
+		return ""
+	}
+	return resList[len(resList)-1].UpdatedAt
+}
+
+// lastCommentUpdatedAt 取评论列表最后一条 updatedAt
+func lastCommentUpdatedAt(resList []*types.TaskCommentRes) string {
+	if len(resList) == 0 {
+		return ""
+	}
+	return resList[len(resList)-1].UpdatedAt
+}
+
+// lastCheckItemIdOf 取检查项列表最后一条 id（keyset 游标辅助）
+func lastCheckItemIdOf(resList []*types.GetTaskCheckItemRes) string {
+	if len(resList) == 0 {
+		return ""
+	}
+	return resList[len(resList)-1].Id
+}
+
+// lastCommentIdOf 取评论列表最后一条 id（keyset 游标辅助）
+func lastCommentIdOf(resList []*types.TaskCommentRes) string {
+	if len(resList) == 0 {
+		return ""
+	}
+	return resList[len(resList)-1].Id
 }
 
 // lastProjectUpdatedAt 取项目列表最后一条 updatedAt
