@@ -65,7 +65,7 @@ services:
             dockerfile: Dockerfile
         container_name: naotodo-server
         ports:
-            - "443:${APP_PORT}" # 应用端口映射 - 根据 APP_PORT 环境变量配置
+            - "3302:${APP_PORT}" # 应用端口映射 - 根据 APP_PORT 环境变量配置
         volumes:
             - app-uploads-data:/app/uploads
             - app-logs-data:/app/logs
