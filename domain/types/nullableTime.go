@@ -63,11 +63,21 @@ func (nt *NullableTime) ToString(fmt string) string {
 
 // --- Maker ---
 
-// NewNullableTimeNull 创建空值 NullableTime
-// @return NullableTime
+// NewNullableTimeNull 创建空值 NullableTime（未设置/缺席，Valid=false）：
+// 持久化更新层按 Valid 判定是否写该列，因此缺席值不会触发写入。
 func NewNullableTimeNull() NullableTime {
 	return NullableTime{
 		Valid:  false,
+		IsNull: true,
+		Time:   time.Time{},
+	}
+}
+
+// NewNullableTimeSetToNull 创建显式置空标记（Valid=true, IsNull=true）：
+// 区别于 NewNullableTimeNull（缺席/不写入），持久化更新层识别后写 NULL。
+func NewNullableTimeSetToNull() NullableTime {
+	return NullableTime{
+		Valid:  true,
 		IsNull: true,
 		Time:   time.Time{},
 	}

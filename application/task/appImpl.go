@@ -119,23 +119,15 @@ func (taskApp *TaskAppImpl) UpdateTask(
 		if err != nil {
 			return fmt.Errorf("UpdateTask: %w", err)
 		}
-		// 3.1 状态迁移
+		// 3.1 状态迁移：由实体状态机维护（含完成时间盖章/清空），此处仅作持久化翻译
 		if req.State != nil {
-			wasCompleted := taskEntity.State == entities.TaskStateCompleted
 			parsed, _ := entities.ParseTaskState(*req.State)
 			if err := taskEntity.ChangeState(parsed); err != nil {
 				return err
 			}
 			newState := taskEntity.State
 			updateTaskValueObject.State = &newState
-			switch {
-			case taskEntity.State == entities.TaskStateCompleted:
-				updateTaskValueObject.CompletedAt = taskEntity.CompletedAt
-			case wasCompleted:
-				updateTaskValueObject.CompletedAt = domaintypes.NullableTime{
-					Valid: true, IsNull: true,
-				}
-			}
+			updateTaskValueObject.CompletedAt = taskEntity.CompletedAt
 		}
 		// 3.2 归档时间
 		if req.ArchivedAt != nil {
@@ -462,19 +454,13 @@ func (impl *TaskAppImpl) UpdateTaskCheckItem(
 	if err != nil {
 		return err
 	}
-	// 状态迁移：读-改-写，复用实体 MarkDone/MarkUndone 保持状态一致
+	// 状态迁移：读-改-写，复用实体 SetDone 保持状态决策在领域层
 	if vo.IsDone != nil {
 		item, err := impl.checkItemRepo.GetCheckItemById(ctx, userId, id64)
 		if err != nil {
 			return fmt.Errorf("UpdateCheckItem: %w", err)
 		}
-		if item.IsCompleted() != *vo.IsDone {
-			if *vo.IsDone {
-				item.MarkDone()
-			} else {
-				item.MarkUndone()
-			}
-		}
+		item.SetDone(*vo.IsDone)
 		newIsDone := item.IsDone
 		vo.IsDone = &newIsDone
 	}
@@ -588,13 +574,7 @@ func (impl *TaskAppImpl) BatchUpdateTaskCheckItems(
 			if err != nil {
 				return nil, fmt.Errorf("BatchUpdateCheckItems: %w", err)
 			}
-			if item.IsCompleted() != *vo.IsDone {
-				if *vo.IsDone {
-					item.MarkDone()
-				} else {
-					item.MarkUndone()
-				}
-			}
+			item.SetDone(*vo.IsDone)
 			newIsDone := item.IsDone
 			vo.IsDone = &newIsDone
 		}

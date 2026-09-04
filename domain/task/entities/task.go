@@ -34,10 +34,11 @@ type Task struct {
 	SortId         uint16
 }
 
-// IsEndAtValid 检查结束时间是否有效
+// IsEndAtValid 校验截止时间与开始时间的先后（仅在两者都设置时有意义）：
+// 未设截止时间（或已清空）视为无需校验，与 ArchivedAt/StarMarkAt/GivenUpAt 的缺席语义一致。
 func (task *Task) IsEndAtValid() bool {
 	if task.EndAt.IsNull {
-		return false
+		return true
 	}
 	if task.StartAt.IsNull {
 		return true
@@ -113,7 +114,8 @@ func (task *Task) ChangeState(next TaskState) error {
 		task.CompletedAt = types.NewNullableTimeByTime(time.Now())
 	}
 	if task.State == TaskStateCompleted {
-		task.CompletedAt = types.NewNullableTimeNull()
+		// 离开已完成 = 显式清空完成时间（区别于"从未设置"），持久化层据此写 NULL
+		task.CompletedAt = types.NewNullableTimeSetToNull()
 	}
 	task.State = next
 	return nil

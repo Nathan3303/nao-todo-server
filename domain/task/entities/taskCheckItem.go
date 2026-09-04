@@ -20,19 +20,13 @@ type TaskCheckItem struct {
 	SortId      uint16
 }
 
-// MarkDone 标记为已完成
-func (ci *TaskCheckItem) MarkDone() {
-	ci.IsDone = true
-}
-
-// MarkUndone 标记为未完成
-func (ci *TaskCheckItem) MarkUndone() {
-	ci.IsDone = false
-}
-
-// IsCompleted 是否已完成
-func (ci *TaskCheckItem) IsCompleted() bool {
-	return ci.IsDone
+// SetDone 幂等设置完成状态：期望值等于当前值时不变化。
+// 作为 IsDone 变更的唯一领域入口（为将来扩展保留，如完成时间戳等）。
+func (ci *TaskCheckItem) SetDone(done bool) {
+	if ci.IsDone == done {
+		return
+	}
+	ci.IsDone = done
 }
 
 // ToggleDone 切换完成状态

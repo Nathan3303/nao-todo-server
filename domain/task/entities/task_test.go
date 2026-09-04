@@ -61,6 +61,62 @@ func TestTaskChangeState(t *testing.T) {
 	}
 }
 
+// TestTaskChangeStateLeavingCompletedExplicitClear 离开 Completed 后 CompletedAt 应为"显式置空"标记
+// （Valid=true, IsNull=true）：持久化更新层以 Valid 判定写入，缺席值（Valid=false）会静默跳过导致
+// completed_at 无法被清空——应用层直接拷贝实体值进更新 VO 依赖此契约。
+func TestTaskChangeStateLeavingCompletedExplicitClear(t *testing.T) {
+	task := &Task{State: TaskStateCompleted}
+	if err := task.ChangeState(TaskStatePending); err != nil {
+		t.Fatal(err)
+	}
+	if !task.CompletedAt.IsSetToNull() || !task.CompletedAt.ShouldUpdate() {
+		t.Fatalf("离开 Completed 后 CompletedAt 应为显式置空标记，实际 %+v", task.CompletedAt)
+	}
+}
+
+// TestTaskIsDatesValidUndatedTask 无日期任务应能通过 IsDatesValid（此前 EndAt 缺席被误判无效，
+// 导致无截止时间任务无法完成/归档/星标/放弃——40023 回归用例）。
+func TestTaskIsDatesValidUndatedTask(t *testing.T) {
+	task := &Task{
+		StartAt:     types.NewNullableTimeNull(),
+		EndAt:       types.NewNullableTimeNull(),
+		ArchivedAt:  types.NewNullableTimeNull(),
+		StarMarkAt:  types.NewNullableTimeNull(),
+		GivenUpAt:   types.NewNullableTimeNull(),
+		CompletedAt: types.NewNullableTimeNull(),
+	}
+	if err := task.IsDatesValid(); err != nil {
+		t.Fatalf("无日期任务 IsDatesValid 应通过，实际 %v", err)
+	}
+}
+
+// TestTaskIsEndAtValidOrdering 截止时间先后校验：两者都设置时强制 end > start；
+// 仅设其一或全缺时不做约束。
+func TestTaskIsEndAtValidOrdering(t *testing.T) {
+	base := time.Date(2026, 9, 10, 9, 0, 0, 0, time.Local)
+	tests := []struct {
+		name    string
+		startAt types.NullableTime
+		endAt   types.NullableTime
+		want    bool
+	}{
+		{name: "两者都无", startAt: types.NewNullableTimeNull(), endAt: types.NewNullableTimeNull(), want: true},
+		{name: "仅截止时间", startAt: types.NewNullableTimeNull(), endAt: types.NewNullableTimeByTime(base.Add(1 * time.Hour)), want: true},
+		{name: "仅开始时间", startAt: types.NewNullableTimeByTime(base), endAt: types.NewNullableTimeNull(), want: true},
+		{name: "end 晚于 start", startAt: types.NewNullableTimeByTime(base), endAt: types.NewNullableTimeByTime(base.Add(1 * time.Hour)), want: true},
+		{name: "end 早于 start", startAt: types.NewNullableTimeByTime(base.Add(1 * time.Hour)), endAt: types.NewNullableTimeByTime(base), want: false},
+		{name: "end 等于 start", startAt: types.NewNullableTimeByTime(base), endAt: types.NewNullableTimeByTime(base), want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{StartAt: tt.startAt, EndAt: tt.endAt}
+			if got := task.IsEndAtValid(); got != tt.want {
+				t.Fatalf("IsEndAtValid() = %v, 期望 %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestTaskArchive(t *testing.T) {
 	task := &Task{}
 	task.Archive(nil)
