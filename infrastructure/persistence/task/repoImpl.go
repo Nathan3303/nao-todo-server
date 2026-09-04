@@ -259,7 +259,8 @@ func (taskRepo *TaskRepoImpl) List(
 		Where("user_id = ?", userId).
 		Scopes(
 			ByParentTaskId(q.ParentTaskId),
-			ByProjectOrTag(q),
+			ByProjects(q.ProjectIds),
+			ByTags(q.TagIds),
 			ByTaskName(q.Name),
 			ByTaskDescription(q.Description),
 			ByTaskState(q.State),

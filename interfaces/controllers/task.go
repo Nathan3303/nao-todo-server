@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	iCtx "naotodoserver/infrastructure/context"
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
+	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -159,6 +159,8 @@ func toListTaskReq(req *types.ListTaskReq) *taskDto.ListTaskReq {
 		Page:         req.Page,
 		Limit:        req.Limit,
 		Sort:         req.Sort,
+		UpdatedAt:    req.UpdatedAt,
+		CursorId:     req.CursorId,
 	}
 }
 

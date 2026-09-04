@@ -5,8 +5,8 @@ import "time"
 type QueryTask struct {
 	UserId       int64
 	ParentTaskId int64
-	ProjectId    int64
-	TagId        string
+	ProjectIds   []int64
+	TagIds       []string
 	Name         string
 	Description  string
 	State        string
@@ -36,8 +36,8 @@ func (queryTask *QueryTask) Validate() error {
 func NewQueryTask(
 	userId int64,
 	parentTaskId int64,
-	projectId int64,
-	tagId string,
+	projectIds []int64,
+	tagIds []string,
 	name string,
 	description string,
 	state string,
@@ -60,8 +60,8 @@ func NewQueryTask(
 	vo := &QueryTask{
 		UserId:       userId,
 		ParentTaskId: parentTaskId,
-		ProjectId:    projectId,
-		TagId:        tagId,
+		ProjectIds:   projectIds,
+		TagIds:       tagIds,
 		Name:         name,
 		Description:  description,
 		State:        state,

@@ -1,6 +1,9 @@
 package task
 
 import (
+	"fmt"
+	"strings"
+
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/task/dto"
 	"naotodoserver/conf"
@@ -171,6 +174,69 @@ func UpdateTaskReqToValueObject(
 	return vo, nil
 }
 
+// splitProjectIds 解析 projectId 逗号多值（组内 OR）：逐段 ParseID（snowflake），
+// 保留字面量 inbox 段（解析为默认收件箱 = userId）；非法段静默跳过；
+// 参数非空但无任何合法段时返回错误，避免"静默降级成不过滤"掩盖脏 id。
+func splitProjectIds(raw string, userId int64) ([]int64, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	seen := make(map[int64]struct{})
+	ids := make([]int64, 0, 4)
+	for _, seg := range strings.Split(raw, ",") {
+		seg = strings.TrimSpace(seg)
+		if seg == "" {
+			continue
+		}
+		var id int64
+		if seg == "inbox" {
+			id = userId
+		} else {
+			v, err := idutil.ParseID(seg)
+			if err != nil {
+				continue
+			}
+			id = v
+		}
+		if id <= 0 {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("projectId 参数无效: %q", raw)
+	}
+	return ids, nil
+}
+
+// splitTagIds 解析 tagId 逗号多值（组内 OR）：纯字符串子串匹配，无需解析；去空去重。
+func splitTagIds(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	ids := make([]string, 0, 4)
+	for _, seg := range strings.Split(raw, ",") {
+		seg = strings.TrimSpace(seg)
+		if seg == "" {
+			continue
+		}
+		if _, dup := seen[seg]; dup {
+			continue
+		}
+		seen[seg] = struct{}{}
+		ids = append(ids, seg)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	return ids
+}
+
 // ListTaskReqToQueryTaskValueObject 列表任务请求转换为查询任务值对象
 // @param userId 用户 ID
 // @param req 列表任务请求
@@ -180,23 +246,17 @@ func ListTaskReqToQueryTaskValueObject(
 	userId int64,
 	req *dto.ListTaskReq,
 ) (*valueobjects.QueryTask, error) {
-	var projectIdInt64 int64
-	if req.ProjectId == "inbox" {
-		projectIdInt64 = userId
-	} else {
-		porjectIdValue, err := idutil.ParseID(req.ProjectId)
-		if err != nil {
-			projectIdInt64 = 0
-		} else {
-			projectIdInt64 = porjectIdValue
-		}
+	projectIds, err := splitProjectIds(req.ProjectId, userId)
+	if err != nil {
+		return nil, err
 	}
+	tagIds := splitTagIds(req.TagId)
 	parentTaskIdInt64, _ := idutil.ParseID(req.ParentTaskId)
 	vo, err := valueobjects.NewQueryTask(
 		userId,
 		parentTaskIdInt64,
-		projectIdInt64,
-		req.TagId,
+		projectIds,
+		tagIds,
 		req.Name,
 		req.Description,
 		req.State,

@@ -2,7 +2,6 @@ package task
 
 import (
 	"naotodoserver/domain/task/entities"
-	"naotodoserver/domain/task/valueobjects"
 	"strings"
 	"time"
 
@@ -21,16 +20,35 @@ func ByParentTaskId(parentTaskId int64) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-// ByProjectOrTag 按项目或标签过滤
-// ProjectId > 0 时按精确项目匹配；否则按标签模糊匹配
-func ByProjectOrTag(query *valueobjects.QueryTask) func(db *gorm.DB) *gorm.DB {
+// ByProjects 按项目过滤（多值组内 OR）：project_id IN (ids)；空集不过滤。
+func ByProjects(projectIds []int64) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if query.ProjectId > 0 {
-			return db.Where("project_id = ?", query.ProjectId)
-		} else if query.TagId != "" {
-			return db.Where("tags LIKE ?", "%"+query.TagId+"%")
+		if len(projectIds) == 0 {
+			return db
 		}
-		return db
+		return db.Where("project_id IN ?", projectIds)
+	}
+}
+
+// ByTags 按标签过滤（多值组内 OR）：tags JSON 串任一命中子串即算；空集不过滤。
+// 与既有单值语义一致（LIKE 子串，非 JSON_CONTAINS 精确匹配）。
+func ByTags(tagIds []string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if len(tagIds) == 0 {
+			return db
+		}
+		conds := make([]string, 0, len(tagIds))
+		args := make([]any, 0, len(tagIds))
+		for _, id := range tagIds {
+			conds = append(conds, "tags LIKE ?")
+			args = append(args, "%"+id+"%")
+		}
+		expr := strings.Join(conds, " OR ")
+		if len(conds) > 1 {
+			// 组内 OR 显式加括号，保证与其它过滤（组间 AND）组合时原子
+			expr = "(" + expr + ")"
+		}
+		return db.Where(expr, args...)
 	}
 }
 
@@ -169,13 +187,11 @@ func ByRelativeDate(relativeDate string) func(db *gorm.DB) *gorm.DB {
 			start, end := GetWeekRange(time.Now())
 			return db.Where("end_at >= ? and end_at <= ?", start, end)
 		case "month":
-			return db.Where(
-				"end_at >= ?",
-				time.
-					Now().
-					AddDate(0, 0, 7).
-					Format("2006-01-02"),
-			)
+			// 真实自然月窗口（本地时区）：end_at ∈ [本月1日, 次月1日)
+			now := time.Now().In(time.Local)
+			y, m, _ := now.Date()
+			start := time.Date(y, m, 1, 0, 0, 0, 0, time.Local)
+			return db.Where("end_at >= ? AND end_at < ?", start, start.AddDate(0, 1, 0))
 		case "-today":
 			return db.Where("end_at < ?", time.Now().Format("2006-01-02"))
 		}
