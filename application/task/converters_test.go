@@ -3,6 +3,8 @@ package task
 import (
 	"reflect"
 	"testing"
+
+	"naotodoserver/application/task/dto"
 )
 
 func TestSplitProjectIds(t *testing.T) {
@@ -63,6 +65,35 @@ func TestSplitTagIds(t *testing.T) {
 			got := splitTagIds(tt.raw)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("splitTagIds(%q) = %v, 期望 %v", tt.raw, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestUpdateTaskReqToValueObject_ProjectId 更新路径 projectId 归一语义（CAL-03 BE-1/2/3）：
+// nil（缺省/null，反序列化后不可区分）= 不改；”/inbox = 默认收件箱 userId；合法 ID = 覆盖。
+func TestUpdateTaskReqToValueObject_ProjectId(t *testing.T) {
+	const userId int64 = 1001
+	strPtr := func(s string) *string { return &s }
+	int64Ptr := func(v int64) *int64 { return &v }
+	tests := []struct {
+		name      string
+		projectId *string
+		want      *int64
+	}{
+		{name: "缺省/nil = 不改", projectId: nil, want: nil},
+		{name: "空串 = 收件箱 userId", projectId: strPtr(""), want: int64Ptr(userId)},
+		{name: "inbox 字面量 = 收件箱 userId", projectId: strPtr("inbox"), want: int64Ptr(userId)},
+		{name: "合法 ID = 覆盖", projectId: strPtr("222"), want: int64Ptr(222)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vo, err := UpdateTaskReqToValueObject(userId, &dto.UpdateTaskReq{ProjectId: tt.projectId})
+			if err != nil {
+				t.Fatalf("UpdateTaskReqToValueObject 意外错误: %v", err)
+			}
+			if !reflect.DeepEqual(vo.ProjectId, tt.want) {
+				t.Fatalf("ProjectId 转换 = %v, 期望 %v", vo.ProjectId, tt.want)
 			}
 		})
 	}

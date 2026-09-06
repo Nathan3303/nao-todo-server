@@ -116,7 +116,9 @@ func UpdateTaskReqToValueObject(
 		iParentId = &iParentIdValue
 	}
 	if req.ProjectId != nil {
-		if *req.ProjectId == "inbox" {
+		// 空串（清除）与字面量 inbox 均归一为默认收件箱（= userId），与 create 路径一致；
+		// null/缺省（nil）到此分支外 = 不改该列。
+		if *req.ProjectId == "" || *req.ProjectId == "inbox" {
 			iProjectId = &userId
 		} else {
 			iProjectIdValue, _ := idutil.ParseID(*req.ProjectId)
