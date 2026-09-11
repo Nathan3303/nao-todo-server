@@ -47,8 +47,16 @@ func (createTask *CreateTask) Validate() error {
 }
 
 // FillStartAt 填充开始时间
+// 客户端已显式提供有效 startAt（非空/非 null）时**不得覆盖**（DEF-SYNC-04：创建/推送往返秒级瞬时不变）；
+// 仅当 startAt 缺失/无效时按既有两段式规则兜底：
+//   - endAt 有效 ⇒ 继承规则（startAt = 服务端 now；endAt 已过去则 now−1min）
+//   - endAt 缺失/无效 ⇒ startAt/endAt 保持原样（未安排）
 func (createTask *CreateTask) FillStartAt() {
-	if createTask.StartAt.IsNull || createTask.EndAt.IsNull {
+	// 客户端已提供有效 startAt ⇒ 原样保留，不得用服务端 now 覆盖
+	if !createTask.StartAt.IsNull {
+		return
+	}
+	if createTask.EndAt.IsNull {
 		return
 	}
 	t := time.Now()

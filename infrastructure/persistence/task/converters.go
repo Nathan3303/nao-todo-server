@@ -1,7 +1,10 @@
 package task
 
 import (
+	"database/sql"
 	"encoding/json"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/domain/types"
@@ -9,6 +12,19 @@ import (
 
 	"gorm.io/gorm"
 )
+
+// truncateToSecond 将可空时间截断到秒级，与 DATETIME（秒级）列精度对齐。
+// MySQL 对无小数秒精度列的插入会对小数秒**四舍五入**（如 .900 ⇒ 下一秒），
+// 造成往返后秒级瞬时漂移（DEF-SYNC-04）；显式截断保证「毫秒截断不算破坏」的
+// 秒级往返不变语义（客户端按 Math.floor(ts/1000) 判读）。缺席/置空值原样返回。
+func truncateToSecond(nt types.NullableTime) sql.NullTime {
+	t, ok := nt.Value()
+	if !ok {
+		return nt.ToSqlNullTime()
+	}
+	nt.SetTime(t.Truncate(time.Second))
+	return nt.ToSqlNullTime()
+}
 
 // CreateTaskValueObjectToModel 创建任务值对象转换为任务模型
 // @param userId 用户ID
@@ -31,8 +47,8 @@ func CreateTaskValueObjectToModel(
 		Description:    createTaskValueObject.Description,
 		State:          uint8(createTaskValueObject.State),
 		Priority:       uint8(createTaskValueObject.Priority),
-		StartAt:        createTaskValueObject.StartAt.ToSqlNullTime(),
-		EndAt:          createTaskValueObject.EndAt.ToSqlNullTime(),
+		StartAt:        truncateToSecond(createTaskValueObject.StartAt),
+		EndAt:          truncateToSecond(createTaskValueObject.EndAt),
 		ProjectId:      int64(createTaskValueObject.ProjectId),
 		Tags:           createTaskValueObject.Tags,
 		RemindAt:       createTaskValueObject.RemindAt.ToSqlNullTime(),
@@ -54,8 +70,8 @@ func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
 		"Description":    vo.Description,
 		"State":          uint8(vo.State),
 		"Priority":       uint8(vo.Priority),
-		"StartAt":        vo.StartAt.ToSqlNullTime(),
-		"EndAt":          vo.EndAt.ToSqlNullTime(),
+		"StartAt":        truncateToSecond(vo.StartAt),
+		"EndAt":          truncateToSecond(vo.EndAt),
 		"ProjectId":      int64(vo.ProjectId),
 		"Tags":           string(tagsJSON),
 		"RemindAt":       vo.RemindAt.ToSqlNullTime(),

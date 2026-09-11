@@ -697,3 +697,44 @@ func TestListCheckItemsSyncKeyset(t *testing.T) {
 		}
 	}
 }
+
+// TestCreateStartAtRoundtrip DEF-SYNC-04 端到端：客户端显式 startAt 经真实 MySQL 往返后
+// 秒级瞬时不变（写路径秒级截断，不被服务端 now 覆盖，也不被 DATETIME 小数秒四舍五入漂移）
+func TestCreateStartAtRoundtrip(t *testing.T) {
+	cleanTasks(t)
+	repo := NewTaskRepo(testDB)
+	ctx := context.Background()
+	const userID = 1010
+
+	// .900 毫秒：若不截断，MySQL 会四舍五入到下一秒（41→42），秒级往返即被破坏
+	startAt, _ := time.Parse(time.RFC3339Nano, "2026-09-11T16:28:41.900+08:00")
+	endAt, _ := time.Parse(time.RFC3339Nano, "2026-09-11T20:00:00.123+08:00")
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	vo := newTaskVO(9601, "往返任务", now, now)
+	vo.StartAt = types.NewNullableTimeByTime(startAt)
+	vo.EndAt = types.NewNullableTimeByTime(endAt)
+
+	created, err := repo.Create(ctx, userID, vo)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	gotStart, ok := created.StartAt.Value()
+	if !ok || gotStart.Unix() != startAt.Truncate(time.Second).Unix() {
+		t.Fatalf("创建响应 startAt 秒级漂移: got %v ok=%v, want %d", gotStart, ok, startAt.Truncate(time.Second).Unix())
+	}
+
+	// 拉回（等价 pull 路径）同样秒级不变
+	fetched, err := repo.GetById(ctx, userID, 9601, false)
+	if err != nil {
+		t.Fatalf("GetById: %v", err)
+	}
+	gotStart, ok = fetched.StartAt.Value()
+	if !ok || gotStart.Unix() != startAt.Truncate(time.Second).Unix() {
+		t.Fatalf("往返后 startAt 秒级漂移: got %v ok=%v, want %d", gotStart, ok, startAt.Truncate(time.Second).Unix())
+	}
+	gotEnd, ok := fetched.EndAt.Value()
+	if !ok || gotEnd.Unix() != endAt.Truncate(time.Second).Unix() {
+		t.Fatalf("往返后 endAt 秒级漂移: got %v ok=%v, want %d", gotEnd, ok, endAt.Truncate(time.Second).Unix())
+	}
+}
