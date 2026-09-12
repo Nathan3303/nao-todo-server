@@ -51,6 +51,7 @@ func ProjectEntityToGetRes(projectEntity *entities.Project) *dto.GetProjectRes {
 	res.SortId = projectEntity.SortId
 	res.ArchivedAt = projectEntity.ArchivedAt.ToString(time.RFC3339)
 	res.DeactivedAt = projectEntity.DeactivedAt.ToString(time.RFC3339)
+	res.TaskCount = projectEntity.TaskCount
 	return &res
 }
 

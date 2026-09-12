@@ -32,6 +32,9 @@ type Project struct {
 	// 超出类型范围，则需要重新计算所有项目排序的 SortId
 	SortId uint16 `gorm:"default:0"`
 
+	// 项目任务数量（含子任务/含归档/含放弃；不含已删除；服务端 owned 反规范化列，事件联动维护）
+	TaskCount uint `gorm:"default:0"`
+
 	// 项目偏好设置
 	// 用于存储用户对项目的偏好设置，例如视图类型、获取选项、列等
 	Preference *ProjectPreference `gorm:"foreignKey:ProjectId;constraint:OnDelete:CASCADE;"`

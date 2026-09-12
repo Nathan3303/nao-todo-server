@@ -128,6 +128,7 @@ func Model2Entity(m *models.Project) *entities.Project {
 	e.ArchivedAt = types.NewNullableTimeByTime(m.ArchivedAt.Time)
 	e.DeactivedAt = types.NewNullableTimeByTime(m.DeactivedAt.Time)
 	e.SortId = m.SortId
+	e.TaskCount = m.TaskCount
 	return e
 }
 

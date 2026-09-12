@@ -32,6 +32,11 @@ type Task struct {
 	RemindTime     string
 	RemindWeekdays uint8
 	SortId         uint16
+
+	// --- 领域统计属性（查询结果承载；服务端 owned 反规范化列，ADR 2026-09-12） ---
+	CheckItemCount uint // 检查项数量（含已完成，口径 §6c）
+	CommentCount   uint // 评论数量（不含已删除，口径 §6d）
+	SubtaskCount   uint // 直接子任务数量（1 层，口径 §6b）
 }
 
 // IsEndAtValid 校验截止时间与开始时间的先后（仅在两者都设置时有意义）：

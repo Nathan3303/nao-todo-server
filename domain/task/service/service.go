@@ -13,11 +13,13 @@ import (
 type TaskDomain interface {
 	// --- Task ---
 	Copy(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
+	// CreateTask 创建任务（幂等 upsert）
+	// created=true 表示本次为新建（含墓碑复活，B6），供调用方按计数口径决定是否 +1
 	CreateTask(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreateTask,
-	) (*entities.Task, error)
+	) (*entities.Task, bool, error)
 	List(
 		ctx context.Context,
 		userId int64,
@@ -35,11 +37,13 @@ type TaskDomain interface {
 	) ([]*entities.Task, error)
 
 	// --- CheckItem ---
+	// CreateCheckItem 创建检查项（幂等 upsert）
+	// created=true 表示本次为新建（含墓碑复活，B6），供调用方按计数口径决定是否 +1
 	CreateCheckItem(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreateTaskCheckItem,
-	) (*entities.TaskCheckItem, error)
+	) (*entities.TaskCheckItem, bool, error)
 
 	// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
 	// 同时推进任务 updated_at，保证清理结果可被增量同步发现

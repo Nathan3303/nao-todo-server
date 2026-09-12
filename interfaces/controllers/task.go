@@ -43,6 +43,9 @@ func toGetTaskRes(output *taskDto.GetTaskRes) *types.GetTaskRes {
 	res.RemindTime = output.RemindTime
 	res.RemindWeekdays = toIntWeekdays(output.RemindWeekdays)
 	res.SortId = output.SortId
+	res.CheckItemCount = output.CheckItemCount
+	res.CommentCount = output.CommentCount
+	res.SubtaskCount = output.SubtaskCount
 	return res
 }
 

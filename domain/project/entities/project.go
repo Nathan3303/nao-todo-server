@@ -17,6 +17,9 @@ type Project struct {
 	ArchivedAt  types.NullableTime
 	DeactivedAt types.NullableTime
 	SortId      uint16
+
+	// TaskCount 项目任务数量（含子任务/含归档/含放弃；不含已删除；服务端 owned 反规范化列，ADR 2026-09-12）
+	TaskCount uint
 }
 
 // Archive 归档任务清单（幂等重设归档时间）

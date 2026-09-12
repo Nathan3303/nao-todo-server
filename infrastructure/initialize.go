@@ -4,6 +4,7 @@ import (
 	"context"
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
+	counts "naotodoserver/application/counts"
 	pomodoroApp "naotodoserver/application/pomodoro"
 	projectApp "naotodoserver/application/project"
 	tagApp "naotodoserver/application/tag"
@@ -16,6 +17,7 @@ import (
 	taskService "naotodoserver/domain/task/service"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/cron"
+	"naotodoserver/infrastructure/events"
 	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/dbs"
@@ -60,12 +62,21 @@ func LoadDomains() *application.Services {
 	// 初始化任务领域模型
 	taskRepoInst := taskRepo.NewTaskRepo(dbs.DB)
 	taskDomain := taskService.NewTaskDomain(taskRepoInst, taskRepoInst)
+	// 初始化项目领域模型（先于任务应用装配：计数订阅者需跨仓注入 taskRepo + projectRepo）
+	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB, cacheInst)
+	projectPreferenceRepoInst := projectRepo.NewProjectPreferenceRepo(dbs.DB)
+	// 初始化计数事件总线 + 订阅者（领域统计属性联动，ADR 2026-09-12 §4.1/§4.2）
+	countBus := events.NewInMemoryBus()
+	countUpdater := counts.NewCountUpdater(taskRepoInst, projectRepoInst)
+	countBus.Subscribe(countUpdater.HandleCountEvent)
 	taskAppInst := taskApp.NewTaskApp(
 		taskDomain,
 		taskRepoInst,
 		taskRepoInst,
 		taskRepoInst,
 		notificationPublisher,
+		txManager,
+		countBus,
 	)
 	// 初始化番茄领域模型
 	pomodoroRecordRepoInst := pomodoroRepo.NewPomodoroRecordRepo(dbs.DB)
@@ -79,9 +90,6 @@ func LoadDomains() *application.Services {
 		pomodoroRecordRepoInst,
 		pomodoroRepoInst,
 	)
-	// 初始化项目领域模型
-	projectRepoInst := projectRepo.NewProjectRepo(dbs.DB, cacheInst)
-	projectPreferenceRepoInst := projectRepo.NewProjectPreferenceRepo(dbs.DB)
 	projectDomain := projectService.NewProjectDomain(
 		projectRepoInst,
 		projectPreferenceRepoInst,
@@ -92,6 +100,7 @@ func LoadDomains() *application.Services {
 		projectRepoInst,
 		projectPreferenceRepoInst,
 		taskRepoInst, // 注入 Task 仓库，用于级联操作
+		countBus,     // 注入计数事件总线（E7 级联重算）
 	)
 	// 初始化标签领域模型
 	tagRepoInst := tagRepo.NewTagRepo(dbs.DB, cacheInst)

@@ -40,6 +40,9 @@ func TaskEntityToGetRes(taskEntity *entities.Task) *dto.GetTaskRes {
 	res.RemindTime = taskEntity.RemindTime
 	res.RemindWeekdays = entities.BitmaskToWeekdays(taskEntity.RemindWeekdays)
 	res.SortId = taskEntity.SortId
+	res.CheckItemCount = taskEntity.CheckItemCount
+	res.CommentCount = taskEntity.CommentCount
+	res.SubtaskCount = taskEntity.SubtaskCount
 	return res
 }
 

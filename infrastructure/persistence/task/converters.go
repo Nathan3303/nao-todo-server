@@ -231,6 +231,9 @@ func TaskModel2Entity(m *models.Task) *entities.Task {
 	e.RemindWeekdays = m.RemindWeekdays
 	e.Tags = m.Tags
 	e.SortId = m.SortId
+	e.CheckItemCount = m.CheckItemCount
+	e.CommentCount = m.CommentCount
+	e.SubtaskCount = m.SubtaskCount
 	return e
 }
 

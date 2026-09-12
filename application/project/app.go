@@ -76,8 +76,9 @@ type ProjectApp interface {
 // projectAppImpl 任务清单应用实现
 type projectAppImpl struct {
 	projectDomain  service.ProjectDomain
-        txManager      domaintypes.TxManager
+	txManager      domaintypes.TxManager
 	repo           repositories.Project
 	preferenceRepo repositories.ProjectPreference
-	taskRepo       taskRepo.Task           // 用于级联操作
+	taskRepo       taskRepo.Task                   // 用于级联操作
+	countPublisher domaintypes.CountEventPublisher // 计数事件发布（E7）
 }

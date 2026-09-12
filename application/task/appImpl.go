@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/task/dto"
@@ -12,6 +13,8 @@ import (
 	"naotodoserver/domain/task/valueobjects"
 	domaintypes "naotodoserver/domain/types"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // NewTaskApp 创建任务应用层实例
@@ -21,15 +24,28 @@ func NewTaskApp(
 	checkItemRepo repositories.TaskCheckItem,
 	commentRepo repositories.TaskComment,
 	publisher domaintypes.NotificationPublisher,
+	txManager domaintypes.TxManager,
+	countPublisher domaintypes.CountEventPublisher,
 ) *TaskAppImpl {
 	impl := &TaskAppImpl{
-		taskDomain:    taskDomain,
-		taskRepo:      taskRepo,
-		checkItemRepo: checkItemRepo,
-		commentRepo:   commentRepo,
-		publisher:     publisher,
+		taskDomain:     taskDomain,
+		taskRepo:       taskRepo,
+		checkItemRepo:  checkItemRepo,
+		commentRepo:    commentRepo,
+		publisher:      publisher,
+		txManager:      txManager,
+		countPublisher: countPublisher,
 	}
 	return impl
+}
+
+// publishCountEvent 发布计数事件（同事务同步分发，ADR §4.1）
+// 无发布器时静默跳过（单元测试/退化场景）；返回错误 ⇒ 调用方事务整体回滚。
+func (taskApp *TaskAppImpl) publishCountEvent(ctx context.Context, event domaintypes.CountEvent) error {
+	if taskApp.countPublisher == nil {
+		return nil
+	}
+	return taskApp.countPublisher.PublishCountEvent(ctx, event)
 }
 
 // GetTaskById 获取单个任务信息
@@ -76,7 +92,40 @@ func (taskApp *TaskAppImpl) CreateTask(
 	if err != nil {
 		return nil, err
 	}
-	taskEntity, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
+	// 2. 写路径包事务（同事务强一致，ADR §4.2）：主写 + 计数事件同步分发
+	var taskEntity *entities.Task
+	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
+		entity, created, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
+		if err != nil {
+			return err
+		}
+		taskEntity = entity
+		// B1/B6：仅 created（含墓碑复活）才 ±1；覆盖/重试不重复计数
+		if !created {
+			return nil
+		}
+		// E4：项目任务数 +1（隐式桶无 projects 行时由仓储无害 no-op，E8）
+		if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:      domaintypes.CountEventTaskCountChanged,
+			UserId:    userId,
+			ProjectId: int64(taskEntity.ProjectId),
+			Delta:     1,
+		}); err != nil {
+			return err
+		}
+		// E3：子任务 ⇒ 父任务直接子数 +1（仅真实父任务）
+		if int64(taskEntity.ParentTaskId) > 0 {
+			if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+				Type:   domaintypes.CountEventSubTaskChanged,
+				UserId: userId,
+				TaskId: int64(taskEntity.ParentTaskId),
+				Delta:  1,
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("CreateTask: %w", err)
 	}
@@ -108,88 +157,147 @@ func (taskApp *TaskAppImpl) UpdateTask(
 	if err != nil {
 		return err
 	}
-	// 3. 读-改-写：状态迁移与时间字段，由实体状态机/业务方法维护
+	// 3. 读-改-写：状态迁移与时间字段由实体状态机维护；
+	//    ProjectId/ParentTaskId 加入读-改-写条件（B4：move/换父事件需要旧值）
 	needReadWrite := req.State != nil ||
 		req.ArchivedAt != nil ||
 		req.StarMarkAt != nil ||
-		req.GivenUpAt != nil
-	var taskEntity *entities.Task
-	if needReadWrite {
-		taskEntity, err = taskApp.taskRepo.GetById(ctx, userId, taskIdInt64, false)
+		req.GivenUpAt != nil ||
+		req.ProjectId != nil ||
+		req.ParentTaskId != nil
+	var (
+		taskEntity     *entities.Task
+		projectChanged bool
+		oldProject     int64
+		newProject     int64
+		parentChanged  bool
+		oldParent      int64
+		newParent      int64
+	)
+	// 4. 写路径包事务（同事务强一致，ADR §4.2）：读-改-写 + 计数事件同步分发
+	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
+		if needReadWrite {
+			taskEntity, err = taskApp.taskRepo.GetById(ctx, userId, taskIdInt64, false)
+			if err != nil {
+				return fmt.Errorf("UpdateTask: %w", err)
+			}
+			// 3.1 状态迁移：由实体状态机维护（含完成时间盖章/清空），此处仅作持久化翻译
+			if req.State != nil {
+				parsed, _ := entities.ParseTaskState(*req.State)
+				if err := taskEntity.ChangeState(parsed); err != nil {
+					return err
+				}
+				newState := taskEntity.State
+				updateTaskValueObject.State = &newState
+				updateTaskValueObject.CompletedAt = taskEntity.CompletedAt
+			}
+			// 3.2 归档时间
+			if req.ArchivedAt != nil {
+				if *req.ArchivedAt == "" {
+					taskEntity.Unarchive()
+					updateTaskValueObject.ArchivedAt = domaintypes.NewNullableTimeByTimeStrPtr(
+						req.ArchivedAt,
+					)
+				} else {
+					parsedTime, _ := time.Parse(time.RFC3339, *req.ArchivedAt)
+					if parsedTime.IsZero() {
+						parsedTime, _ = time.Parse("2006-01-02T15:04", *req.ArchivedAt)
+					}
+					taskEntity.Archive(&parsedTime)
+					updateTaskValueObject.ArchivedAt = domaintypes.NewNullableTimeByTimeStrPtr(
+						req.ArchivedAt,
+					)
+				}
+			}
+			// 3.3 收藏时间
+			if req.StarMarkAt != nil {
+				if *req.StarMarkAt == "" {
+					// 空串：取消收藏（清空实体，置 null 落库，不再校验与开始时间的关系）
+					taskEntity.Unstar()
+					updateTaskValueObject.StarMarkAt = domaintypes.NewNullableTimeByTimeStrPtr(
+						req.StarMarkAt,
+					)
+				} else {
+					parsedTime, _ := time.Parse(time.RFC3339, *req.StarMarkAt)
+					if parsedTime.IsZero() {
+						parsedTime, _ = time.Parse("2006-01-02T15:04", *req.StarMarkAt)
+					}
+					taskEntity.ToggleStar(&parsedTime)
+					updateTaskValueObject.StarMarkAt = domaintypes.NewNullableTimeByTimeStrPtr(
+						req.StarMarkAt,
+					)
+				}
+			}
+			// 3.4 放弃时间
+			if req.GivenUpAt != nil {
+				if *req.GivenUpAt == "" {
+					taskEntity.UngiveUp()
+					updateTaskValueObject.GivenUpAt = domaintypes.NewNullableTimeByTimeStrPtr(
+						req.GivenUpAt,
+					)
+				} else {
+					parsedTime, _ := time.Parse(time.RFC3339, *req.GivenUpAt)
+					if parsedTime.IsZero() {
+						parsedTime, _ = time.Parse("2006-01-02T15:04", *req.GivenUpAt)
+					}
+					taskEntity.GiveUp(&parsedTime)
+					updateTaskValueObject.GivenUpAt = domaintypes.NewNullableTimeByTimeStrPtr(
+						req.GivenUpAt,
+					)
+				}
+			}
+			// 3.5 实体时间参数校验
+			if err := taskEntity.IsDatesValid(); err != nil {
+				return err
+			}
+			// 3.6 项目变更检测（E5，仅实际变化才发）
+			if updateTaskValueObject.ProjectId != nil &&
+				*updateTaskValueObject.ProjectId != int64(taskEntity.ProjectId) {
+				projectChanged = true
+				oldProject = int64(taskEntity.ProjectId)
+				newProject = *updateTaskValueObject.ProjectId
+			}
+			// 3.7 父任务变更检测（E6，仅实际变化才发；A→B 或 A→0）
+			if updateTaskValueObject.ParentTaskId != nil &&
+				*updateTaskValueObject.ParentTaskId != int64(taskEntity.ParentTaskId) {
+				parentChanged = true
+				oldParent = int64(taskEntity.ParentTaskId)
+				newParent = *updateTaskValueObject.ParentTaskId
+			}
+		}
+		applied, err := taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject)
 		if err != nil {
 			return fmt.Errorf("UpdateTask: %w", err)
 		}
-		// 3.1 状态迁移：由实体状态机维护（含完成时间盖章/清空），此处仅作持久化翻译
-		if req.State != nil {
-			parsed, _ := entities.ParseTaskState(*req.State)
-			if err := taskEntity.ChangeState(parsed); err != nil {
+		// B1：LWW 拒绝（未实际写入）时不发布计数事件
+		if !applied {
+			return nil
+		}
+		// E5：任务移动 —— 旧项目 -1、新项目 +1
+		if projectChanged {
+			if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+				Type:         domaintypes.CountEventTaskMoved,
+				UserId:       userId,
+				OldProjectId: oldProject,
+				ProjectId:    newProject,
+			}); err != nil {
 				return err
 			}
-			newState := taskEntity.State
-			updateTaskValueObject.State = &newState
-			updateTaskValueObject.CompletedAt = taskEntity.CompletedAt
 		}
-		// 3.2 归档时间
-		if req.ArchivedAt != nil {
-			if *req.ArchivedAt == "" {
-				taskEntity.Unarchive()
-				updateTaskValueObject.ArchivedAt = domaintypes.NewNullableTimeByTimeStrPtr(
-					req.ArchivedAt,
-				)
-			} else {
-				parsedTime, _ := time.Parse(time.RFC3339, *req.ArchivedAt)
-				if parsedTime.IsZero() {
-					parsedTime, _ = time.Parse("2006-01-02T15:04", *req.ArchivedAt)
-				}
-				taskEntity.Archive(&parsedTime)
-				updateTaskValueObject.ArchivedAt = domaintypes.NewNullableTimeByTimeStrPtr(
-					req.ArchivedAt,
-				)
+		// E6：换父/脱离 —— 旧父 -1、新父 +1
+		if parentChanged {
+			if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+				Type:            domaintypes.CountEventTaskParentChanged,
+				UserId:          userId,
+				OldParentTaskId: oldParent,
+				ParentTaskId:    newParent,
+			}); err != nil {
+				return err
 			}
 		}
-		// 3.3 收藏时间
-		if req.StarMarkAt != nil {
-			if *req.StarMarkAt == "" {
-				// 空串：取消收藏（清空实体，置 null 落库，不再校验与开始时间的关系）
-				taskEntity.Unstar()
-				updateTaskValueObject.StarMarkAt = domaintypes.NewNullableTimeByTimeStrPtr(
-					req.StarMarkAt,
-				)
-			} else {
-				parsedTime, _ := time.Parse(time.RFC3339, *req.StarMarkAt)
-				if parsedTime.IsZero() {
-					parsedTime, _ = time.Parse("2006-01-02T15:04", *req.StarMarkAt)
-				}
-				taskEntity.ToggleStar(&parsedTime)
-				updateTaskValueObject.StarMarkAt = domaintypes.NewNullableTimeByTimeStrPtr(
-					req.StarMarkAt,
-				)
-			}
-		}
-		// 3.4 放弃时间
-		if req.GivenUpAt != nil {
-			if *req.GivenUpAt == "" {
-				taskEntity.UngiveUp()
-				updateTaskValueObject.GivenUpAt = domaintypes.NewNullableTimeByTimeStrPtr(
-					req.GivenUpAt,
-				)
-			} else {
-				parsedTime, _ := time.Parse(time.RFC3339, *req.GivenUpAt)
-				if parsedTime.IsZero() {
-					parsedTime, _ = time.Parse("2006-01-02T15:04", *req.GivenUpAt)
-				}
-				taskEntity.GiveUp(&parsedTime)
-				updateTaskValueObject.GivenUpAt = domaintypes.NewNullableTimeByTimeStrPtr(
-					req.GivenUpAt,
-				)
-			}
-		}
-		// 3.5 实体时间参数校验
-		if err := taskEntity.IsDatesValid(); err != nil {
-			return err
-		}
-	}
-	if err := taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject); err != nil {
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("UpdateTask: %w", err)
 	}
 	return nil
@@ -211,7 +319,42 @@ func (taskApp *TaskAppImpl) DeleteTask(
 	if err != nil {
 		return domerr.ErrInvalidTaskID
 	}
-	if err := taskApp.taskRepo.Delete(ctx, userId, taskId64); err != nil {
+	// 2. 写路径包事务：读旧值（E4/E3 需 projectId/parentTaskId）+ 软删 + 计数事件
+	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
+		taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, false)
+		if err != nil {
+			// 不存在或已软删 ⇒ no-op（墓碑重放防重复递减，口径 §6e 删除即出局）
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return err
+		}
+		if err := taskApp.taskRepo.Delete(ctx, userId, taskId64); err != nil {
+			return err
+		}
+		// E4：项目任务数 -1
+		if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:      domaintypes.CountEventTaskCountChanged,
+			UserId:    userId,
+			ProjectId: int64(taskEntity.ProjectId),
+			Delta:     -1,
+		}); err != nil {
+			return err
+		}
+		// E3：子任务 ⇒ 父任务直接子数 -1（B9：删除即出局，父链递减登记为将来规则）
+		if int64(taskEntity.ParentTaskId) > 0 {
+			if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+				Type:   domaintypes.CountEventSubTaskChanged,
+				UserId: userId,
+				TaskId: int64(taskEntity.ParentTaskId),
+				Delta:  -1,
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("DeleteTask: %w", err)
 	}
 	return nil
@@ -233,7 +376,45 @@ func (taskApp *TaskAppImpl) RestoreTask(
 	if err != nil {
 		return domerr.ErrInvalidTaskID
 	}
-	if err := taskApp.taskRepo.Restore(ctx, userId, taskId64); err != nil {
+	// 2. 写路径包事务：读墓碑旧值 + 恢复 + 计数事件（恢复重新计入，口径 §6e）
+	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
+		taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, true)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return err
+		}
+		// 已是存活任务：恢复无实际效果，不重复计入
+		if taskEntity.DeletedAt.IsNull {
+			return nil
+		}
+		if err := taskApp.taskRepo.Restore(ctx, userId, taskId64); err != nil {
+			return err
+		}
+		// E4：项目任务数 +1
+		if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:      domaintypes.CountEventTaskCountChanged,
+			UserId:    userId,
+			ProjectId: int64(taskEntity.ProjectId),
+			Delta:     1,
+		}); err != nil {
+			return err
+		}
+		// E3：子任务 ⇒ 父任务直接子数 +1
+		if int64(taskEntity.ParentTaskId) > 0 {
+			if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+				Type:   domaintypes.CountEventSubTaskChanged,
+				UserId: userId,
+				TaskId: int64(taskEntity.ParentTaskId),
+				Delta:  1,
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("RestoreTask: %w", err)
 	}
 	return nil
@@ -255,8 +436,35 @@ func (taskApp *TaskAppImpl) CopyTask(
 	if err != nil {
 		return nil, domerr.ErrInvalidTaskID
 	}
-	// 2. 调用领域层复制任务
-	taskEntity, err := taskApp.taskDomain.Copy(ctx, userId, taskId64)
+	// 2. 写路径包事务：复制（恒新建）+ 双事件（B8：父 +1 与项目 +1）
+	var taskEntity *entities.Task
+	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
+		entity, err := taskApp.taskDomain.Copy(ctx, userId, taskId64)
+		if err != nil {
+			return err
+		}
+		taskEntity = entity
+		// B8：复制品继承源 ParentTaskId/ProjectId ⇒ E3（父 +1）+ E4（项目 +1）
+		if int64(taskEntity.ParentTaskId) > 0 {
+			if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+				Type:   domaintypes.CountEventSubTaskChanged,
+				UserId: userId,
+				TaskId: int64(taskEntity.ParentTaskId),
+				Delta:  1,
+			}); err != nil {
+				return err
+			}
+		}
+		if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:      domaintypes.CountEventTaskCountChanged,
+			UserId:    userId,
+			ProjectId: int64(taskEntity.ProjectId),
+			Delta:     1,
+		}); err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("CopyTask: %w", err)
 	}
@@ -427,7 +635,24 @@ func (impl *TaskAppImpl) CreateTaskCheckItem(
 	if err != nil {
 		return nil, err
 	}
-	e, err := impl.taskDomain.CreateCheckItem(ctx, userId, vo)
+	var e *entities.TaskCheckItem
+	// 写路径包事务：主写 + E1 计数事件（仅 created，B6 复活=created）
+	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
+		var created bool
+		e, created, err = impl.taskDomain.CreateCheckItem(ctx, userId, vo)
+		if err != nil {
+			return err
+		}
+		if !created {
+			return nil
+		}
+		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:   domaintypes.CountEventCheckItemChanged,
+			UserId: userId,
+			TaskId: int64(e.TaskId),
+			Delta:  1,
+		})
+	})
 	if err != nil {
 		return nil, fmt.Errorf("CreateCheckItem: %w", err)
 	}
@@ -484,7 +709,26 @@ func (impl *TaskAppImpl) DeleteTaskCheckItem(
 	if err != nil {
 		return domerr.ErrInvalidItemID
 	}
-	if err := impl.checkItemRepo.DeleteCheckItem(ctx, userId, id64); err != nil {
+	// 写路径包事务：读所属任务 + 软删 + E1 计数事件（不存在/已删 ⇒ no-op）
+	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
+		item, err := impl.checkItemRepo.GetCheckItemById(ctx, userId, id64)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return err
+		}
+		if err := impl.checkItemRepo.DeleteCheckItem(ctx, userId, id64); err != nil {
+			return err
+		}
+		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:   domaintypes.CountEventCheckItemChanged,
+			UserId: userId,
+			TaskId: int64(item.TaskId),
+			Delta:  -1,
+		})
+	})
+	if err != nil {
 		return fmt.Errorf("DeleteCheckItem: %w", err)
 	}
 	return nil
@@ -629,8 +873,24 @@ func (impl *TaskAppImpl) CreateTaskComment(
 	if err != nil {
 		return nil, err
 	}
-	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	e, _, err := impl.commentRepo.UpsertComment(ctx, userId, vo)
+	var e *entities.TaskComment
+	// 写路径包事务：主写 + E2 计数事件（仅 created，B6 复活=created）
+	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
+		var created bool
+		e, created, err = impl.commentRepo.UpsertComment(ctx, userId, vo)
+		if err != nil {
+			return err
+		}
+		if !created {
+			return nil
+		}
+		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:   domaintypes.CountEventCommentChanged,
+			UserId: userId,
+			TaskId: int64(e.TaskId),
+			Delta:  1,
+		})
+	})
 	if err != nil {
 		return nil, fmt.Errorf("CreateComment: %w", err)
 	}
@@ -677,7 +937,26 @@ func (impl *TaskAppImpl) DeleteTaskComment(
 	if err != nil {
 		return domerr.ErrInvalidCommentID
 	}
-	if err := impl.commentRepo.DeleteComment(ctx, userId, id64); err != nil {
+	// 写路径包事务：读所属任务 + 软删 + E2 计数事件（不存在/已删 ⇒ no-op）
+	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
+		comment, err := impl.commentRepo.GetCommentById(ctx, userId, id64)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil
+			}
+			return err
+		}
+		if err := impl.commentRepo.DeleteComment(ctx, userId, id64); err != nil {
+			return err
+		}
+		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
+			Type:   domaintypes.CountEventCommentChanged,
+			UserId: userId,
+			TaskId: int64(comment.TaskId),
+			Delta:  -1,
+		})
+	})
+	if err != nil {
 		return fmt.Errorf("DeleteComment: %w", err)
 	}
 	return nil

@@ -20,6 +20,9 @@ type GetTaskRes struct {
 	RemindTime     string   `json:"remindTime"`
 	RemindWeekdays []int    `json:"remindWeekdays"`
 	SortId         uint16   `json:"sortId"`
+	CheckItemCount uint     `json:"checkItemCount"`
+	CommentCount   uint     `json:"commentCount"`
+	SubtaskCount   uint     `json:"subtaskCount"`
 }
 
 // CreateTaskReq 创建任务请求

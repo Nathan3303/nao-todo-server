@@ -34,9 +34,11 @@ type TaskApp interface {
 
 // TaskAppImpl 任务应用实现
 type TaskAppImpl struct {
-	taskDomain    service.TaskDomain
-	taskRepo      repositories.Task
-	checkItemRepo repositories.TaskCheckItem
-	commentRepo   repositories.TaskComment
-	publisher     domaintypes.NotificationPublisher
+	taskDomain     service.TaskDomain
+	taskRepo       repositories.Task
+	checkItemRepo  repositories.TaskCheckItem
+	commentRepo    repositories.TaskComment
+	publisher      domaintypes.NotificationPublisher
+	txManager      domaintypes.TxManager
+	countPublisher domaintypes.CountEventPublisher
 }

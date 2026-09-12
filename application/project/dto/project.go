@@ -3,6 +3,7 @@
 package dto
 
 // GetProjectRes 获取任务清单出参
+// 注意：与 CreateProjectRes 保持字段一致（appImpl 有直接类型转换）
 type GetProjectRes struct {
 	Id          string
 	CreatedAt   string
@@ -13,6 +14,7 @@ type GetProjectRes struct {
 	SortId      uint16
 	ArchivedAt  string
 	DeactivedAt string
+	TaskCount   uint // 项目任务数量（服务端 owned）
 }
 
 // CreateProjectReq 创建任务清单入参
@@ -26,6 +28,7 @@ type CreateProjectReq struct {
 }
 
 // CreateProjectRes 创建任务清单出参
+// 注意：与 GetProjectRes 保持字段一致（appImpl 有直接类型转换）
 type CreateProjectRes struct {
 	Id          string
 	CreatedAt   string
@@ -36,6 +39,7 @@ type CreateProjectRes struct {
 	SortId      uint16
 	ArchivedAt  string
 	DeactivedAt string
+	TaskCount   uint // 项目任务数量（服务端 owned）
 }
 
 // UpdateProjectReq 更新任务清单入参

@@ -33,6 +33,7 @@ func toGetProjectRes(output *projectDto.GetProjectRes) *types.GetProjectRes {
 	res.SortId = output.SortId
 	res.ArchivedAt = output.ArchivedAt
 	res.DeactivedAt = output.DeactivedAt
+	res.TaskCount = output.TaskCount
 	return res
 }
 
@@ -75,6 +76,7 @@ func toCreateProjectRes(output *projectDto.CreateProjectRes) *types.CreateProjec
 	res.SortId = output.SortId
 	res.ArchivedAt = output.ArchivedAt
 	res.DeactivedAt = output.DeactivedAt
+	res.TaskCount = output.TaskCount
 	return res
 }
 

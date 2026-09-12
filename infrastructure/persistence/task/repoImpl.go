@@ -51,11 +51,12 @@ func (taskRepo *TaskRepoImpl) GetById(
 	whereCond.UserId = userId
 	whereCond.ID = taskId
 	// 3. 查询
-	db := taskRepo.db.WithContext(ctx)
+	db := dbs.DBFrom(ctx, taskRepo.db)
+	tx := db.WithContext(ctx)
 	if includeDeleted {
-		db = db.Unscoped()
+		tx = tx.Unscoped()
 	}
-	tx := db.Where(whereCond).First(taskModel)
+	tx = tx.Where(whereCond).First(taskModel)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -75,8 +76,9 @@ func (taskRepo *TaskRepoImpl) Create(
 ) (*entities.Task, error) {
 	// 1. 转换创建实体到模型
 	createModel := CreateTaskValueObjectToModel(userId, createTaskValueObject)
-	// 2. 创建
-	tx := taskRepo.db.WithContext(ctx).Create(createModel)
+	// 2. 创建（加入调用方外层事务，若存在）
+	db := dbs.DBFrom(ctx, taskRepo.db)
+	tx := db.WithContext(ctx).Create(createModel)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -100,7 +102,8 @@ func (taskRepo *TaskRepoImpl) Upsert(
 		return entity, true, err
 	}
 	var existing models.Task
-	err := taskRepo.db.WithContext(ctx).Unscoped().
+	db := dbs.DBFrom(ctx, taskRepo.db)
+	err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).
 		First(&existing).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -131,14 +134,15 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	if _, ok := updateMap["deleted_at"]; !ok {
 		updateMap["deleted_at"] = gorm.Expr("NULL")
 	}
-	if err := taskRepo.db.WithContext(ctx).Unscoped().
+	if err := db.WithContext(ctx).Unscoped().
 		Model(&models.Task{}).
 		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
 		return nil, false, err
 	}
 	entity, err := taskRepo.GetById(ctx, userId, createTaskValueObject.Id, true)
-	return entity, false, err
+	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
+	return entity, existing.DeletedAt.Valid, err
 }
 
 // GetMaxSortId 获取任务最大排序 ID
@@ -147,7 +151,7 @@ func (taskRepo *TaskRepoImpl) Upsert(
 // @return 最大排序ID
 func (taskRepo *TaskRepoImpl) GetMaxSortId(ctx context.Context, userId int64) uint16 {
 	var maxSortId uint16 = 255
-	taskRepo.db.
+	dbs.DBFrom(ctx, taskRepo.db).
 		WithContext(ctx).
 		Model(&models.Task{}).
 		Where("user_id = ?", userId).
@@ -159,13 +163,14 @@ func (taskRepo *TaskRepoImpl) GetMaxSortId(ctx context.Context, userId int64) ui
 // @param ctx 上下文
 // @param whereEntity 查询实体
 // @param updateEntity 更新实体
+// @return bool 是否实际写入（false = LWW 乐观锁拒绝，未变更任何行）
 // @return error 错误
 func (taskRepo *TaskRepoImpl) Update(
 	ctx context.Context,
 	userId int64,
 	taskId int64,
 	updateTaskValueObject *valueobjects.UpdateTask,
-) error {
+) (bool, error) {
 	// 1. 转换查询实体到模型
 	var whereCond models.Task
 	whereCond.UserId = userId
@@ -173,14 +178,15 @@ func (taskRepo *TaskRepoImpl) Update(
 	// 2. 转换更新实体到 map
 	updateMap := UpdateTaskValueObjectToMap(updateTaskValueObject)
 	// 3. LWW 乐观锁：请求 updatedAt 早于库中版本时不更新（防旧数据回滚）
-	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
+	db := dbs.DBFrom(ctx, taskRepo.db)
+	tx := db.WithContext(ctx).Model(&models.Task{}).
 		Where(whereCond)
 	if !updateTaskValueObject.UpdatedAt.IsZero() {
 		tx = tx.Where("updated_at <= ?", updateTaskValueObject.UpdatedAt)
 	}
 	// 4. 更新（map 不含 UpdatedAt，gorm 自动刷新为 now）
 	tx = tx.Updates(updateMap)
-	return tx.Error
+	return tx.RowsAffected > 0, tx.Error
 }
 
 // Delete 删除任务
@@ -190,7 +196,7 @@ func (taskRepo *TaskRepoImpl) Update(
 // @return error 错误
 func (taskRepo *TaskRepoImpl) Delete(ctx context.Context, userId int64, taskId int64) error {
 	// 1. 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
-	tx := taskRepo.db.WithContext(ctx).
+	tx := dbs.DBFrom(ctx, taskRepo.db).WithContext(ctx).
 		Model(&models.Task{}).
 		Where("id = ? AND user_id = ?", taskId, userId).
 		UpdateColumns(map[string]any{
@@ -210,8 +216,9 @@ func (taskRepo *TaskRepoImpl) Restore(ctx context.Context, userId int64, taskId 
 	var whereCond models.Task
 	whereCond.UserId = userId
 	whereCond.ID = taskId
-	// 2. 恢复
-	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).Unscoped().
+	// 2. 恢复（加入调用方外层事务，若存在）
+	db := dbs.DBFrom(ctx, taskRepo.db)
+	tx := db.WithContext(ctx).Model(&models.Task{}).Unscoped().
 		Where(whereCond).
 		Update("deleted_at", nil)
 	return tx.Error
@@ -462,7 +469,7 @@ func (repo *TaskRepoImpl) GetCheckItemById(
 	checkItemId int64,
 ) (*entities.TaskCheckItem, error) {
 	var m models.TaskCheckItem
-	tx := repo.db.
+	tx := dbs.DBFrom(ctx, repo.db).
 		WithContext(ctx).
 		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", checkItemId, userId).First(&m)
@@ -484,7 +491,7 @@ func (repo *TaskRepoImpl) CreateCheckItem(
 	vo *valueobjects.CreateTaskCheckItem,
 ) (*entities.TaskCheckItem, error) {
 	m := TaskCheckItemValueObjectToModel(vo)
-	tx := repo.db.WithContext(ctx).Model(&models.TaskCheckItem{}).Create(m)
+	tx := dbs.DBFrom(ctx, repo.db).WithContext(ctx).Model(&models.TaskCheckItem{}).Create(m)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
@@ -505,7 +512,8 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 		return entity, true, err
 	}
 	var existing models.TaskCheckItem
-	err := repo.db.WithContext(ctx).Unscoped().
+	db := dbs.DBFrom(ctx, repo.db)
+	err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&existing).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -534,19 +542,20 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 	updateMap["updated_at"] = time.Now()
 	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at
 	updateMap["deleted_at"] = gorm.Expr("NULL")
-	if err := repo.db.WithContext(ctx).Unscoped().
+	if err := db.WithContext(ctx).Unscoped().
 		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
 		return nil, false, err
 	}
 	var updated models.TaskCheckItem
-	if err := repo.db.WithContext(ctx).Unscoped().
+	if err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&updated).Error; err != nil {
 		return nil, false, err
 	}
-	return TaskCheckItemModel2Entity(&updated), false, nil
+	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
+	return TaskCheckItemModel2Entity(&updated), existing.DeletedAt.Valid, nil
 }
 
 // UpdateCheckItem 更新任务检查项
@@ -579,7 +588,7 @@ func (repo *TaskRepoImpl) UpdateCheckItem(
 // @return error 错误
 func (repo *TaskRepoImpl) DeleteCheckItem(ctx context.Context, userId, checkItemId int64) error {
 	// 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
-	return repo.db.
+	return dbs.DBFrom(ctx, repo.db).
 		WithContext(ctx).
 		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", checkItemId, userId).
@@ -713,7 +722,7 @@ func (repo *TaskRepoImpl) GetCommentById(
 	commentId int64,
 ) (*entities.TaskComment, error) {
 	var m models.TaskComment
-	tx := repo.db.
+	tx := dbs.DBFrom(ctx, repo.db).
 		WithContext(ctx).
 		Model(&models.TaskComment{}).
 		Where("user_id = ? AND id = ?", userId, commentId).
@@ -737,7 +746,8 @@ func (repo *TaskRepoImpl) CreateComment(
 ) (*entities.TaskComment, error) {
 	var user models.User
 	var err error
-	err = repo.db.
+	db := dbs.DBFrom(ctx, repo.db)
+	err = db.
 		WithContext(ctx).
 		Model(&models.User{}).
 		Where("id = ?", userId).
@@ -749,7 +759,7 @@ func (repo *TaskRepoImpl) CreateComment(
 	m := CreateTaskCommentValueObjectToModel(vo)
 	m.Nickname = user.Nickname
 	m.Avatar = user.Avatar
-	err = repo.db.WithContext(ctx).Create(m).Error
+	err = db.WithContext(ctx).Create(m).Error
 	if err != nil {
 		return nil, err
 	}
@@ -770,7 +780,8 @@ func (repo *TaskRepoImpl) UpsertComment(
 		return entity, true, err
 	}
 	var existing models.TaskComment
-	err := repo.db.WithContext(ctx).Unscoped().
+	db := dbs.DBFrom(ctx, repo.db)
+	err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&existing).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -799,19 +810,20 @@ func (repo *TaskRepoImpl) UpsertComment(
 	updateMap["updated_at"] = time.Now()
 	// 覆盖已软删记录（墓碑）时复活：显式清 deleted_at
 	updateMap["deleted_at"] = gorm.Expr("NULL")
-	if err := repo.db.WithContext(ctx).Unscoped().
+	if err := db.WithContext(ctx).Unscoped().
 		Model(&models.TaskComment{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
 		return nil, false, err
 	}
 	var updated models.TaskComment
-	if err := repo.db.WithContext(ctx).Unscoped().
+	if err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&updated).Error; err != nil {
 		return nil, false, err
 	}
-	return TaskCommentModel2Entity(&updated), false, nil
+	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
+	return TaskCommentModel2Entity(&updated), existing.DeletedAt.Valid, nil
 }
 
 // UpdateComment 更新任务评论
@@ -844,7 +856,7 @@ func (repo *TaskRepoImpl) UpdateComment(
 // @return error 错误
 func (repo *TaskRepoImpl) DeleteComment(ctx context.Context, userId, commentId int64) error {
 	// 软删同时推进 updated_at，保证删除墓碑可被增量拉取发现
-	return repo.db.
+	return dbs.DBFrom(ctx, repo.db).
 		WithContext(ctx).
 		Model(&models.TaskComment{}).
 		Where("user_id = ? AND id = ?", userId, commentId).
@@ -934,6 +946,51 @@ func (repo *TaskRepoImpl) SyncCommentUserProfile(
 		Where("user_id = ?", userId).
 		Updates(updates).
 		Error
+}
+
+// --- 计数联动（服务端 owned；B3 绕过 UpdateTask LWW；B2 同写 updated_at；ADR 2026-09-12） ---
+
+// adjustCountColumn 计数列直写：check_item_count/comment_count/subtask_count ± delta 并推进 updated_at
+// 仅作用于未删除行（删除即出局，口径 §6e）；经 DBFrom 加入调用方外层事务（同事务强一致 §4.2）。
+func (taskRepo *TaskRepoImpl) adjustCountColumn(
+	ctx context.Context,
+	column string,
+	userId int64,
+	taskId int64,
+	delta int,
+) error {
+	if taskId <= 0 {
+		return nil
+	}
+	db := dbs.DBFrom(ctx, taskRepo.db)
+	return db.WithContext(ctx).
+		Model(&models.Task{}).
+		Where("id = ? AND user_id = ? AND deleted_at IS NULL", taskId, userId).
+		UpdateColumns(map[string]any{
+			column:       gorm.Expr(column+" + ?", delta),
+			"updated_at": time.Now(),
+		}).Error
+}
+
+// AdjustCheckItemCount 调整任务检查项计数（E1）
+func (taskRepo *TaskRepoImpl) AdjustCheckItemCount(
+	ctx context.Context, userId, taskId int64, delta int,
+) error {
+	return taskRepo.adjustCountColumn(ctx, "check_item_count", userId, taskId, delta)
+}
+
+// AdjustCommentCount 调整任务评论计数（E2）
+func (taskRepo *TaskRepoImpl) AdjustCommentCount(
+	ctx context.Context, userId, taskId int64, delta int,
+) error {
+	return taskRepo.adjustCountColumn(ctx, "comment_count", userId, taskId, delta)
+}
+
+// AdjustSubTaskCount 调整任务直接子任务计数（E3/E6；taskId = 被计数父任务）
+func (taskRepo *TaskRepoImpl) AdjustSubTaskCount(
+	ctx context.Context, userId, parentTaskId int64, delta int,
+) error {
+	return taskRepo.adjustCountColumn(ctx, "subtask_count", userId, parentTaskId, delta)
 }
 
 // SoftDeleteByProjectId 软删除指定项目下的所有任务

@@ -24,11 +24,11 @@ func (d *TaskDomainImpl) CreateTask(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreateTask,
-) (*entities.Task, error) {
+) (*entities.Task, bool, error) {
 	vo.SortId = d.taskRepo.GetMaxSortId(ctx, userId) + 1
-	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	entity, _, err := d.taskRepo.Upsert(ctx, userId, vo)
-	return entity, err
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
+	entity, created, err := d.taskRepo.Upsert(ctx, userId, vo)
+	return entity, created, err
 }
 
 // Copy 复制任务
@@ -61,7 +61,8 @@ func (d *TaskDomainImpl) Copy(
 		return nil, err
 	}
 	// 创建新任务并返回新任务实体
-	return d.CreateTask(ctx, userId, &vo)
+	entity, _, err := d.CreateTask(ctx, userId, &vo)
+	return entity, err
 }
 
 // List 获取任务列表
@@ -84,14 +85,14 @@ func (d *TaskDomainImpl) CreateCheckItem(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreateTaskCheckItem,
-) (*entities.TaskCheckItem, error) {
+) (*entities.TaskCheckItem, bool, error) {
 	// 客户端未提供 sortId（0）时由服务端自动生成，保持既有创建语义
 	if vo.SortId == 0 {
 		vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
 	}
-	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	entity, _, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
-	return entity, err
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
+	entity, created, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
+	return entity, created, err
 }
 
 // ListSync 增量同步任务列表（包含软删墓碑，keyset 游标稳定排序分页）

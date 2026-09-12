@@ -69,4 +69,10 @@ type Project interface {
 
 	// 删除已注销的任务清单
 	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) (int64, error)
+
+	// AdjustTaskCount 调整项目任务计数（E4/E5；直写列 + bump updated_at；隐式桶无 projects 行为无害 no-op）
+	AdjustTaskCount(ctx context.Context, userId, projectId int64, delta int) error
+
+	// RecountTaskCount 批量重算项目任务计数（E7 级联删/恢复：写最终值，不逐事件；口径含子任务/含归档/含放弃、不含已删除）
+	RecountTaskCount(ctx context.Context, userId, projectId int64) error
 }

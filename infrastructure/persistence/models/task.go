@@ -78,6 +78,17 @@ type Task struct {
 	// 排序 ID
 	// 用于任务列表排序，采用大间距整数，基数 255，创建时取当前用户最大值 +1
 	SortId uint16 `gorm:"default:0"`
+
+	// --- 领域统计属性（服务端 owned 反规范化列，事件联动维护；ADR 2026-09-12） ---
+
+	// 任务检查项数量（含已完成项，口径 §6c；不含已删除检查项，§6d）
+	CheckItemCount uint `gorm:"default:0"`
+
+	// 任务评论数量（不含已删除评论，口径 §6d）
+	CommentCount uint `gorm:"default:0"`
+
+	// 直接子任务数量（1 层直接子，口径 §6b；删除即出局，§6e）
+	SubtaskCount uint `gorm:"default:0"`
 }
 
 // TaskCheckItem 待办任务检查项模型

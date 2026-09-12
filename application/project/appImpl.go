@@ -17,19 +17,30 @@ import (
 // NewProjectApp 创建任务清单应用层实例
 func NewProjectApp(
 	projectDomain service.ProjectDomain,
-        txManager domaintypes.TxManager,
+	txManager domaintypes.TxManager,
 	repo repositories.Project,
 	preferenceRepo repositories.ProjectPreference,
 	taskRepo taskRepo.Task,
+	countPublisher domaintypes.CountEventPublisher,
 ) ProjectApp {
 	impl := &projectAppImpl{
 		projectDomain:  projectDomain,
-                txManager:      txManager,
+		txManager:      txManager,
 		repo:           repo,
 		preferenceRepo: preferenceRepo,
 		taskRepo:       taskRepo,
+		countPublisher: countPublisher,
 	}
 	return impl
+}
+
+// publishCountEvent 发布计数事件（同事务同步分发，ADR §4.1）
+// 无发布器时静默跳过；返回错误 ⇒ 调用方事务整体回滚。
+func (app *projectAppImpl) publishCountEvent(ctx context.Context, event domaintypes.CountEvent) error {
+	if app.countPublisher == nil {
+		return nil
+	}
+	return app.countPublisher.PublishCountEvent(ctx, event)
 }
 
 // 获取任务清单
@@ -139,7 +150,12 @@ func (app *projectAppImpl) Delete(
                 if err != nil {
                         return err
                 }
-                return nil
+                // 3. E7：批量重算项目任务数（写最终值，不逐事件）
+                return app.publishCountEvent(ctx, domaintypes.CountEvent{
+                        Type:      domaintypes.CountEventTaskCountRecounted,
+                        UserId:    userId,
+                        ProjectId: projectIdInt64,
+                })
         })
         if err != nil {
                 return err
@@ -173,7 +189,12 @@ func (app *projectAppImpl) Restore(
                 if err := app.taskRepo.RestoreByProjectId(ctx, userId, projectIdInt64); err != nil {
                         return err
                 }
-                return nil
+                // 3. E7：批量重算项目任务数（写最终值，不逐事件）
+                return app.publishCountEvent(ctx, domaintypes.CountEvent{
+                        Type:      domaintypes.CountEventTaskCountRecounted,
+                        UserId:    userId,
+                        ProjectId: projectIdInt64,
+                })
         })
         if err != nil {
                 return err

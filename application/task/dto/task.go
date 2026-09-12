@@ -27,6 +27,11 @@ type GetTaskRes struct {
 	RemindTime     string   // 提醒具体时间
 	RemindWeekdays []uint8  // 提醒星期
 	SortId         uint16   // 排序值
+
+	// 领域统计属性（服务端 owned；ADR 2026-09-12）
+	CheckItemCount uint // 检查项数量
+	CommentCount   uint // 评论数量
+	SubtaskCount   uint // 直接子任务数量
 }
 
 // CreateTaskReq 创建任务入参

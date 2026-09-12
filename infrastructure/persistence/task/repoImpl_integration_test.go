@@ -47,7 +47,14 @@ func TestMain(m *testing.M) {
 	sqlDB, _ := db.DB()
 	sqlDB.SetMaxOpenConns(5)
 
-	if err := db.AutoMigrate(&models.Task{}, &models.TaskCheckItem{}, &models.TaskComment{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Task{},
+		&models.TaskCheckItem{},
+		&models.TaskComment{},
+		&models.Project{},
+		&models.ProjectPreference{},
+	); err != nil {
 		fmt.Printf("迁移失败: %v\n", err)
 		os.Exit(1)
 	}
@@ -61,6 +68,8 @@ func TestMain(m *testing.M) {
 func cleanTasks(t *testing.T) {
 	t.Helper()
 	for _, stmt := range []string{
+		"DELETE FROM project_preferences",
+		"DELETE FROM projects",
 		"DELETE FROM task_comments",
 		"DELETE FROM task_check_items",
 		"DELETE FROM tasks",

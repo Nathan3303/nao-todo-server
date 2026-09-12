@@ -335,6 +335,56 @@ func (projectRepo *ProjectRepoImpl) DeleteDeactivatedProjects(
 	return tx.RowsAffected, tx.Error
 }
 
+// AdjustTaskCount 调整项目任务计数（E4/E5：直写列 + bump updated_at；B2 红线）
+// 隐式桶（projectId = userId 的内置项目虚拟行，E8）无 projects 行 ⇒ 无害 no-op；
+// 项目列表缓存同步失效，避免展示陈旧计数。经 DBFrom 加入调用方外层事务（同事务强一致 §4.2）。
+func (projectRepo *ProjectRepoImpl) AdjustTaskCount(
+	ctx context.Context, userId, projectId int64, delta int,
+) error {
+	if projectId <= 0 {
+		return nil
+	}
+	db := dbs.DBFrom(ctx, projectRepo.db)
+	err := db.WithContext(ctx).
+		Model(&models.Project{}).
+		Where("id = ? AND user_id = ?", projectId, userId).
+		UpdateColumns(map[string]any{
+			"task_count": gorm.Expr("task_count + ?", delta),
+			"updated_at": time.Now(),
+		}).Error
+	if err != nil {
+		return err
+	}
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
+	return nil
+}
+
+// RecountTaskCount 批量重算项目任务计数（E7：级联删/恢复写最终值，不逐事件）
+// 口径 §6：含子任务/含归档/含放弃；不含已删除（deleted_at IS NULL）。
+func (projectRepo *ProjectRepoImpl) RecountTaskCount(
+	ctx context.Context, userId, projectId int64,
+) error {
+	if projectId <= 0 {
+		return nil
+	}
+	db := dbs.DBFrom(ctx, projectRepo.db)
+	err := db.WithContext(ctx).
+		Model(&models.Project{}).
+		Where("id = ? AND user_id = ?", projectId, userId).
+		UpdateColumns(map[string]any{
+			"task_count": gorm.Expr(
+				"(SELECT COUNT(*) FROM tasks WHERE project_id = ? AND deleted_at IS NULL)",
+				projectId,
+			),
+			"updated_at": time.Now(),
+		}).Error
+	if err != nil {
+		return err
+	}
+	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
+	return nil
+}
+
 // ListSync 增量同步任务清单列表：包含软删墓碑，(updated_at, id) keyset 游标 + 稳定排序 + limit（绕过缓存）
 func (projectRepo *ProjectRepoImpl) ListSync(
 	ctx context.Context,

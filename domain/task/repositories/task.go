@@ -35,12 +35,13 @@ type Task interface {
 	) (*entities.Task, bool, error)
 
 	// Update 更新任务
+	// 返回是否实际写入（false = LWW 乐观锁拒绝，未变更任何行）
 	Update(
 		ctx context.Context,
 		userId int64,
 		taskId int64,
 		updateTaskValueObject *valueobjects.UpdateTask,
-	) error
+	) (bool, error)
 
 	// Delete 删除任务
 	Delete(ctx context.Context, userId int64, taskId int64) error
@@ -99,4 +100,13 @@ type Task interface {
 
 	// UnarchiveByProjectId 取消归档指定项目下的所有任务（级联取消归档用）
 	UnarchiveByProjectId(ctx context.Context, userId int64, projectId int64) error
+
+	// AdjustCheckItemCount 调整任务检查项计数（E1；直写列 + bump updated_at，不经 UpdateTask 的 LWW）
+	AdjustCheckItemCount(ctx context.Context, userId, taskId int64, delta int) error
+
+	// AdjustCommentCount 调整任务评论计数（E2）
+	AdjustCommentCount(ctx context.Context, userId, taskId int64, delta int) error
+
+	// AdjustSubTaskCount 调整任务直接子任务计数（E3/E6；taskId = 被计数父任务）
+	AdjustSubTaskCount(ctx context.Context, userId, parentTaskId int64, delta int) error
 }

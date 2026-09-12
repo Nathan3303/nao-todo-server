@@ -22,6 +22,7 @@ type CreateProjectRes struct {
 	SortId      uint16 `json:"sortId"`
 	ArchivedAt  string `json:"archivedAt"`
 	DeactivedAt string `json:"deactivedAt"`
+	TaskCount   uint   `json:"taskCount"`
 }
 
 // GetProjectRes 获取项目响应

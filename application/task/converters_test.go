@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"naotodoserver/application/task/dto"
+	"naotodoserver/domain/task/entities"
 )
 
 func TestSplitProjectIds(t *testing.T) {
@@ -96,5 +97,20 @@ func TestUpdateTaskReqToValueObject_ProjectId(t *testing.T) {
 				t.Fatalf("ProjectId 转换 = %v, 期望 %v", vo.ProjectId, tt.want)
 			}
 		})
+	}
+}
+
+// TestTaskEntityToGetRes_Counts 领域统计属性：TaskEntityToGetRes 透传计数（ADR §5.1）
+func TestTaskEntityToGetRes_Counts(t *testing.T) {
+	e := &entities.Task{
+		Name:           "t",
+		CheckItemCount: 3,
+		CommentCount:   5,
+		SubtaskCount:   7,
+	}
+	res := TaskEntityToGetRes(e)
+	if res.CheckItemCount != 3 || res.CommentCount != 5 || res.SubtaskCount != 7 {
+		t.Fatalf("计数透传错误: got %d/%d/%d, want 3/5/7",
+			res.CheckItemCount, res.CommentCount, res.SubtaskCount)
 	}
 }
