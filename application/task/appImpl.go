@@ -95,6 +95,19 @@ func (taskApp *TaskAppImpl) CreateTask(
 	// 2. 写路径包事务（同事务强一致，ADR §4.2）：主写 + 计数事件同步分发
 	var taskEntity *entities.Task
 	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
+		// 覆盖分支需旧值：E5/E6 必须比较旧/新后才发（B1/B4 同型）。
+		// sync push 的任务更新走本路径（CreateTask → Upsert 覆盖），是桌面端主更新入口。
+		var before *entities.Task
+		if createTaskValueObject.Id != 0 {
+			existing, err := taskApp.taskRepo.GetById(ctx, userId, createTaskValueObject.Id, true)
+			if err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					return err
+				}
+			} else {
+				before = existing
+			}
+		}
 		entity, created, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
 		if err != nil {
 			return err
@@ -102,6 +115,31 @@ func (taskApp *TaskAppImpl) CreateTask(
 		taskEntity = entity
 		// B1/B6：仅 created（含墓碑复活）才 ±1；覆盖/重试不重复计数
 		if !created {
+			// 覆盖分支（created=false）：仅在实际变更时发 E5/E6；
+			// LWW 拒绝（未写入）时 before 与 taskEntity 不变 ⇒ 不发（B1）
+			if before == nil {
+				return nil
+			}
+			if int64(before.ProjectId) != int64(taskEntity.ProjectId) {
+				if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+					Type:         domaintypes.CountEventTaskMoved,
+					UserId:       userId,
+					OldProjectId: int64(before.ProjectId),
+					ProjectId:    int64(taskEntity.ProjectId),
+				}); err != nil {
+					return err
+				}
+			}
+			if int64(before.ParentTaskId) != int64(taskEntity.ParentTaskId) {
+				if err := taskApp.publishCountEvent(ctx, domaintypes.CountEvent{
+					Type:            domaintypes.CountEventTaskParentChanged,
+					UserId:          userId,
+					OldParentTaskId: int64(before.ParentTaskId),
+					ParentTaskId:    int64(taskEntity.ParentTaskId),
+				}); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 		// E4：项目任务数 +1（隐式桶无 projects 行时由仓储无害 no-op，E8）

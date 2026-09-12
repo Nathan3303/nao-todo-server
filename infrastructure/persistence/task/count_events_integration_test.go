@@ -690,4 +690,200 @@ func TestCount_Atomicity_RollbackOnCountFailure(t *testing.T) {
 	}
 }
 
+// TC-STAT-S23/S13（sync push 覆盖分支 / PM 裁定 2026-09-13 a）：Upsert 覆盖变更 projectId / parentTaskId
+// 时补发 E5/E6 —— 桌面端任务更新走 push → CreateTask → Upsert 覆盖，是计数正确性的主写入路径。
+func TestCount_UpsertOverwrite_PublishesMoveAndReparent(t *testing.T) {
+	cleanTasks(t)
+	s := newFullStack(t)
+	insertProject(t, testProjA)
+	insertProject(t, testProjB)
+	ctx := context.Background()
+
+	parentP := createTask(t, s, taskReq("父P", testProjA, 0, nil))
+	parentQ := createTask(t, s, taskReq("父Q", testProjA, 0, nil))
+	taskID := createTask(t, s, taskReq("T", testProjA, parentP, nil))
+	if got := projectTaskCount(t, testProjA); got != 3 {
+		t.Fatalf("初始项目A task_count = %d, want 3", got)
+	}
+	idStr := idutil.FormatID(taskID)
+
+	// E5：覆盖 push 携带新 projectId（父不变）⇒ A -1、B +1，且两项目行均 bump
+	baseA := backdateProject(t, testProjA)
+	baseB := backdateProject(t, testProjB)
+	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentP, &idStr)); err != nil {
+		t.Fatalf("覆盖 push（换项目）: %v", err)
+	}
+	if got := projectTaskCount(t, testProjA); got != 2 {
+		t.Fatalf("覆盖换项目后项目A task_count = %d, want 2（E5 -1）", got)
+	}
+	if got := projectTaskCount(t, testProjB); got != 1 {
+		t.Fatalf("覆盖换项目后项目B task_count = %d, want 1（E5 +1）", got)
+	}
+	assertAdvanced(t, "覆盖-move-旧项目A", baseA, projectUpdatedAt(t, testProjA))
+	assertAdvanced(t, "覆盖-move-新项目B", baseB, projectUpdatedAt(t, testProjB))
+	if _, _, got := taskCountsOf(t, parentP); got != 1 {
+		t.Fatalf("换项目不应影响父计数：父P subtask_count = %d, want 1", got)
+	}
+
+	// E6：覆盖 push 换父（项目不变）⇒ 旧父 -1、新父 +1，且两父行均 bump
+	baseP := backdateTask(t, parentP)
+	baseQ := backdateTask(t, parentQ)
+	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentQ, &idStr)); err != nil {
+		t.Fatalf("覆盖 push（换父）: %v", err)
+	}
+	if _, _, got := taskCountsOf(t, parentP); got != 0 {
+		t.Fatalf("覆盖换父后父P subtask_count = %d, want 0（E6 -1）", got)
+	}
+	if _, _, got := taskCountsOf(t, parentQ); got != 1 {
+		t.Fatalf("覆盖换父后父Q subtask_count = %d, want 1（E6 +1）", got)
+	}
+	assertAdvanced(t, "覆盖-换父-旧父P", baseP, taskUpdatedAt(t, parentP))
+	assertAdvanced(t, "覆盖-换父-新父Q", baseQ, taskUpdatedAt(t, parentQ))
+	if got := projectTaskCount(t, testProjB); got != 1 {
+		t.Fatalf("换父不应影响项目计数：项目B task_count = %d, want 1", got)
+	}
+
+	// E6 边界：覆盖脱离父（A→0，兼容 Q1）⇒ 仅旧父 -1 + bump
+	baseQ = backdateTask(t, parentQ)
+	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, 0, &idStr)); err != nil {
+		t.Fatalf("覆盖 push（脱离父）: %v", err)
+	}
+	if _, _, got := taskCountsOf(t, parentQ); got != 0 {
+		t.Fatalf("覆盖脱离父后父Q subtask_count = %d, want 0（E6 -1）", got)
+	}
+	assertAdvanced(t, "覆盖-脱离-旧父Q", baseQ, taskUpdatedAt(t, parentQ))
+}
+
+// TC-STAT-S23/S13（PM 裁定 a·要求 1/2）：覆盖 push 未变更 projectId/parentTaskId ⇒
+// 主写生效但计数与**涉及的父/项目行 bump 均不发生**（B1：仅实际生效才发布）。
+func TestCount_UpsertOverwrite_UnchangedNoPublish(t *testing.T) {
+	cleanTasks(t)
+	s := newFullStack(t)
+	insertProject(t, testProjA)
+	insertProject(t, testProjB)
+	ctx := context.Background()
+
+	parentP := createTask(t, s, taskReq("父P", testProjA, 0, nil))
+	taskID := createTask(t, s, taskReq("T", testProjA, parentP, nil))
+	idStr := idutil.FormatID(taskID)
+
+	baseA := backdateProject(t, testProjA)
+	baseB := backdateProject(t, testProjB)
+	baseP := backdateTask(t, parentP)
+
+	// 仅改名，项目与父均与库中一致
+	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T-改名", testProjA, parentP, &idStr)); err != nil {
+		t.Fatalf("覆盖 push（同项目同父）: %v", err)
+	}
+	var m models.Task
+	if err := testDB.Where("id = ?", taskID).First(&m).Error; err != nil {
+		t.Fatalf("读任务: %v", err)
+	}
+	if m.Name != "T-改名" {
+		t.Fatalf("覆盖未生效：name = %q, want T-改名", m.Name)
+	}
+	if got := projectTaskCount(t, testProjA); got != 2 {
+		t.Fatalf("项目A task_count = %d, want 2（值未变不应 ±1）", got)
+	}
+	if got := projectTaskCount(t, testProjB); got != 0 {
+		t.Fatalf("项目B task_count = %d, want 0（值未变不应 ±1）", got)
+	}
+	if _, _, got := taskCountsOf(t, parentP); got != 1 {
+		t.Fatalf("父P subtask_count = %d, want 1（值未变不应 ±1）", got)
+	}
+	if after := projectUpdatedAt(t, testProjA); !after.Equal(baseA) {
+		t.Fatalf("项目A updated_at 被无谓 bump：before %v, after %v", baseA, after)
+	}
+	if after := projectUpdatedAt(t, testProjB); !after.Equal(baseB) {
+		t.Fatalf("项目B updated_at 被无谓 bump：before %v, after %v", baseB, after)
+	}
+	if after := taskUpdatedAt(t, parentP); !after.Equal(baseP) {
+		t.Fatalf("父P updated_at 被无谓 bump：before %v, after %v", baseP, after)
+	}
+
+	// 三态之 Noop：携带更旧 updatedAt（LWW 拒绝、未写入）⇒ 计数与涉及行 bump 均不发生（B1）
+	stale := time.Now().Add(-time.Hour).Format(time.RFC3339)
+	staleReq := taskReq("T-不应生效", testProjA, parentP, &idStr)
+	staleReq.UpdatedAt = &stale
+	baseA = backdateProject(t, testProjA)
+	baseP = backdateTask(t, parentP)
+	if _, err := s.taskApp.CreateTask(ctx, testUserID, staleReq); err != nil {
+		t.Fatalf("覆盖 push（过期 LWW）: %v", err)
+	}
+	var afterNoop models.Task
+	if err := testDB.Where("id = ?", taskID).First(&afterNoop).Error; err != nil {
+		t.Fatalf("读任务: %v", err)
+	}
+	if afterNoop.Name != "T-改名" {
+		t.Fatalf("LWW 拒绝应不写入：name = %q, want T-改名", afterNoop.Name)
+	}
+	if after := projectUpdatedAt(t, testProjA); !after.Equal(baseA) {
+		t.Fatalf("Noop 不应 bump 项目A：before %v, after %v", baseA, after)
+	}
+	if after := taskUpdatedAt(t, parentP); !after.Equal(baseP) {
+		t.Fatalf("Noop 不应 bump 父P：before %v, after %v", baseP, after)
+	}
+	if got := projectTaskCount(t, testProjA); got != 2 {
+		t.Fatalf("Noop 后项目A task_count = %d, want 2", got)
+	}
+}
+
+// TC-STAT-S39/S23（PM 裁定 a·要求 1「三态区分」）：墓碑复活（`created=true`）走既有 E4 +1 / E3 +1，
+// **不得再发旧项目/旧父 -1**（删除时已 -1）—— 复活同时换项目/换父也不得双重扣减。
+func TestCount_UpsertRevive_NoDoubleDecrement(t *testing.T) {
+	cleanTasks(t)
+	s := newFullStack(t)
+	insertProject(t, testProjA)
+	insertProject(t, testProjB)
+	ctx := context.Background()
+
+	parentP := createTask(t, s, taskReq("父P", testProjA, 0, nil))
+	parentQ := createTask(t, s, taskReq("父Q", testProjB, 0, nil))
+	taskID := createTask(t, s, taskReq("T", testProjA, parentP, nil))
+	if got := projectTaskCount(t, testProjA); got != 2 { // 父P + T
+		t.Fatalf("初始项目A task_count = %d, want 2", got)
+	}
+	if got := projectTaskCount(t, testProjB); got != 1 { // 父Q
+		t.Fatalf("初始项目B task_count = %d, want 1", got)
+	}
+
+	// 删除 T（push 墓碑）：A -1、父P -1
+	if err := s.taskApp.DeleteTask(ctx, testUserID, idutil.FormatID(taskID)); err != nil {
+		t.Fatalf("DeleteTask: %v", err)
+	}
+	if got := projectTaskCount(t, testProjA); got != 1 {
+		t.Fatalf("删除后项目A task_count = %d, want 1", got)
+	}
+	if _, _, got := taskCountsOf(t, parentP); got != 0 {
+		t.Fatalf("删除后父P subtask_count = %d, want 0", got)
+	}
+
+	// 墓碑复活（同 id push，携带新项目 B + 新父 Q）：仅 +1，不得对旧项目/旧父再 -1
+	idStr := idutil.FormatID(taskID)
+	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentQ, &idStr)); err != nil {
+		t.Fatalf("墓碑复活: %v", err)
+	}
+	if got := projectTaskCount(t, testProjA); got != 1 {
+		t.Fatalf("复活后旧项目A task_count = %d, want 1（不得再次 -1）", got)
+	}
+	if got := projectTaskCount(t, testProjB); got != 2 {
+		t.Fatalf("复活后新项目B task_count = %d, want 2（E4 +1）", got)
+	}
+	if _, _, got := taskCountsOf(t, parentP); got != 0 {
+		t.Fatalf("复活后旧父P subtask_count = %d, want 0（不得再次 -1）", got)
+	}
+	if _, _, got := taskCountsOf(t, parentQ); got != 1 {
+		t.Fatalf("复活后新父Q subtask_count = %d, want 1（E3 +1）", got)
+	}
+	// 落库的项目/父确已切换
+	var m models.Task
+	if err := testDB.Where("id = ?", taskID).First(&m).Error; err != nil {
+		t.Fatalf("读任务: %v", err)
+	}
+	if int64(m.ProjectId) != testProjB || int64(m.ParentTaskId) != parentQ {
+		t.Fatalf("复活后 project/parent 未切换：project=%d parent=%d, want %d/%d",
+			m.ProjectId, m.ParentTaskId, testProjB, parentQ)
+	}
+}
+
 func strPtr(s string) *string { return &s }
