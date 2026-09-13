@@ -41,11 +41,11 @@ type CreateTaskReq struct {
 	Description    string   // 任务描述
 	State          string   // 任务状态
 	Priority       string   // 任务优先级
-	StartAt        string   // 开始时间
-	EndAt          string   // 结束时间
+	StartAt        *string  // 开始时间（nil=缺省不改，""=清空）
+	EndAt          *string  // 结束时间（nil=缺省不改，""=清空）
 	ProjectId      string   // 项目 ID
 	Tags           []string // 标签列表
-	RemindAt       string   // 提醒时间
+	RemindAt       *string  // 提醒时间（nil=缺省不改，""=清空）
 	RemindRepeat   string   // 提醒重复规则
 	RemindTime     string   // 提醒具体时间
 	RemindWeekdays []uint8  // 提醒星期

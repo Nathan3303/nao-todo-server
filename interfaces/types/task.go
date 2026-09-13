@@ -32,11 +32,11 @@ type CreateTaskReq struct {
 	Description    string   `json:"description"`
 	State          string   `json:"state" binding:"required"`
 	Priority       string   `json:"priority" binding:"required"`
-	StartAt        string   `json:"startAt"`
-	EndAt          string   `json:"endAt"`
+	StartAt        *string  `json:"startAt"`
+	EndAt          *string  `json:"endAt"`
 	ProjectId      string   `json:"projectId"`
 	Tags           []string `json:"tags"`
-	RemindAt       string   `json:"remindAt"`
+	RemindAt       *string  `json:"remindAt"`
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
 	RemindWeekdays []int    `json:"remindWeekdays"`

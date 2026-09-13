@@ -3,6 +3,7 @@ package task
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"naotodoserver/application/task/dto"
 	"naotodoserver/domain/task/entities"
@@ -98,6 +99,53 @@ func TestUpdateTaskReqToValueObject_ProjectId(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestCreateTaskReqToValueObject_NullableTimeStartAt SYNC-DEF-01：create/push 请求
+// 缺省（nil）与显式空串（清空）必须可区分，且显式空串不被 FillStartAt 复活。
+func TestCreateTaskReqToValueObject_NullableTimeStartAt(t *testing.T) {
+	strPtr := func(s string) *string { return &s }
+	endAt := time.Now().Add(time.Hour).Format(time.RFC3339)
+
+	t.Run("缺省 startAt + endAt 有效 ⇒ 兜底派生", func(t *testing.T) {
+		vo, err := CreateTaskReqToValueObject(1001, &dto.CreateTaskReq{
+			Name: "t", State: "pending", Priority: "medium", EndAt: strPtr(endAt),
+		})
+		if err != nil {
+			t.Fatalf("意外错误: %v", err)
+		}
+		if vo.StartAt.IsNull {
+			t.Fatal("缺省 startAt 应兜底派生为非空")
+		}
+	})
+
+	t.Run("显式空串 startAt + endAt 有效 ⇒ 保持清空", func(t *testing.T) {
+		vo, err := CreateTaskReqToValueObject(1001, &dto.CreateTaskReq{
+			Name: "t", State: "pending", Priority: "medium",
+			StartAt: strPtr(""), EndAt: strPtr(endAt),
+		})
+		if err != nil {
+			t.Fatalf("意外错误: %v", err)
+		}
+		if !vo.StartAt.Valid || !vo.StartAt.IsNull {
+			t.Fatalf("显式空串 startAt 应保持清空（Valid=true,IsNull=true），got Valid=%v IsNull=%v Time=%v",
+				vo.StartAt.Valid, vo.StartAt.IsNull, vo.StartAt.Time)
+		}
+	})
+
+	t.Run("有效 startAt ⇒ 指定值", func(t *testing.T) {
+		startAt := time.Now().Add(2 * time.Hour).Truncate(time.Second)
+		vo, err := CreateTaskReqToValueObject(1001, &dto.CreateTaskReq{
+			Name: "t", State: "pending", Priority: "medium",
+			StartAt: strPtr(startAt.Format(time.RFC3339)), EndAt: strPtr(endAt),
+		})
+		if err != nil {
+			t.Fatalf("意外错误: %v", err)
+		}
+		if got, ok := vo.StartAt.Value(); !ok || !got.Equal(startAt) {
+			t.Fatalf("有效 startAt 转换错误: got %v ok=%v, want %v", got, ok, startAt)
+		}
+	})
 }
 
 // TestTaskEntityToGetRes_Counts 领域统计属性：TaskEntityToGetRes 透传计数（ADR §5.1）

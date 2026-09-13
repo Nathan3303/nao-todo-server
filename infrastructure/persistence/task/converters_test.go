@@ -69,6 +69,40 @@ func TestCreateTaskVOToUpdateMap_DeletedAt(t *testing.T) {
 	}
 }
 
+// TestCreateTaskVOToUpdateMap_NullableTimeSemantics SYNC-DEF-01：可空时间字段
+// 缺省（Valid=false）不写列；显式空串（Valid=true,IsNull=true）写 NULL；有效值写时间。
+func TestCreateTaskVOToUpdateMap_NullableTimeSemantics(t *testing.T) {
+	t.Run("缺省不写列", func(t *testing.T) {
+		vo := newConvertTaskVO()
+		m := CreateTaskVOToUpdateMap(vo)
+		for _, k := range []string{"StartAt", "EndAt", "RemindAt"} {
+			if _, ok := m[k]; ok {
+				t.Fatalf("缺省的 %s 不应进入 updateMap", k)
+			}
+		}
+	})
+
+	t.Run("显式空串写 NULL", func(t *testing.T) {
+		vo := newConvertTaskVO()
+		vo.StartAt = types.NewNullableTimeByTimeStr("")
+		vo.EndAt = types.NewNullableTimeByTimeStr("")
+		vo.RemindAt = types.NewNullableTimeByTimeStr("")
+		m := CreateTaskVOToUpdateMap(vo)
+		for _, k := range []string{"StartAt", "EndAt"} {
+			st, ok := m[k].(sql.NullTime)
+			if !ok {
+				t.Fatalf("%s 应进入 updateMap 且为 sql.NullTime, got %#v", k, m[k])
+			}
+			if st.Valid {
+				t.Fatalf("%s 显式空串应写 NULL, got %v", k, st.Time)
+			}
+		}
+		if rt, ok := m["RemindAt"].(sql.NullTime); !ok || rt.Valid {
+			t.Fatalf("RemindAt 显式空串应写 NULL, got %#v", m["RemindAt"])
+		}
+	})
+}
+
 // --- DEF-SYNC-04：创建/覆盖写路径秒级往返不变（往返归一） ---
 
 // TestCreateTaskValueObjectToModel_RoundtripSecondLevel 提供 startAt+endAt（含毫秒）

@@ -10,11 +10,11 @@ import (
 )
 
 // newStartAtTask 走 NewCreateTask 真实构造路径（含 FillStartAt 兜底）
-func newStartAtTask(t *testing.T, startAt, endAt string) *CreateTask {
+func newStartAtTask(t *testing.T, startAt, endAt *string) *CreateTask {
 	t.Helper()
 	vo, err := NewCreateTask(
 		0, "任务", "", entities.TaskStatePending, entities.TaskPriorityMedium,
-		startAt, endAt, 0, nil, "", 0, "", 0,
+		startAt, endAt, 0, nil, nil, 0, "", 0,
 	)
 	if err != nil {
 		t.Fatalf("NewCreateTask: %v", err)
@@ -28,7 +28,7 @@ func newStartAtTask(t *testing.T, startAt, endAt string) *CreateTask {
 func TestNewCreateTask_ProvidedStartAtNotOverwritten(t *testing.T) {
 	startAt := time.Now().Add(time.Hour).Truncate(time.Second)
 	endAt := startAt.Add(2 * time.Hour)
-	vo := newStartAtTask(t, startAt.Format(time.RFC3339), endAt.Format(time.RFC3339))
+	vo := newStartAtTask(t, strPtr(startAt.Format(time.RFC3339)), strPtr(endAt.Format(time.RFC3339)))
 	if vo.StartAt.IsNull {
 		t.Fatal("startAt 应为有效值")
 	}
@@ -45,7 +45,7 @@ func TestNewCreateTask_EndAtPastNoInversion(t *testing.T) {
 	// 旧 FillStartAt：endAt(过去) ⇒ startAt = now−1min ⇒ 必然 > endAt(更早过去) ⇒ 倒置
 	startAt := time.Now().Add(-3 * time.Minute).Truncate(time.Second)
 	endAt := startAt.Add(time.Minute) // endAt 仍早于 now，但晚于 startAt
-	vo := newStartAtTask(t, startAt.Format(time.RFC3339), endAt.Format(time.RFC3339))
+	vo := newStartAtTask(t, strPtr(startAt.Format(time.RFC3339)), strPtr(endAt.Format(time.RFC3339)))
 	if vo.StartAt.IsNull {
 		t.Fatal("startAt 应为有效值")
 	}
@@ -57,42 +57,69 @@ func TestNewCreateTask_EndAtPastNoInversion(t *testing.T) {
 	}
 }
 
-// ③a 缺失 startAt + endAt 有效（未来）⇒ 既有兜底语义不变（派生 startAt ≈ 创建时刻）
+// ③a 缺省 startAt + endAt 有效（未来）⇒ 既有兜底语义不变（派生 startAt ≈ 创建时刻）
 func TestNewCreateTask_MissingStartAtFutureEndAtFallback(t *testing.T) {
 	endAt := time.Now().Add(time.Hour).Truncate(time.Second)
 	before := time.Now()
-	vo := newStartAtTask(t, "", endAt.Format(time.RFC3339))
+	vo := newStartAtTask(t, nil, strPtr(endAt.Format(time.RFC3339)))
 	after := time.Now()
 	if vo.StartAt.IsNull {
-		t.Fatal("缺失 startAt 应走兜底派生")
+		t.Fatal("缺省 startAt 应走兜底派生")
 	}
 	if vo.StartAt.Time.Before(before.Add(-time.Second)) || vo.StartAt.Time.After(after.Add(time.Second)) {
 		t.Fatalf("派生 startAt 应≈创建时刻: got %v, 窗口 [%v, %v]", vo.StartAt.Time, before, after)
 	}
 }
 
-// ③b 缺失 startAt + 缺失 endAt ⇒ 两者皆空（未安排），既有语义不变
+// ③b 缺省 startAt + 缺省 endAt ⇒ 两者皆空（未安排），既有语义不变
 func TestNewCreateTask_MissingStartAtMissingEndAt(t *testing.T) {
-	vo := newStartAtTask(t, "", "")
+	vo := newStartAtTask(t, nil, nil)
 	if !vo.StartAt.IsNull {
-		t.Fatal("缺失 startAt 应为空")
+		t.Fatal("缺省 startAt 应为空")
 	}
 	if !vo.EndAt.IsNull {
-		t.Fatal("缺失 endAt 应为空")
+		t.Fatal("缺省 endAt 应为空")
 	}
 }
 
-// ③c 无效 startAt（不可解析）视同缺失 ⇒ 走兜底派生（endAt 有效）
+// ③c 无效 startAt（不可解析）视同缺省 ⇒ 走兜底派生（endAt 有效）
 func TestNewCreateTask_InvalidStartAtFallsBack(t *testing.T) {
 	endAt := time.Now().Add(time.Hour).Truncate(time.Second)
 	before := time.Now()
-	vo := newStartAtTask(t, "not-a-date", endAt.Format(time.RFC3339))
+	vo := newStartAtTask(t, strPtr("not-a-date"), strPtr(endAt.Format(time.RFC3339)))
 	after := time.Now()
 	if vo.StartAt.IsNull {
-		t.Fatal("无效 startAt 应视同缺失并兜底派生")
+		t.Fatal("无效 startAt 应视同缺省并兜底派生")
 	}
 	if vo.StartAt.Time.Before(before.Add(-time.Second)) || vo.StartAt.Time.After(after.Add(time.Second)) {
 		t.Fatalf("派生 startAt 应≈创建时刻: got %v, 窗口 [%v, %v]", vo.StartAt.Time, before, after)
+	}
+}
+
+// SYNC-DEF-01：显式空串 startAt（清空）+ endAt 有效 ⇒ 不得被 FillStartAt 复活为 now，
+// 应保持「已提供且置空」语义，由持久化层写 NULL。
+func TestNewCreateTask_ExplicitEmptyStartAtStaysCleared(t *testing.T) {
+	endAt := time.Now().Add(time.Hour).Truncate(time.Second)
+	vo := newStartAtTask(t, strPtr(""), strPtr(endAt.Format(time.RFC3339)))
+	if !vo.StartAt.Valid || !vo.StartAt.IsNull {
+		t.Fatalf("显式空串 startAt 应保持清空语义（Valid=true,IsNull=true），got Valid=%v IsNull=%v Time=%v",
+			vo.StartAt.Valid, vo.StartAt.IsNull, vo.StartAt.Time)
+	}
+	if !vo.EndAt.Time.Equal(endAt) {
+		t.Fatalf("endAt 被改写: got %v, want %v", vo.EndAt.Time, endAt)
+	}
+}
+
+// SYNC-DEF-01：缺省与显式空串必须可区分（Valid 位）
+func TestNewCreateTask_AbsentVsExplicitEmpty(t *testing.T) {
+	absent := newStartAtTask(t, nil, nil)
+	if absent.StartAt.Valid {
+		t.Fatal("缺省 startAt 应为 Valid=false（未提供）")
+	}
+	cleared := newStartAtTask(t, strPtr(""), nil)
+	if !cleared.StartAt.Valid || !cleared.StartAt.IsNull {
+		t.Fatalf("显式空串 startAt 应为 Valid=true,IsNull=true，got Valid=%v IsNull=%v",
+			cleared.StartAt.Valid, cleared.StartAt.IsNull)
 	}
 }
 
