@@ -58,7 +58,9 @@ func (d *TaskDomainImpl) Copy(
 	// vo.RemindRepeat = task.RemindRepeat
 	// vo.RemindTime = task.RemindTime
 	// vo.RemindWeekdays = task.RemindWeekdays
-	if vo.Validate() != nil {
+	// 校验源任务派生的复制 VO（名称追加“的复制”后可能超长）——必须返回真实校验错误，
+	// 不得吞错（原写法 `if vo.Validate() != nil { return nil, err }` 中 err 为 nil ⇒ 静默失效/上层空指针）
+	if err := vo.Validate(); err != nil {
 		return nil, err
 	}
 	// G9：复制品置源父组组末（职责上移后必须显式赋值，否则为 0 落到组首）
