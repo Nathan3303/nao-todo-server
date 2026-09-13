@@ -40,6 +40,8 @@ type CreateTaskReq struct {
 	RemindRepeat   string   `json:"remindRepeat"`
 	RemindTime     string   `json:"remindTime"`
 	RemindWeekdays []int    `json:"remindWeekdays"`
+	// SortId 组内排序值（0 = 未设置，由服务端置组末；显式非零优先）
+	SortId uint16 `json:"sortId"`
 	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
 	Id        *string `json:"id"`
 	CreatedAt *string `json:"createdAt"`

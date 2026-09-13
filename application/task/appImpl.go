@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/task/dto"
 	domerr "naotodoserver/domain/errors"
@@ -37,6 +38,23 @@ func NewTaskApp(
 		countPublisher: countPublisher,
 	}
 	return impl
+}
+
+// nextGroupSortId 组内下一个排序值（组末）：COALESCE(MAX(sort_id), 255) + 1，空组首个 = 256。
+// Q1 防回绕：max+1 超出 uint16 上界（65535）⇒ 返回可识别的领域错误且不写入，
+// 客户端捕获后对本组重建（1000,2000,…）再重试；组 >65 行属客户端已禁重建的观察项。
+func (taskApp *TaskAppImpl) nextGroupSortId(
+	ctx context.Context,
+	userId, parentTaskId int64,
+) (uint16, error) {
+	maxSortId, err := taskApp.taskRepo.GetMaxSortId(ctx, userId, parentTaskId)
+	if err != nil {
+		return 0, fmt.Errorf("GetMaxSortId: %w", err)
+	}
+	if maxSortId >= math.MaxUint16 {
+		return 0, domerr.ErrSortIdOverflow
+	}
+	return maxSortId + 1, nil
 }
 
 // publishCountEvent 发布计数事件（同事务同步分发，ADR §4.1）
@@ -106,6 +124,24 @@ func (taskApp *TaskAppImpl) CreateTask(
 				}
 			} else {
 				before = existing
+			}
+		}
+		// §4 生成优先级（G1–G5，B3：赋值决策已上移到 app 层）：显式非零 ⇒ 请求值优先（G1/G3）；
+		// 否则仅「新建行」（Id==0 或行不存在，含 push 携带客户端 id 的新建）或
+		// 「覆盖且父已变」（G5）置新组组末；覆盖且父未变（含墓碑复活）⇒ 保持 0，
+		// 由 CreateTaskVOToUpdateMap 跳过写列（G4/B1）；墓碑复活保持原值不重排（G10 同精神）
+		if createTaskValueObject.SortId == 0 {
+			newGroup := int64(createTaskValueObject.ParentTaskId)
+			isCreate := createTaskValueObject.Id == 0 || before == nil
+			parentChanged := before != nil &&
+				!before.DeletedAt.Valid &&
+				int64(before.ParentTaskId) != newGroup
+			if isCreate || parentChanged {
+				sortId, err := taskApp.nextGroupSortId(ctx, userId, newGroup)
+				if err != nil {
+					return err
+				}
+				createTaskValueObject.SortId = sortId
 			}
 		}
 		entity, created, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
@@ -301,6 +337,16 @@ func (taskApp *TaskAppImpl) UpdateTask(
 				parentChanged = true
 				oldParent = int64(taskEntity.ParentTaskId)
 				newParent = *updateTaskValueObject.ParentTaskId
+			}
+			// 3.8 G7：换父且未显式携带 sortId（nil/0）⇒ 新组组末；
+			// 与 E6 的 parentChanged 共用同一次读（B4，零额外 SELECT）
+			if parentChanged &&
+				(updateTaskValueObject.SortId == nil || *updateTaskValueObject.SortId == 0) {
+				sortId, err := taskApp.nextGroupSortId(ctx, userId, newParent)
+				if err != nil {
+					return err
+				}
+				updateTaskValueObject.SortId = &sortId
 			}
 		}
 		applied, err := taskApp.taskRepo.Update(ctx, userId, taskIdInt64, updateTaskValueObject)

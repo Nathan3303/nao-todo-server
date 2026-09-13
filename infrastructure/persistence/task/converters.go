@@ -78,7 +78,10 @@ func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
 		"RemindRepeat":   vo.RemindRepeat,
 		"RemindTime":     vo.RemindTime,
 		"RemindWeekdays": vo.RemindWeekdays,
-		"SortId":         vo.SortId,
+	}
+	// G4/B1：SortId = 0 视为「未设置」⇒ 不写列，避免 sync push 的存量本地记录（sortId 0）覆盖时清零组内序
+	if vo.SortId != 0 {
+		updateMap["SortId"] = vo.SortId
 	}
 	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
 		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()

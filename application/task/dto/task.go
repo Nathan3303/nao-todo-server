@@ -49,6 +49,7 @@ type CreateTaskReq struct {
 	RemindRepeat   string   // 提醒重复规则
 	RemindTime     string   // 提醒具体时间
 	RemindWeekdays []uint8  // 提醒星期
+	SortId         uint16   // 排序值（0 = 未设置，服务端按 §4 矩阵分配组末）
 	Id             *string  // 同步元数据：客户端预置 id
 	CreatedAt      *string  // 同步元数据：客户端预置 createdAt
 	UpdatedAt      *string  // 同步元数据：客户端预置 updatedAt

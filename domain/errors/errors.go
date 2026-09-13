@@ -23,4 +23,7 @@ var (
 	ErrCreateFailed      = errors.New("创建失败")
 	ErrDeleteFailed      = errors.New("删除失败")
 	ErrIDConflict        = errors.New("ID 冲突：本地生成 ID 与远程已存在实体碰撞，请重新分配")
+	// ErrSortIdOverflow 组内排序值已耗尽（组内 max+1 超出 uint16 上界 65535）：
+	// 不写入任何数据，客户端应捕获后对本组重建（1000,2000,…）再重试。
+	ErrSortIdOverflow = errors.New("组内排序值已超出上限（65535），请对本组重建后重试")
 )

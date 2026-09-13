@@ -25,7 +25,8 @@ func (d *TaskDomainImpl) CreateTask(
 	userId int64,
 	vo *valueobjects.CreateTask,
 ) (*entities.Task, bool, error) {
-	vo.SortId = d.taskRepo.GetMaxSortId(ctx, userId) + 1
+	// SortId 赋值决策已上移到 app 层（ADR §4 生成优先级矩阵 G1–G5）：领域层无旧值，
+	// 无法区分「新建 / 覆盖且父变 / 覆盖且父未变」，无条件 max+1 会把 G4 变成「每次 push 都重排到组末」。
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
 	entity, created, err := d.taskRepo.Upsert(ctx, userId, vo)
 	return entity, created, err
@@ -60,6 +61,12 @@ func (d *TaskDomainImpl) Copy(
 	if vo.Validate() != nil {
 		return nil, err
 	}
+	// G9：复制品置源父组组末（职责上移后必须显式赋值，否则为 0 落到组首）
+	maxSortId, err := d.taskRepo.GetMaxSortId(ctx, userId, int64(vo.ParentTaskId))
+	if err != nil {
+		return nil, err
+	}
+	vo.SortId = maxSortId + 1
 	// 创建新任务并返回新任务实体
 	entity, _, err := d.CreateTask(ctx, userId, &vo)
 	return entity, err

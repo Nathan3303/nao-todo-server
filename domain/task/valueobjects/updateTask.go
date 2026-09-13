@@ -129,6 +129,7 @@ func NewUpdateTask(
 	vo.RemindRepeat = remindRepeat
 	vo.RemindTime = remindTime
 	vo.RemindWeekdays = remindWeekdays
+	vo.SortId = sortId
 	err := vo.Validate()
 	if err != nil {
 		return nil, err

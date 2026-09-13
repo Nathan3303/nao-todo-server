@@ -97,6 +97,7 @@ func CreateTaskReqToValueObject(
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
 	vo.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
+	vo.SortId = req.SortId
 	return vo, nil
 }
 

@@ -145,18 +145,27 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	return entity, existing.DeletedAt.Valid, err
 }
 
-// GetMaxSortId 获取任务最大排序 ID
+// GetMaxSortId 获取指定分组（同一 parent_task_id）内的最大排序 ID
+// 空组返回 255 基线（调用方 +1 得 256）；软删行由 GORM 默认作用域天然排除
 // @param ctx 上下文
 // @param userId 用户ID
+// @param parentTaskId 分组键（0 = 顶层组）
 // @return 最大排序ID
-func (taskRepo *TaskRepoImpl) GetMaxSortId(ctx context.Context, userId int64) uint16 {
+// @return error 错误
+func (taskRepo *TaskRepoImpl) GetMaxSortId(
+	ctx context.Context,
+	userId, parentTaskId int64,
+) (uint16, error) {
 	var maxSortId uint16 = 255
-	dbs.DBFrom(ctx, taskRepo.db).
+	tx := dbs.DBFrom(ctx, taskRepo.db).
 		WithContext(ctx).
 		Model(&models.Task{}).
-		Where("user_id = ?", userId).
-		Pluck("MAX(sort_id)", &maxSortId)
-	return maxSortId
+		Where("user_id = ? AND parent_task_id = ?", userId, parentTaskId).
+		Pluck("COALESCE(MAX(sort_id), 255)", &maxSortId)
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	return maxSortId, nil
 }
 
 // Update 更新任务
@@ -280,6 +289,12 @@ func (taskRepo *TaskRepoImpl) List(
 			ByRelativeDate(q.RelativeDate),
 			query.Sort(q.Sort),
 		)
+	// §7/AC10：仅子任务组查询（parentTaskId > 0）且未显式指定 sort 时追加组内默认序，
+	// 保证分页组合稳定、存量 sort_id = 0 的组也稳定；顶层组（组 0）语义不变（B5：
+	// 全局默认序会把 sort_id = 0 的旧行推到顶层列表最前）。
+	if q.ParentTaskId > 0 && q.Sort == "" {
+		tx = tx.Order("sort_id ASC").Order("id ASC")
+	}
 
 	var total int64
 	tx.Count(&total)

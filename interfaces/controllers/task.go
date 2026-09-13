@@ -103,6 +103,7 @@ func toCreateTaskReq(req *types.CreateTaskReq) *taskDto.CreateTaskReq {
 		RemindRepeat:   req.RemindRepeat,
 		RemindTime:     req.RemindTime,
 		RemindWeekdays: toUint8Weekdays(req.RemindWeekdays),
+		SortId:         req.SortId,
 		Id:             req.Id,
 		CreatedAt:      req.CreatedAt,
 		UpdatedAt:      req.UpdatedAt,

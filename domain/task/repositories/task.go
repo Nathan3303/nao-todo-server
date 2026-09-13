@@ -69,8 +69,9 @@ type Task interface {
 	// Snooze 稍后提醒
 	Snooze(ctx context.Context, userId int64, taskId int64, remindAt string) error
 
-	// GetMaxSortId 获取任务最大排序 ID
-	GetMaxSortId(ctx context.Context, userId int64) uint16
+	// GetMaxSortId 获取指定分组（同一 parent_task_id 的层级）内的最大排序 ID
+	// 组 = parent_task_id；0 = 顶层组。空组返回 255 基线（调用方 +1 得 256）。
+	GetMaxSortId(ctx context.Context, userId, parentTaskId int64) (uint16, error)
 
 	// GetDueReminders 获取到期提醒任务
 	GetDueReminders(ctx context.Context) ([]*entities.Task, error)
