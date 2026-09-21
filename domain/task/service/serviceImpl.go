@@ -161,12 +161,18 @@ func (d *TaskDomainImpl) ProcessReminders(ctx context.Context) ([]*entities.Task
 		// 返回 false 时跳过，避免覆盖用户新设置的提醒。
 		expectedRemindAt := task.RemindAt.Time.Truncate(time.Millisecond)
 		if task.RemindRepeat != 0 {
+			// H4：仅当 end_at 实际存在（Valid 且非 NULL）时传终止边界；
+			// 否则传 nil，避免零值 end_at 使 next.After(zero) 恒真而误判「已越过终点」清空。
+			var endAtPtr *time.Time
+			if endAt, ok := task.EndAt.Value(); ok {
+				endAtPtr = &endAt
+			}
 			next := d.calculateNextRemindAt(
 				task.RemindAt.Time,
 				task.RemindRepeat,
 				task.RemindTime,
 				task.RemindWeekdays,
-				&task.EndAt.Time,
+				endAtPtr,
 			)
 			if next != nil {
 				changed, err := d.taskRepo.UpdateRemindAt(
