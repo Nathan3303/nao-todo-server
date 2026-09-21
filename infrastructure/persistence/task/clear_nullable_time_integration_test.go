@@ -153,17 +153,18 @@ func TestUpdateRepo_EmptyStringClearsNullableTimes(t *testing.T) {
 	vo.StartAt = types.NewNullableTimeByTime(now.Add(2 * time.Hour))
 	vo.EndAt = types.NewNullableTimeByTime(now.Add(3 * time.Hour))
 	vo.RemindAt = types.NewNullableTimeByTime(now.Add(time.Hour))
+	// DEF-SYNC-06：归档/星标/放弃时间已进入 Create 模型，经 Upsert 置位
+	vo.ArchivedAt = types.NewNullableTimeByTime(now)
+	vo.StarMarkAt = types.NewNullableTimeByTime(now)
+	vo.GivenUpAt = types.NewNullableTimeByTime(now)
 	if _, _, err := repo.Upsert(ctx, userID, vo); err != nil {
 		t.Fatalf("初始 Upsert: %v", err)
 	}
-	// 归档/星标/放弃/完成时间不在 Create 模型，直接置位模拟已有值
+	// completed_at 仍为纯服务端派生列（不在 Create 模型），直接置位模拟已有值
 	if err := testDB.Model(&models.Task{}).
 		Where("id = ? AND user_id = ?", 9103, userID).
-		Updates(map[string]any{
-			"archived_at": now, "star_mark_at": now,
-			"given_up_at": now, "completed_at": now,
-		}).Error; err != nil {
-		t.Fatalf("置位可空时间: %v", err)
+		Updates(map[string]any{"completed_at": now}).Error; err != nil {
+		t.Fatalf("置位完成时间: %v", err)
 	}
 
 	empty := ""
@@ -204,6 +205,7 @@ func TestNewCreateTask_FillStartAtDoesNotResurrectCleared(t *testing.T) {
 	vo, err := valueobjects.NewCreateTask(
 		types.TaskID(0), "任务", "", entities.TaskStatePending, entities.TaskPriorityMedium,
 		&empty, &endAt, types.ProjectID(0), nil,
+		nil, nil, nil,
 		nil, 0, "", 0,
 	)
 	if err != nil {

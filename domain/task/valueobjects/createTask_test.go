@@ -14,7 +14,7 @@ func newStartAtTask(t *testing.T, startAt, endAt *string) *CreateTask {
 	t.Helper()
 	vo, err := NewCreateTask(
 		0, "任务", "", entities.TaskStatePending, entities.TaskPriorityMedium,
-		startAt, endAt, 0, nil, nil, 0, "", 0,
+		startAt, endAt, 0, nil, nil, nil, nil, nil, 0, "", 0,
 	)
 	if err != nil {
 		t.Fatalf("NewCreateTask: %v", err)

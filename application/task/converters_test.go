@@ -7,6 +7,8 @@ import (
 
 	"naotodoserver/application/task/dto"
 	"naotodoserver/domain/task/entities"
+	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 func TestSplitProjectIds(t *testing.T) {
@@ -146,6 +148,76 @@ func TestCreateTaskReqToValueObject_NullableTimeStartAt(t *testing.T) {
 			t.Fatalf("有效 startAt 转换错误: got %v ok=%v, want %v", got, ok, startAt)
 		}
 	})
+}
+
+// TestCreateTaskReqToValueObject_StatusTimestamps DEF-SYNC-06：create/push 三状态
+// 时间戳字段（archivedAt/starMarkAt/givenUpAt）三态语义必须与可空时间字段一致：
+// nil（缺省）⇒ Valid=false 不写列；""（显式清空）⇒ Valid=true,IsNull=true；
+// 合法时间 ⇒ 设值；非法非空串 ⇒ 视同缺省（沿用 nullableTimeFromCreateReq 语义）。
+func TestCreateTaskReqToValueObject_StatusTimestamps(t *testing.T) {
+	strPtr := func(s string) *string { return &s }
+	valid := time.Now().Add(2 * time.Hour).Truncate(time.Second)
+
+	cols := []struct {
+		name string
+		set  func(*dto.CreateTaskReq, *string)
+		read func(*valueobjects.CreateTask) domaintypes.NullableTime
+	}{
+		{"archivedAt", func(r *dto.CreateTaskReq, v *string) { r.ArchivedAt = v }, func(vo *valueobjects.CreateTask) domaintypes.NullableTime { return vo.ArchivedAt }},
+		{"starMarkAt", func(r *dto.CreateTaskReq, v *string) { r.StarMarkAt = v }, func(vo *valueobjects.CreateTask) domaintypes.NullableTime { return vo.StarMarkAt }},
+		{"givenUpAt", func(r *dto.CreateTaskReq, v *string) { r.GivenUpAt = v }, func(vo *valueobjects.CreateTask) domaintypes.NullableTime { return vo.GivenUpAt }},
+	}
+	build := func() *dto.CreateTaskReq {
+		return &dto.CreateTaskReq{Name: "t", State: "pending", Priority: "medium"}
+	}
+
+	for _, c := range cols {
+		t.Run(c.name+"/缺省=不写", func(t *testing.T) {
+			vo, err := CreateTaskReqToValueObject(1001, build())
+			if err != nil {
+				t.Fatalf("意外错误: %v", err)
+			}
+			if nt := c.read(vo); nt.Valid {
+				t.Fatalf("%s 缺省时 Valid 应为 false（不写列），got %+v", c.name, nt)
+			}
+		})
+		t.Run(c.name+"/空串=清空", func(t *testing.T) {
+			req := build()
+			c.set(req, strPtr(""))
+			vo, err := CreateTaskReqToValueObject(1001, req)
+			if err != nil {
+				t.Fatalf("意外错误: %v", err)
+			}
+			nt := c.read(vo)
+			if !nt.Valid || !nt.IsNull {
+				t.Fatalf("%s 显式空串应为 Valid=true,IsNull=true（写 NULL），got %+v", c.name, nt)
+			}
+		})
+		t.Run(c.name+"/合法时间=设值", func(t *testing.T) {
+			req := build()
+			c.set(req, strPtr(valid.Format(time.RFC3339)))
+			vo, err := CreateTaskReqToValueObject(1001, req)
+			if err != nil {
+				t.Fatalf("意外错误: %v", err)
+			}
+			nt := c.read(vo)
+			got, ok := nt.Value()
+			if !ok || !got.Equal(valid) {
+				t.Fatalf("%s 合法时间转换错误: got %v ok=%v, want %v", c.name, got, ok, valid)
+			}
+		})
+		t.Run(c.name+"/非法非空串=缺省", func(t *testing.T) {
+			req := build()
+			c.set(req, strPtr("not-a-time"))
+			vo, err := CreateTaskReqToValueObject(1001, req)
+			if err != nil {
+				t.Fatalf("意外错误: %v", err)
+			}
+			if nt := c.read(vo); nt.Valid {
+				t.Fatalf("%s 非法非空串应视同缺省（Valid=false），got %+v", c.name, nt)
+			}
+		})
+	}
 }
 
 // TestTaskEntityToGetRes_Counts 领域统计属性：TaskEntityToGetRes 透传计数（ADR §5.1）

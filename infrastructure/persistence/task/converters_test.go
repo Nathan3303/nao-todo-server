@@ -168,3 +168,67 @@ func TestCreateTaskVOToUpdateMap_StartEndSecondLevel(t *testing.T) {
 		t.Fatalf("覆盖分支 startAt 应截断到秒，got 纳秒 %d", st.Time.Nanosecond())
 	}
 }
+
+// TestCreateTaskVOToUpdateMap_StatusTimestamps DEF-SYNC-06：Create VO 的状态时间戳
+// （ArchivedAt/StarMarkAt/GivenUpAt）按三态写入 upsert 覆盖映射：
+// 缺省不写列；显式空串写 NULL；有效值写截断到秒的时间。
+func TestCreateTaskVOToUpdateMap_StatusTimestamps(t *testing.T) {
+	now := time.Date(2026, 9, 21, 10, 0, 0, 900*int(time.Millisecond), time.UTC)
+	cols := []struct {
+		name string
+		set  func(*valueobjects.CreateTask, types.NullableTime)
+		key  string
+	}{
+		{"ArchivedAt", func(vo *valueobjects.CreateTask, nt types.NullableTime) { vo.ArchivedAt = nt }, "ArchivedAt"},
+		{"StarMarkAt", func(vo *valueobjects.CreateTask, nt types.NullableTime) { vo.StarMarkAt = nt }, "StarMarkAt"},
+		{"GivenUpAt", func(vo *valueobjects.CreateTask, nt types.NullableTime) { vo.GivenUpAt = nt }, "GivenUpAt"},
+	}
+	for _, c := range cols {
+		t.Run(c.name+"/缺省不写列", func(t *testing.T) {
+			m := CreateTaskVOToUpdateMap(newConvertTaskVO())
+			if _, ok := m[c.key]; ok {
+				t.Fatalf("缺省的 %s 不应进入 updateMap", c.key)
+			}
+		})
+		t.Run(c.name+"/空串写 NULL", func(t *testing.T) {
+			vo := newConvertTaskVO()
+			c.set(vo, types.NewNullableTimeByTimeStr(""))
+			st, ok := CreateTaskVOToUpdateMap(vo)[c.key].(sql.NullTime)
+			if !ok {
+				t.Fatalf("%s 应进入 updateMap 且为 sql.NullTime", c.key)
+			}
+			if st.Valid {
+				t.Fatalf("%s 显式空串应写 NULL, got %v", c.key, st.Time)
+			}
+		})
+		t.Run(c.name+"/有效值写秒级", func(t *testing.T) {
+			vo := newConvertTaskVO()
+			c.set(vo, types.NewNullableTimeByTime(now))
+			st, ok := CreateTaskVOToUpdateMap(vo)[c.key].(sql.NullTime)
+			if !ok || !st.Valid {
+				t.Fatalf("%s 有效值应写入有效 sql.NullTime, got %#v", c.key, CreateTaskVOToUpdateMap(vo)[c.key])
+			}
+			if st.Time.Nanosecond() != 0 || !st.Time.Equal(now.Truncate(time.Second)) {
+				t.Fatalf("%s 应截断到秒, got %v", c.key, st.Time)
+			}
+		})
+	}
+}
+
+// TestCreateTaskValueObjectToModel_StatusTimestamps 新建分支（CreateTaskValueObjectToModel）
+// 同样须携带三状态时间戳，否则首次推送（服务端无既有行）仍会丢字段。
+func TestCreateTaskValueObjectToModel_StatusTimestamps(t *testing.T) {
+	now := time.Date(2026, 9, 21, 10, 0, 0, 0, time.UTC)
+	vo := newConvertTaskVO()
+	vo.ArchivedAt = types.NewNullableTimeByTime(now)
+	vo.StarMarkAt = types.NewNullableTimeByTime(now.Add(time.Second))
+	vo.GivenUpAt = types.NewNullableTimeByTime(now.Add(2 * time.Second))
+	m := CreateTaskValueObjectToModel(1, vo)
+	if !m.ArchivedAt.Valid || !m.StarMarkAt.Valid || !m.GivenUpAt.Valid {
+		t.Fatalf("新建模型丢失状态时间戳: archived=%v star=%v givenUp=%v",
+			m.ArchivedAt, m.StarMarkAt, m.GivenUpAt)
+	}
+	if !m.GivenUpAt.Time.Equal(now.Add(2 * time.Second)) {
+		t.Fatalf("given_up_at 值错误: got %v", m.GivenUpAt.Time)
+	}
+}
