@@ -24,6 +24,9 @@ type CreateTask struct {
 	EndAt          types.NullableTime
 	ProjectId      types.ProjectID
 	Tags           []string
+	ArchivedAt     types.NullableTime
+	StarMarkAt     types.NullableTime
+	GivenUpAt      types.NullableTime
 	RemindAt       types.NullableTime
 	RemindRepeat   uint8
 	RemindTime     string
@@ -98,6 +101,9 @@ func nullableTimeFromCreateReq(s *string) types.NullableTime {
 // @param endAt 任务结束时间（nil=缺省，""=清空）
 // @param projectId 项目 ID
 // @param tags 任务标签
+// @param archivedAt 归档时间（nil=缺省，""=清空）
+// @param starMarkAt 星标时间（nil=缺省，""=清空）
+// @param givenUpAt 放弃时间（nil=缺省，""=清空）
 // @param remindAt 提醒时间（nil=缺省，""=清空）
 // @param remindRepeat 重复提醒类型
 // @param remindTime 提醒时刻
@@ -114,6 +120,9 @@ func NewCreateTask(
 	endAt *string,
 	projectId types.ProjectID,
 	tags []string,
+	archivedAt *string,
+	starMarkAt *string,
+	givenUpAt *string,
 	remindAt *string,
 	remindRepeat uint8,
 	remindTime string,
@@ -129,6 +138,9 @@ func NewCreateTask(
 		EndAt:          nullableTimeFromCreateReq(endAt),
 		ProjectId:      projectId,
 		Tags:           tags,
+		ArchivedAt:     nullableTimeFromCreateReq(archivedAt),
+		StarMarkAt:     nullableTimeFromCreateReq(starMarkAt),
+		GivenUpAt:      nullableTimeFromCreateReq(givenUpAt),
 		RemindAt:       nullableTimeFromCreateReq(remindAt),
 		RemindRepeat:   remindRepeat,
 		RemindTime:     remindTime,

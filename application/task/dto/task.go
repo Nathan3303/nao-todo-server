@@ -45,6 +45,9 @@ type CreateTaskReq struct {
 	EndAt          *string  // 结束时间（nil=缺省不改，""=清空）
 	ProjectId      string   // 项目 ID
 	Tags           []string // 标签列表
+	ArchivedAt     *string  // 归档时间（nil=缺省不写，""=清空）
+	StarMarkAt     *string  // 星标时间（nil=缺省不写，""=清空）
+	GivenUpAt      *string  // 放弃时间（nil=缺省不写，""=清空）
 	RemindAt       *string  // 提醒时间（nil=缺省不改，""=清空）
 	RemindRepeat   string   // 提醒重复规则
 	RemindTime     string   // 提醒具体时间

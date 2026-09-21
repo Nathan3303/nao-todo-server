@@ -51,6 +51,9 @@ func CreateTaskValueObjectToModel(
 		EndAt:          truncateToSecond(createTaskValueObject.EndAt),
 		ProjectId:      int64(createTaskValueObject.ProjectId),
 		Tags:           createTaskValueObject.Tags,
+		ArchivedAt:     truncateToSecond(createTaskValueObject.ArchivedAt),
+		StarMarkAt:     truncateToSecond(createTaskValueObject.StarMarkAt),
+		GivenUpAt:      truncateToSecond(createTaskValueObject.GivenUpAt),
 		RemindAt:       createTaskValueObject.RemindAt.ToSqlNullTime(),
 		RemindRepeat:   createTaskValueObject.RemindRepeat,
 		RemindTime:     createTaskValueObject.RemindTime,
@@ -60,7 +63,8 @@ func CreateTaskValueObjectToModel(
 }
 
 // CreateTaskVOToUpdateMap 创建任务值对象转换为全量更新映射（Upsert 覆盖用）
-// 仅包含 Create VO 表达的字段，不触碰 archived_at/star_mark_at/given_up_at/completed_at 等列
+// 包含 Create VO 表达的字段（含 archived_at/star_mark_at/given_up_at 状态时间戳），
+// 不触碰 completed_at 等纯服务端派生列。
 // 可空时间字段语义（SYNC-DEF-01）：Valid=false（字段缺省）⇒ 不写列；
 // Valid=true,IsNull=true（显式空串）⇒ 写 NULL 清空；Valid=true,IsNull=false ⇒ 写指定值。
 // 客户端携带删除时间（本地墓碑）时写入 deleted_at；未携带时由 Upsert 兜底清空复活
@@ -87,6 +91,16 @@ func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
 	}
 	if vo.RemindAt.Valid {
 		updateMap["RemindAt"] = vo.RemindAt.ToSqlNullTime()
+	}
+	// 状态时间戳（DEF-SYNC-06）：与可空时间同三态语义，补齐 push 落库能力
+	if vo.ArchivedAt.Valid {
+		updateMap["ArchivedAt"] = truncateToSecond(vo.ArchivedAt)
+	}
+	if vo.StarMarkAt.Valid {
+		updateMap["StarMarkAt"] = truncateToSecond(vo.StarMarkAt)
+	}
+	if vo.GivenUpAt.Valid {
+		updateMap["GivenUpAt"] = truncateToSecond(vo.GivenUpAt)
 	}
 	// G4/B1：SortId = 0 视为「未设置」⇒ 不写列，避免 sync push 的存量本地记录（sortId 0）覆盖时清零组内序
 	if vo.SortId != 0 {

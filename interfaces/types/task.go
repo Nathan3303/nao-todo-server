@@ -27,19 +27,23 @@ type GetTaskRes struct {
 
 // CreateTaskReq 创建任务请求
 type CreateTaskReq struct {
-	ParentTaskId   string   `json:"parentTaskId"`
-	Name           string   `json:"name" binding:"required"`
-	Description    string   `json:"description"`
-	State          string   `json:"state" binding:"required"`
-	Priority       string   `json:"priority" binding:"required"`
-	StartAt        *string  `json:"startAt"`
-	EndAt          *string  `json:"endAt"`
-	ProjectId      string   `json:"projectId"`
-	Tags           []string `json:"tags"`
-	RemindAt       *string  `json:"remindAt"`
-	RemindRepeat   string   `json:"remindRepeat"`
-	RemindTime     string   `json:"remindTime"`
-	RemindWeekdays []int    `json:"remindWeekdays"`
+	ParentTaskId string   `json:"parentTaskId"`
+	Name         string   `json:"name" binding:"required"`
+	Description  string   `json:"description"`
+	State        string   `json:"state" binding:"required"`
+	Priority     string   `json:"priority" binding:"required"`
+	StartAt      *string  `json:"startAt"`
+	EndAt        *string  `json:"endAt"`
+	ProjectId    string   `json:"projectId"`
+	Tags         []string `json:"tags"`
+	// 状态时间戳（可空，含同步推送）：nil=缺省不写列、""=显式清空置 NULL、合法时间=设值
+	ArchivedAt     *string `json:"archivedAt"`
+	StarMarkAt     *string `json:"starMarkAt"`
+	GivenUpAt      *string `json:"givenUpAt"`
+	RemindAt       *string `json:"remindAt"`
+	RemindRepeat   string  `json:"remindRepeat"`
+	RemindTime     string  `json:"remindTime"`
+	RemindWeekdays []int   `json:"remindWeekdays"`
 	// SortId 组内排序值（0 = 未设置，由服务端置组末；显式非零优先）
 	SortId uint16 `json:"sortId"`
 	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
