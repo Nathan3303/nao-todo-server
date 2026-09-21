@@ -65,3 +65,4 @@ deploy/
 naotodoserver
 .omo/run-continuation
 .golangci-cache
+.pi
