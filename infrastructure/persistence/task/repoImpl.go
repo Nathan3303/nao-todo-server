@@ -381,6 +381,9 @@ func (taskRepo *TaskRepoImpl) Snooze(
 }
 
 // GetDueReminders 获取到期提醒任务
+// 仅返回仍「活跃」的任务：已完成 / 已归档 / 已放弃的任务不参与提醒扫描
+// （H1：避免完成/归档/放弃后 remind_at 残留仍照常弹提醒）。
+// 恢复（取消归档/取消放弃/回到未完成）后 remind_at 未被改动 ⇒ 自动恢复提醒。
 // @param ctx 上下文
 // @return 任务实体列表
 // @return error 错误
@@ -389,11 +392,14 @@ func (taskRepo *TaskRepoImpl) GetDueReminders(ctx context.Context) ([]*entities.
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	// 2. 查询到期提醒
+	// 2. 查询到期提醒（软删由 GORM 隐式 deleted_at IS NULL 过滤）
 	var taskModels []*models.Task
 	tx := taskRepo.db.WithContext(ctx).Model(&models.Task{}).
 		Where("remind_at <= NOW()").
 		Where("remind_at IS NOT NULL").
+		Where("archived_at IS NULL").
+		Where("given_up_at IS NULL").
+		Where("state <> ?", uint8(entities.TaskStateCompleted)).
 		Find(&taskModels)
 	if tx.Error != nil {
 		return nil, tx.Error
