@@ -248,10 +248,11 @@ func (r *UserRepoImpl) GetConfig(
 }
 
 // UpdateConfig 更新用户配置
+// patch 中为 nil 的字段不修改；Preferences 为空串表示清除（写 NULL）
 func (r *UserRepoImpl) UpdateConfig(
 	ctx context.Context,
 	userId types.UserID,
-	appearance string,
+	patch valueobjects.UpdateUserConfig,
 ) error {
 	config := &models.UserConfig{}
 	err := r.db.
@@ -262,10 +263,12 @@ func (r *UserRepoImpl) UpdateConfig(
 		Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if err := r.db.
-				WithContext(ctx).
-				Create(&models.UserConfig{UserId: int64(userId), Appearance: appearance}).
-				Error; err != nil {
+			newConfig := &models.UserConfig{UserId: int64(userId), Appearance: "auto"}
+			if patch.Appearance != nil {
+				newConfig.Appearance = *patch.Appearance
+			}
+			newConfig.Preferences = nullablePreferences(patch.Preferences)
+			if err := r.db.WithContext(ctx).Create(newConfig).Error; err != nil {
 				return err
 			}
 			// 失效配置缓存
@@ -274,16 +277,36 @@ func (r *UserRepoImpl) UpdateConfig(
 		}
 		return err
 	}
+	updates := map[string]interface{}{}
+	if patch.Appearance != nil {
+		updates["appearance"] = *patch.Appearance
+	}
+	if patch.Preferences != nil {
+		updates["preferences"] = nullablePreferences(patch.Preferences)
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	// map 形式 Updates 会由 GORM 自动刷新 updated_at（服务端权威时间，LWW 判据）
 	if err := r.db.
 		WithContext(ctx).
-		Model(config).
-		Update("appearance", appearance).
+		Model(&models.UserConfig{}).
+		Where("user_id = ?", int64(userId)).
+		Updates(updates).
 		Error; err != nil {
 		return err
 	}
 	// 失效配置缓存
 	r.cache.Del(ctx, cache.UserConfigKey(int64(userId)))
 	return nil
+}
+
+// nullablePreferences 将偏好快照转换为可写入 JSON 列的值：nil 或空串视为清除（NULL）
+func nullablePreferences(preferences *string) *string {
+	if preferences == nil || *preferences == "" {
+		return nil
+	}
+	return preferences
 }
 
 // Delete 删除用户

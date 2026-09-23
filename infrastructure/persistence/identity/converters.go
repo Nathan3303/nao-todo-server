@@ -61,6 +61,10 @@ func UserConfigEntity2Model(e *entities.UserConfig) *models.UserConfig {
 	m.DeletedAt = gorm.DeletedAt(e.DeletedAt.ToSqlNullTime())
 	m.UserId = int64(e.UserId)
 	m.Appearance = e.Appearance
+	if e.Preferences != "" {
+		preferences := e.Preferences
+		m.Preferences = &preferences
+	}
 	return &m
 }
 
@@ -73,6 +77,9 @@ func UserConfigModel2Entity(m *models.UserConfig) *entities.UserConfig {
 	e.DeletedAt = types.NewNullableTimeByTime(m.DeletedAt.Time)
 	e.UserId = types.UserID(m.UserId)
 	e.Appearance = m.Appearance
+	if m.Preferences != nil {
+		e.Preferences = *m.Preferences
+	}
 	return &e
 }
 

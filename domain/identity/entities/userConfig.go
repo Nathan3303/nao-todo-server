@@ -9,4 +9,7 @@ type UserConfig struct {
 	types.EntityBase
 	UserId     types.UserID
 	Appearance string
+	// Preferences 偏好快照（客户端拥有的 JSON blob，服务端不解析）
+	// 空串表示尚未设置
+	Preferences string
 }

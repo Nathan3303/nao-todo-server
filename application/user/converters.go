@@ -1,6 +1,7 @@
 package user
 
 import (
+	"naotodoserver/application/idutil"
 	"naotodoserver/application/user/dto"
 	"naotodoserver/conf"
 	"naotodoserver/domain/identity/entities"
@@ -33,6 +34,9 @@ func UserEntity2Res(e *entities.User) *dto.GetProfileOutput {
 // ConfigEntity2Res 用户配置实体转换为获取用户配置响应
 func ConfigEntity2Res(e *entities.UserConfig) *dto.GetConfigOutput {
 	return &dto.GetConfigOutput{
-		Appearance: e.Appearance,
+		Appearance:  e.Appearance,
+		Preferences: e.Preferences,
+		// updatedAt 为服务端权威时间（LWW 判据），毫秒精度
+		UpdatedAt: idutil.FormatTimeMilli(e.UpdatedAt),
 	}
 }

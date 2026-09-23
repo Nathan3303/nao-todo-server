@@ -12,6 +12,7 @@ import (
 	"naotodoserver/conf"
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/repositories"
+	"naotodoserver/domain/identity/valueobjects"
 	domaintypes "naotodoserver/domain/types"
 )
 
@@ -277,7 +278,7 @@ func (u *userAppImpl) UpdateConfig(
 	err := u.userRepo.UpdateConfig(
 		ctx,
 		domaintypes.UserID(userId),
-		req.Appearance,
+		valueobjects.NewUpdateUserConfig(req.Appearance, req.Preferences),
 	)
 	if err != nil {
 		return fmt.Errorf("user.UpdateConfig: %w", err)

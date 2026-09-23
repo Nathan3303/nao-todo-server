@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -100,18 +101,35 @@ func toRestoreUserInput(req types.RestoreUserReq) userDto.RestoreUserInput {
 // @param output 应用层获取用户配置出参
 // @return 获取用户配置响应
 func toGetConfigRes(output *userDto.GetConfigOutput) *types.GetUserConfigRes {
-	return &types.GetUserConfigRes{
+	res := &types.GetUserConfigRes{
 		Appearance: output.Appearance,
+		UpdatedAt:  output.UpdatedAt,
 	}
+	if output.Preferences == "" {
+		// 尚未设置时返回空对象，客户端以本地为准并回传
+		res.Preferences = json.RawMessage("{}")
+	} else {
+		res.Preferences = json.RawMessage(output.Preferences)
+	}
+	return res
 }
 
 // toUpdateConfigInput 将更新用户配置请求转换为应用层入参
 // @param req 更新用户配置请求
 // @return 应用层更新用户配置入参
 func toUpdateConfigInput(req types.UpdateUserConfigReq) userDto.UpdateConfigInput {
-	return userDto.UpdateConfigInput{
+	input := userDto.UpdateConfigInput{
 		Appearance: req.Appearance,
 	}
+	if req.Preferences != nil {
+		preferences := string(req.Preferences)
+		// 显式 null 视为清除（写 NULL），避免把 JSON null 存入偏好快照
+		if preferences == "null" {
+			preferences = ""
+		}
+		input.Preferences = &preferences
+	}
+	return input
 }
 
 // UpdateUserNickname 更新用户昵称控制器

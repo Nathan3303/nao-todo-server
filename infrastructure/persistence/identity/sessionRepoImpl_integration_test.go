@@ -54,7 +54,11 @@ func TestMain(m *testing.M) {
 	sqlDB, _ := db.DB()
 	sqlDB.SetMaxOpenConns(5)
 
-	if err := db.AutoMigrate(&models.UserSession{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.UserSession{},
+		&models.UserConfig{},
+		&models.ProjectPreference{},
+	); err != nil {
 		fmt.Printf("迁移失败: %v\n", err)
 		os.Exit(1)
 	}

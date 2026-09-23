@@ -69,6 +69,11 @@ type UserConfig struct {
 	// 用户外观
 	// 例如：system、light 以及 dark
 	Appearance string `gorm:"size:8;default:'system'"`
+
+	// 用户偏好设置
+	// 客户端拥有的偏好快照（JSON blob，如内建清单偏好 / 侧边栏宽度 / 日历偏好）
+	// 服务端仅作哑存储，不解析、不校验内容；NULL 表示尚未设置
+	Preferences *string `gorm:"type:json;null"`
 }
 
 // UserSession 用户会话模型

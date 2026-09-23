@@ -51,10 +51,15 @@ type RestoreUserInput struct {
 
 // GetConfigOutput 获取用户配置出参
 type GetConfigOutput struct {
-	Appearance string
+	Appearance  string
+	Preferences string
+	UpdatedAt   string
 }
 
 // UpdateConfigInput 更新用户配置入参
+// Appearance / Preferences 为 nil 表示不修改对应字段
+// Preferences 为空串表示清除偏好快照
 type UpdateConfigInput struct {
-	Appearance string
+	Appearance  *string
+	Preferences *string
 }

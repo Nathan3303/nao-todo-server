@@ -1,5 +1,7 @@
 package types
 
+import "encoding/json"
+
 // GetUserProfileRes 获取用户个人信息响应
 type GetUserProfileRes struct {
 	Email                string `json:"email"`
@@ -49,9 +51,16 @@ type RestoreUserReq struct {
 // GetUserConfigRes 获取用户配置响应
 type GetUserConfigRes struct {
 	Appearance string `json:"appearance"`
+	// Preferences 偏好快照（服务端哑存储，原样回传；未设置时为空对象）
+	Preferences json.RawMessage `json:"preferences"`
+	// UpdatedAt 服务端权威更新时间（LWW 判据）
+	UpdatedAt string `json:"updatedAt"`
 }
 
 // UpdateUserConfigReq 更新用户配置请求
+// Appearance / Preferences 均可选：未携带表示不修改对应字段
+// Preferences 为全量快照（客户端推送时装配），仅走 JSON 绑定
 type UpdateUserConfigReq struct {
-	Appearance string `json:"appearance" form:"appearance" binding:"required"`
+	Appearance  *string         `json:"appearance" form:"appearance"`
+	Preferences json.RawMessage `json:"preferences" form:"-"`
 }
