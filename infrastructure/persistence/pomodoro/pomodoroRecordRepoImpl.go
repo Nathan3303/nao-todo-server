@@ -57,12 +57,12 @@ func (r *PomodoroRecordRepoImpl) Upsert(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreatePomodoroRecord,
-) (*entities.PomodoroRecord, bool, error) {
+) (*entities.PomodoroRecord, types.UpsertResult, error) {
 	if vo.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, err := r.Create(ctx, vo)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.PomodoroRecord
 	err := r.db.WithContext(ctx).Unscoped().
@@ -72,10 +72,10 @@ func (r *PomodoroRecordRepoImpl) Upsert(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, createErr := r.Create(ctx, vo)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
@@ -83,10 +83,10 @@ func (r *PomodoroRecordRepoImpl) Upsert(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return PomodoroRecordModel2Entity(&existing), false, nil
+		return PomodoroRecordModel2Entity(&existing), types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := CreatePomodoroRecordVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -97,15 +97,15 @@ func (r *PomodoroRecordRepoImpl) Upsert(
 		Model(&models.PomodoroRecord{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	var updated models.PomodoroRecord
 	if err := r.db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&updated).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
-	return PomodoroRecordModel2Entity(&updated), false, nil
+	return PomodoroRecordModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite}, nil
 }
 
 // GetById 获取 PomodoroRecord

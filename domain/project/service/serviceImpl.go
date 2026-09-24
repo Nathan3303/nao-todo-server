@@ -6,6 +6,7 @@ import (
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // NewProjectDomain 创建任务清单领域服务实现
@@ -23,21 +24,21 @@ func NewProjectDomain(
 func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
 	createProjectValueObject *valueobjects.CreateProject,
-) (*entities.Project, error) {
+) (*entities.Project, domaintypes.UpsertResult, error) {
 	// 设置排序 ID
 	createProjectValueObject.SortId = p.repo.GetMaxSortId(ctx, createProjectValueObject.UserId) + 1
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	projectEntity, created, err := p.repo.Upsert(
+	projectEntity, result, err := p.repo.Upsert(
 		ctx,
 		createProjectValueObject.UserId,
 		createProjectValueObject,
 	)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 仅首次新建时初始化基础偏好；覆盖/重试场景保留用户已有偏好
-	if !created {
-		return projectEntity, nil
+	if !result.Created {
+		return projectEntity, result, nil
 	}
 	// 创建任务清单基础偏好值对象
 	projectPreferenceValueObject, err := valueobjects.NewSaveProjectPreference(
@@ -46,7 +47,7 @@ func (p *ProjectDomainImpl) Create(
 		"{}",
 	)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 保存任务清单基础偏好值对象
 	err = p.preferenceRepo.Save(
@@ -56,10 +57,10 @@ func (p *ProjectDomainImpl) Create(
 		projectPreferenceValueObject,
 	)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 返回任务清单实体
-	return projectEntity, nil
+	return projectEntity, result, nil
 }
 
 // Delete 删除任务清单

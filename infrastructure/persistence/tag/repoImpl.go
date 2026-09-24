@@ -85,12 +85,12 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 	ctx context.Context,
 	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
-) (*entities.Tag, bool, error) {
+) (*entities.Tag, types.UpsertResult, error) {
 	if createTagValueObject.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		createTagValueObject.UpdatedAt = time.Now()
 		entity, err := tagRepo.Create(ctx, userId, createTagValueObject)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.Tag
 	err := tagRepo.db.WithContext(ctx).Unscoped().
@@ -101,10 +101,10 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		createTagValueObject.UpdatedAt = time.Now()
 		entity, createErr := tagRepo.Create(ctx, userId, createTagValueObject)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
@@ -112,10 +112,10 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return TagModel2Entity(&existing), false, nil
+		return TagModel2Entity(&existing), types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := CreateTagVOToUpdateMap(createTagValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -128,7 +128,7 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 		Model(&models.Tag{}).
 		Where("id = ? AND user_id = ?", createTagValueObject.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	tagRepo.cache.Del(ctx, cache.TagListKey(userId))
 	var updated models.Tag
@@ -136,9 +136,9 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 		Preload("Preference").
 		Where("id = ? AND user_id = ?", createTagValueObject.Id, userId).
 		First(&updated).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
-	return TagModel2Entity(&updated), false, nil
+	return TagModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite}, nil
 }
 
 // ListSync 增量同步标签列表：包含软删墓碑，(updated_at, id) keyset 游标 + 稳定排序 + limit（绕过缓存）

@@ -168,11 +168,11 @@ func TestUpsertTombstoneDeletedAt(t *testing.T) {
 	// 2. 推送本地墓碑（携带 DeletedAt，updatedAt 更新）→ 不复活，deleted_at 保留
 	tombVO := newTagVO(9201, "标签A", now, now.Add(time.Second))
 	tombVO.DeletedAt = types.NewNullableTimeByTime(now.Add(30 * time.Second))
-	entity, created, err := testRepo.Upsert(ctx, userID, tombVO)
+	entity, res, err := testRepo.Upsert(ctx, userID, tombVO)
 	if err != nil {
 		t.Fatalf("墓碑 Upsert: %v", err)
 	}
-	if created {
+	if res.Created {
 		t.Fatal("墓碑 Upsert 应返回 created=false")
 	}
 	if got := entity.DeletedAt.ToString(time.RFC3339); got == "" {
@@ -214,11 +214,11 @@ func TestUpsertCreateWithDeletedAt(t *testing.T) {
 
 	vo := newTagVO(9301, "创建即删", now, now)
 	vo.DeletedAt = types.NewNullableTimeByTime(now.Add(time.Minute))
-	entity, created, err := testRepo.Upsert(ctx, userID, vo)
+	entity, res, err := testRepo.Upsert(ctx, userID, vo)
 	if err != nil {
 		t.Fatalf("Upsert: %v", err)
 	}
-	if !created {
+	if !res.Created {
 		t.Fatal("新 id 应返回 created=true")
 	}
 	if got := entity.DeletedAt.ToString(time.RFC3339); got == "" {

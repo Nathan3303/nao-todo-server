@@ -100,19 +100,19 @@ func TestUpsertIdempotent(t *testing.T) {
 	const userID = 1001
 	now := time.Now().UTC().Truncate(time.Millisecond)
 
-	first, created1, err := repo.Upsert(ctx, userID, newTaskVO(9001, "任务A", now, now))
+	first, res1, err := repo.Upsert(ctx, userID, newTaskVO(9001, "任务A", now, now))
 	if err != nil {
 		t.Fatalf("首次 Upsert: %v", err)
 	}
-	if !created1 {
+	if !res1.Created {
 		t.Fatal("首次 Upsert 应返回 created=true")
 	}
 
-	second, created2, err := repo.Upsert(ctx, userID, newTaskVO(9001, "任务A", now, now.Add(2*time.Second)))
+	second, res2, err := repo.Upsert(ctx, userID, newTaskVO(9001, "任务A", now, now.Add(2*time.Second)))
 	if err != nil {
 		t.Fatalf("重复 Upsert: %v", err)
 	}
-	if created2 {
+	if res2.Created {
 		t.Fatal("重复 Upsert 应返回 created=false")
 	}
 	if first.Id != second.Id {
@@ -134,14 +134,19 @@ func TestUpsertLWW(t *testing.T) {
 	const userID = 1002
 	now := time.Now().UTC().Truncate(time.Millisecond)
 
-	if _, _, err := repo.Upsert(ctx, userID, newTaskVO(9002, "原始", now, now)); err != nil {
+	if _, res, err := repo.Upsert(ctx, userID, newTaskVO(9002, "原始", now, now)); err != nil {
 		t.Fatalf("初始 Upsert: %v", err)
+	} else if res.Outcome != types.UpsertOverwrite || !res.Created {
+		t.Fatalf("初始 Upsert 应返回 Overwrite/Created, got %+v", res)
 	}
 
 	// 旧 updatedAt（早于库中版本）→ no-op，内容不变
-	_, _, err := repo.Upsert(ctx, userID, newTaskVO(9002, "旧数据", now, now.Add(-time.Minute)))
+	_, res, err := repo.Upsert(ctx, userID, newTaskVO(9002, "旧数据", now, now.Add(-time.Minute)))
 	if err != nil {
 		t.Fatalf("旧版本 Upsert: %v", err)
+	}
+	if res.Outcome != types.UpsertNoop {
+		t.Fatalf("旧 updatedAt 应返回 UpsertNoop, got %+v", res)
 	}
 	var m models.Task
 	testDB.First(&m, "id = ?", 9002)
@@ -150,13 +155,12 @@ func TestUpsertLWW(t *testing.T) {
 	}
 
 	// 新 updatedAt → 覆盖
-	_, _, err = repo.Upsert(ctx, userID, newTaskVO(9002, "新数据", now, now.Add(time.Minute)))
+	_, res, err = repo.Upsert(ctx, userID, newTaskVO(9002, "新数据", now, now.Add(time.Minute)))
 	if err != nil {
 		t.Fatalf("新版本 Upsert: %v", err)
 	}
-	testDB.First(&m, "id = ?", 9002)
-	if m.Name != "新数据" {
-		t.Fatalf("新 updatedAt 应覆盖, got name=%q", m.Name)
+	if res.Outcome != types.UpsertOverwrite {
+		t.Fatalf("新 updatedAt 应返回 UpsertOverwrite, got %+v", res)
 	}
 }
 
@@ -258,11 +262,11 @@ func TestUpsertTombstoneWithDeletedAt(t *testing.T) {
 	// 2. 推送本地墓碑（携带 DeletedAt，updatedAt 更新）→ 不复活，deleted_at 保留
 	tombVO := newTaskVO(9006, "任务", now, now.Add(time.Hour))
 	tombVO.DeletedAt = types.NewNullableTimeByTime(now.Add(30 * time.Minute))
-	entity, created, err := repo.Upsert(ctx, userID, tombVO)
+	entity, res, err := repo.Upsert(ctx, userID, tombVO)
 	if err != nil {
 		t.Fatalf("墓碑 Upsert: %v", err)
 	}
-	if created {
+	if res.Created {
 		t.Fatal("墓碑 Upsert 应返回 created=false")
 	}
 	if got := entity.DeletedAt.ToString(time.RFC3339); got == "" {
@@ -432,11 +436,11 @@ func TestUpsertCheckItemOverridesIsDoneAndSortId(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Millisecond)
 
 	// 首次创建：未完成、sortId 未提供（0，由领域层生成，repo 层原样落库）
-	first, created1, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, 0, taskID, "How are you ?", false, 0, now, now))
+	first, res1, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, 0, taskID, "How are you ?", false, 0, now, now))
 	if err != nil {
 		t.Fatalf("首次 UpsertCheckItem: %v", err)
 	}
-	if !created1 {
+	if !res1.Created {
 		t.Fatal("首次 UpsertCheckItem 应返回 created=true")
 	}
 	if first.IsDone {
@@ -444,11 +448,11 @@ func TestUpsertCheckItemOverridesIsDoneAndSortId(t *testing.T) {
 	}
 
 	// 客户端 push 更新：同 id 携带 isDone=true、sortId=263（模拟前端请求体字段）
-	second, created2, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, first.Id, taskID, "How are you ?", true, 263, now, now.Add(2*time.Second)))
+	second, res2, err := repo.UpsertCheckItem(ctx, userID, newCheckItemVO(userID, first.Id, taskID, "How are you ?", true, 263, now, now.Add(2*time.Second)))
 	if err != nil {
 		t.Fatalf("覆盖 UpsertCheckItem: %v", err)
 	}
-	if created2 {
+	if res2.Created {
 		t.Fatal("同 id 覆盖应返回 created=false")
 	}
 	if !second.IsDone {

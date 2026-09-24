@@ -78,7 +78,7 @@ func (c *CommentController) CreateComment(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层新增评论
-	res, err := c.taskApp.CreateTaskComment(
+	res, _, err := c.taskApp.CreateTaskComment(
 		ctx.Request.Context(),
 		userId,
 		toCreateTaskCommentReq(&req),

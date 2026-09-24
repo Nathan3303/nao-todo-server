@@ -122,7 +122,7 @@ func taskReq(name string, projectID, parentTaskID int64, id *string) *taskDto.Cr
 // createTask 经 app 创建任务并返回解析后的 int64 ID
 func createTask(t *testing.T, s *fullStack, req *taskDto.CreateTaskReq) int64 {
 	t.Helper()
-	res, err := s.taskApp.CreateTask(context.Background(), testUserID, req)
+	res, _, err := s.taskApp.CreateTask(context.Background(), testUserID, req)
 	if err != nil {
 		t.Fatalf("CreateTask: %v", err)
 	}
@@ -243,7 +243,7 @@ func TestCount_CheckItemCommentLifecycle(t *testing.T) {
 	taskID := createTask(t, s, taskReq("T", testProjA, 0, nil))
 
 	// 创建检查项 ⇒ check_item_count 1
-	ciRes, err := s.taskApp.CreateTaskCheckItem(context.Background(), testUserID, &taskDto.CreateTaskCheckItemReq{
+	ciRes, _, err := s.taskApp.CreateTaskCheckItem(context.Background(), testUserID, &taskDto.CreateTaskCheckItemReq{
 		TaskId: idutil.FormatID(taskID),
 		Name:   "ci1",
 	})
@@ -255,7 +255,7 @@ func TestCount_CheckItemCommentLifecycle(t *testing.T) {
 		t.Fatalf("创建检查项后 check_item_count = %d, want 1", ci)
 	}
 	// U-S3：同 id 覆盖（created=false）不重复 +1
-	_, err = s.taskApp.CreateTaskCheckItem(context.Background(), testUserID, &taskDto.CreateTaskCheckItemReq{
+	_, _, err = s.taskApp.CreateTaskCheckItem(context.Background(), testUserID, &taskDto.CreateTaskCheckItemReq{
 		TaskId: idutil.FormatID(taskID),
 		Name:   "ci1",
 		Id:     &ciRes.Id,
@@ -269,7 +269,7 @@ func TestCount_CheckItemCommentLifecycle(t *testing.T) {
 	}
 
 	// 创建评论 ⇒ comment_count 1
-	cmRes, err := s.taskApp.CreateTaskComment(context.Background(), testUserID, &taskDto.CreateTaskCommentReq{
+	cmRes, _, err := s.taskApp.CreateTaskComment(context.Background(), testUserID, &taskDto.CreateTaskCommentReq{
 		TaskId:  idutil.FormatID(taskID),
 		Content: "c1",
 	})
@@ -281,7 +281,7 @@ func TestCount_CheckItemCommentLifecycle(t *testing.T) {
 		t.Fatalf("创建评论后 comment_count = %d, want 1", cc)
 	}
 	// 同 id 覆盖（created=false）不重复 +1
-	_, err = s.taskApp.CreateTaskComment(context.Background(), testUserID, &taskDto.CreateTaskCommentReq{
+	_, _, err = s.taskApp.CreateTaskComment(context.Background(), testUserID, &taskDto.CreateTaskCommentReq{
 		TaskId:  idutil.FormatID(taskID),
 		Content: "c1",
 		Id:      &cmRes.Id,
@@ -321,7 +321,7 @@ func TestCount_B2_UpdatedAtAdvances(t *testing.T) {
 
 	// 检查项增
 	baseline := backdateTask(t, taskID)
-	ci, err := s.taskApp.CreateTaskCheckItem(ctx, testUserID, &taskDto.CreateTaskCheckItemReq{
+	ci, _, err := s.taskApp.CreateTaskCheckItem(ctx, testUserID, &taskDto.CreateTaskCheckItemReq{
 		TaskId: idutil.FormatID(taskID),
 		Name:   "ci",
 	})
@@ -355,7 +355,7 @@ func TestCount_B2_UpdatedAtAdvances_AllWritePaths(t *testing.T) {
 
 	// S33：评论增 / 删 ⇒ 任务行 bump
 	base := backdateTask(t, taskID)
-	comment, err := s.taskApp.CreateTaskComment(ctx, testUserID, &taskDto.CreateTaskCommentReq{
+	comment, _, err := s.taskApp.CreateTaskComment(ctx, testUserID, &taskDto.CreateTaskCommentReq{
 		TaskId:  idutil.FormatID(taskID),
 		Content: "c1",
 	})
@@ -441,7 +441,7 @@ func TestCount_B2_CountChangeIsPullDiscoverable(t *testing.T) {
 
 	// 客户端最后一次拉到的版本（已拉过该行）
 	cursor := backdateTask(t, taskID)
-	if _, err := s.taskApp.CreateTaskCheckItem(ctx, testUserID, &taskDto.CreateTaskCheckItemReq{
+	if _, _, err := s.taskApp.CreateTaskCheckItem(ctx, testUserID, &taskDto.CreateTaskCheckItemReq{
 		TaskId: idutil.FormatID(taskID),
 		Name:   "ci",
 	}); err != nil {
@@ -488,7 +488,7 @@ func TestCount_ServerOwned_RequestCountsIgnored(t *testing.T) {
 	}
 
 	// 前置：真实产生 1 个检查项（服务端计数 = 1）
-	if _, err := s.taskApp.CreateTaskCheckItem(ctx, testUserID, &taskDto.CreateTaskCheckItemReq{
+	if _, _, err := s.taskApp.CreateTaskCheckItem(ctx, testUserID, &taskDto.CreateTaskCheckItemReq{
 		TaskId: idutil.FormatID(taskID),
 		Name:   "ci",
 	}); err != nil {
@@ -674,7 +674,7 @@ func TestCount_Atomicity_RollbackOnCountFailure(t *testing.T) {
 		return errors.New("模拟计数更新失败")
 	})
 
-	_, err := s.taskApp.CreateTask(context.Background(), testUserID, taskReq("T", testProjA, 0, nil))
+	_, _, err := s.taskApp.CreateTask(context.Background(), testUserID, taskReq("T", testProjA, 0, nil))
 	if err == nil {
 		t.Fatal("计数更新失败时 CreateTask 应返回错误（事务回滚）")
 	}
@@ -710,7 +710,7 @@ func TestCount_UpsertOverwrite_PublishesMoveAndReparent(t *testing.T) {
 	// E5：覆盖 push 携带新 projectId（父不变）⇒ A -1、B +1，且两项目行均 bump
 	baseA := backdateProject(t, testProjA)
 	baseB := backdateProject(t, testProjB)
-	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentP, &idStr)); err != nil {
+	if _, _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentP, &idStr)); err != nil {
 		t.Fatalf("覆盖 push（换项目）: %v", err)
 	}
 	if got := projectTaskCount(t, testProjA); got != 2 {
@@ -728,7 +728,7 @@ func TestCount_UpsertOverwrite_PublishesMoveAndReparent(t *testing.T) {
 	// E6：覆盖 push 换父（项目不变）⇒ 旧父 -1、新父 +1，且两父行均 bump
 	baseP := backdateTask(t, parentP)
 	baseQ := backdateTask(t, parentQ)
-	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentQ, &idStr)); err != nil {
+	if _, _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentQ, &idStr)); err != nil {
 		t.Fatalf("覆盖 push（换父）: %v", err)
 	}
 	if _, _, got := taskCountsOf(t, parentP); got != 0 {
@@ -745,7 +745,7 @@ func TestCount_UpsertOverwrite_PublishesMoveAndReparent(t *testing.T) {
 
 	// E6 边界：覆盖脱离父（A→0，兼容 Q1）⇒ 仅旧父 -1 + bump
 	baseQ = backdateTask(t, parentQ)
-	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, 0, &idStr)); err != nil {
+	if _, _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, 0, &idStr)); err != nil {
 		t.Fatalf("覆盖 push（脱离父）: %v", err)
 	}
 	if _, _, got := taskCountsOf(t, parentQ); got != 0 {
@@ -772,7 +772,7 @@ func TestCount_UpsertOverwrite_UnchangedNoPublish(t *testing.T) {
 	baseP := backdateTask(t, parentP)
 
 	// 仅改名，项目与父均与库中一致
-	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T-改名", testProjA, parentP, &idStr)); err != nil {
+	if _, _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T-改名", testProjA, parentP, &idStr)); err != nil {
 		t.Fatalf("覆盖 push（同项目同父）: %v", err)
 	}
 	var m models.Task
@@ -807,7 +807,7 @@ func TestCount_UpsertOverwrite_UnchangedNoPublish(t *testing.T) {
 	staleReq.UpdatedAt = &stale
 	baseA = backdateProject(t, testProjA)
 	baseP = backdateTask(t, parentP)
-	if _, err := s.taskApp.CreateTask(ctx, testUserID, staleReq); err != nil {
+	if _, _, err := s.taskApp.CreateTask(ctx, testUserID, staleReq); err != nil {
 		t.Fatalf("覆盖 push（过期 LWW）: %v", err)
 	}
 	var afterNoop models.Task
@@ -860,7 +860,7 @@ func TestCount_UpsertRevive_NoDoubleDecrement(t *testing.T) {
 
 	// 墓碑复活（同 id push，携带新项目 B + 新父 Q）：仅 +1，不得对旧项目/旧父再 -1
 	idStr := idutil.FormatID(taskID)
-	if _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentQ, &idStr)); err != nil {
+	if _, _, err := s.taskApp.CreateTask(ctx, testUserID, taskReq("T", testProjB, parentQ, &idStr)); err != nil {
 		t.Fatalf("墓碑复活: %v", err)
 	}
 	if got := projectTaskCount(t, testProjA); got != 1 {

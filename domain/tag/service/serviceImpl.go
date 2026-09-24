@@ -6,6 +6,7 @@ import (
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // NewTagDomain 标签域注册函数
@@ -24,22 +25,23 @@ func NewTagDomain(
 // @param userId 用户ID
 // @param createTagValueObject 创建标签值对象
 // @return *entities.Tag 创建的标签信息
+// @return domaintypes.UpsertResult 本次 upsert 动作（Created / Outcome）
 // @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) Create(
 	ctx context.Context,
 	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
-) (*entities.Tag, error) {
+) (*entities.Tag, domaintypes.UpsertResult, error) {
 	// 设置排序 ID
 	createTagValueObject.SortId = tagDomain.tagRepo.GetMaxSortId(ctx, userId) + 1
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	tagEntity, created, err := tagDomain.tagRepo.Upsert(ctx, userId, createTagValueObject)
+	tagEntity, result, err := tagDomain.tagRepo.Upsert(ctx, userId, createTagValueObject)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 仅首次新建时初始化基础偏好；覆盖/重试场景保留用户已有偏好
-	if !created {
-		return tagEntity, nil
+	if !result.Created {
+		return tagEntity, result, nil
 	}
 	// 创建标签基础偏好
 	tagPreferenceValueObject, err := valueobjects.NewSaveTagPreference(
@@ -48,7 +50,7 @@ func (tagDomain *TagDomainImpl) Create(
 		"{}",
 	)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 保存标签基础偏好
 	err = tagDomain.preferenceRepo.Save(
@@ -58,10 +60,10 @@ func (tagDomain *TagDomainImpl) Create(
 		tagPreferenceValueObject,
 	)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 返回标签信息
-	return tagEntity, nil
+	return tagEntity, result, nil
 }
 
 // Delete 删除标签

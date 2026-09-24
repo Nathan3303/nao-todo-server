@@ -99,19 +99,21 @@ func (taskApp *TaskAppImpl) GetTaskById(
 // @param userId 用户 ID
 // @param req 创建任务请求
 // @return 任务响应
+// @return domaintypes.UpsertResult 本次 upsert 动作（供同步回执使用）
 // @return error 错误信息
 func (taskApp *TaskAppImpl) CreateTask(
 	ctx context.Context,
 	userId int64,
 	req *dto.CreateTaskReq,
-) (*dto.GetTaskRes, error) {
+) (*dto.GetTaskRes, domaintypes.UpsertResult, error) {
 	// 1. 请求体转换值对象
 	createTaskValueObject, err := CreateTaskReqToValueObject(userId, req)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 2. 写路径包事务（同事务强一致，ADR §4.2）：主写 + 计数事件同步分发
 	var taskEntity *entities.Task
+	var upsert domaintypes.UpsertResult
 	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
 		// 覆盖分支需旧值：E5/E6 必须比较旧/新后才发（B1/B4 同型）。
 		// sync push 的任务更新走本路径（CreateTask → Upsert 覆盖），是桌面端主更新入口。
@@ -144,13 +146,14 @@ func (taskApp *TaskAppImpl) CreateTask(
 				createTaskValueObject.SortId = sortId
 			}
 		}
-		entity, created, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
+		entity, result, err := taskApp.taskDomain.CreateTask(ctx, userId, createTaskValueObject)
 		if err != nil {
 			return err
 		}
 		taskEntity = entity
+		upsert = result
 		// B1/B6：仅 created（含墓碑复活）才 ±1；覆盖/重试不重复计数
-		if !created {
+		if !upsert.Created {
 			// 覆盖分支（created=false）：仅在实际变更时发 E5/E6；
 			// LWW 拒绝（未写入）时 before 与 taskEntity 不变 ⇒ 不发（B1）
 			if before == nil {
@@ -201,11 +204,11 @@ func (taskApp *TaskAppImpl) CreateTask(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("CreateTask: %w", err)
+		return nil, domaintypes.UpsertResult{}, fmt.Errorf("CreateTask: %w", err)
 	}
 	// 3. 转换为响应对象
 	res := TaskEntityToGetRes(taskEntity)
-	return res, nil
+	return res, upsert, nil
 }
 
 // UpdateTask 更新任务
@@ -709,25 +712,26 @@ func (impl *TaskAppImpl) GetTaskCheckItemById(
 // @param userId 用户 ID
 // @param req 创建检查事项请求
 // @return 创建检查事项响应
+// @return domaintypes.UpsertResult 本次 upsert 动作（供同步回执使用）
 // @return error 错误信息
 func (impl *TaskAppImpl) CreateTaskCheckItem(
 	ctx context.Context,
 	userId int64,
 	req *dto.CreateTaskCheckItemReq,
-) (*dto.CreateTaskCheckItemRes, error) {
+) (*dto.CreateTaskCheckItemRes, domaintypes.UpsertResult, error) {
 	vo, err := CreateTaskCheckItemReqToVO(userId, req)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	var e *entities.TaskCheckItem
+	var upsert domaintypes.UpsertResult
 	// 写路径包事务：主写 + E1 计数事件（仅 created，B6 复活=created）
 	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
-		var created bool
-		e, created, err = impl.taskDomain.CreateCheckItem(ctx, userId, vo)
+		e, upsert, err = impl.taskDomain.CreateCheckItem(ctx, userId, vo)
 		if err != nil {
 			return err
 		}
-		if !created {
+		if !upsert.Created {
 			return nil
 		}
 		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
@@ -738,9 +742,9 @@ func (impl *TaskAppImpl) CreateTaskCheckItem(
 		})
 	})
 	if err != nil {
-		return nil, fmt.Errorf("CreateCheckItem: %w", err)
+		return nil, domaintypes.UpsertResult{}, fmt.Errorf("CreateCheckItem: %w", err)
 	}
-	return TaskCheckItemEntityToCreateRes(e), nil
+	return TaskCheckItemEntityToCreateRes(e), upsert, nil
 }
 
 // UpdateTaskCheckItem 更新检查事项
@@ -947,25 +951,26 @@ func (impl *TaskAppImpl) GetTaskCommentById(
 // @param userId 用户 ID
 // @param req 创建评论请求
 // @return 创建评论响应
+// @return domaintypes.UpsertResult 本次 upsert 动作（供同步回执使用）
 // @return error 错误信息
 func (impl *TaskAppImpl) CreateTaskComment(
 	ctx context.Context,
 	userId int64,
 	req *dto.CreateTaskCommentReq,
-) (*dto.TaskCommentRes, error) {
+) (*dto.TaskCommentRes, domaintypes.UpsertResult, error) {
 	vo, err := CreateTaskCommentReqToVO(userId, req)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	var e *entities.TaskComment
+	var upsert domaintypes.UpsertResult
 	// 写路径包事务：主写 + E2 计数事件（仅 created，B6 复活=created）
 	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
-		var created bool
-		e, created, err = impl.commentRepo.UpsertComment(ctx, userId, vo)
+		e, upsert, err = impl.commentRepo.UpsertComment(ctx, userId, vo)
 		if err != nil {
 			return err
 		}
-		if !created {
+		if !upsert.Created {
 			return nil
 		}
 		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
@@ -976,9 +981,9 @@ func (impl *TaskAppImpl) CreateTaskComment(
 		})
 	})
 	if err != nil {
-		return nil, fmt.Errorf("CreateComment: %w", err)
+		return nil, domaintypes.UpsertResult{}, fmt.Errorf("CreateComment: %w", err)
 	}
-	return TaskCommentEntityToRes(e), nil
+	return TaskCommentEntityToRes(e), upsert, nil
 }
 
 // UpdateTaskComment 更新评论

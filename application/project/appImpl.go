@@ -78,21 +78,21 @@ func (app *projectAppImpl) Create(
 	ctx context.Context,
 	userId int64,
 	createProjectReq *dto.CreateProjectReq,
-) (*dto.CreateProjectRes, error) {
+) (*dto.CreateProjectRes, domaintypes.UpsertResult, error) {
 	// 请求体转换值对象
 	createProjectValueObject, err := CreateProjectReqToValueObject(userId, createProjectReq)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 创建任务清单
-	projectEntity, err := app.projectDomain.Create(ctx, createProjectValueObject)
+	projectEntity, upsert, err := app.projectDomain.Create(ctx, createProjectValueObject)
 	if err != nil {
-		return nil, fmt.Errorf("project.Create: %w", err)
+		return nil, domaintypes.UpsertResult{}, fmt.Errorf("project.Create: %w", err)
 	}
 	// 实体转换响应体
 	createProjectRes := (*dto.CreateProjectRes)(ProjectEntityToGetRes(projectEntity))
 	// 返回结果
-	return createProjectRes, nil
+	return createProjectRes, upsert, nil
 }
 
 // 更新任务清单

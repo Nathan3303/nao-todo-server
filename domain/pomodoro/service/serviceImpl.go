@@ -7,6 +7,7 @@ import (
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // NewPomodoroDomain 创建 Pomodoro 任务服务实现
@@ -27,14 +28,14 @@ func (d *PomodoroDomainImpl) CreatePomodoro(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreatePomodoro,
-) (*entities.Pomodoro, error) {
+) (*entities.Pomodoro, domaintypes.UpsertResult, error) {
 	vo.UserId = userId
 	if err := vo.Validate(); err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	entity, _, err := d.pomodoroRepo.Upsert(ctx, userId, vo)
-	return entity, err
+	entity, result, err := d.pomodoroRepo.Upsert(ctx, userId, vo)
+	return entity, result, err
 }
 
 // UpdatePomodoro 更新常用番茄工作（PATCH 语义）
@@ -57,14 +58,14 @@ func (d *PomodoroDomainImpl) CreatePomodoroRecord(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreatePomodoroRecord,
-) (*entities.PomodoroRecord, error) {
+) (*entities.PomodoroRecord, domaintypes.UpsertResult, error) {
 	vo.UserId = userId
 	if err := vo.Validate(); err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
-	entity, _, err := d.pomodoroRecordRepo.Upsert(ctx, userId, vo)
-	return entity, err
+	entity, result, err := d.pomodoroRecordRepo.Upsert(ctx, userId, vo)
+	return entity, result, err
 }
 
 // ListPomodoroSync 增量同步常用番茄工作列表

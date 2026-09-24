@@ -94,12 +94,12 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	ctx context.Context,
 	userId int64,
 	createTaskValueObject *valueobjects.CreateTask,
-) (*entities.Task, bool, error) {
+) (*entities.Task, types.UpsertResult, error) {
 	if createTaskValueObject.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now（createdAt 保留客户端值供冲突检测）
 		createTaskValueObject.UpdatedAt = time.Now()
 		entity, err := taskRepo.Create(ctx, userId, createTaskValueObject)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.Task
 	db := dbs.DBFrom(ctx, taskRepo.db)
@@ -110,10 +110,10 @@ func (taskRepo *TaskRepoImpl) Upsert(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		createTaskValueObject.UpdatedAt = time.Now()
 		entity, createErr := taskRepo.Create(ctx, userId, createTaskValueObject)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	existingEntity := TaskModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
@@ -122,10 +122,10 @@ func (taskRepo *TaskRepoImpl) Upsert(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return existingEntity, false, nil
+		return existingEntity, types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := CreateTaskVOToUpdateMap(createTaskValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now（LWW 判定仍用客户端时间）
@@ -138,11 +138,11 @@ func (taskRepo *TaskRepoImpl) Upsert(
 		Model(&models.Task{}).
 		Where("id = ? AND user_id = ?", createTaskValueObject.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	entity, err := taskRepo.GetById(ctx, userId, createTaskValueObject.Id, true)
 	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
-	return entity, existing.DeletedAt.Valid, err
+	return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: existing.DeletedAt.Valid}, err
 }
 
 // GetMaxSortId 获取指定分组（同一 parent_task_id）内的最大排序 ID
@@ -525,12 +525,12 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreateTaskCheckItem,
-) (*entities.TaskCheckItem, bool, error) {
+) (*entities.TaskCheckItem, types.UpsertResult, error) {
 	if vo.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, err := repo.CreateCheckItem(ctx, userId, vo)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.TaskCheckItem
 	db := dbs.DBFrom(ctx, repo.db)
@@ -541,10 +541,10 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, createErr := repo.CreateCheckItem(ctx, userId, vo)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	existingEntity := TaskCheckItemModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
@@ -553,10 +553,10 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return existingEntity, false, nil
+		return existingEntity, types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := TaskCheckItemVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -567,16 +567,16 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 		Model(&models.TaskCheckItem{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	var updated models.TaskCheckItem
 	if err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&updated).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
-	return TaskCheckItemModel2Entity(&updated), existing.DeletedAt.Valid, nil
+	return TaskCheckItemModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite, Created: existing.DeletedAt.Valid}, nil
 }
 
 // UpdateCheckItem 更新任务检查项
@@ -793,12 +793,12 @@ func (repo *TaskRepoImpl) UpsertComment(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreateTaskComment,
-) (*entities.TaskComment, bool, error) {
+) (*entities.TaskComment, types.UpsertResult, error) {
 	if vo.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, err := repo.CreateComment(ctx, userId, vo)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.TaskComment
 	db := dbs.DBFrom(ctx, repo.db)
@@ -809,10 +809,10 @@ func (repo *TaskRepoImpl) UpsertComment(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, createErr := repo.CreateComment(ctx, userId, vo)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	existingEntity := TaskCommentModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
@@ -821,10 +821,10 @@ func (repo *TaskRepoImpl) UpsertComment(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return existingEntity, false, nil
+		return existingEntity, types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := TaskCommentVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -835,16 +835,16 @@ func (repo *TaskRepoImpl) UpsertComment(
 		Model(&models.TaskComment{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	var updated models.TaskComment
 	if err := db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&updated).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
-	return TaskCommentModel2Entity(&updated), existing.DeletedAt.Valid, nil
+	return TaskCommentModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite, Created: existing.DeletedAt.Valid}, nil
 }
 
 // UpdateComment 更新任务评论

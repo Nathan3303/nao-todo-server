@@ -41,9 +41,9 @@ func (f *fakeCopyRepo) Upsert(
 	ctx context.Context,
 	userId int64,
 	createTaskValueObject *valueobjects.CreateTask,
-) (*entities.Task, bool, error) {
+) (*entities.Task, types.UpsertResult, error) {
 	f.upsertCalled = true
-	return nil, false, errors.New("校验失败时不应触发写入")
+	return nil, types.UpsertResult{}, errors.New("校验失败时不应触发写入")
 }
 
 // TestCopy_ValidationErrorNotSwallowed 回归：Copy 的 VO 校验失败必须返回真实错误且不写入

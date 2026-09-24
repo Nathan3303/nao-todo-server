@@ -9,6 +9,7 @@ import (
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // NewTaskDomain 任务域实现
@@ -24,12 +25,12 @@ func (d *TaskDomainImpl) CreateTask(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreateTask,
-) (*entities.Task, bool, error) {
+) (*entities.Task, domaintypes.UpsertResult, error) {
 	// SortId 赋值决策已上移到 app 层（ADR §4 生成优先级矩阵 G1–G5）：领域层无旧值，
 	// 无法区分「新建 / 覆盖且父变 / 覆盖且父未变」，无条件 max+1 会把 G4 变成「每次 push 都重排到组末」。
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
-	entity, created, err := d.taskRepo.Upsert(ctx, userId, vo)
-	return entity, created, err
+	entity, result, err := d.taskRepo.Upsert(ctx, userId, vo)
+	return entity, result, err
 }
 
 // Copy 复制任务
@@ -94,14 +95,14 @@ func (d *TaskDomainImpl) CreateCheckItem(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreateTaskCheckItem,
-) (*entities.TaskCheckItem, bool, error) {
+) (*entities.TaskCheckItem, domaintypes.UpsertResult, error) {
 	// 客户端未提供 sortId（0）时由服务端自动生成，保持既有创建语义
 	if vo.SortId == 0 {
 		vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
 	}
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
-	entity, created, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
-	return entity, created, err
+	entity, result, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
+	return entity, result, err
 }
 
 // ListSync 增量同步任务列表（包含软删墓碑，keyset 游标稳定排序分页）

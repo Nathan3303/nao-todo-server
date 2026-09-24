@@ -43,12 +43,12 @@ func (r *PomodoroRepoImpl) Upsert(
 	ctx context.Context,
 	userId int64,
 	vo *valueobjects.CreatePomodoro,
-) (*entities.Pomodoro, bool, error) {
+) (*entities.Pomodoro, types.UpsertResult, error) {
 	if vo.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, err := r.Create(ctx, vo)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.Pomodoro
 	err := r.db.WithContext(ctx).Unscoped().
@@ -58,10 +58,10 @@ func (r *PomodoroRepoImpl) Upsert(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		vo.UpdatedAt = time.Now()
 		entity, createErr := r.Create(ctx, vo)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
@@ -69,10 +69,10 @@ func (r *PomodoroRepoImpl) Upsert(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return PomodoroModel2Entity(&existing), false, nil
+		return PomodoroModel2Entity(&existing), types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := CreatePomodoroVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -85,15 +85,15 @@ func (r *PomodoroRepoImpl) Upsert(
 		Model(&models.Pomodoro{}).
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	var updated models.Pomodoro
 	if err := r.db.WithContext(ctx).Unscoped().
 		Where("id = ? AND user_id = ?", vo.Id, userId).
 		First(&updated).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
-	return PomodoroModel2Entity(&updated), false, nil
+	return PomodoroModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite}, nil
 }
 
 // GetById 获取常用番茄工作

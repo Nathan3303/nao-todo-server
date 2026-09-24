@@ -207,7 +207,7 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 		return
 	}
 	// 3. 创建标签
-	res, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(createTagReq))
+	res, _, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(createTagReq))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    30012,

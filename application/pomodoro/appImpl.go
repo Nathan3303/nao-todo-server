@@ -9,6 +9,7 @@ import (
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
@@ -36,16 +37,16 @@ func (app *PomodoroAppImpl) Create(
 	ctx context.Context,
 	userId int64,
 	req *dto.CreatePomodoroRecordReq,
-) (*dto.CreatePomodoroRecordRes, error) {
+) (*dto.CreatePomodoroRecordRes, domaintypes.UpsertResult, error) {
 	vo, err := CreatePomodoroRecordReqToVO(userId, req)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
-	entity, err := app.pomodoroDomain.CreatePomodoroRecord(ctx, userId, vo)
+	entity, upsert, err := app.pomodoroDomain.CreatePomodoroRecord(ctx, userId, vo)
 	if err != nil {
-		return nil, fmt.Errorf("pomodoro.Create: %w", err)
+		return nil, domaintypes.UpsertResult{}, fmt.Errorf("pomodoro.Create: %w", err)
 	}
-	return PomodoroRecordEntityToCreateRes(entity), nil
+	return PomodoroRecordEntityToCreateRes(entity), upsert, nil
 }
 
 // Get 获取专注记录
@@ -132,16 +133,16 @@ func (app *PomodoroAppImpl) CreatePomodoro(
 	ctx context.Context,
 	userId int64,
 	req *dto.CreatePomodoroReq,
-) (*dto.CreatePomodoroRes, error) {
+) (*dto.CreatePomodoroRes, domaintypes.UpsertResult, error) {
 	vo, err := CreatePomodoroReqToVO(userId, req)
 	if err != nil {
-		return nil, err
+		return nil, domaintypes.UpsertResult{}, err
 	}
-	entity, err := app.pomodoroDomain.CreatePomodoro(ctx, userId, vo)
+	entity, upsert, err := app.pomodoroDomain.CreatePomodoro(ctx, userId, vo)
 	if err != nil {
-		return nil, fmt.Errorf("pomodoro.CreatePomodoro: %w", err)
+		return nil, domaintypes.UpsertResult{}, fmt.Errorf("pomodoro.CreatePomodoro: %w", err)
 	}
-	return PomodoroEntityToCreateRes(entity), nil
+	return PomodoroEntityToCreateRes(entity), upsert, nil
 }
 
 // GetPomodoro 获取常用番茄工作

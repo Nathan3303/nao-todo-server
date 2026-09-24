@@ -19,7 +19,7 @@ type TagApp interface {
 		ctx context.Context,
 		userId int64,
 		createTagReq *dto.CreateTagReq,
-	) (*dto.CreateTagRes, error)
+	) (*dto.CreateTagRes, types.UpsertResult, error)
 
 	// 更新标签
 	UpdateTag(

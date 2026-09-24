@@ -58,7 +58,7 @@
 }
 ```
 
-响应 `{ results: [{ table, id, serverUpdatedAt }], serverTime }`——每条的服务端 `updatedAt`（前端推进游标、覆盖冲突判定），`serverTime` 顺带校准时钟。
+响应 `{ results: [{ table, id, serverUpdatedAt, outcome }], serverTime }`——每条的服务端 `updatedAt`（前端推进游标、覆盖冲突判定），`serverTime` 顺带校准时钟；`outcome`（**additive，2026-09-24 T143**）为该条的 upsert 判定，与 `domain/types.DecideUpsert` 同源：`applied`（新建/复活/覆盖）、`noop`（请求更旧，被服务端现有版本覆盖，未写入）、`conflict`（create 语义 ID 碰撞，伴随 `error`）、`skipped`（服务端忽略，如只追加资源不支持删除）、`error`（处理失败，伴随 `error`）。
 
 **批量增量拉取** `POST /sync/pull`（与 push 对称）：
 

@@ -83,7 +83,7 @@ func (c *EventController) CreateEvent(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层创建检查事项
-	res, err := c.taskApp.CreateTaskCheckItem(
+	res, _, err := c.taskApp.CreateTaskCheckItem(
 		ctx.Request.Context(),
 		userId,
 		toCreateTaskCheckItemReq(&req),

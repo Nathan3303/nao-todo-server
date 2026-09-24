@@ -7,6 +7,7 @@ import (
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // PomodoroDomain Pomodoro 任务服务接口
@@ -14,11 +15,12 @@ type PomodoroDomain interface {
 	// --- Pomodoro ---
 
 	// CreatePomodoro 创建常用番茄工作
+	// 返回 UpsertResult：Outcome 供同步回执使用；Created 供附属逻辑判定
 	CreatePomodoro(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreatePomodoro,
-	) (*entities.Pomodoro, error)
+	) (*entities.Pomodoro, domaintypes.UpsertResult, error)
 
 	// UpdatePomodoro 更新常用番茄工作（PATCH 语义）
 	UpdatePomodoro(
@@ -40,11 +42,12 @@ type PomodoroDomain interface {
 	// --- PomodoroRecord ---
 
 	// Create 创建 PomodoroRecord
+	// 返回 UpsertResult：Outcome 供同步回执使用；Created 供附属逻辑判定
 	CreatePomodoroRecord(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreatePomodoroRecord,
-	) (*entities.PomodoroRecord, error)
+	) (*entities.PomodoroRecord, domaintypes.UpsertResult, error)
 
 	// ListPomodoroRecordSync 增量同步番茄工作记录列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序）
 	ListPomodoroRecordSync(

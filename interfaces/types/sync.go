@@ -22,15 +22,33 @@ type SyncPushReq struct {
 }
 
 // SyncResult 单条推送结果
+// Outcome 语义（additive，2026-09-24 T143）：与 domain/types.DecideUpsert 判定同源，
+// 客户端据此区分「被服务端现有版本覆盖（noop）」与「实际写入（applied）」。
 type SyncResult struct {
 	Table           string `json:"table"`
 	Id              string `json:"id"`
 	ServerUpdatedAt string `json:"serverUpdatedAt"`
+	// Outcome 本条推送的服务端判定：
+	//   applied  = 服务端已写入（新建 / 墓碑复活 / 覆盖）
+	//   noop     = 服务端判定请求更旧，未写入，返回库中当前版本（被服务端现有版本覆盖）
+	//   conflict = create 语义 ID 碰撞（同时 error 非空）
+	//   skipped  = 服务端忽略该条（如只追加资源不支持删除）
+	//   error    = 处理失败（同时 error 非空）
+	Outcome string `json:"outcome,omitempty"`
 	// Error 本条推送失败原因（部分成功语义：仅失败条目携带，其余为空）
 	Error string `json:"error,omitempty"`
 	// Skipped 本条被服务端忽略（如只追加资源不支持删除）
 	Skipped bool `json:"skipped,omitempty"`
 }
+
+// 单条推送结果语义常量（SyncResult.Outcome）
+const (
+	SyncOutcomeApplied  = "applied"
+	SyncOutcomeNoop     = "noop"
+	SyncOutcomeConflict = "conflict"
+	SyncOutcomeSkipped  = "skipped"
+	SyncOutcomeError    = "error"
+)
 
 // SyncPushRes 批量推送响应
 type SyncPushRes struct {

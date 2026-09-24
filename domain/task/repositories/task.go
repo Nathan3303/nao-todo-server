@@ -6,6 +6,7 @@ import (
 
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // Task 任务仓库接口
@@ -27,12 +28,13 @@ type Task interface {
 	) (*entities.Task, error)
 
 	// Upsert 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
-	// created=true 表示本次为新建（调用方需初始化偏好等附属记录）
+	// 返回 UpsertResult：Outcome 与 DecideUpsert 判定同源；Created=true 表示本次为新建
+	// （调用方需初始化偏好等附属记录）
 	Upsert(
 		ctx context.Context,
 		userId int64,
 		createTaskValueObject *valueobjects.CreateTask,
-	) (*entities.Task, bool, error)
+	) (*entities.Task, domaintypes.UpsertResult, error)
 
 	// Update 更新任务
 	// 返回是否实际写入（false = LWW 乐观锁拒绝，未变更任何行）

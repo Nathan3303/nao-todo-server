@@ -6,6 +6,7 @@ import (
 
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // TaskCheckItem 任务检查项仓库接口
@@ -25,12 +26,12 @@ type TaskCheckItem interface {
 	) (*entities.TaskCheckItem, error)
 
 	// UpsertCheckItem 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
-	// created=true 表示本次为新建
+	// 返回 UpsertResult：Outcome 与 DecideUpsert 判定同源；Created=true 表示本次为新建
 	UpsertCheckItem(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreateTaskCheckItem,
-	) (*entities.TaskCheckItem, bool, error)
+	) (*entities.TaskCheckItem, domaintypes.UpsertResult, error)
 
 	// UpdateCheckItem 更新任务检查项
 	UpdateCheckItem(

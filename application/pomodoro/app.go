@@ -6,6 +6,7 @@ import (
 	"naotodoserver/application/pomodoro/dto"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // PomodoroApp 专注应用应用层接口
@@ -17,7 +18,7 @@ type PomodoroApp interface {
 		ctx context.Context,
 		userId int64,
 		req *dto.CreatePomodoroRecordReq,
-	) (*dto.CreatePomodoroRecordRes, error)
+	) (*dto.CreatePomodoroRecordRes, domaintypes.UpsertResult, error)
 
 	// Get 获取番茄工作记录
 	Get(
@@ -47,7 +48,7 @@ type PomodoroApp interface {
 		ctx context.Context,
 		userId int64,
 		req *dto.CreatePomodoroReq,
-	) (*dto.CreatePomodoroRes, error)
+	) (*dto.CreatePomodoroRes, domaintypes.UpsertResult, error)
 
 	// GetPomodoro 获取常用番茄工作
 	GetPomodoro(

@@ -215,7 +215,7 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 		return
 	}
 	// 创建清单
-	res, err := c.projectApp.Create(
+	res, _, err := c.projectApp.Create(
 		ctx.Request.Context(),
 		userId,
 		toCreateProjectInput(&createProjectReq),

@@ -5,15 +5,17 @@ import (
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // ProjectDomain 任务清单领域服务接口
 type ProjectDomain interface {
 	// 创建任务清单
+	// 返回 UpsertResult：Created=true 表示本次为新建（含墓碑复活）；Outcome 供同步回执使用
 	Create(
 		ctx context.Context,
 		createProjectValueObject *valueobjects.CreateProject,
-	) (*entities.Project, error)
+	) (*entities.Project, domaintypes.UpsertResult, error)
 
 	// 删除任务清单
 	Delete(ctx context.Context, userId int64, projectId int64) error

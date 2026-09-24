@@ -230,7 +230,7 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.pomodoroApp.Create(
+	res, _, err := c.pomodoroApp.Create(
 		ctx.Request.Context(),
 		userId,
 		toCreatePomodoroRecordInput(req),
@@ -423,7 +423,7 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	res, err := c.pomodoroApp.CreatePomodoro(
+	res, _, err := c.pomodoroApp.CreatePomodoro(
 		ctx.Request.Context(),
 		userId,
 		toCreatePomodoroInput(req),

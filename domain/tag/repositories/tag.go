@@ -6,6 +6,7 @@ import (
 
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // TagRepository 标签仓库接口
@@ -40,12 +41,13 @@ type TagRepository interface {
 	) (*entities.Tag, error)
 
 	// Upsert 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
-	// created=true 表示本次为新建（调用方需初始化偏好等附属记录）
+	// 返回 UpsertResult：Outcome 与 DecideUpsert 判定同源；Created=true 表示本次为新建
+	// （调用方需初始化偏好等附属记录）
 	Upsert(
 		ctx context.Context,
 		userId int64,
 		createTagValueObject *valueobjects.CreateTag,
-	) (*entities.Tag, bool, error)
+	) (*entities.Tag, domaintypes.UpsertResult, error)
 
 	// 更新标签
 	// @param ctx 上下文

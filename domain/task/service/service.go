@@ -7,6 +7,7 @@ import (
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
 // TaskDomain 任务域接口
@@ -14,12 +15,13 @@ type TaskDomain interface {
 	// --- Task ---
 	Copy(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
 	// CreateTask 创建任务（幂等 upsert）
-	// created=true 表示本次为新建（含墓碑复活，B6），供调用方按计数口径决定是否 +1
+	// 返回 UpsertResult.Created=true 表示本次为新建（含墓碑复活，B6），
+	// 供调用方按计数口径决定是否 +1；UpsertResult.Outcome 供同步回执使用
 	CreateTask(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreateTask,
-	) (*entities.Task, bool, error)
+	) (*entities.Task, domaintypes.UpsertResult, error)
 	List(
 		ctx context.Context,
 		userId int64,
@@ -38,12 +40,13 @@ type TaskDomain interface {
 
 	// --- CheckItem ---
 	// CreateCheckItem 创建检查项（幂等 upsert）
-	// created=true 表示本次为新建（含墓碑复活，B6），供调用方按计数口径决定是否 +1
+	// 返回 UpsertResult.Created=true 表示本次为新建（含墓碑复活，B6），
+	// 供调用方按计数口径决定是否 +1；UpsertResult.Outcome 供同步回执使用
 	CreateCheckItem(
 		ctx context.Context,
 		userId int64,
 		vo *valueobjects.CreateTaskCheckItem,
-	) (*entities.TaskCheckItem, bool, error)
+	) (*entities.TaskCheckItem, domaintypes.UpsertResult, error)
 
 	// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
 	// 同时推进任务 updated_at，保证清理结果可被增量同步发现

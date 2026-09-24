@@ -18,6 +18,14 @@ const (
 	UpsertConflict
 )
 
+// UpsertResult 单次幂等写入（upsert）的实际动作。
+// Outcome 与 DecideUpsert 判定同源（ID 冲突以 error 返回，不落入本结构）；
+// Created 表示本次为新建（含墓碑复活，B6），供计数事件 / 附属记录初始化判定使用。
+type UpsertResult struct {
+	Outcome UpsertOutcome
+	Created bool
+}
+
 // DecideUpsert 判定"记录已存在"时的 upsert 动作（纯逻辑，便于单测）。
 // 参数为库中记录的 created_at/updated_at 与请求携带的 createdAt/updatedAt（零值表示未提供）。
 // conflictWindow 为 create 语义冲突判定窗口：请求携带 createdAt 且与库中相差超过该窗口 → 判为 ID 碰撞（返回 ErrIDConflict）。

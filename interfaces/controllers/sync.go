@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,6 +13,8 @@ import (
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
+	domerr "naotodoserver/domain/errors"
+	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 
@@ -47,9 +50,28 @@ func NewSyncController(
 	}
 }
 
+// syncOutcomeOf 将领域 upsert 判定映射为同步回执语义（唯一映射点，避免两套语义）
+func syncOutcomeOf(result domaintypes.UpsertResult) string {
+	if result.Outcome == domaintypes.UpsertNoop {
+		return types.SyncOutcomeNoop
+	}
+	return types.SyncOutcomeApplied
+}
+
+// syncErrOutcome 失败条目语义：create 语义 ID 碰撞 = conflict，其余 = error
+func syncErrOutcome(err error) string {
+	if errors.Is(err, domerr.ErrIDConflict) {
+		return types.SyncOutcomeConflict
+	}
+	return types.SyncOutcomeError
+}
+
 // Push 批量推送控制器
 // @code 9001x
 // 多表批量 upsert（客户端预置 id 时走 LWW 幂等）+ 删除墓碑同步
+//
+// 每条结果额外回传 outcome（additive，2026-09-24 T143），语义与 domain/types.DecideUpsert 判定同源：
+// applied / noop / conflict / skipped / error。
 func (c *SyncController) Push(ctx *gin.Context) {
 	// 1. 获取当前登录用户 ID
 	userId := iCtx.GetUserId(ctx.Request.Context())
@@ -76,60 +98,60 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			len(req.Projects)+len(req.Tags)+len(req.Pomodoros)+len(req.PomodoroRecords)+len(req.Deletions))
 
 	for i := range req.Tasks {
-		res, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req.Tasks[i]))
+		res, upsert, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req.Tasks[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "tasks", Id: syncID(req.Tasks[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "tasks", Id: syncID(req.Tasks[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "tasks", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "tasks", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.TaskCheckItems {
-		res, err := c.checkItemApp.CreateTaskCheckItem(ctx.Request.Context(), userId, toCreateTaskCheckItemReq(&req.TaskCheckItems[i]))
+		res, upsert, err := c.checkItemApp.CreateTaskCheckItem(ctx.Request.Context(), userId, toCreateTaskCheckItemReq(&req.TaskCheckItems[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "taskCheckItems", Id: syncID(req.TaskCheckItems[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "taskCheckItems", Id: syncID(req.TaskCheckItems[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "taskCheckItems", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "taskCheckItems", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.TaskComments {
-		res, err := c.commentApp.CreateTaskComment(ctx.Request.Context(), userId, toCreateTaskCommentReq(&req.TaskComments[i]))
+		res, upsert, err := c.commentApp.CreateTaskComment(ctx.Request.Context(), userId, toCreateTaskCommentReq(&req.TaskComments[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "taskComments", Id: syncID(req.TaskComments[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "taskComments", Id: syncID(req.TaskComments[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "taskComments", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "taskComments", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.Projects {
-		res, err := c.projectApp.Create(ctx.Request.Context(), userId, toCreateProjectInput(&req.Projects[i]))
+		res, upsert, err := c.projectApp.Create(ctx.Request.Context(), userId, toCreateProjectInput(&req.Projects[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "projects", Id: syncID(req.Projects[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "projects", Id: syncID(req.Projects[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "projects", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "projects", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.Tags {
-		res, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(&req.Tags[i]))
+		res, upsert, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(&req.Tags[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "tags", Id: syncID(req.Tags[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "tags", Id: syncID(req.Tags[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "tags", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "tags", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.Pomodoros {
-		res, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), userId, toCreatePomodoroInput(req.Pomodoros[i]))
+		res, upsert, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), userId, toCreatePomodoroInput(req.Pomodoros[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "pomodoros", Id: syncID(req.Pomodoros[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "pomodoros", Id: syncID(req.Pomodoros[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "pomodoros", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "pomodoros", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.PomodoroRecords {
-		res, err := c.pomodoroApp.Create(ctx.Request.Context(), userId, toCreatePomodoroRecordInput(req.PomodoroRecords[i]))
+		res, upsert, err := c.pomodoroApp.Create(ctx.Request.Context(), userId, toCreatePomodoroRecordInput(req.PomodoroRecords[i]))
 		if err != nil {
-			results = append(results, types.SyncResult{Table: "pomodoroRecords", Id: syncID(req.PomodoroRecords[i].Id), Error: err.Error()})
+			results = append(results, types.SyncResult{Table: "pomodoroRecords", Id: syncID(req.PomodoroRecords[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: "pomodoroRecords", Id: res.Id, ServerUpdatedAt: res.UpdatedAt})
+		results = append(results, types.SyncResult{Table: "pomodoroRecords", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 
 	// 4. 删除墓碑（软删，服务端推进 updated_at）
@@ -151,16 +173,16 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			err = c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), userId, d.Id)
 		case "pomodoroRecords":
 			// PomodoroRecord 为只追加记录，无删除接口，忽略删除请求并明确标记
-			results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, Skipped: true})
+			results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, Skipped: true, Outcome: types.SyncOutcomeSkipped})
 			continue
 		default:
 			err = fmt.Errorf("未知删除表: %s", d.Table)
 		}
 		if err != nil {
-			results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, Error: err.Error()})
+			results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
 		}
-		results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, ServerUpdatedAt: idutil.FormatTimeMilli(now)})
+		results = append(results, types.SyncResult{Table: d.Table, Id: d.Id, ServerUpdatedAt: idutil.FormatTimeMilli(now), Outcome: types.SyncOutcomeApplied})
 	}
 
 	// 5. 返回结果

@@ -504,7 +504,7 @@ func TestSortId_OverflowReturnsDomainError(t *testing.T) {
 
 	// 新建未带 ⇒ max+1 = 65536 溢出 ⇒ 明确领域错误，不写入
 	req := taskReq("溢出", testProjA, parent, nil)
-	_, err := s.taskApp.CreateTask(context.Background(), testUserID, req)
+	_, _, err := s.taskApp.CreateTask(context.Background(), testUserID, req)
 	if !errors.Is(err, domerr.ErrSortIdOverflow) {
 		t.Fatalf("溢出创建 err = %v, want ErrSortIdOverflow", err)
 	}

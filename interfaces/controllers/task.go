@@ -438,7 +438,7 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层创建任务
-	res, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req))
+	res, _, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    40012,

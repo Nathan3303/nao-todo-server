@@ -19,7 +19,7 @@ type ProjectApp interface {
 		ctx context.Context,
 		userId int64,
 		createProjectReq *dto.CreateProjectReq,
-	) (*dto.CreateProjectRes, error)
+	) (*dto.CreateProjectRes, domaintypes.UpsertResult, error)
 
 	// 更新任务清单
 	Update(

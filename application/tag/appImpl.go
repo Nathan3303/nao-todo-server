@@ -69,24 +69,25 @@ func (tagApp *TagAppImpl) GetTag(
 // @param tagId 标签 ID
 // @param req 创建标签请求体
 // @return 创建标签响应体
+// @return types.UpsertResult 本次 upsert 动作（供同步回执使用）
 // @return error
 func (tagApp *TagAppImpl) CreateTag(
 	ctx context.Context,
 	userId int64,
 	createTagReq *dto.CreateTagReq,
-) (*dto.CreateTagRes, error) {
+) (*dto.CreateTagRes, types.UpsertResult, error) {
 	// 转换请求体
 	createTagValueObject, err := CreateTagReqToValueObject(createTagReq)
 	if err != nil {
-		return nil, err
+		return nil, types.UpsertResult{}, err
 	}
 	// 创建标签
-	tagEntity, err := tagApp.tagDomain.Create(ctx, userId, createTagValueObject)
+	tagEntity, upsert, err := tagApp.tagDomain.Create(ctx, userId, createTagValueObject)
 	if err != nil {
-		return nil, fmt.Errorf("tag.Create: %w", err)
+		return nil, types.UpsertResult{}, fmt.Errorf("tag.Create: %w", err)
 	}
 	// 实体转换响应体并返回结果
-	return TagEntityToCreateRes(tagEntity), nil
+	return TagEntityToCreateRes(tagEntity), upsert, nil
 }
 
 // UpdateTag 更新标签信息

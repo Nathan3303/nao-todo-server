@@ -54,12 +54,12 @@ func (projectRepo *ProjectRepoImpl) Upsert(
 	ctx context.Context,
 	userId int64,
 	createProjectValueObject *valueobjects.CreateProject,
-) (*entities.Project, bool, error) {
+) (*entities.Project, types.UpsertResult, error) {
 	if createProjectValueObject.Id == 0 {
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		createProjectValueObject.UpdatedAt = time.Now()
 		entity, err := projectRepo.Create(ctx, createProjectValueObject)
-		return entity, true, err
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, err
 	}
 	var existing models.Project
 	err := projectRepo.db.WithContext(ctx).Unscoped().
@@ -70,10 +70,10 @@ func (projectRepo *ProjectRepoImpl) Upsert(
 		// 服务器时间为唯一基准：新建实体 updated_at 落服务器 now
 		createProjectValueObject.UpdatedAt = time.Now()
 		entity, createErr := projectRepo.Create(ctx, createProjectValueObject)
-		return entity, true, createErr
+		return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: true}, createErr
 	}
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
@@ -81,10 +81,10 @@ func (projectRepo *ProjectRepoImpl) Upsert(
 		time.Minute,
 	)
 	if err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	if outcome == types.UpsertNoop {
-		return Model2Entity(&existing), false, nil
+		return Model2Entity(&existing), types.UpsertResult{Outcome: types.UpsertNoop}, nil
 	}
 	updateMap := CreateProjectVOToUpdateMap(createProjectValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -97,7 +97,7 @@ func (projectRepo *ProjectRepoImpl) Upsert(
 		Model(&models.Project{}).
 		Where("id = ? AND user_id = ?", createProjectValueObject.Id, userId).
 		UpdateColumns(updateMap).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
 	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	var updated models.Project
@@ -105,9 +105,9 @@ func (projectRepo *ProjectRepoImpl) Upsert(
 		Preload("Preference").
 		Where("id = ? AND user_id = ?", createProjectValueObject.Id, userId).
 		First(&updated).Error; err != nil {
-		return nil, false, err
+		return nil, types.UpsertResult{}, err
 	}
-	return Model2Entity(&updated), false, nil
+	return Model2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite}, nil
 }
 
 // GetById 获取单个清单详情
