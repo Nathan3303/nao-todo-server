@@ -122,6 +122,62 @@ func TestProjectAndTagAreAnded(t *testing.T) {
 	}
 }
 
+// TestByTaskArchived 归档谓词回归（DEF-12 ①/DP-1=(b)）：
+// true ⇒ archived_at IS NOT NULL；false ⇒ archived_at IS NULL（修复前是 no-op）。
+// 未传 isArchived 在 Go 中即 bool 零值 false ⇒ 与显式 false 走同一分支（见 TestByTaskArchivedUnsetIsZeroValue）。
+func TestByTaskArchived(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		archived bool
+		wantSQL  string
+	}{
+		{name: "true 仅已归档", archived: true, wantSQL: "archived_at IS NOT NULL"},
+		{name: "显式 false 排除归档", archived: false, wantSQL: "archived_at IS NULL"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stmt, err := scopeDB(ByTaskArchived(tc.archived))
+			if err != nil {
+				t.Fatal(err)
+			}
+			exprs := whereExprs(t, stmt)
+			if len(exprs) != 1 {
+				t.Fatalf("期望 1 条 WHERE，实际 %d", len(exprs))
+			}
+			expr, ok := exprs[0].(clause.Expr)
+			if !ok || expr.SQL != tc.wantSQL {
+				t.Fatalf("期望 %q，实际 %#v", tc.wantSQL, exprs[0])
+			}
+		})
+	}
+}
+
+// TestByTaskArchivedUnsetIsZeroValue 固化「未传 isArchived」与显式 false 同路径：
+// bool 值类型无三态 ⇒ 未传即零值 false，两者产生同一谓词（不存在隐式分叉）。
+func TestByTaskArchivedUnsetIsZeroValue(t *testing.T) {
+	var unset bool // 模拟「未传」
+	unsetStmt, err := scopeDB(ByTaskArchived(unset))
+	if err != nil {
+		t.Fatal(err)
+	}
+	explicitStmt, err := scopeDB(ByTaskArchived(false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	unsetExprs := whereExprs(t, unsetStmt)
+	explicitExprs := whereExprs(t, explicitStmt)
+	if len(unsetExprs) != 1 || len(explicitExprs) != 1 {
+		t.Fatalf("应各 1 条 WHERE，实际 unset=%d explicit=%d", len(unsetExprs), len(explicitExprs))
+	}
+	unsetExpr, ok1 := unsetExprs[0].(clause.Expr)
+	explicitExpr, ok2 := explicitExprs[0].(clause.Expr)
+	if !ok1 || !ok2 {
+		t.Fatalf("谓词类型错误: unset=%#v explicit=%#v", unsetExpr, explicitExpr)
+	}
+	if unsetExpr.SQL != "archived_at IS NULL" || unsetExpr.SQL != explicitExpr.SQL {
+		t.Fatalf("未传与显式 false 应同谓词 IS NULL，实际 unset=%q explicit=%q", unsetExpr.SQL, explicitExpr.SQL)
+	}
+}
+
 func TestByRelativeDateMonth(t *testing.T) {
 	stmt, err := scopeDB(ByRelativeDate("month"))
 	if err != nil {

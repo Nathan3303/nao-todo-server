@@ -234,3 +234,32 @@ func TestTaskEntityToGetRes_Counts(t *testing.T) {
 			res.CheckItemCount, res.CommentCount, res.SubtaskCount)
 	}
 }
+
+// TestListTaskReqToQueryTaskValueObject_IsArchivedDefault 固化「未传 isArchived」= 值类型零值 false，
+// 与显式 false 产生同一 QueryTask.IsArchived（DP-1=(b)：默认也排除归档），
+// repoImpl 以唯一的 ByTaskArchived(q.IsArchived) 统一过滤，不存在「显式 false / 未传」隐式分叉。
+func TestListTaskReqToQueryTaskValueObject_IsArchivedDefault(t *testing.T) {
+	unset, err := ListTaskReqToQueryTaskValueObject(1001, &dto.ListTaskReq{})
+	if err != nil {
+		t.Fatalf("未传 isArchived 转换失败: %v", err)
+	}
+	explicitFalse, err := ListTaskReqToQueryTaskValueObject(1001, &dto.ListTaskReq{IsArchived: false})
+	if err != nil {
+		t.Fatalf("显式 false 转换失败: %v", err)
+	}
+	if unset.IsArchived != explicitFalse.IsArchived {
+		t.Fatalf("未传与显式 false 必须同结果，实际 unset=%v explicit=%v",
+			unset.IsArchived, explicitFalse.IsArchived)
+	}
+	if unset.IsArchived {
+		t.Fatalf("未传 isArchived 应解析为 false，实际 %v", unset.IsArchived)
+	}
+
+	explicitTrue, err := ListTaskReqToQueryTaskValueObject(1001, &dto.ListTaskReq{IsArchived: true})
+	if err != nil {
+		t.Fatalf("显式 true 转换失败: %v", err)
+	}
+	if !explicitTrue.IsArchived {
+		t.Fatalf("显式 true 应解析为 true，实际 %v", explicitTrue.IsArchived)
+	}
+}
