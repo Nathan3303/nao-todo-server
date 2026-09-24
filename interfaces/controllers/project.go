@@ -452,6 +452,16 @@ func (c *ProjectController) UnarchiveProject(ctx *gin.Context) {
 	})
 }
 
+// parseIsArchivedFilter 解析清单列表归档过滤参数。
+// 缺失/空串 ⇒ false，与显式 "false" 同为零值 false（未传与显式 false 同路径，无隐性分叉）；
+// 仅 "true" ⇒ true（返回已归档清单）。语义与任务列表 isArchived 一致（DP-1=(b)）。
+func parseIsArchivedFilter(raw string) (bool, error) {
+	if raw == "" {
+		return false, nil
+	}
+	return strconv.ParseBool(raw)
+}
+
 // ListProject 获取清单列表接入点
 // @code 2007x
 func (c *ProjectController) ListProject(ctx *gin.Context) {
@@ -489,8 +499,19 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 		})
 		return
 	}
+	// 归档过滤：未传（缺省/空）与显式 false 同为零值 false ⇒ 默认排除已归档清单（DP-1=(b)）；
+	// 仅显式 true 才返回已归档清单（与任务列表同语义）。上面的 /sync/pull 分支不解析，照常返回归档。
+	isArchived, err := parseIsArchivedFilter(ctx.Query("isArchived"))
+	if err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    20071,
+			Message: "获取清单列表失败",
+			Error:   "isArchived 参数格式错误",
+		})
+		return
+	}
 	// 获取清单列表
-	res, err := c.projectApp.List(ctx.Request.Context(), userId)
+	res, err := c.projectApp.List(ctx.Request.Context(), userId, isArchived)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    20071,

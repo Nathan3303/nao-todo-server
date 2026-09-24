@@ -38,8 +38,8 @@ type ProjectApp interface {
 	// 取消归档任务清单
 	Unarchive(ctx context.Context, userId int64, projectId string) error
 
-	// 获取任务清单列表
-	List(ctx context.Context, userId int64) (dto.ListProjectRes, error)
+	// 获取任务清单列表（isArchived=false/未传 ⇒ 默认排除已归档，DP-1=(b)）
+	List(ctx context.Context, userId int64, isArchived bool) (dto.ListProjectRes, error)
 	// ListSync 增量同步任务清单列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
 	ListSync(
 		ctx context.Context,

@@ -277,14 +277,15 @@ func (app *projectAppImpl) Unarchive(
         return nil
 }
 
-// 获取用户任务清单列表
+// 获取用户任务清单列表（isArchived=false/未传 ⇒ 默认排除已归档，DP-1=(b)）
 // @param ctx 上下文
 // @param userId 用户 ID
+// @param isArchived 是否仅取已归档（false/未传 = 默认排除归档）
 // @return dto.ListProjectRes 任务清单响应体列表
 // @return error 验证失败返回错误，否则返回 nil
-func (app *projectAppImpl) List(ctx context.Context, userId int64) (dto.ListProjectRes, error) {
+func (app *projectAppImpl) List(ctx context.Context, userId int64, isArchived bool) (dto.ListProjectRes, error) {
 	// 获取清单列表
-	projectEntities, err := app.repo.GetByUserId(ctx, userId)
+	projectEntities, err := app.repo.GetByUserId(ctx, userId, isArchived)
 	if err != nil {
 		return nil, err
 	}

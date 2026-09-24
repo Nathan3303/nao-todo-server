@@ -275,26 +275,35 @@ func (projectRepo *ProjectRepoImpl) BatchUpdate(
 	return Models2Entities(updatedProjects), nil
 }
 
-// GetByUserId 获取用户所有清单
+// GetByUserId 获取用户清单列表（默认排除已归档，DP-1=(b)）
+// 归档过滤语义与任务列表一致：isArchived=true 只返回已归档；false / 未传（Go 零值）返回未归档。
+// /sync/pull 走 ListSync（不经此方法），归档清单照常同步，客户端镜像完整。
+// 缓存只覆盖默认（未归档）视图，既有失效口径 cache.ProjectListKey 不变；
+// 归档视图为低频入口，直接读库，避免新增缓存键与其失效面。
 // @param ctx 上下文
 // @param userId 用户ID
+// @param isArchived 是否仅取已归档（false/未传 = 默认排除归档）
 // @return 项目列表
 // @return error 错误
 func (projectRepo *ProjectRepoImpl) GetByUserId(
 	ctx context.Context,
 	userId int64,
+	isArchived bool,
 ) ([]*entities.Project, error) {
-	// 1. 优先读取缓存
+	// 1. 默认视图优先读取缓存
 	key := cache.ProjectListKey(userId)
-	var cached []*entities.Project
-	if projectRepo.cache.Get(ctx, key, &cached) {
-		return cached, nil
+	if !isArchived {
+		var cached []*entities.Project
+		if projectRepo.cache.Get(ctx, key, &cached) {
+			return cached, nil
+		}
 	}
-	// 2. 从数据库中查询
+	// 2. 从数据库中查询（统一经 ByProjectArchived：未传与显式 false 同分支）
 	var ms []*models.Project
 	tx := projectRepo.db.WithContext(ctx).
 		Preload("Preference").
 		Where("user_id = ?", userId).
+		Scopes(ByProjectArchived(isArchived)).
 		Order("sort_id ASC").
 		Find(&ms)
 	// 3. 转换为实体并返回结果
@@ -302,8 +311,10 @@ func (projectRepo *ProjectRepoImpl) GetByUserId(
 		return nil, tx.Error
 	}
 	es := Models2Entities(ms)
-	// 4. 写入缓存
-	projectRepo.cache.Set(ctx, key, es, time.Minute*30)
+	// 4. 写入缓存（仅默认视图）
+	if !isArchived {
+		projectRepo.cache.Set(ctx, key, es, time.Minute*30)
+	}
 	return es, nil
 }
 

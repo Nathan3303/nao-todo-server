@@ -55,8 +55,8 @@ type Project interface {
 		deactivedAt types.NullableTime,
 	) error
 
-	// 根据用户ID获取任务清单列表
-	GetByUserId(ctx context.Context, userId int64) ([]*entities.Project, error)
+	// 根据用户ID获取任务清单列表（默认排除已归档：isArchived=false/未传 ⇒ archived_at IS NULL，DP-1=(b)）
+	GetByUserId(ctx context.Context, userId int64, isArchived bool) ([]*entities.Project, error)
 
 	// 获取最大排序 ID
 	GetMaxSortId(ctx context.Context, userId int64) uint16
