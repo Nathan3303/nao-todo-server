@@ -28,7 +28,8 @@ type CreatePomodoroRecordReq struct {
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
-	BaseUpdatedAt *string
+	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
+	BaseUpdatedAt *string `json:"-"`
 }
 
 // CreatePomodoroRecordRes 创建番茄工作记录出参
@@ -83,7 +84,8 @@ type CreatePomodoroReq struct {
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 	DeletedAt   *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
-	BaseUpdatedAt *string
+	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
+	BaseUpdatedAt *string `json:"-"`
 }
 
 // PomodoroRes 常用番茄工作出参

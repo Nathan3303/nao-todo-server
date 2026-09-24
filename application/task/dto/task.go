@@ -58,7 +58,8 @@ type CreateTaskReq struct {
 	UpdatedAt      *string  // 同步元数据：客户端预置 updatedAt
 	DeletedAt      *string  // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
-	BaseUpdatedAt *string
+	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
+	BaseUpdatedAt *string `json:"-"`
 }
 
 // UpdateTaskReq 更新任务入参
@@ -155,7 +156,8 @@ type CreateTaskCheckItemReq struct {
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
-	BaseUpdatedAt *string
+	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
+	BaseUpdatedAt *string `json:"-"`
 	IsDone      bool    // 是否已完成（可选，默认 false；push 同步时更新完成状态）
 	SortId      uint16  // 排序值（可选，默认 0 由服务端自动生成；push 同步时保持排序）
 }
@@ -229,7 +231,8 @@ type CreateTaskCommentReq struct {
 	CreatedAt *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt *string // 同步元数据：客户端预置 updatedAt
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
-	BaseUpdatedAt *string
+	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
+	BaseUpdatedAt *string `json:"-"`
 }
 
 // UpdateTaskCommentReq 更新任务评论入参
