@@ -101,6 +101,11 @@ func CreateTaskReqToValueObject(
 	vo.UpdatedAt = updatedAt
 	vo.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
 	vo.SortId = req.SortId
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
 	return vo, nil
 }
 
@@ -370,6 +375,11 @@ func CreateTaskCheckItemReqToVO(
 	vo.UpdatedAt = updatedAt
 	vo.IsDone = req.IsDone
 	vo.SortId = req.SortId
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
 	return vo, nil
 }
 
@@ -505,6 +515,11 @@ func CreateTaskCommentReqToVO(
 	vo.Id = id
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
 	return vo, nil
 }
 

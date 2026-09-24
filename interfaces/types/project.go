@@ -67,6 +67,14 @@ type GetProjectPreferenceRes struct {
 	Columns    string `json:"columns"`
 }
 
+// SaveProjectPreferenceRes 保存项目偏好响应
+// additive（2026-09-24 T163）：保留既有 projectId，补服务端权威 updatedAt（RFC3339Milli，
+// 与 GET /projects/:id/preference 同格式），供客户端落 per-row OCC base。
+type SaveProjectPreferenceRes struct {
+	ProjectId string `json:"projectId"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
 // UpdateProjectPreferenceReq 更新项目偏好请求
 type UpdateProjectPreferenceReq struct {
 	ViewType   string `json:"viewType"`

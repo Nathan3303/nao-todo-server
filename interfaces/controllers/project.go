@@ -622,8 +622,8 @@ func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 		})
 		return
 	}
-	// 保存清单偏好
-	err = c.projectApp.SavePreference(
+	// 保存清单偏好（additive T163：响应补服务端权威 updatedAt）
+	preferenceRes, err := c.projectApp.SavePreference(
 		ctx.Request.Context(),
 		userId,
 		projectId,
@@ -641,6 +641,9 @@ func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 	Success(ctx, types.ResponseData{
 		Code:    20090,
 		Message: "保存清单偏好成功",
-		Data:    projectId,
+		Data: types.SaveProjectPreferenceRes{
+			ProjectId: projectId,
+			UpdatedAt: preferenceRes.UpdatedAt,
+		},
 	})
 }

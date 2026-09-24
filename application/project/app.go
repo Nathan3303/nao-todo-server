@@ -62,12 +62,13 @@ type ProjectApp interface {
 	) (*dto.GetProjectPreferenceRes, error)
 
 	// 保存任务清单偏好
+	// 返回保存后回读的偏好（含服务端权威 updatedAt，additive T163）
 	SavePreference(
 		ctx context.Context,
 		userId int64,
 		projectId string,
 		updateProjectPreferenceReq *dto.UpdateProjectPreferenceReq,
-	) error
+	) (*dto.GetProjectPreferenceRes, error)
 
 	// 删除已注销的任务清单（供定时任务调用）
 	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error

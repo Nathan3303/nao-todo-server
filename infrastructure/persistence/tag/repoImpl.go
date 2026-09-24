@@ -108,14 +108,15 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
-		createTagValueObject.CreatedAt, createTagValueObject.UpdatedAt,
+		createTagValueObject.CreatedAt, createTagValueObject.UpdatedAt, createTagValueObject.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {
 		return nil, types.UpsertResult{}, err
 	}
-	if outcome == types.UpsertNoop {
-		return TagModel2Entity(&existing), types.UpsertResult{Outcome: types.UpsertNoop}, nil
+	// Noop（LWW 拒）/ Stale（OCC base 不匹配）：均不写入，回传库中当前版本供客户端 rebase
+	if outcome == types.UpsertNoop || outcome == types.UpsertStale {
+		return TagModel2Entity(&existing), types.UpsertResult{Outcome: outcome}, nil
 	}
 	updateMap := CreateTagVOToUpdateMap(createTagValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now

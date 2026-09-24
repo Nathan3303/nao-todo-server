@@ -65,14 +65,15 @@ func (r *PomodoroRepoImpl) Upsert(
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
-		vo.CreatedAt, vo.UpdatedAt,
+		vo.CreatedAt, vo.UpdatedAt, vo.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {
 		return nil, types.UpsertResult{}, err
 	}
-	if outcome == types.UpsertNoop {
-		return PomodoroModel2Entity(&existing), types.UpsertResult{Outcome: types.UpsertNoop}, nil
+	// Noop（LWW 拒）/ Stale（OCC base 不匹配）：均不写入，回传库中当前版本供客户端 rebase
+	if outcome == types.UpsertNoop || outcome == types.UpsertStale {
+		return PomodoroModel2Entity(&existing), types.UpsertResult{Outcome: outcome}, nil
 	}
 	updateMap := CreatePomodoroVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now

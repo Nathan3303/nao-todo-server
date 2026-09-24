@@ -52,10 +52,22 @@ func NewSyncController(
 
 // syncOutcomeOf 将领域 upsert 判定映射为同步回执语义（唯一映射点，避免两套语义）
 func syncOutcomeOf(result domaintypes.UpsertResult) string {
-	if result.Outcome == domaintypes.UpsertNoop {
+	switch result.Outcome {
+	case domaintypes.UpsertNoop:
 		return types.SyncOutcomeNoop
+	case domaintypes.UpsertStale:
+		return types.SyncOutcomeStale
+	default:
+		return types.SyncOutcomeApplied
 	}
-	return types.SyncOutcomeApplied
+}
+
+// basePtr 返回 sync 条目 baseUpdatedAt 的指针；空串返回 nil（= 未提供，回退 LWW）
+func basePtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 // syncErrOutcome 失败条目语义：create 语义 ID 碰撞 = conflict，其余 = error
@@ -98,7 +110,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			len(req.Projects)+len(req.Tags)+len(req.Pomodoros)+len(req.PomodoroRecords)+len(req.Deletions))
 
 	for i := range req.Tasks {
-		res, upsert, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req.Tasks[i]))
+		taskReq := toCreateTaskReq(&req.Tasks[i].CreateTaskReq)
+		taskReq.BaseUpdatedAt = basePtr(req.Tasks[i].BaseUpdatedAt)
+		res, upsert, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, taskReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "tasks", Id: syncID(req.Tasks[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
@@ -106,7 +120,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		results = append(results, types.SyncResult{Table: "tasks", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.TaskCheckItems {
-		res, upsert, err := c.checkItemApp.CreateTaskCheckItem(ctx.Request.Context(), userId, toCreateTaskCheckItemReq(&req.TaskCheckItems[i]))
+		itemReq := toCreateTaskCheckItemReq(&req.TaskCheckItems[i].CreateTaskCheckItemReq)
+		itemReq.BaseUpdatedAt = basePtr(req.TaskCheckItems[i].BaseUpdatedAt)
+		res, upsert, err := c.checkItemApp.CreateTaskCheckItem(ctx.Request.Context(), userId, itemReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "taskCheckItems", Id: syncID(req.TaskCheckItems[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
@@ -114,7 +130,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		results = append(results, types.SyncResult{Table: "taskCheckItems", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.TaskComments {
-		res, upsert, err := c.commentApp.CreateTaskComment(ctx.Request.Context(), userId, toCreateTaskCommentReq(&req.TaskComments[i]))
+		commentReq := toCreateTaskCommentReq(&req.TaskComments[i].CreateTaskCommentReq)
+		commentReq.BaseUpdatedAt = basePtr(req.TaskComments[i].BaseUpdatedAt)
+		res, upsert, err := c.commentApp.CreateTaskComment(ctx.Request.Context(), userId, commentReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "taskComments", Id: syncID(req.TaskComments[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
@@ -122,7 +140,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		results = append(results, types.SyncResult{Table: "taskComments", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.Projects {
-		res, upsert, err := c.projectApp.Create(ctx.Request.Context(), userId, toCreateProjectInput(&req.Projects[i]))
+		projectReq := toCreateProjectInput(&req.Projects[i].CreateProjectReq)
+		projectReq.BaseUpdatedAt = basePtr(req.Projects[i].BaseUpdatedAt)
+		res, upsert, err := c.projectApp.Create(ctx.Request.Context(), userId, projectReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "projects", Id: syncID(req.Projects[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
@@ -130,7 +150,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		results = append(results, types.SyncResult{Table: "projects", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.Tags {
-		res, upsert, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(&req.Tags[i]))
+		tagReq := toCreateTagInput(&req.Tags[i].CreateTagReq)
+		tagReq.BaseUpdatedAt = basePtr(req.Tags[i].BaseUpdatedAt)
+		res, upsert, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, tagReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "tags", Id: syncID(req.Tags[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
@@ -138,7 +160,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		results = append(results, types.SyncResult{Table: "tags", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.Pomodoros {
-		res, upsert, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), userId, toCreatePomodoroInput(req.Pomodoros[i]))
+		pomodoroReq := toCreatePomodoroInput(req.Pomodoros[i].CreatePomodoroReq)
+		pomodoroReq.BaseUpdatedAt = basePtr(req.Pomodoros[i].BaseUpdatedAt)
+		res, upsert, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), userId, pomodoroReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "pomodoros", Id: syncID(req.Pomodoros[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue
@@ -146,7 +170,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		results = append(results, types.SyncResult{Table: "pomodoros", Id: res.Id, ServerUpdatedAt: res.UpdatedAt, Outcome: syncOutcomeOf(upsert)})
 	}
 	for i := range req.PomodoroRecords {
-		res, upsert, err := c.pomodoroApp.Create(ctx.Request.Context(), userId, toCreatePomodoroRecordInput(req.PomodoroRecords[i]))
+		recordReq := toCreatePomodoroRecordInput(req.PomodoroRecords[i].CreatePomodoroRecordReq)
+		recordReq.BaseUpdatedAt = basePtr(req.PomodoroRecords[i].BaseUpdatedAt)
+		res, upsert, err := c.pomodoroApp.Create(ctx.Request.Context(), userId, recordReq)
 		if err != nil {
 			results = append(results, types.SyncResult{Table: "pomodoroRecords", Id: syncID(req.PomodoroRecords[i].Id), Error: err.Error(), Outcome: syncErrOutcome(err)})
 			continue

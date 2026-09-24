@@ -19,6 +19,9 @@ type CreateTaskComment struct {
 	Content     string
 	Attachments []string
 	IsTopUp     bool
+
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
+	BaseUpdatedAt time.Time
 }
 
 // Validate 验证创建待办任务评论 Value Object 是否符合要求

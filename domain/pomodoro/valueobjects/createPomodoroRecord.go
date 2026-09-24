@@ -24,6 +24,9 @@ type CreatePomodoroRecord struct {
 	EndAt       types.NullableTime
 	Duration    uint16
 	Note        string
+
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
+	BaseUpdatedAt time.Time
 }
 
 // Validate 验证创建待办任务番茄工作记录值对象是否有效

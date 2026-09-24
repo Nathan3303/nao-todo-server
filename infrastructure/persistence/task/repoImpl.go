@@ -118,14 +118,15 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	existingEntity := TaskModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existingEntity.UpdatedAt,
-		createTaskValueObject.CreatedAt, createTaskValueObject.UpdatedAt,
+		createTaskValueObject.CreatedAt, createTaskValueObject.UpdatedAt, createTaskValueObject.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {
 		return nil, types.UpsertResult{}, err
 	}
-	if outcome == types.UpsertNoop {
-		return existingEntity, types.UpsertResult{Outcome: types.UpsertNoop}, nil
+	// Noop（LWW 拒）/ Stale（OCC base 不匹配）：均不写入，回传库中当前版本供客户端 rebase
+	if outcome == types.UpsertNoop || outcome == types.UpsertStale {
+		return existingEntity, types.UpsertResult{Outcome: outcome}, nil
 	}
 	updateMap := CreateTaskVOToUpdateMap(createTaskValueObject)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now（LWW 判定仍用客户端时间）
@@ -549,14 +550,15 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 	existingEntity := TaskCheckItemModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existingEntity.UpdatedAt,
-		vo.CreatedAt, vo.UpdatedAt,
+		vo.CreatedAt, vo.UpdatedAt, vo.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {
 		return nil, types.UpsertResult{}, err
 	}
-	if outcome == types.UpsertNoop {
-		return existingEntity, types.UpsertResult{Outcome: types.UpsertNoop}, nil
+	// Noop（LWW 拒）/ Stale（OCC base 不匹配）：均不写入，回传库中当前版本供客户端 rebase
+	if outcome == types.UpsertNoop || outcome == types.UpsertStale {
+		return existingEntity, types.UpsertResult{Outcome: outcome}, nil
 	}
 	updateMap := TaskCheckItemVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now
@@ -817,14 +819,15 @@ func (repo *TaskRepoImpl) UpsertComment(
 	existingEntity := TaskCommentModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existingEntity.UpdatedAt,
-		vo.CreatedAt, vo.UpdatedAt,
+		vo.CreatedAt, vo.UpdatedAt, vo.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {
 		return nil, types.UpsertResult{}, err
 	}
-	if outcome == types.UpsertNoop {
-		return existingEntity, types.UpsertResult{Outcome: types.UpsertNoop}, nil
+	// Noop（LWW 拒）/ Stale（OCC base 不匹配）：均不写入，回传库中当前版本供客户端 rebase
+	if outcome == types.UpsertNoop || outcome == types.UpsertStale {
+		return existingEntity, types.UpsertResult{Outcome: outcome}, nil
 	}
 	updateMap := TaskCommentVOToUpdateMap(vo)
 	// 服务器时间为唯一基准：覆盖写入 updated_at 用服务器 now

@@ -18,6 +18,9 @@ type CreateProject struct {
 	Name        string
 	Description string
 	SortId      uint16
+
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
+	BaseUpdatedAt time.Time
 }
 
 // Validate 验证创建项目值对象是否符合要求

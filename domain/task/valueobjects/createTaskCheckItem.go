@@ -18,6 +18,9 @@ type CreateTaskCheckItem struct {
 	Description string
 	IsDone      bool
 	SortId      uint16
+
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
+	BaseUpdatedAt time.Time
 }
 
 // Validate 验证创建任务检查项值对象是否有效

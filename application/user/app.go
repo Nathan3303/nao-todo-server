@@ -57,7 +57,8 @@ type UserApp interface {
 	GetConfig(ctx context.Context, userId int64) (*dto.GetConfigOutput, error)
 
 	// UpdateConfig 更新用户配置
-	UpdateConfig(ctx context.Context, userId int64, req dto.UpdateConfigInput) error
+	// 返回更新后回读的配置（含服务端权威 updatedAt，additive T163）
+	UpdateConfig(ctx context.Context, userId int64, req dto.UpdateConfigInput) (*dto.GetConfigOutput, error)
 
 	// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
 	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error

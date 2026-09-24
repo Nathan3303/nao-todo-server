@@ -57,6 +57,13 @@ type GetUserConfigRes struct {
 	UpdatedAt string `json:"updatedAt"`
 }
 
+// UpdateUserConfigRes 更新用户配置响应
+// additive（2026-09-24 T163）：补服务端权威 updatedAt（RFC3339Milli，与 GET /user/config 同格式），
+// 供客户端推送成功后立即落 per-row OCC base。
+type UpdateUserConfigRes struct {
+	UpdatedAt string `json:"updatedAt"`
+}
+
 // UpdateUserConfigReq 更新用户配置请求
 // Appearance / Preferences 均可选：未携带表示不修改对应字段
 // Preferences 为全量快照（客户端推送时装配），仅走 JSON 绑定

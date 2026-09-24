@@ -27,6 +27,8 @@ type CreatePomodoroRecordReq struct {
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
+	BaseUpdatedAt *string
 }
 
 // CreatePomodoroRecordRes 创建番茄工作记录出参
@@ -80,6 +82,8 @@ type CreatePomodoroReq struct {
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
 	DeletedAt   *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
+	BaseUpdatedAt *string
 }
 
 // PomodoroRes 常用番茄工作出参

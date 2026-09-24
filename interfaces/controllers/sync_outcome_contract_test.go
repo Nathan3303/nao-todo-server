@@ -171,6 +171,7 @@ func TestSyncPushOutcome_AllBranches(t *testing.T) {
 	}{
 		{"覆盖/新建 → applied", domaintypes.UpsertResult{Outcome: domaintypes.UpsertOverwrite, Created: true}, nil, types.SyncOutcomeApplied, false},
 		{"LWW 拒绝 → noop", domaintypes.UpsertResult{Outcome: domaintypes.UpsertNoop}, nil, types.SyncOutcomeNoop, false},
+		{"OCC base 不匹配 → stale", domaintypes.UpsertResult{Outcome: domaintypes.UpsertStale}, nil, types.SyncOutcomeStale, false},
 		{"ID 碰撞 → conflict", domaintypes.UpsertResult{}, domerr.ErrIDConflict, types.SyncOutcomeConflict, true},
 		{"其他失败 → error", domaintypes.UpsertResult{}, errors.New("boom"), types.SyncOutcomeError, true},
 	}
@@ -193,6 +194,27 @@ func TestSyncPushOutcome_AllBranches(t *testing.T) {
 				t.Fatalf("成功分支 error = %q, want 空", r.Error)
 			}
 		})
+	}
+}
+
+// TestSyncPushOutcome_StaleCarriesServerUpdatedAt stale 必须回传库中当前版本
+// （ADR §9.1.3：供客户端 rebase，缺此字段则无法以新 base 重推）。
+func TestSyncPushOutcome_StaleCarriesServerUpdatedAt(t *testing.T) {
+	app := &fakeTaskApp{upsert: domaintypes.UpsertResult{Outcome: domaintypes.UpsertStale}}
+	c := NewSyncController(app, nil, nil, nil, nil, nil)
+	got := pushSync(t, c, taskOnlyBody)
+	if len(got.Results) != 1 {
+		t.Fatalf("results 条数 = %d, want 1", len(got.Results))
+	}
+	r := got.Results[0]
+	if r.Outcome != types.SyncOutcomeStale {
+		t.Fatalf("outcome = %q, want %q", r.Outcome, types.SyncOutcomeStale)
+	}
+	if r.ServerUpdatedAt == "" {
+		t.Fatal("stale 必须携带 serverUpdatedAt（库中当前版本，供客户端 rebase）")
+	}
+	if r.Error != "" {
+		t.Fatalf("stale 非错误，error 应为空, got %q", r.Error)
 	}
 }
 

@@ -74,6 +74,89 @@ func TestSyncPushContract_ClientTaskFieldsExpressible(t *testing.T) {
 	}
 }
 
+// TestSyncPushContract_BaseUpdatedAtNotInSharedCreateReq C-44：OCC base 字段只存在于
+// sync 专用条目，不得污染共享 create DTO（create REST 的 JSON 契约不变）。
+func TestSyncPushContract_BaseUpdatedAtNotInSharedCreateReq(t *testing.T) {
+	for _, shared := range []reflect.Type{
+		reflect.TypeOf(types.CreateTaskReq{}),
+		reflect.TypeOf(types.CreateTaskCheckItemReq{}),
+		reflect.TypeOf(types.CreateTaskCommentReq{}),
+		reflect.TypeOf(types.CreateProjectReq{}),
+		reflect.TypeOf(types.CreateTagReq{}),
+		reflect.TypeOf(types.CreatePomodoroReq{}),
+		reflect.TypeOf(types.CreatePomodoroRecordReq{}),
+	} {
+		if _, ok := jsonTagSet(shared)["baseUpdatedAt"]; ok {
+			t.Fatalf("共享 create DTO %s 不应含 baseUpdatedAt（C-44）", shared.Name())
+		}
+	}
+	syncItems := map[string]reflect.Type{
+		"tasks":           reflect.TypeOf(types.SyncTaskPushItem{}),
+		"taskCheckItems":  reflect.TypeOf(types.SyncCheckItemPushItem{}),
+		"taskComments":    reflect.TypeOf(types.SyncCommentPushItem{}),
+		"projects":        reflect.TypeOf(types.SyncProjectPushItem{}),
+		"tags":            reflect.TypeOf(types.SyncTagPushItem{}),
+		"pomodoros":       reflect.TypeOf(types.SyncPomodoroPushItem{}),
+		"pomodoroRecords": reflect.TypeOf(types.SyncPomodoroRecordPushItem{}),
+	}
+	for table, typ := range syncItems {
+		if _, ok := jsonTagSet(typ)["baseUpdatedAt"]; !ok {
+			t.Fatalf("sync 条目 %s 缺少 baseUpdatedAt", table)
+		}
+	}
+}
+
+// TestSyncPushContract_BaseUpdatedAtBindingEndToEnd baseUpdatedAt 经 JSON 绑定 → app DTO → VO
+// 全链透传（防中途丢弃导致 OCC 静默回退 LWW）。
+func TestSyncPushContract_BaseUpdatedAtBindingEndToEnd(t *testing.T) {
+	const baseStr = "2026-09-24T10:00:00.123Z"
+	payload := `{"tasks":[{"id":"9001","name":"任务","state":"pending","priority":"medium",` +
+		`"baseUpdatedAt":"` + baseStr + `"}]}`
+	var req types.SyncPushReq
+	if err := json.Unmarshal([]byte(payload), &req); err != nil {
+		t.Fatalf("绑定 sync push: %v", err)
+	}
+	if got := req.Tasks[0].BaseUpdatedAt; got != baseStr {
+		t.Fatalf("baseUpdatedAt 绑定 = %q, want %q", got, baseStr)
+	}
+	appReq := toCreateTaskReq(&req.Tasks[0].CreateTaskReq)
+	appReq.BaseUpdatedAt = basePtr(req.Tasks[0].BaseUpdatedAt)
+	vo, err := taskApp.CreateTaskReqToValueObject(1001, appReq)
+	if err != nil {
+		t.Fatalf("CreateTaskReqToValueObject: %v", err)
+	}
+	want, _ := time.Parse(time.RFC3339Nano, baseStr)
+	if !vo.BaseUpdatedAt.Equal(want) {
+		t.Fatalf("VO.BaseUpdatedAt = %v, want %v", vo.BaseUpdatedAt, want)
+	}
+}
+
+// TestSyncPushContract_BaseUpdatedAtMissingFallsBack base 缺失/空串 ⇒ app DTO 为 nil ⇒
+// VO 零值（回退现行 LWW，向后兼容）。
+func TestSyncPushContract_BaseUpdatedAtMissingFallsBack(t *testing.T) {
+	for _, body := range []string{
+		`{"tasks":[{"name":"t","state":"pending","priority":"medium"}]}`,
+		`{"tasks":[{"name":"t","state":"pending","priority":"medium","baseUpdatedAt":""}]}`,
+	} {
+		var req types.SyncPushReq
+		if err := json.Unmarshal([]byte(body), &req); err != nil {
+			t.Fatalf("绑定 sync push: %v", err)
+		}
+		appReq := toCreateTaskReq(&req.Tasks[0].CreateTaskReq)
+		appReq.BaseUpdatedAt = basePtr(req.Tasks[0].BaseUpdatedAt)
+		if appReq.BaseUpdatedAt != nil {
+			t.Fatalf("base 缺失/空串应回退 nil, got %q", *appReq.BaseUpdatedAt)
+		}
+		vo, err := taskApp.CreateTaskReqToValueObject(1001, appReq)
+		if err != nil {
+			t.Fatalf("CreateTaskReqToValueObject: %v", err)
+		}
+		if !vo.BaseUpdatedAt.IsZero() {
+			t.Fatalf("base 缺失/空串应得零值, got %v", vo.BaseUpdatedAt)
+		}
+	}
+}
+
 // TestSyncPushContract_StatusTimestampBindingEndToEnd 状态时间戳经 sync push
 // JSON 绑定 → 接口层转换 → 应用层 VO 全链透传（防再次中途丢弃）。
 func TestSyncPushContract_StatusTimestampBindingEndToEnd(t *testing.T) {
@@ -86,7 +169,7 @@ func TestSyncPushContract_StatusTimestampBindingEndToEnd(t *testing.T) {
 	if len(req.Tasks) != 1 {
 		t.Fatalf("tasks 条数 = %d, want 1", len(req.Tasks))
 	}
-	vo, err := taskApp.CreateTaskReqToValueObject(1001, toCreateTaskReq(&req.Tasks[0]))
+	vo, err := taskApp.CreateTaskReqToValueObject(1001, toCreateTaskReq(&req.Tasks[0].CreateTaskReq))
 	if err != nil {
 		t.Fatalf("CreateTaskReqToValueObject: %v", err)
 	}

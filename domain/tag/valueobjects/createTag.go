@@ -18,6 +18,9 @@ type CreateTag struct {
 	Description string
 	Color       string
 	SortId      uint16
+
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
+	BaseUpdatedAt time.Time
 }
 
 // Validate 校验创建标签值对象

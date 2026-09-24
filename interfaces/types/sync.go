@@ -9,16 +9,55 @@ type SyncDeletion struct {
 }
 
 // SyncPushReq 批量推送请求
-// 各表条目复用对应资源的 create 请求结构（可携带 id/createdAt/updatedAt 同步元数据）
+// 各表条目为 sync 专用类型：嵌入对应资源的 create 请求结构（同形）+ additive `baseUpdatedAt`（OCC）。
+// ⛔ 不直接复用共享 CreateXxxReq —— 避免把 OCC 字段污染 create REST 的 JSON 契约（C-44）。
 type SyncPushReq struct {
-	Tasks           []CreateTaskReq           `json:"tasks"`
-	TaskCheckItems  []CreateTaskCheckItemReq  `json:"taskCheckItems"`
-	TaskComments    []CreateTaskCommentReq    `json:"taskComments"`
-	Projects        []CreateProjectReq        `json:"projects"`
-	Tags            []CreateTagReq            `json:"tags"`
-	Pomodoros       []CreatePomodoroReq       `json:"pomodoros"`
-	PomodoroRecords []CreatePomodoroRecordReq `json:"pomodoroRecords"`
-	Deletions       []SyncDeletion            `json:"deletions"`
+	Tasks           []SyncTaskPushItem           `json:"tasks"`
+	TaskCheckItems  []SyncCheckItemPushItem      `json:"taskCheckItems"`
+	TaskComments    []SyncCommentPushItem        `json:"taskComments"`
+	Projects        []SyncProjectPushItem        `json:"projects"`
+	Tags            []SyncTagPushItem            `json:"tags"`
+	Pomodoros       []SyncPomodoroPushItem       `json:"pomodoros"`
+	PomodoroRecords []SyncPomodoroRecordPushItem `json:"pomodoroRecords"`
+	Deletions       []SyncDeletion               `json:"deletions"`
+}
+
+// 以下 sync 专用条目类型：JSON 层与共享 CreateXxxReq 同形 + 可选 baseUpdatedAt（纯追加）。
+// BaseUpdatedAt 为客户端持有的服务端版本快照（RFC3339Milli）；缺失/空 ⇒ 回退现行 LWW（向后兼容）。
+
+type SyncTaskPushItem struct {
+	CreateTaskReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+}
+
+type SyncCheckItemPushItem struct {
+	CreateTaskCheckItemReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+}
+
+type SyncCommentPushItem struct {
+	CreateTaskCommentReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+}
+
+type SyncProjectPushItem struct {
+	CreateProjectReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+}
+
+type SyncTagPushItem struct {
+	CreateTagReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+}
+
+type SyncPomodoroPushItem struct {
+	CreatePomodoroReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+}
+
+type SyncPomodoroRecordPushItem struct {
+	CreatePomodoroRecordReq
+	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
 }
 
 // SyncResult 单条推送结果
@@ -31,6 +70,7 @@ type SyncResult struct {
 	// Outcome 本条推送的服务端判定：
 	//   applied  = 服务端已写入（新建 / 墓碑复活 / 覆盖）
 	//   noop     = 服务端判定请求更旧，未写入，返回库中当前版本（被服务端现有版本覆盖）
+	//   stale    = OCC base 不匹配，未写入，返回库中当前版本（additive，2026-09-24 T163；与 conflict 语义区分）
 	//   conflict = create 语义 ID 碰撞（同时 error 非空）
 	//   skipped  = 服务端忽略该条（如只追加资源不支持删除）
 	//   error    = 处理失败（同时 error 非空）
@@ -45,6 +85,7 @@ type SyncResult struct {
 const (
 	SyncOutcomeApplied  = "applied"
 	SyncOutcomeNoop     = "noop"
+	SyncOutcomeStale    = "stale"
 	SyncOutcomeConflict = "conflict"
 	SyncOutcomeSkipped  = "skipped"
 	SyncOutcomeError    = "error"

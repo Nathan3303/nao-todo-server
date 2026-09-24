@@ -470,7 +470,8 @@ func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 		})
 		return
 	}
-	err = c.userApp.UpdateConfig(ctx.Request.Context(), userId, toUpdateConfigInput(req))
+	// additive T163：响应补服务端权威 updatedAt（供客户端推送成功后落 per-row OCC base）
+	output, err := c.userApp.UpdateConfig(ctx.Request.Context(), userId, toUpdateConfigInput(req))
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    10123,
@@ -479,5 +480,9 @@ func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 		})
 		return
 	}
-	Success(ctx, types.ResponseData{Code: 10120, Message: "更新用户配置成功"})
+	Success(ctx, types.ResponseData{
+		Code:    10120,
+		Message: "更新用户配置成功",
+		Data:    types.UpdateUserConfigRes{UpdatedAt: output.UpdatedAt},
+	})
 }

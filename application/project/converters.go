@@ -34,6 +34,11 @@ func CreateProjectReqToValueObject(
 	createProjectValueObject.CreatedAt = createdAt
 	createProjectValueObject.UpdatedAt = updatedAt
 	createProjectValueObject.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	createProjectValueObject.BaseUpdatedAt = baseUpdatedAt
 	return createProjectValueObject, nil
 }
 

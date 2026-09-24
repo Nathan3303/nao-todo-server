@@ -383,31 +383,39 @@ func (app *projectAppImpl) GetPreference(
 // @param userId 用户 ID
 // @param projectId 任务清单 ID
 // @param req 更新任务清单偏好请求体
-// @return *dto.UpdateProjectPreferenceRes 更新任务清单偏好响应体
+// @return *dto.GetProjectPreferenceRes 保存后回读的清单偏好（含服务端权威 updatedAt）
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) SavePreference(
 	ctx context.Context,
 	userId int64,
 	projectId string,
 	updateProjectPreferenceReq *dto.UpdateProjectPreferenceReq,
-) error {
+) (*dto.GetProjectPreferenceRes, error) {
 	// 获取清单 ID
 	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return domerr.ErrInvalidProjectID
+		return nil, domerr.ErrInvalidProjectID
 	}
 	// 请求体转换实体
 	saveProjectPreferenceValueObject, err := UpdateProjectPreferenceReqToValueObject(
 		updateProjectPreferenceReq,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// 更新清单偏好
-	return app.preferenceRepo.Save(
+	if err := app.preferenceRepo.Save(
 		ctx,
 		userId,
 		projectIdInt64,
 		saveProjectPreferenceValueObject,
-	)
+	); err != nil {
+		return nil, err
+	}
+	// 回读服务端权威 updatedAt（additive T163，与 GET 同一转换器 ⇒ 同格式）
+	projectPreferenceEntity, err := app.preferenceRepo.Get(ctx, userId, projectIdInt64)
+	if err != nil {
+		return nil, err
+	}
+	return ProjectPreferenceEntityToGetRes(projectPreferenceEntity), nil
 }

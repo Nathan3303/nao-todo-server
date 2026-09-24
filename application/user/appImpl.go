@@ -271,17 +271,23 @@ func (u *userAppImpl) GetConfig(ctx context.Context, userId int64) (*dto.GetConf
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param req 更新用户配置请求
+// @return *dto.GetConfigOutput 更新后回读的配置（含服务端权威 updatedAt）
 // @return error 错误
 func (u *userAppImpl) UpdateConfig(
 	ctx context.Context, userId int64, req dto.UpdateConfigInput,
-) error {
+) (*dto.GetConfigOutput, error) {
 	err := u.userRepo.UpdateConfig(
 		ctx,
 		domaintypes.UserID(userId),
 		valueobjects.NewUpdateUserConfig(req.Appearance, req.Preferences),
 	)
 	if err != nil {
-		return fmt.Errorf("user.UpdateConfig: %w", err)
+		return nil, fmt.Errorf("user.UpdateConfig: %w", err)
 	}
-	return nil
+	// 回读服务端权威 updatedAt（additive T163，与 GET 同一转换器 ⇒ 同格式）
+	config, err := u.userRepo.GetConfig(ctx, domaintypes.UserID(userId))
+	if err != nil {
+		return nil, fmt.Errorf("user.GetConfig: %w", err)
+	}
+	return ConfigEntity2Res(config), nil
 }

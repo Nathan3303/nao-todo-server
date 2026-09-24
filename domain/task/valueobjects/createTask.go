@@ -14,6 +14,7 @@ type CreateTask struct {
 	Id             int64
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	BaseUpdatedAt  time.Time // OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
 	DeletedAt      types.NullableTime
 	ParentTaskId   types.TaskID
 	Name           string

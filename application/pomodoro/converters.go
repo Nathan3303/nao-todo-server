@@ -57,6 +57,11 @@ func CreatePomodoroRecordReqToVO(
 	vo.Id = id
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
 	return vo, nil
 }
 
@@ -198,6 +203,11 @@ func CreatePomodoroReqToVO(
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt
 	vo.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
 	return vo, nil
 }
 

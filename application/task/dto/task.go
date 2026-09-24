@@ -57,6 +57,8 @@ type CreateTaskReq struct {
 	CreatedAt      *string  // 同步元数据：客户端预置 createdAt
 	UpdatedAt      *string  // 同步元数据：客户端预置 updatedAt
 	DeletedAt      *string  // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
+	BaseUpdatedAt *string
 }
 
 // UpdateTaskReq 更新任务入参
@@ -152,6 +154,8 @@ type CreateTaskCheckItemReq struct {
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
+	BaseUpdatedAt *string
 	IsDone      bool    // 是否已完成（可选，默认 false；push 同步时更新完成状态）
 	SortId      uint16  // 排序值（可选，默认 0 由服务端自动生成；push 同步时保持排序）
 }
@@ -224,6 +228,8 @@ type CreateTaskCommentReq struct {
 	Id        *string // 同步元数据：客户端预置 id
 	CreatedAt *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt *string // 同步元数据：客户端预置 updatedAt
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
+	BaseUpdatedAt *string
 }
 
 // UpdateTaskCommentReq 更新任务评论入参
