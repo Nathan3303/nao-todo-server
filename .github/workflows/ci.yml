@@ -1,5 +1,9 @@
 # 服务端门禁（T202）：build/vet/unit + 真实 MySQL/Redis 集成测试
-# 约定：Go 1.27（与本地一致）· 不使用 golangci-lint（v1.64.8 解析不了 go1.27 导出数据）
+# 约定：Go 1.27（与本地一致）
+# T205：新增 golangci-lint v2.14.0（与本地同版本，官方二进制由 go1.27.0 构建）。
+#       老仓首次全量跑有 124 条存量发现（按 linter 分组见 T205 回执），故先 **report-only**：
+#       该步骤 continue-on-error，只输出结果、不阻断；build/vet/unit 与 integration 仍是唯一的必需检查。
+#       存量清扫单落地后，再去掉 continue-on-error（或改为 only-new-issues）转为阻断。
 # 集成测试口径固定 -p 1：多个包的 TestMain 会各自 AutoMigrate 同一测试库，并行必竞态
 name: CI
 
@@ -43,6 +47,16 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
+      # T205：report-only（非阻断）。continue-on-error 保证存量 lint 发现不会把
+      # build/vet/unit 这个必需检查变红；发现数仍完整打印在日志里。
+      - name: golangci-lint (report-only)
+        continue-on-error: true
+        uses: golangci/golangci-lint-action@v9
+        with:
+          # 与本地实测版本一致（v2.14.0，built with go1.27.0）
+          version: v2.14.0
+          # 保留 v1 配置里的 run.timeout: 5m 意图（v2 schema 已移除该字段）
+          args: --timeout=5m
 
   integration:
     name: integration
