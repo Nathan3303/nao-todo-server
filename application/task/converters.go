@@ -1,118 +1,560 @@
 package task
 
 import (
+	"fmt"
+	"strings"
+
+	"naotodoserver/application/idutil"
+	"naotodoserver/application/task/dto"
+	"naotodoserver/conf"
 	"naotodoserver/domain/task/entities"
-	"naotodoserver/domain/task/vo"
-	"naotodoserver/infrastructure/utils"
-	"naotodoserver/interfaces/types"
-	"strconv"
+	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 	"time"
 )
 
-var TodoStateMap = map[string]int8{
-	"todo":        1,
-	"in-progress": 2,
-	"done":        3,
-}
-
-var TodoStateMapReverse = map[int8]string{
-	1: "todo",
-	2: "in-progress",
-	3: "done",
-}
-
-var TodoPriorityMap = map[string]int8{
-	"low":    1,
-	"medium": 2,
-	"high":   3,
-	"urgent": 4,
-}
-
-var TodoPriorityMapReverse = map[int8]string{
-	1: "low",
-	2: "medium",
-	3: "high",
-	4: "urgent",
-}
-
-func TaskEntity2Res(e *entities.Task) *types.TaskRes {
-	res := &types.TaskRes{}
-	res.Id = strconv.FormatInt(e.Id, 10)
-	res.ProjectId = strconv.FormatInt(e.ProjectId, 10)
-	res.Name = e.Name
-	res.Description = e.Description
-	res.State = TodoStateMapReverse[e.State]
-	res.Priority = TodoPriorityMapReverse[e.Priority]
-	res.StartAt = e.GetFormatedStartAt()
-	res.EndAt = e.GetFormatedEndAt()
-	res.ArchivedAt, res.IsArchived = e.ParseArchivedAt()
-	res.StarMarkAt, res.IsStarMarked = e.ParseStarMarkAt()
-	res.GivenUpAt, res.IsGivenUp = e.ParseGivenUpAt()
-	res.Tags = e.Tags
-	res.UpdatedAt = e.GetFormatedUpdatedAt()
-	res.CreatedAt = e.GetFormatedCreatedAt()
-	res.DeletedAt, res.IsDeleted = e.GetFormatedDeletedAt()
+// TaskEntityToGetRes 任务实体转换为获取任务响应
+func TaskEntityToGetRes(taskEntity *entities.Task) *dto.GetTaskRes {
+	res := &dto.GetTaskRes{}
+	res.Id = idutil.FormatID(taskEntity.Id)
+	res.UpdatedAt = taskEntity.UpdatedAt.Format(idutil.RFC3339Milli)
+	res.CreatedAt = taskEntity.CreatedAt.Format(time.RFC3339)
+	res.DeletedAt = taskEntity.DeletedAt.ToString(time.RFC3339)
+	res.ParentTaskId = idutil.FormatID(taskEntity.ParentTaskId)
+	if taskEntity.ParentTaskId == 0 {
+		res.ParentTaskId = ""
+	}
+	res.Name = taskEntity.Name
+	res.Description = taskEntity.Description
+	res.State = taskEntity.State.String()
+	res.Priority = taskEntity.Priority.String()
+	res.StartAt = taskEntity.StartAt.ToString(time.RFC3339)
+	res.EndAt = taskEntity.EndAt.ToString(time.RFC3339)
+	res.ProjectId = idutil.FormatID(taskEntity.ProjectId)
+	res.Tags = taskEntity.Tags
+	res.ArchivedAt = taskEntity.ArchivedAt.ToString(time.RFC3339)
+	res.StarMarkAt = taskEntity.StarMarkAt.ToString(time.RFC3339)
+	res.GivenUpAt = taskEntity.GivenUpAt.ToString(time.RFC3339)
+	res.RemindAt = taskEntity.RemindAt.ToString(time.RFC3339)
+	res.RemindRepeat = entities.RemindRepeat(taskEntity.RemindRepeat).String()
+	res.RemindTime = taskEntity.RemindTime
+	res.RemindWeekdays = entities.BitmaskToWeekdays(taskEntity.RemindWeekdays)
+	res.SortId = taskEntity.SortId
+	res.CheckItemCount = taskEntity.CheckItemCount
+	res.CommentCount = taskEntity.CommentCount
+	res.SubtaskCount = taskEntity.SubtaskCount
 	return res
 }
 
-func CreateTaskReq2Entity(req *types.CreateTaskReq) *entities.Task {
-	e := &entities.Task{}
-	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	e.Name = req.Name
-	e.Description = req.Description
-	e.State = TodoStateMap[req.State]
-	e.Priority = TodoPriorityMap[req.Priority]
-	e.StartAt = utils.DateString2TimePtr(req.StartAt)
-	e.EndAt = utils.DateString2TimePtr(req.EndAt)
-	e.Tags = req.Tags
-	return e
-}
-
-func UpdateTaskReq2Entity(req *types.UpdateTaskReq) *entities.Task {
-	e := &entities.Task{}
-	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	e.Name = req.Name
-	e.Description = req.Description
-	e.State = TodoStateMap[req.State]
-	e.Priority = TodoPriorityMap[req.Priority]
-	e.StartAt = utils.DateString2TimePtr(req.StartAt)
-	e.EndAt = utils.DateString2TimePtr(req.EndAt)
-	e.Tags = req.Tags
-	if req.IsStarMarked {
-		*e.StarMarkAt = time.Now()
+// CreateTaskReqToValueObject 创建任务请求转换为创建任务值对象
+// @param userId 用户 ID
+// @param req 创建任务请求
+// @return 创建任务值对象
+// @error 错误
+func CreateTaskReqToValueObject(
+	userId int64,
+	req *dto.CreateTaskReq,
+) (*valueobjects.CreateTask, error) {
+	parentTaskIdInt64, err := idutil.ParseID(req.ParentTaskId)
+	if err != nil {
+		parentTaskIdInt64 = 0
 	}
-	return e
+	var projectIdInt64 int64
+	if req.ProjectId == "" {
+		projectIdInt64 = userId
+	} else {
+		projectIdInt64, err = idutil.ParseID(req.ProjectId)
+		if err != nil {
+			return nil, err
+		}
+	}
+	state, _ := entities.ParseTaskState(req.State)
+	priority, _ := entities.ParseTaskPriority(req.Priority)
+	remindRepeat, _ := entities.ParseRemindRepeat(req.RemindRepeat)
+	vo, err := valueobjects.NewCreateTask(
+		domaintypes.TaskID(parentTaskIdInt64),
+		req.Name,
+		req.Description,
+		state,
+		priority,
+		req.StartAt,
+		req.EndAt,
+		domaintypes.ProjectID(projectIdInt64),
+		req.Tags,
+		req.ArchivedAt,
+		req.StarMarkAt,
+		req.GivenUpAt,
+		req.RemindAt,
+		uint8(remindRepeat),
+		req.RemindTime,
+		entities.WeekdaysToBitmask(req.RemindWeekdays),
+	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	vo.DeletedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeletedAt)
+	vo.SortId = req.SortId
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
+	return vo, nil
 }
 
-func ListTaskReq2Entity(req *types.ListTaskReq) *entities.Task {
-	e := &entities.Task{}
-	e.ProjectId, _ = strconv.ParseInt(req.ProjectId, 10, 64)
-	e.Name = req.Name
-	e.Description = req.Description
-	e.State = TodoStateMap[req.State]
-	e.Priority = TodoPriorityMap[req.Priority]
-	e.StartAt = utils.DateString2TimePtr(req.StartAt)
-	e.EndAt = utils.DateString2TimePtr(req.EndAt)
-	e.DeletedAt = utils.DateString2Time(req.DeletedAt)
-	return e
+// UpdateTaskReqToValueObject 更新任务请求转换为更新任务值对象
+// @param userId 用户 ID
+// @param req 更新任务请求
+// @return 更新任务值对象
+// @error 错误
+func UpdateTaskReqToValueObject(
+	userId int64,
+	req *dto.UpdateTaskReq,
+) (*valueobjects.UpdateTask, error) {
+	var iParentId, iProjectId *int64
+	var iState *entities.TaskState
+	var iPriority *entities.TaskPriority
+	var iRemindRepeat *uint8
+	var iRemindWeekdays *uint8
+	if req.ParentTaskId != nil {
+		iParentIdValue, _ := idutil.ParseID(*req.ParentTaskId)
+		iParentId = &iParentIdValue
+	}
+	if req.ProjectId != nil {
+		// 空串（清除）与字面量 inbox 均归一为默认收件箱（= userId），与 create 路径一致；
+		// null/缺省（nil）到此分支外 = 不改该列。
+		if *req.ProjectId == "" || *req.ProjectId == "inbox" {
+			iProjectId = &userId
+		} else {
+			iProjectIdValue, _ := idutil.ParseID(*req.ProjectId)
+			iProjectId = &iProjectIdValue
+		}
+	}
+	if req.State != nil {
+		iStateValue, _ := entities.ParseTaskState(*req.State)
+		iState = &iStateValue
+	}
+	if req.Priority != nil {
+		iPriorityValue, _ := entities.ParseTaskPriority(*req.Priority)
+		iPriority = &iPriorityValue
+	}
+	if req.RemindRepeat != nil {
+		remindRepeat, _ := entities.ParseRemindRepeat(*req.RemindRepeat)
+		iRemindRepeatValue := uint8(remindRepeat)
+		iRemindRepeat = &iRemindRepeatValue
+	}
+	if req.RemindWeekdays != nil {
+		iRemindWeekdaysValue := entities.WeekdaysToBitmask(req.RemindWeekdays)
+		iRemindWeekdays = &iRemindWeekdaysValue
+	}
+	vo, err := valueobjects.NewUpdateTask(
+		0,
+		iParentId,
+		req.Name,
+		req.Description,
+		iState,
+		iPriority,
+		req.StartAt,
+		req.EndAt,
+		iProjectId,
+		req.Tags,
+		req.ArchivedAt,
+		req.StarMarkAt,
+		req.GivenUpAt,
+		nil,
+		req.RemindAt,
+		iRemindRepeat,
+		req.RemindTime,
+		iRemindWeekdays,
+		req.SortId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
 }
 
-func TaskEntities2Reses(e []*entities.Task) []*types.TaskRes {
-	reses := make([]*types.TaskRes, 0, len(e))
-	for _, item := range e {
-		reses = append(reses, TaskEntity2Res(item))
+// splitProjectIds 解析 projectId 逗号多值（组内 OR）：逐段 ParseID（snowflake），
+// 保留字面量 inbox 段（解析为默认收件箱 = userId）；非法段静默跳过；
+// 参数非空但无任何合法段时返回错误，避免"静默降级成不过滤"掩盖脏 id。
+func splitProjectIds(raw string, userId int64) ([]int64, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	seen := make(map[int64]struct{})
+	ids := make([]int64, 0, 4)
+	for _, seg := range strings.Split(raw, ",") {
+		seg = strings.TrimSpace(seg)
+		if seg == "" {
+			continue
+		}
+		var id int64
+		if seg == "inbox" {
+			id = userId
+		} else {
+			v, err := idutil.ParseID(seg)
+			if err != nil {
+				continue
+			}
+			id = v
+		}
+		if id <= 0 {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("projectId 参数无效: %q", raw)
+	}
+	return ids, nil
+}
+
+// splitTagIds 解析 tagId 逗号多值（组内 OR）：纯字符串子串匹配，无需解析；去空去重。
+func splitTagIds(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	ids := make([]string, 0, 4)
+	for _, seg := range strings.Split(raw, ",") {
+		seg = strings.TrimSpace(seg)
+		if seg == "" {
+			continue
+		}
+		if _, dup := seen[seg]; dup {
+			continue
+		}
+		seen[seg] = struct{}{}
+		ids = append(ids, seg)
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	return ids
+}
+
+// ListTaskReqToQueryTaskValueObject 列表任务请求转换为查询任务值对象
+// @param userId 用户 ID
+// @param req 列表任务请求
+// @return 查询任务值对象
+// @error 错误
+func ListTaskReqToQueryTaskValueObject(
+	userId int64,
+	req *dto.ListTaskReq,
+) (*valueobjects.QueryTask, error) {
+	projectIds, err := splitProjectIds(req.ProjectId, userId)
+	if err != nil {
+		return nil, err
+	}
+	tagIds := splitTagIds(req.TagId)
+	parentTaskIdInt64, _ := idutil.ParseID(req.ParentTaskId)
+	vo, err := valueobjects.NewQueryTask(
+		userId,
+		parentTaskIdInt64,
+		projectIds,
+		tagIds,
+		req.Name,
+		req.Description,
+		req.State,
+		req.Priority,
+		req.StartAt,
+		req.EndAt,
+		req.DeletedAt,
+		req.ArchivedAt,
+		req.StarMarkAt,
+		req.GivenUpAt,
+		req.IsDeleted,
+		req.IsArchived,
+		req.IsStarMarked,
+		req.IsGivenUp,
+		req.Page,
+		req.Limit,
+		req.RelativeDate,
+		req.Sort,
+	)
+	if err != nil {
+		return nil, err
+	}
+	cursor, err := idutil.ParseUpdatedAtCursor(req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.UpdatedAt = cursor
+	return vo, nil
+}
+
+// TaskEntitiesToGetReses 任务实体转换为获取任务响应列表
+// @param taskEntities 任务实体列表
+// @return 任务响应列表
+func TaskEntitiesToGetReses(taskEntities []*entities.Task) []*dto.GetTaskRes {
+	reses := make([]*dto.GetTaskRes, 0, len(taskEntities))
+	for _, item := range taskEntities {
+		reses = append(reses, TaskEntityToGetRes(item))
 	}
 	return reses
 }
 
-func PaginationVO2Res(pagination *vo.Pagination) *types.Pagination {
-	res := &types.Pagination{}
-	res.Page = pagination.Page
-	res.Limit = pagination.Limit
-	res.Total = pagination.Total
-	res.MaxPage = int(pagination.Total / int64(pagination.Limit))
-	if pagination.Total%int64(pagination.Limit) > 0 {
-		res.MaxPage++
+// PaginationValueObjectToRes 分页值对象转换为分页响应
+// @param paginationValueObject 分页值对象
+// @return 分页响应
+func PaginationValueObjectToRes(paginationValueObject *valueobjects.Pagination) *dto.Pagination {
+	paginationValueObject.CalcMaxPage()
+	return &dto.Pagination{
+		Page:    paginationValueObject.Page,
+		Limit:   paginationValueObject.Limit,
+		Total:   paginationValueObject.Total,
+		MaxPage: paginationValueObject.MaxPage,
+	}
+}
+
+// --- TaskCheckItem converters ---
+
+// TaskCheckItemEntityToGetRes 任务检查项实体转换为获取任务检查项响应
+// @param e 任务检查项实体
+// @return 任务检查项响应
+func TaskCheckItemEntityToGetRes(e *entities.TaskCheckItem) *dto.GetTaskCheckItemRes {
+	var res dto.GetTaskCheckItemRes
+	res.Id = idutil.FormatID(e.Id)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.TaskId = idutil.FormatID(e.TaskId)
+	res.Name = e.Name
+	res.Description = e.Description
+	res.IsDone = e.IsDone
+	res.SortId = e.SortId
+	return &res
+}
+
+// CreateTaskCheckItemReqToVO 创建任务检查项请求转换为创建任务检查项值对象
+// @param userId 用户 ID
+// @param req 创建任务检查项请求
+// @return 创建任务检查项值对象
+// @error 错误
+func CreateTaskCheckItemReqToVO(
+	userId int64,
+	req *dto.CreateTaskCheckItemReq,
+) (*valueobjects.CreateTaskCheckItem, error) {
+	taskId, err := idutil.ParseID(req.TaskId)
+	if err != nil {
+		return nil, err
+	}
+	vo, err := valueobjects.NewCreateTaskCheckItem(
+		userId,
+		taskId,
+		req.Name,
+		req.Description,
+	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	vo.IsDone = req.IsDone
+	vo.SortId = req.SortId
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
+	return vo, nil
+}
+
+// TaskCheckItemEntityToCreateRes 任务检查项实体转换为创建任务检查项响应
+// @param e 任务检查项实体
+// @return 创建任务检查项响应
+func TaskCheckItemEntityToCreateRes(e *entities.TaskCheckItem) *dto.CreateTaskCheckItemRes {
+	var res dto.CreateTaskCheckItemRes
+	res.Id = idutil.FormatID(e.Id)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.TaskId = idutil.FormatID(e.TaskId)
+	res.Name = e.Name
+	res.Description = e.Description
+	res.IsDone = e.IsDone
+	res.SortId = e.SortId
+	return &res
+}
+
+// UpdateTaskCheckItemReqToVO 更新任务检查项请求转换为更新任务检查项值对象
+// @param req 更新任务检查项请求
+// @return 更新任务检查项值对象
+// @error 错误
+func UpdateTaskCheckItemReqToVO(
+	req *dto.UpdateTaskCheckItemReq,
+) (*valueobjects.UpdateTaskCheckItem, error) {
+	vo, err := valueobjects.NewUpdateTaskCheckItem(
+		req.Name,
+		req.Description,
+		req.IsDone,
+		req.SortId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
+}
+
+// TaskCheckItemEntitiesToReses 任务检查项实体转换为获取任务检查项响应列表
+// @param items 任务检查项实体列表
+// @return 任务检查项响应列表
+func TaskCheckItemEntitiesToReses(items []*entities.TaskCheckItem) dto.ListTaskCheckItemRes {
+	res := make([]*dto.GetTaskCheckItemRes, 0, len(items))
+	for _, e := range items {
+		res = append(res, TaskCheckItemEntityToGetRes(e))
+	}
+	return res
+}
+
+// BatchUpdateTaskCheckItemReqToVOs 批量更新任务检查项请求转换为批量更新任务检查项值对象列表
+// @param req 批量更新任务检查项请求
+// @return 批量更新任务检查项值对象列表
+// @error 错误
+func BatchUpdateTaskCheckItemReqToVOs(
+	req *dto.BatchUpdateTaskCheckItemReq,
+) ([]*valueobjects.BatchUpdateTaskCheckItem, error) {
+	vos := make([]*valueobjects.BatchUpdateTaskCheckItem, 0, len(req.Events))
+	for _, e := range req.Events {
+		id, err := idutil.ParseID(e.Id)
+		if err != nil {
+			return nil, err
+		}
+		vo, err := valueobjects.NewBatchUpdateTaskCheckItem(
+			id,
+			e.Name,
+			e.Description,
+			e.IsDone,
+			e.SortId,
+		)
+		if err != nil {
+			return nil, err
+		}
+		vos = append(vos, vo)
+	}
+	return vos, nil
+}
+
+// --- TaskComment converters ---
+
+// TaskCommentEntityToRes 任务评论实体转换为获取任务评论响应
+// @param e 任务评论实体
+// @return 任务评论响应
+func TaskCommentEntityToRes(e *entities.TaskComment) *dto.TaskCommentRes {
+	var res dto.TaskCommentRes
+	res.Id = idutil.FormatID(e.Id)
+	res.CreatedAt = e.CreatedAt.Format(time.RFC3339)
+	res.UpdatedAt = e.UpdatedAt.Format(idutil.RFC3339Milli)
+	res.DeletedAt = e.DeletedAt.ToString(time.RFC3339)
+	res.TaskId = idutil.FormatID(e.TaskId)
+	res.Content = e.Content
+	res.Attachments = e.Attachments
+	res.IsTopUp = e.IsTopUp
+	res.Nickname = e.Nickname
+	res.Avatar = conf.Conf.Uploads.AvatarURL(e.Avatar)
+	return &res
+}
+
+// CreateTaskCommentReqToVO 创建任务评论请求转换为创建任务评论值对象
+// @param userId 用户 ID
+// @param req 创建任务评论请求
+// @return 创建任务评论值对象
+// @error 错误
+func CreateTaskCommentReqToVO(
+	userId int64,
+	req *dto.CreateTaskCommentReq,
+) (*valueobjects.CreateTaskComment, error) {
+	taskId, err := idutil.ParseID(req.TaskId)
+	if err != nil {
+		return nil, err
+	}
+	vo, err := valueobjects.NewCreateTaskComment(
+		userId,
+		taskId,
+		req.Content,
+		nil,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.Id = id
+	vo.CreatedAt = createdAt
+	vo.UpdatedAt = updatedAt
+	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	vo.BaseUpdatedAt = baseUpdatedAt
+	return vo, nil
+}
+
+// UpdateTaskCommentReqToVO 更新任务评论请求转换为更新任务评论值对象
+// @param req 更新任务评论请求
+// @return 更新任务评论值对象
+// @error 错误
+func UpdateTaskCommentReqToVO(
+	req *dto.UpdateTaskCommentReq,
+) (*valueobjects.UpdateTaskComment, error) {
+	vo, err := valueobjects.NewUpdateTaskComment(
+		req.Content,
+		req.Attachments,
+		req.IsTopUp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if req.UpdatedAt != nil {
+		t, err := idutil.ParseUpdatedAtCursor(*req.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		vo.UpdatedAt = t
+	}
+	return vo, nil
+}
+
+// TaskCommentEntitiesToListRes 任务评论实体列表转换为获取任务评论响应列表
+// @param list 任务评论实体列表
+// @return 任务评论响应列表
+func TaskCommentEntitiesToListRes(list []*entities.TaskComment) []*dto.TaskCommentRes {
+	res := make([]*dto.TaskCommentRes, 0, len(list))
+	for _, e := range list {
+		res = append(res, TaskCommentEntityToRes(e))
 	}
 	return res
 }

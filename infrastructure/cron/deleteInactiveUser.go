@@ -1,27 +1,23 @@
 package cron
 
 import (
+	"context"
 	"fmt"
-	"naotodoserver/infrastructure/persistence/dbs"
-	"naotodoserver/infrastructure/persistence/models"
-	"time"
+	userApp "naotodoserver/application/user"
 )
 
 type DeleteDeactivedUserJob struct {
 	DayOffset int8
+	UserApp   userApp.UserApp
 }
 
-func NewDeleteDeactivedUserJob(dayOffset int8) *DeleteDeactivedUserJob {
-	return &DeleteDeactivedUserJob{DayOffset: dayOffset}
+func NewDeleteDeactivedUserJob(dayOffset int8, userApp userApp.UserApp) *DeleteDeactivedUserJob {
+	return &DeleteDeactivedUserJob{DayOffset: dayOffset, UserApp: userApp}
 }
 
 func (ddu *DeleteDeactivedUserJob) Run() {
-	tx := dbs.DB.Model(&models.User{}).
-		Where("deactived_at < ?", time.Now().AddDate(0, 0, -1*int(ddu.DayOffset))).
-		Delete(&models.User{})
-	if tx.Error != nil {
-		fmt.Println("删除注销用户记录失败：" + tx.Error.Error())
-		return
+	err := ddu.UserApp.DeleteDeactivatedUsers(context.TODO(), ddu.DayOffset)
+	if err != nil {
+		fmt.Println("删除已注销用户失败：" + err.Error())
 	}
-	fmt.Printf("已删除注销用户记录 %d 条\n", tx.RowsAffected)
 }

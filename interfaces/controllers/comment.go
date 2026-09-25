@@ -1,18 +1,34 @@
 package controllers
 
 import (
-	"naotodoserver/application/comment"
+	iCtx "naotodoserver/infrastructure/context"
+	taskApp "naotodoserver/application/task"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * Get comment
- * 获取评论详情（60000）
- */
-func GetCommentHandler(ctx *gin.Context) {
-	// 1. 获取评论 ID
+type CommentController struct {
+	taskApp taskApp.TaskCommentApp
+}
+
+func NewCommentController(app taskApp.TaskCommentApp) *CommentController {
+	return &CommentController{taskApp: app}
+}
+
+// GetComment 获取评论详情控制器
+// @code 6000x
+func (c *CommentController) GetComment(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    60003,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取评论 ID
 	commentId := ctx.Param("commentId")
 	if commentId == "" {
 		Failure(ctx, types.ResponseData{
@@ -21,8 +37,8 @@ func GetCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用服务层获取评论详情
-	comment, err := comment.App.GetComment(ctx.Request.Context(), commentId)
+	// 3. 调用服务层获取评论详情
+	comment, err := c.taskApp.GetTaskCommentById(ctx.Request.Context(), userId, commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60002,
@@ -31,21 +47,28 @@ func GetCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回评论详情
+	// 4. 返回评论详情
 	Success(ctx, types.ResponseData{
 		Code:    60000,
 		Message: "获取评论详情成功",
-		Data:    comment,
+		Data:    toTaskCommentRes(comment),
 	})
 }
 
-/*
- * Create comment
- * 新增评论（60010）
- */
-func CreateCommentHandler(ctx *gin.Context) {
-	// 1. 绑定请求参数
-	var req types.CreateCommentReq
+// CreateComment 新增评论控制器
+// @code 6001x
+func (c *CommentController) CreateComment(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    60013,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 绑定请求参数
+	var req types.CreateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60011,
@@ -54,8 +77,12 @@ func CreateCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用服务层新增评论
-	res, err := comment.App.CreateComment(ctx.Request.Context(), &req)
+	// 3. 调用服务层新增评论
+	res, _, err := c.taskApp.CreateTaskComment(
+		ctx.Request.Context(),
+		userId,
+		toCreateTaskCommentReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60012,
@@ -64,20 +91,27 @@ func CreateCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回评论 ID
+	// 4. 返回评论 ID
 	Success(ctx, types.ResponseData{
 		Code:    60010,
 		Message: "新增评论成功",
-		Data:    res,
+		Data:    toTaskCommentRes(res),
 	})
 }
 
-/*
- * Update comment
- * 更新评论（60020）
- */
-func UpdateCommentHandler(ctx *gin.Context) {
-	// 1. 获取评论 ID
+// UpdateComment 更新评论控制器
+// @code 6002x
+func (c *CommentController) UpdateComment(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    60024,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取评论 ID
 	commentId := ctx.Param("commentId")
 	if commentId == "" {
 		Failure(ctx, types.ResponseData{
@@ -86,8 +120,8 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 绑定请求参数
-	var req types.UpdateCommentReq
+	// 3. 绑定请求参数
+	var req types.UpdateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60022,
@@ -96,8 +130,13 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 调用服务层更新评论
-	res, err := comment.App.UpdateComment(ctx.Request.Context(), commentId, &req)
+	// 4. 调用服务层更新评论
+	err := c.taskApp.UpdateTaskComment(
+		ctx.Request.Context(),
+		userId,
+		commentId,
+		toUpdateTaskCommentReq(&req),
+	)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60023,
@@ -106,21 +145,27 @@ func UpdateCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 4. 返回评论 ID
+	// 5. 返回评论 ID
 	Success(ctx, types.ResponseData{
 		Code:    60020,
 		Message: "更新评论成功",
-		Data:    res,
+		Data:    commentId,
 	})
-
 }
 
-/*
- * Delete comment
- * 删除评论（60030）
- */
-func DeleteCommentHandler(ctx *gin.Context) {
-	// 1. 获取评论 ID
+// DeleteComment 删除评论控制器
+// @code 6003x
+func (c *CommentController) DeleteComment(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    60033,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取评论 ID
 	commentId := ctx.Param("commentId")
 	if commentId == "" {
 		Failure(ctx, types.ResponseData{
@@ -129,8 +174,8 @@ func DeleteCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用服务层删除评论
-	res, err := comment.App.DeleteComment(ctx.Request.Context(), commentId)
+	// 3. 调用服务层删除评论
+	err := c.taskApp.DeleteTaskComment(ctx.Request.Context(), userId, commentId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60032,
@@ -139,20 +184,27 @@ func DeleteCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回评论 ID
+	// 4. 返回评论 ID
 	Success(ctx, types.ResponseData{
 		Code:    60030,
 		Message: "删除评论成功",
-		Data:    res,
+		Data:    commentId,
 	})
 }
 
-/*
- * List comment
- * 获取评论列表（60040）
- */
-func ListCommentHandler(ctx *gin.Context) {
-	// 1. 获取待办任务 ID
+// ListComment 获取评论列表控制器
+// @code 6004x
+func (c *CommentController) ListComment(ctx *gin.Context) {
+	// 1. 获取当前登录用户 ID
+	userId := iCtx.GetUserId(ctx.Request.Context())
+	if userId <= 0 {
+		Failure(ctx, types.ResponseData{
+			Code:    60043,
+			Message: "用户未登录",
+		})
+		return
+	}
+	// 2. 获取待办任务 ID
 	taskId := ctx.Query("taskId")
 	if taskId == "" {
 		Failure(ctx, types.ResponseData{
@@ -161,8 +213,8 @@ func ListCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 调用服务层获取评论列表
-	res, err := comment.App.ListComment(ctx.Request.Context(), taskId)
+	// 3. 调用服务层获取评论列表
+	comments, err := c.taskApp.ListTaskComments(ctx.Request.Context(), userId, taskId)
 	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    60042,
@@ -171,10 +223,10 @@ func ListCommentHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	// 3. 返回评论列表
+	// 4. 返回评论列表
 	Success(ctx, types.ResponseData{
 		Code:    60040,
 		Message: "获取评论列表成功",
-		Data:    res,
+		Data:    toTaskCommentResList(comments),
 	})
 }

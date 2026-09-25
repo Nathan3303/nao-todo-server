@@ -7,11 +7,11 @@ import (
 )
 
 func GetCronServiceImpl() CronService {
-	once.Do(func() {
+	if cronService == nil {
 		cronService = &CronServiceImpl{
 			cron: cron.New(),
 		}
-	})
+	}
 	return cronService
 }
 
@@ -44,7 +44,7 @@ func (cs *CronServiceImpl) Stop() {
 	fmt.Println("Cron 已停止")
 }
 
-// Add implements CronService.
+// AddFunc Add implements CronService.
 func (cs *CronServiceImpl) AddFunc(flag string, fn func()) error {
 	_, err := cs.cron.AddFunc(flag, fn)
 	return err

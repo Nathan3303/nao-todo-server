@@ -1,0 +1,63 @@
+package valueobjects
+
+import (
+	"errors"
+	"time"
+
+	"naotodoserver/domain/textutils"
+	"naotodoserver/domain/types"
+)
+
+// CreateTag 创建标签值对象
+type CreateTag struct {
+	Id          int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   types.NullableTime
+	Name        string
+	Description string
+	Color       string
+	SortId      uint16
+
+	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
+	BaseUpdatedAt time.Time
+}
+
+// Validate 校验创建标签值对象
+// @return error 校验失败返回错误，否则返回 nil
+func (createTag *CreateTag) Validate() error {
+	if createTag.Name == "" {
+		return errors.New("标签名称不能为空")
+	}
+	if textutils.RuneLength(createTag.Name) > 64 {
+		return errors.New("标签名称长度不能超过64个字符")
+	}
+	if createTag.Description != "" && textutils.RuneLength(createTag.Description) > 512 {
+		return errors.New("标签描述长度不能超过512个字符")
+	}
+	if createTag.Color == "" {
+		return errors.New("标签颜色不能为空")
+	}
+	if textutils.RuneLength(createTag.Color) > 16 {
+		return errors.New("标签颜色长度不能超过16个字符")
+	}
+	return nil
+}
+
+// NewCreateTag 创建标签值对象
+// @param name 标签名称
+// @param description 标签描述
+// @param color 标签颜色
+// @return *CreateTag 创建标签值对象
+// @return error 校验失败返回错误，否则返回 nil
+func NewCreateTag(name, description, color string) (*CreateTag, error) {
+	vo := &CreateTag{
+		Name:        name,
+		Description: description,
+		Color:       color,
+	}
+	if err := vo.Validate(); err != nil {
+		return nil, err
+	}
+	return vo, nil
+}

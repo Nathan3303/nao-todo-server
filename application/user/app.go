@@ -2,37 +2,72 @@ package user
 
 import (
 	"context"
-	"naotodoserver/domain/user/service"
-	"naotodoserver/interfaces/types"
-	"sync"
+	"io"
 
-	"github.com/gin-gonic/gin"
+	taskApp "naotodoserver/application/task"
+	"naotodoserver/application/user/dto"
+	"naotodoserver/domain/identity/repositories"
 )
 
+// UserApp 用户应用接口
 type UserApp interface {
+	// UpdateNickname 更新用户昵称
 	UpdateNickname(
 		ctx context.Context,
-		req types.UpdateUserNicknameReq,
-	) (*types.UpdateUserNicknameRes, error)
-	GetProfile(ctx context.Context) (*types.GetUserProfileRes, error)
+		userId int64,
+		req dto.UpdateNicknameInput,
+	) error
+
+	// GetProfile 获取用户个人信息
+	GetProfile(ctx context.Context, userId int64) (*dto.GetProfileOutput, error)
+
+	// UpdatePassword 更新用户密码
 	UpdatePassword(
 		ctx context.Context,
-		req types.UpdateUserPasswordReq,
-	) (*types.UpdateUserPasswordRes, error)
+		userId int64,
+		req dto.UpdatePasswordInput,
+	) error
+
+	// UpdateAvatar 更新用户头像
 	UpdateAvatar(
 		ctx context.Context,
-		req types.UpdateUserAvatarReq,
-	) (*types.UpdateUserAvatarRes, error)
-	UpdateAvatarByFile(ctx *gin.Context) (*types.UpdateUserAvatarRes, error)
-	DeactiveUser(ctx context.Context, req *types.DeactiveUserReq) error
-	ActiveUser(ctx context.Context, req *types.ActiveUserReq) error
+		userId int64,
+		req dto.UpdateAvatarInput,
+	) (*dto.UpdateAvatarOutput, error)
+
+	// UpdateAvatarByFile 更新用户头像（通过文件上传）
+	UpdateAvatarByFile(
+		ctx context.Context,
+		userId int64,
+		file io.Reader,
+		filename string,
+		size int64,
+	) (*dto.UpdateAvatarOutput, error)
+
+	// GetAvatar 获取头像文件流
+	GetAvatar(ctx context.Context, filename string) (io.ReadCloser, error)
+
+	// DeleteUser 删除用户（注销账户）
+	DeleteUser(ctx context.Context, userId int64, req dto.DeleteUserInput) error
+
+	// RestoreUser 激活用户
+	RestoreUser(ctx context.Context, userId int64, req dto.RestoreUserInput) error
+
+	// GetConfig 获取用户配置
+	GetConfig(ctx context.Context, userId int64) (*dto.GetConfigOutput, error)
+
+	// UpdateConfig 更新用户配置
+	// 返回更新后回读的配置（含服务端权威 updatedAt，additive T163）
+	UpdateConfig(ctx context.Context, userId int64, req dto.UpdateConfigInput) (*dto.GetConfigOutput, error)
+
+	// DeleteDeactivatedUsers 删除已注销用户（供定时任务调用）
+	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error
 }
 
+// userAppImpl 用户应用实现
 type userAppImpl struct {
-	userDomain service.UserDomain
+	userRepo      repositories.User
+	sessionRepo   repositories.UserSession
+	taskApp       taskApp.TaskCommentApp
+	avatarStorage AvatarStorage
 }
-
-var (
-	App  *userAppImpl
-	once sync.Once
-)

@@ -4,28 +4,26 @@ import (
 	"context"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
-	"naotodoserver/domain/tag/vo"
+	"naotodoserver/domain/tag/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
+// TagDomain 标签领域服务接口
 type TagDomain interface {
-	GetById(ctx context.Context, userId int64, tagId int64) (*entities.Tag, error)
-	Create(ctx context.Context, userId int64, createEntity *entities.Tag) (*entities.Tag, error)
-	Update(
+	// 创建标签
+	// 返回 UpsertResult：Created=true 表示本次为新建（含墓碑复活）；Outcome 供同步回执使用
+	Create(
 		ctx context.Context,
 		userId int64,
-		tagId int64,
-		updateEntity *entities.Tag,
-	) error
+		createTagValueObject *valueobjects.CreateTag,
+	) (*entities.Tag, domaintypes.UpsertResult, error)
+
+	// 删除标签
 	Delete(ctx context.Context, userId int64, tagId int64) error
-	List(ctx context.Context, userId int64) ([]*entities.Tag, error)
-	UpdatePreference(
-		ctx context.Context,
-		userId int64,
-		tagId int64,
-		preference *vo.TagPreference,
-	) error
 }
 
+// TagDomainImpl 标签领域服务实现
 type TagDomainImpl struct {
-	tagRepo repositories.TagRepository
+	tagRepo        repositories.TagRepository
+	preferenceRepo repositories.TagPreference
 }

@@ -1,0 +1,66 @@
+package project
+
+import (
+	"testing"
+	"time"
+
+	"naotodoserver/domain/project/valueobjects"
+	"naotodoserver/domain/types"
+)
+
+func newProjectVO() *valueobjects.CreateProject {
+	return &valueobjects.CreateProject{
+		Id:   1,
+		Name: "项目",
+	}
+}
+
+// TestCreateProjectValueObject2Model_DeletedAt 创建模型携带/未携带 DeletedAt
+func TestCreateProjectValueObject2Model_DeletedAt(t *testing.T) {
+	now := time.Date(2026, 8, 13, 10, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name      string
+		deletedAt types.NullableTime
+		wantValid bool
+	}{
+		{name: "携带删除时间", deletedAt: types.NewNullableTimeByTime(now), wantValid: true},
+		{name: "未携带", deletedAt: types.NullableTime{}, wantValid: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vo := newProjectVO()
+			vo.DeletedAt = tt.deletedAt
+			m := CreateProjectValueObject2Model(vo)
+			if got := m.DeletedAt.Valid; got != tt.wantValid {
+				t.Errorf("DeletedAt.Valid = %v, want %v", got, tt.wantValid)
+			}
+		})
+	}
+}
+
+// TestCreateProjectVOToUpdateMap_DeletedAt 更新映射仅携带删除时间时写入 deleted_at
+func TestCreateProjectVOToUpdateMap_DeletedAt(t *testing.T) {
+	now := time.Date(2026, 8, 13, 10, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name        string
+		deletedAt   types.NullableTime
+		wantWritten bool
+	}{
+		{name: "携带删除时间", deletedAt: types.NewNullableTimeByTime(now), wantWritten: true},
+		{name: "未携带", deletedAt: types.NullableTime{}, wantWritten: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vo := newProjectVO()
+			vo.DeletedAt = tt.deletedAt
+			m := CreateProjectVOToUpdateMap(vo)
+			_, ok := m["deleted_at"]
+			if ok != tt.wantWritten {
+				t.Errorf("updateMap 含 deleted_at = %v, want %v", ok, tt.wantWritten)
+			}
+			if tt.wantWritten && m["deleted_at"] == nil {
+				t.Error("deleted_at 值不应为 nil")
+			}
+		})
+	}
+}

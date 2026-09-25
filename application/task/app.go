@@ -2,32 +2,43 @@ package task
 
 import (
 	"context"
+	"naotodoserver/application/task/dto"
+	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/service"
-	"naotodoserver/interfaces/types"
-	"sync"
+	domaintypes "naotodoserver/domain/types"
 )
 
+// TaskApp 任务应用接口
 type TaskApp interface {
-	GetTaskById(ctx context.Context, taskId string) (*types.TaskRes, error)
-	CreateTask(ctx context.Context, req *types.CreateTaskReq) (*types.TaskRes, error)
-	UpdateTask(
-		ctx context.Context,
-		taskId string,
-		req *types.UpdateTaskReq,
-	) (*types.UpdateTaskRes, error)
-	DeleteTask(ctx context.Context, taskId string) (*types.DeleteTaskRes, error)
-	RestoreTask(ctx context.Context, taskId string) (*types.RestoreTaskRes, error)
+	// --- Task ---
+	GetTaskById(
+		ctx context.Context, userId int64, taskId string, includeDeleted bool,
+	) (*dto.GetTaskRes, error)
+	CreateTask(ctx context.Context, userId int64, req *dto.CreateTaskReq) (*dto.GetTaskRes, domaintypes.UpsertResult, error)
+	UpdateTask(ctx context.Context, userId int64, taskId string, req *dto.UpdateTaskReq) error
+	DeleteTask(ctx context.Context, userId int64, taskId string) error
+	RestoreTask(ctx context.Context, userId int64, taskId string) error
+	CopyTask(ctx context.Context, userId int64, taskId string) (*dto.GetTaskRes, error)
 	ListTask(
-		ctx context.Context,
-		req *types.ListTaskReq,
-	) (types.ListTaskRes, *types.Pagination, error)
+		ctx context.Context, userId int64, req *dto.ListTaskReq,
+	) (dto.ListTaskRes, *dto.Pagination, error)
+	// ListTaskSync 增量同步任务列表（包含软删墓碑，updated_at 游标稳定排序分页）
+	ListTaskSync(
+		ctx context.Context, userId int64, req *dto.ListTaskReq,
+	) (dto.ListTaskRes, error)
+	SnoozeTask(
+		ctx context.Context, userId int64, taskId string, req *dto.SnoozeTaskReq,
+	) (*dto.SnoozeTaskRes, error)
+	ProcessReminders(ctx context.Context) error
 }
 
+// TaskAppImpl 任务应用实现
 type TaskAppImpl struct {
-	taskDomain service.TaskDomain
+	taskDomain     service.TaskDomain
+	taskRepo       repositories.Task
+	checkItemRepo  repositories.TaskCheckItem
+	commentRepo    repositories.TaskComment
+	publisher      domaintypes.NotificationPublisher
+	txManager      domaintypes.TxManager
+	countPublisher domaintypes.CountEventPublisher
 }
-
-var (
-	App  TaskApp
-	once sync.Once
-)
