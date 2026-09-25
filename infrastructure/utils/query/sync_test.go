@@ -33,7 +33,7 @@ func TestSyncScopesDryRun(t *testing.T) {
 
 	t.Run("SyncOrder 生成稳定排序", func(t *testing.T) {
 		stmt := db.Model(&stub{}).Scopes(SyncOrder()).Find(&stub{}).Statement
-		sql := db.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
+		sql := db.Explain(stmt.SQL.String(), stmt.Vars...)
 		lower := strings.ToLower(sql)
 		idxUpdated := strings.Index(lower, "updated_at asc")
 		idxID := strings.Index(lower, "id asc")
@@ -45,7 +45,7 @@ func TestSyncScopesDryRun(t *testing.T) {
 	t.Run("ByKeysetCursor 生成 (updated_at, id) 组合条件", func(t *testing.T) {
 		cursor := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 		stmt := db.Model(&stub{}).Scopes(ByKeysetCursor(cursor, 12345)).Find(&stub{}).Statement
-		sql := db.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
+		sql := db.Explain(stmt.SQL.String(), stmt.Vars...)
 		lower := strings.ToLower(sql)
 		if !strings.Contains(lower, "updated_at >") || !strings.Contains(lower, "id >") {
 			t.Fatalf("keyset 应生成 (updated_at, id) 组合条件: %s", sql)
@@ -54,7 +54,7 @@ func TestSyncScopesDryRun(t *testing.T) {
 
 	t.Run("ByKeysetCursor 零值不过滤", func(t *testing.T) {
 		stmt := db.Model(&stub{}).Scopes(ByKeysetCursor(time.Time{}, 0)).Find(&stub{}).Statement
-		sql := db.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
+		sql := db.Explain(stmt.SQL.String(), stmt.Vars...)
 		if strings.Contains(sql, "updated_at") || strings.Contains(sql, "id") {
 			t.Fatalf("零值 keyset 游标不应生成过滤条件: %s", sql)
 		}

@@ -113,7 +113,8 @@ func DoMigration() {
 		// 已存在则跳过（幂等）；CREATE INDEX 不支持 IF NOT EXISTS，用错误容忍
 		var cnt int64
 		DB.Raw(
-			"SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?",
+			"SELECT COUNT(*) FROM information_schema.statistics "+
+				"WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?",
 			item.table, item.index,
 		).Scan(&cnt)
 		if cnt > 0 {

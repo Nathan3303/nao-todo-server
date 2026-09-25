@@ -36,7 +36,10 @@ func NewProjectApp(
 
 // publishCountEvent 发布计数事件（同事务同步分发，ADR §4.1）
 // 无发布器时静默跳过；返回错误 ⇒ 调用方事务整体回滚。
-func (app *projectAppImpl) publishCountEvent(ctx context.Context, event domaintypes.CountEvent) error {
+func (app *projectAppImpl) publishCountEvent(
+	ctx context.Context,
+	event domaintypes.CountEvent,
+) error {
 	if app.countPublisher == nil {
 		return nil
 	}
@@ -283,7 +286,11 @@ func (app *projectAppImpl) Unarchive(
 // @param isArchived 是否仅取已归档（false/未传 = 默认排除归档）
 // @return dto.ListProjectRes 任务清单响应体列表
 // @return error 验证失败返回错误，否则返回 nil
-func (app *projectAppImpl) List(ctx context.Context, userId int64, isArchived bool) (dto.ListProjectRes, error) {
+func (app *projectAppImpl) List(
+	ctx context.Context,
+	userId int64,
+	isArchived bool,
+) (dto.ListProjectRes, error) {
 	// 获取清单列表
 	projectEntities, err := app.repo.GetByUserId(ctx, userId, isArchived)
 	if err != nil {

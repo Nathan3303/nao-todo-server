@@ -77,7 +77,9 @@ func (projectRepo *ProjectRepoImpl) Upsert(
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
-		createProjectValueObject.CreatedAt, createProjectValueObject.UpdatedAt, createProjectValueObject.BaseUpdatedAt,
+		createProjectValueObject.CreatedAt,
+		createProjectValueObject.UpdatedAt,
+		createProjectValueObject.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {

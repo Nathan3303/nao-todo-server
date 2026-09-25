@@ -118,7 +118,9 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	existingEntity := TaskModel2Entity(&existing)
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existingEntity.UpdatedAt,
-		createTaskValueObject.CreatedAt, createTaskValueObject.UpdatedAt, createTaskValueObject.BaseUpdatedAt,
+		createTaskValueObject.CreatedAt,
+		createTaskValueObject.UpdatedAt,
+		createTaskValueObject.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {
@@ -143,7 +145,10 @@ func (taskRepo *TaskRepoImpl) Upsert(
 	}
 	entity, err := taskRepo.GetById(ctx, userId, createTaskValueObject.Id, true)
 	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
-	return entity, types.UpsertResult{Outcome: types.UpsertOverwrite, Created: existing.DeletedAt.Valid}, err
+	return entity, types.UpsertResult{
+		Outcome: types.UpsertOverwrite,
+		Created: existing.DeletedAt.Valid,
+	}, err
 }
 
 // GetMaxSortId 获取指定分组（同一 parent_task_id）内的最大排序 ID
@@ -578,7 +583,10 @@ func (repo *TaskRepoImpl) UpsertCheckItem(
 		return nil, types.UpsertResult{}, err
 	}
 	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
-	return TaskCheckItemModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite, Created: existing.DeletedAt.Valid}, nil
+	return TaskCheckItemModel2Entity(&updated), types.UpsertResult{
+		Outcome: types.UpsertOverwrite,
+		Created: existing.DeletedAt.Valid,
+	}, nil
 }
 
 // UpdateCheckItem 更新任务检查项
@@ -847,7 +855,10 @@ func (repo *TaskRepoImpl) UpsertComment(
 		return nil, types.UpsertResult{}, err
 	}
 	// B6：复活即创建 —— 覆盖已软删记录（墓碑）视同新建，供计数事件按 created=true 口径 +1
-	return TaskCommentModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite, Created: existing.DeletedAt.Valid}, nil
+	return TaskCommentModel2Entity(&updated), types.UpsertResult{
+		Outcome: types.UpsertOverwrite,
+		Created: existing.DeletedAt.Valid,
+	}, nil
 }
 
 // UpdateComment 更新任务评论

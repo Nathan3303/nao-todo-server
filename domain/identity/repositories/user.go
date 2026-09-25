@@ -46,5 +46,9 @@ type User interface {
 	GetConfig(ctx context.Context, userId types.UserID) (*entities.UserConfig, error)
 
 	// UpdateConfig 更新用户配置（patch 中为 nil 的字段不修改）
-	UpdateConfig(ctx context.Context, userId types.UserID, patch valueobjects.UpdateUserConfig) error
+	UpdateConfig(
+		ctx context.Context,
+		userId types.UserID,
+		patch valueobjects.UpdateUserConfig,
+	) error
 }

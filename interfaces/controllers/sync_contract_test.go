@@ -33,7 +33,7 @@ func jsonTagSet(typ reflect.Type) map[string]struct{} {
 	set := make(map[string]struct{})
 	var walk func(reflect.Type)
 	walk = func(t reflect.Type) {
-		if t.Kind() == reflect.Ptr {
+		if t.Kind() == reflect.Pointer {
 			t = t.Elem()
 		}
 		if t.Kind() != reflect.Struct {

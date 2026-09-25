@@ -86,7 +86,12 @@ type Task interface {
 	// UpdateRemindAt 更新提醒时间
 	// 仅当任务 remind_at 仍为 expectedRemindAt 时生效（CAS 防与 Snooze 竞态）；
 	// 返回是否实际变更（false 表示提醒已被其他路径改期/删除）
-	UpdateRemindAt(ctx context.Context, taskId int64, expectedRemindAt time.Time, remindAt string) (bool, error)
+	UpdateRemindAt(
+		ctx context.Context,
+		taskId int64,
+		expectedRemindAt time.Time,
+		remindAt string,
+	) (bool, error)
 
 	// SoftDeleteByProjectId 软删除指定项目下的所有任务（级联删除用）
 	SoftDeleteByProjectId(ctx context.Context, userId int64, projectId int64) error

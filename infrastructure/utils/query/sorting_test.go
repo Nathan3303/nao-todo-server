@@ -31,7 +31,7 @@ func sortDryRunSQL(t *testing.T, sort string) string {
 		CreatedAt time.Time
 	}
 	stmt := db.Model(&stub{}).Scopes(Sort(sort)).Find(&stub{}).Statement
-	return db.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
+	return db.Explain(stmt.SQL.String(), stmt.Vars...)
 }
 
 // assertNoOrderBy 非法 field / direction 必须回落到「无 ORDER BY」，不得拼接进 SQL

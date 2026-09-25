@@ -39,14 +39,18 @@ func (u *CountUpdater) HandleCountEvent(ctx context.Context, event types.CountEv
 		return u.projectRepo.AdjustTaskCount(ctx, event.UserId, event.ProjectId, int(event.Delta))
 	case types.CountEventTaskMoved:
 		// E5：旧项目 -1、新项目 +1（两行均 bump updated_at，B2）
-		if err := u.projectRepo.AdjustTaskCount(ctx, event.UserId, event.OldProjectId, -1); err != nil {
+		if err := u.projectRepo.AdjustTaskCount(
+			ctx, event.UserId, event.OldProjectId, -1,
+		); err != nil {
 			return err
 		}
 		return u.projectRepo.AdjustTaskCount(ctx, event.UserId, event.ProjectId, 1)
 	case types.CountEventTaskParentChanged:
 		// E6：旧父 -1、新父 +1（A→0 仅 -1；0 无父跳过）
 		if event.OldParentTaskId > 0 {
-			if err := u.taskRepo.AdjustSubTaskCount(ctx, event.UserId, event.OldParentTaskId, -1); err != nil {
+			if err := u.taskRepo.AdjustSubTaskCount(
+				ctx, event.UserId, event.OldParentTaskId, -1,
+			); err != nil {
 				return err
 			}
 		}

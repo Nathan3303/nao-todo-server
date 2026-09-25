@@ -108,7 +108,9 @@ func (tagRepo *TagRepositoryImpl) Upsert(
 	}
 	outcome, err := types.DecideUpsert(
 		existing.CreatedAt, existing.UpdatedAt,
-		createTagValueObject.CreatedAt, createTagValueObject.UpdatedAt, createTagValueObject.BaseUpdatedAt,
+		createTagValueObject.CreatedAt,
+		createTagValueObject.UpdatedAt,
+		createTagValueObject.BaseUpdatedAt,
 		time.Minute,
 	)
 	if err != nil {

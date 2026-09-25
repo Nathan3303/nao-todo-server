@@ -106,7 +106,9 @@ func (r *PomodoroRecordRepoImpl) Upsert(
 		First(&updated).Error; err != nil {
 		return nil, types.UpsertResult{}, err
 	}
-	return PomodoroRecordModel2Entity(&updated), types.UpsertResult{Outcome: types.UpsertOverwrite}, nil
+	return PomodoroRecordModel2Entity(&updated), types.UpsertResult{
+		Outcome: types.UpsertOverwrite,
+	}, nil
 }
 
 // GetById 获取 PomodoroRecord
