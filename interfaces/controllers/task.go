@@ -63,13 +63,19 @@ func toIntWeekdays(weekdays []uint8) []int {
 }
 
 // toUint8Weekdays 将接口层星期数组（[]int）转换回内部类型（[]uint8）
+// 星期有效域为 0..6（与 entities.WeekdaysToBitmask 的 ">6 忽略" 规则一致）：
+// 越界值（<0 或 >6）一律丢弃，避免 int→uint8 截断把非法输入变成合法星期
+// （如 257 截断为 1 = 周一），同时消除 gosec G115。
 func toUint8Weekdays(weekdays []int) []uint8 {
 	if weekdays == nil {
 		return nil
 	}
-	res := make([]uint8, len(weekdays))
-	for i, d := range weekdays {
-		res[i] = uint8(d)
+	res := make([]uint8, 0, len(weekdays))
+	for _, d := range weekdays {
+		if d < 0 || d > 6 {
+			continue
+		}
+		res = append(res, uint8(d))
 	}
 	return res
 }
