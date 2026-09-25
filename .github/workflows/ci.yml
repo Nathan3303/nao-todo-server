@@ -3,7 +3,8 @@
 # T205：新增 golangci-lint v2.14.0（与本地同版本，官方二进制由 go1.27.0 构建）；初版 **report-only**。
 # T206：存量 124 条（lll 56 / goimports 53 / staticcheck 10 / govet 2 / prealloc 2 / gosec 1）分 3 批清零后，
 #       **已摘掉 continue-on-error ⇒ 全量阻断**（lint 发现即 build/vet/unit 红、挡住合并）。
-#       errcheck 独立阻断步骤（--enable-only=errcheck）保留为专项信号（全量步骤已含 errcheck）。
+#       原先的 errcheck 专项步骤已删除（纯冗余）：全量步骤读同一 .golangci.yml，
+#       已含 errcheck（check-type-assertions: true / check-blank: false），且同样阻断。
 # 集成测试口径固定 -p 1：多个包的 TestMain 会各自 AutoMigrate 同一测试库，并行必竞态
 name: CI
 
@@ -55,17 +56,6 @@ jobs:
           version: v2.14.0
           # 保留 v1 配置里的 run.timeout: 5m 意图（v2 schema 已移除该字段）
           args: --timeout=5m
-      # T205：errcheck 专项阻断步骤（缺省即阻断，无 continue-on-error）；T206 后全量步骤已同样阻断，
-      # 本步骤保留为「只看 errcheck」的专项信号（失败即 build/vet/unit 红）。
-      # --enable-only=errcheck 只启用 errcheck，其余 linter/enable 集被覆写；
-      # linters.settings.errcheck（check-type-assertions: true / check-blank: false）与
-      # exclusions/presets（含 std-error-handling，即 defer Close() 等暂不管）继续生效。
-      # 当前树实测 0 条 ⇒ CI 绿；一旦漏判错，本步骤 rc=1，build/vet/unit 直接红并挡住合并。
-      - name: errcheck (blocking)
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.14.0
-          args: --enable-only=errcheck --timeout=5m
 
   integration:
     name: integration
