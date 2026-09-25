@@ -49,7 +49,7 @@ func baseUpdatedAtField(t *testing.T, name string, ptr any) reflect.Value {
 	if !field.IsValid() {
 		t.Fatalf("%s: 缺少 BaseUpdatedAt 字段", name)
 	}
-	if field.Kind() != reflect.Ptr {
+	if field.Kind() != reflect.Pointer {
 		t.Fatalf("%s: BaseUpdatedAt 应为指针, got %s", name, field.Kind())
 	}
 	return field
