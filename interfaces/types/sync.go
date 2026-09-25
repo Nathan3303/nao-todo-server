@@ -28,6 +28,15 @@ type SyncPushReq struct {
 type SyncTaskPushItem struct {
 	CreateTaskReq
 	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+	// 可空时间三态遮蔽位（T319）：以下六个字段与内嵌 CreateTaskReq 的 `*string` 版 JSON 名
+	// 完全一致（客户端零改动），但按 encoding/json「浅层优先」规则遮蔽内嵌字段，从而把
+	// `null` 与「字段缺省」区分开。语义：absent ⇒ 不写列；null / "" ⇒ 显式清空；值 ⇒ 设值。
+	StartAt    NullableString `json:"startAt"`
+	EndAt      NullableString `json:"endAt"`
+	ArchivedAt NullableString `json:"archivedAt"`
+	StarMarkAt NullableString `json:"starMarkAt"`
+	GivenUpAt  NullableString `json:"givenUpAt"`
+	RemindAt   NullableString `json:"remindAt"`
 }
 
 type SyncCheckItemPushItem struct {

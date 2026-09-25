@@ -119,7 +119,7 @@ func TestSyncPushContract_BaseUpdatedAtBindingEndToEnd(t *testing.T) {
 	if got := req.Tasks[0].BaseUpdatedAt; got != baseStr {
 		t.Fatalf("baseUpdatedAt 绑定 = %q, want %q", got, baseStr)
 	}
-	appReq := toCreateTaskReq(&req.Tasks[0].CreateTaskReq)
+	appReq := toCreateTaskReqFromSync(&req.Tasks[0])
 	appReq.BaseUpdatedAt = basePtr(req.Tasks[0].BaseUpdatedAt)
 	vo, err := taskApp.CreateTaskReqToValueObject(1001, appReq)
 	if err != nil {
@@ -159,6 +159,8 @@ func TestSyncPushContract_BaseUpdatedAtMissingFallsBack(t *testing.T) {
 
 // TestSyncPushContract_StatusTimestampBindingEndToEnd 状态时间戳经 sync push
 // JSON 绑定 → 接口层转换 → 应用层 VO 全链透传（防再次中途丢弃）。
+// T319：sync 路径的可空时间改由三态承载（NullableString 遮蔽内嵌 *string），
+// 本用例随之改走 toCreateTaskReqFromSync（真实写路径），语义不变。
 func TestSyncPushContract_StatusTimestampBindingEndToEnd(t *testing.T) {
 	payload := `{"tasks":[{"id":"9001","name":"任务","state":"pending","priority":"medium",` +
 		`"archivedAt":"2026-09-21T10:00:00Z","starMarkAt":"2026-09-21T10:01:00Z","givenUpAt":"2026-09-21T10:02:00Z"}]}`
@@ -169,7 +171,7 @@ func TestSyncPushContract_StatusTimestampBindingEndToEnd(t *testing.T) {
 	if len(req.Tasks) != 1 {
 		t.Fatalf("tasks 条数 = %d, want 1", len(req.Tasks))
 	}
-	vo, err := taskApp.CreateTaskReqToValueObject(1001, toCreateTaskReq(&req.Tasks[0].CreateTaskReq))
+	vo, err := taskApp.CreateTaskReqToValueObject(1001, toCreateTaskReqFromSync(&req.Tasks[0]))
 	if err != nil {
 		t.Fatalf("CreateTaskReqToValueObject: %v", err)
 	}

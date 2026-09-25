@@ -111,7 +111,7 @@ func (c *SyncController) Push(ctx *gin.Context) {
 	results := make([]types.SyncResult, 0, total)
 
 	for i := range req.Tasks {
-		taskReq := toCreateTaskReq(&req.Tasks[i].CreateTaskReq)
+		taskReq := toCreateTaskReqFromSync(&req.Tasks[i])
 		taskReq.BaseUpdatedAt = basePtr(req.Tasks[i].BaseUpdatedAt)
 		res, upsert, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, taskReq)
 		if err != nil {
@@ -274,6 +274,45 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			ServerTime: strconv.FormatInt(time.Now().UnixMilli(), 10),
 		},
 	})
+}
+
+// syncNullableTime 将 sync 三态字段归一为共享 create DTO 的 *string 契约（复用既有清空链路）：
+//   - null（显式置空）/ "" ⇒ ptr("")：应用层 nullableTimeFromCreateReq 映射为「显式清空写 NULL」
+//   - 值                    ⇒ ptr(值)
+//   - absent（键缺省）      ⇒ 回退内嵌 *string（JSON 绑定下必为 nil = 不写列；Go 侧程序化构造
+//     保持既有语义，避免第二套清空语义）
+//
+// @param n 三态字段
+// @param embedded 内嵌 CreateTaskReq 的同名字段（*string 版）
+// @return 应用层入参使用的 *string（nil = 缺省不写列）
+func syncNullableTime(n types.NullableString, embedded *string) *string {
+	if !n.Present {
+		return embedded
+	}
+	if n.Null || n.Value == "" {
+		empty := ""
+		return &empty
+	}
+	value := n.Value
+	return &value
+}
+
+// toCreateTaskReqFromSync 将 /sync/push 任务条目转换为应用层入参：
+// 先按共享 create 语义整体转换（非三态字段零差异），再用三态覆盖六个可空时间字段
+// （startAt/endAt/archivedAt/starMarkAt/givenUpAt/remindAt，与
+// valueobjects.nullableTimeFromCreateReq 的使用面同集合）。
+//
+// @param item sync 推送条目
+// @return 应用层创建任务入参
+func toCreateTaskReqFromSync(item *types.SyncTaskPushItem) *taskDto.CreateTaskReq {
+	req := toCreateTaskReq(&item.CreateTaskReq)
+	req.StartAt = syncNullableTime(item.StartAt, req.StartAt)
+	req.EndAt = syncNullableTime(item.EndAt, req.EndAt)
+	req.ArchivedAt = syncNullableTime(item.ArchivedAt, req.ArchivedAt)
+	req.StarMarkAt = syncNullableTime(item.StarMarkAt, req.StarMarkAt)
+	req.GivenUpAt = syncNullableTime(item.GivenUpAt, req.GivenUpAt)
+	req.RemindAt = syncNullableTime(item.RemindAt, req.RemindAt)
+	return req
 }
 
 // Pull 批量增量拉取控制器
