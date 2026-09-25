@@ -43,6 +43,7 @@ func NewTaskApp(
 // nextGroupSortId 组内下一个排序值（组末）：COALESCE(MAX(sort_id), 255) + 1，空组首个 = 256。
 // Q1 防回绕：max+1 超出 uint16 上界（65535）⇒ 返回可识别的领域错误且不写入，
 // 客户端捕获后对本组重建（1000,2000,…）再重试；组 >65 行属客户端已禁重建的观察项。
+// maxSortId 为 uint16 ⇒ 仅当等于上界 65535 时 +1 才回绕，故判等即可（与 >= 等价）。
 func (taskApp *TaskAppImpl) nextGroupSortId(
 	ctx context.Context,
 	userId, parentTaskId int64,
@@ -51,7 +52,7 @@ func (taskApp *TaskAppImpl) nextGroupSortId(
 	if err != nil {
 		return 0, fmt.Errorf("GetMaxSortId: %w", err)
 	}
-	if maxSortId >= math.MaxUint16 {
+	if maxSortId == math.MaxUint16 {
 		return 0, domerr.ErrSortIdOverflow
 	}
 	return maxSortId + 1, nil

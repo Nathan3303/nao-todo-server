@@ -169,7 +169,7 @@ func TagPreferenceModel2Entity(m *models.TagPreference) *entities.TagPreference 
 // @param mList 标签模型列表
 // @return []*entities.Tag 标签实体列表
 func TagModelList2EntityList(mList []*models.Tag) []*entities.Tag {
-	eList := []*entities.Tag{}
+	eList := make([]*entities.Tag, 0, len(mList))
 	for _, m := range mList {
 		eList = append(eList, TagModel2Entity(m))
 	}
