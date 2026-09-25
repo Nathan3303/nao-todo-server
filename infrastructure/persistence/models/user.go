@@ -84,7 +84,8 @@ type UserSession struct {
 	// 用户 ID
 	// 用于关联用户表，获取用户会话信息
 	// 一用户可同时保留多个会话（多设备登录）
-	// 索引名 idx_user_session_user_device / idx_user_session_user 已落库，改名会改变 DDL ⇒ 无法换行
+	// T206 例外：索引名已落库（仓库内无迁移脚本，GORM tag 仅映射既有 DDL），
+	// 改名需 DDL 迁移，且 struct tag 不能跨行 ⇒ 本行 //nolint:lll；⛔ 不改 lll 全局阈值。
 	UserId int64 `gorm:"not null;uniqueIndex:idx_user_session_user_device,priority:1;index:idx_user_session_user"` //nolint:lll
 
 	// 会话令牌
@@ -103,7 +104,7 @@ type UserSession struct {
 	// 设备 ID
 	// 客户端持久化生成的可选稳定标识；同一用户同一设备重复登录时覆盖旧会话
 	// 为空（NULL）时不参与去重（老客户端每次登录新增会话）
-	// 同上：唯一索引名不可缩短 ⇒ 无法换行
+	// T206 例外：同上（唯一索引名 idx_user_session_user_device 已落库，改名需 DDL 迁移）⇒ 本行 //nolint:lll。
 	DeviceId sql.NullString `gorm:"null;size:64;uniqueIndex:idx_user_session_user_device,priority:2"` //nolint:lll
 
 	// IP4 地址
