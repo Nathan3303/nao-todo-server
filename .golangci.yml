@@ -1,33 +1,36 @@
+# T205：v1.64.8 -> v2.14.0 迁移（golangci-lint v2 schema）
+# 迁移目的：v1.64.x 无法解析 go1.27 的 export data，v2.14.0 官方二进制以 go1.27.0 构建。
+# 迁移方式：golangci-lint migrate（schema 适配），规则集/意图与 v1 保持一致，未增删 linter。
+# 差异说明：v2 将 gosimple 合入 staticcheck、gofmt/goimports 移入 formatters，
+# 且 staticcheck 现在默认包含 QF（quickfix）/ST 检查（v1 默认只跑 SA）——详见 PR 说明与 T205 回执。
+version: "2"
+
 # 运行配置
 run:
     # 并发数，默认是 CPU 核心数
     concurrency: 4
-    # 分析超时时间
-    timeout: 5m
     # 检查测试文件
     tests: true
+# 注：v1 的 run.timeout 在 v2 schema 已移除（默认不设超时）；CI 侧用 --timeout=5m 保留原意图
 
 # 输出格式配置
 output:
-    # 输出格式：tab, colored-line-number, line-number, json, checkstyle, code-climate
     formats:
-        - format: colored-line-number
-    # 打印出有问题的代码行
-    print-issued-lines: true
-    # 打印出 linter 的名称
-    print-linter-name: true
+        text:
+            path: stdout
+            # 打印出有问题的代码行
+            print-issued-lines: true
+            # 打印出 linter 的名称
+            print-linter-name: true
 
 # Linter 配置
 linters:
-    disable-all: true # 禁用所有默认 linter，按需开启
+    default: none # 禁用所有默认 linter，按需开启（等价于 v1 的 disable-all: true）
     enable:
         # --- 核心与官方规范 ---
-        - gofmt # 检查代码是否通过 gofmt 格式化
-        - goimports # 检查 import 分组与排序
         - govet # Go 官方静态分析工具，检查可疑代码
-        - staticcheck # 官方推荐的综合静态检查工具
+        - staticcheck # 官方推荐的综合静态检查工具（v2 已含 gosimple）
         - errcheck # 检查是否忽略了错误返回值 (Go 核心规范)
-        - gosimple # 检查代码是否可以简化
         - unused # 检查未使用的常量、变量、函数等
 
         # --- 团队风格与可读性 ---
@@ -41,39 +44,63 @@ linters:
         - gosec # 检查常见的安全问题 (如硬编码密码、SQL注入风险)
         - prealloc # 检查切片预分配，提升性能
 
-# 各个 Linter 的具体参数配置
-linters-settings:
-    # 行宽限制配置
-    lll:
-        line-length: 100 # 最大行宽 100 字符
-        tab-width: 4 # Tab 占 4 个字符宽度
+    # 各个 Linter 的具体参数配置
+    settings:
+        # 行宽限制配置
+        lll:
+            line-length: 100 # 最大行宽 100 字符
+            tab-width: 4 # Tab 占 4 个字符宽度
 
-    # revive 配置 (替代 golint)
-    revive:
+        # revive 配置 (替代 golint)
+        revive:
+            rules:
+                - name: exported
+                  arguments:
+                      - "disableStutteringCheck" # 禁用函数名与包名重复的检查
+
+        # errcheck 配置
+        errcheck:
+            check-type-assertions: true # 检查类型断言是否处理了 error
+            check-blank: false # 允许使用 _ = func() 显式忽略错误
+
+    # 排除特定规则或文件的报错
+    exclusions:
+        generated: lax
+        presets:
+            - comments
+            - common-false-positives
+            - legacy
+            - std-error-handling
         rules:
-            - name: exported
-              arguments:
-                  - "disableStutteringCheck" # 禁用函数名与包名重复的检查
+            # 允许在测试文件中忽略 errcheck 和行宽限制
+            - linters:
+                  - errcheck
+                  - lll
+              path: _test\.go
 
-    # errcheck 配置
-    errcheck:
-        check-type-assertions: true # 检查类型断言是否处理了 error
-        check-blank: false # 允许使用 _ = func() 显式忽略错误
+            # 允许在 main.go 或 cmd 目录中忽略未导出变量的警告
+            - linters:
+                  - revive
+              path: cmd/
 
-    # goimports 配置
-    goimports:
-        local-prefixes: "naotodoserver" # 项目模块路径，用于 import 分组
+        paths:
+            - third_party$
+            - builtin$
+            - examples$
 
-# 排除特定规则或文件的报错
-issues:
-    exclude-rules:
-        # 允许在测试文件中忽略 errcheck 和行宽限制
-        - path: _test\.go
-          linters:
-              - errcheck
-              - lll
-
-        # 允许在 main.go 或 cmd 目录中忽略未导出变量的警告
-        - path: cmd/
-          linters:
-              - revive
+# 格式化器（v1 中 gofmt/goimports 属于 linter，v2 拆分为 formatters）
+formatters:
+    enable:
+        - gofmt # 检查代码是否通过 gofmt 格式化
+        - goimports # 检查 import 分组与排序
+    settings:
+        # goimports 配置
+        goimports:
+            local-prefixes: # 项目模块路径，用于 import 分组
+                - naotodoserver
+    exclusions:
+        generated: lax
+        paths:
+            - third_party$
+            - builtin$
+            - examples$
