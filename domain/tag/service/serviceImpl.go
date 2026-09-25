@@ -2,90 +2,85 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
-	"naotodoserver/domain/tag/vo"
+	"naotodoserver/domain/tag/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
-// 标签域注册函数
-func NewTagDomain(tagRepo repositories.TagRepository) TagDomain {
-	return &TagDomainImpl{tagRepo: tagRepo}
+// NewTagDomain 标签域注册函数
+func NewTagDomain(
+	tagRepo repositories.TagRepository,
+	preferenceRepo repositories.TagPreference,
+) TagDomain {
+	return &TagDomainImpl{
+		tagRepo:        tagRepo,
+		preferenceRepo: preferenceRepo,
+	}
 }
 
-/*
- * Get tag by id
- * 根据标签ID获取标签信息
- */
-func (tagDomain *TagDomainImpl) GetById(
-	ctx context.Context,
-	userId int64,
-	tagId int64,
-) (*entities.Tag, error) {
-	return tagDomain.tagRepo.GetById(ctx, userId, tagId)
-}
-
-/*
- * Create tag
- * 创建标签
- */
+// Create 创建标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param createTagValueObject 创建标签值对象
+// @return *entities.Tag 创建的标签信息
+// @return domaintypes.UpsertResult 本次 upsert 动作（Created / Outcome）
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) Create(
 	ctx context.Context,
 	userId int64,
-	createEntity *entities.Tag,
-) (*entities.Tag, error) {
-	createEntity.UserId = userId
-	createEntity.Preference = vo.MakeDefaultTagPreference()
-	return tagDomain.tagRepo.Create(ctx, createEntity)
+	createTagValueObject *valueobjects.CreateTag,
+) (*entities.Tag, domaintypes.UpsertResult, error) {
+	// 设置排序 ID
+	createTagValueObject.SortId = tagDomain.tagRepo.GetMaxSortId(ctx, userId) + 1
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	tagEntity, result, err := tagDomain.tagRepo.Upsert(ctx, userId, createTagValueObject)
+	if err != nil {
+		return nil, domaintypes.UpsertResult{}, err
+	}
+	// 仅首次新建时初始化基础偏好；覆盖/重试场景保留用户已有偏好
+	if !result.Created {
+		return tagEntity, result, nil
+	}
+	// 创建标签基础偏好
+	tagPreferenceValueObject, err := valueobjects.NewSaveTagPreference(
+		"table",
+		fmt.Sprintf("{\"tagId\": \"%d\"}", tagEntity.Id),
+		"{}",
+	)
+	if err != nil {
+		return nil, domaintypes.UpsertResult{}, err
+	}
+	// 保存标签基础偏好
+	err = tagDomain.preferenceRepo.Save(
+		ctx,
+		userId,
+		tagEntity.Id,
+		tagPreferenceValueObject,
+	)
+	if err != nil {
+		return nil, domaintypes.UpsertResult{}, err
+	}
+	// 返回标签信息
+	return tagEntity, result, nil
 }
 
-/*
- * Update tag
- * 更新标签信息
- */
-func (tagDomain *TagDomainImpl) Update(
-	ctx context.Context,
-	userId int64,
-	tagId int64,
-	updateEntity *entities.Tag,
-) error {
-	whereEntity := &entities.Tag{UserId: userId, Id: tagId}
-	return tagDomain.tagRepo.Update(ctx, whereEntity, updateEntity)
-}
-
-/*
- * Delete tag
- * 删除标签
- */
+// Delete 删除标签
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return error 校验失败返回错误，否则返回 nil
 func (tagDomain *TagDomainImpl) Delete(
 	ctx context.Context,
 	userId int64,
 	tagId int64,
 ) error {
-	whereEntity := &entities.Tag{UserId: userId, Id: tagId}
-	return tagDomain.tagRepo.Delete(ctx, whereEntity)
-}
-
-/*
- * List tag
- * 获取所有标签
- */
-func (tagDomain *TagDomainImpl) List(
-	ctx context.Context,
-	userId int64,
-) ([]*entities.Tag, error) {
-	whereEntity := &entities.Tag{UserId: userId}
-	return tagDomain.tagRepo.Get(ctx, whereEntity)
-}
-
-/*
- * Update tag preference
- * 更新标签偏好
- */
-func (tagDomain *TagDomainImpl) UpdatePreference(
-	ctx context.Context,
-	userId int64,
-	tagId int64,
-	preference *vo.TagPreference,
-) error {
-	panic("unimplemented")
+	// 删除标签
+	err := tagDomain.tagRepo.Delete(ctx, userId, tagId)
+	if err != nil {
+		return err
+	}
+	// 删除标签偏好
+	return tagDomain.preferenceRepo.Delete(ctx, userId, tagId)
 }

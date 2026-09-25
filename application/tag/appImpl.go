@@ -2,163 +2,311 @@ package tag
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"naotodoserver/application/idutil"
+	"naotodoserver/application/tag/dto"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
-	iCtx "naotodoserver/infrastructure/context"
-	"naotodoserver/interfaces/types"
-	"strconv"
+	taskService "naotodoserver/domain/task/service"
+	"naotodoserver/domain/types"
 )
 
-// 注册函数
-func RegistDomainImpl(tagDomain service.TagDomain) TagApp {
-	once.Do(func() {
-		App.tagDomain = tagDomain
-	})
-	return &App
+// NewTagApp 创建标签应用层实例
+// @param tagDomain 标签领域服务
+// @param tagRepo 标签仓储
+// @param preferenceRepo 标签偏好仓储
+// @param txManager 事务管理器
+// @param taskDomain 任务领域服务（删除标签时级联清理任务引用）
+// @return TagApp 标签应用层接口
+func NewTagApp(
+	tagDomain service.TagDomain,
+	tagRepo repositories.TagRepository,
+	preferenceRepo repositories.TagPreference,
+	txManager types.TxManager,
+	taskDomain taskService.TaskDomain,
+) TagApp {
+	impl := &TagAppImpl{
+		tagDomain:      tagDomain,
+		tagRepo:        tagRepo,
+		preferenceRepo: preferenceRepo,
+		txManager:      txManager,
+		taskDomain:     taskDomain,
+	}
+	return impl
 }
 
-/*
- * Get tag
- * 获取单个标签信息
- */
+// GetTag 获取标签信息
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagId 标签 ID
+// @return 标签响应体
+// @return error
 func (tagApp *TagAppImpl) GetTag(
 	ctx context.Context,
+	userId int64,
 	tagId string,
-) (*types.GetTagRes, error) {
-	// 1. 获取用户 ID
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
-	}
-	// 2. 转换 tagId
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+) (*dto.GetTagRes, error) {
+	// 转换 tagId
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return nil, errors.New("标签 ID 格式错误")
+		return nil, domerr.ErrInvalidTagID
 	}
-	// 2. 调用域函数 - 获取标签信息
-	tagEntity, err := tagApp.tagDomain.GetById(ctx, userId, tagId64)
+	// 获取标签信息
+	tagEntity, err := tagApp.tagRepo.GetById(ctx, userId, tagId64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tag.Get: %w", err)
 	}
-	// 3. 实体转换响应体
-	res := TagEntity2GetRes(tagEntity)
-	// 4. 返回结果
-	return res, nil
+	// 实体转换响应体
+	getRes := TagEntityToGetRes(tagEntity)
+	// 返回结果
+	return getRes, nil
 }
 
-/*
- * Create tag
- * 创建标签
- */
+// CreateTag 创建标签
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagId 标签 ID
+// @param req 创建标签请求体
+// @return 创建标签响应体
+// @return types.UpsertResult 本次 upsert 动作（供同步回执使用）
+// @return error
 func (tagApp *TagAppImpl) CreateTag(
 	ctx context.Context,
-	req *types.CreateTagReq,
-) (*types.CreateTagRes, error) {
-	// 1. 获取用户 ID
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
-	}
-	// 2. 转换请求体
-	createEntity := CreateReq2Entity(req)
-	err := createEntity.IsValid()
+	userId int64,
+	createTagReq *dto.CreateTagReq,
+) (*dto.CreateTagRes, types.UpsertResult, error) {
+	// 转换请求体
+	createTagValueObject, err := CreateTagReqToValueObject(createTagReq)
 	if err != nil {
-		return nil, err
+		return nil, types.UpsertResult{}, err
 	}
-	// 3. 调用域函数 - 创建标签
-	tagEntity, err := tagApp.tagDomain.Create(ctx, userId, createEntity)
+	// 创建标签
+	tagEntity, upsert, err := tagApp.tagDomain.Create(ctx, userId, createTagValueObject)
 	if err != nil {
-		return nil, err
+		return nil, types.UpsertResult{}, fmt.Errorf("tag.Create: %w", err)
 	}
-	// 4. 实体转换响应体并返回结果
-	return TagEntity2CreateRes(tagEntity), nil
+	// 实体转换响应体并返回结果
+	return TagEntityToCreateRes(tagEntity), upsert, nil
 }
 
-/*
- * Update tag
- * 更新标签信息
- */
+// UpdateTag 更新标签信息
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagId 标签 ID
+// @param updateTagReq 更新标签请求体
+// @return error
 func (tagApp *TagAppImpl) UpdateTag(
 	ctx context.Context,
-	req *types.UpdateTagReq,
-) (*types.UpdateTagRes, error) {
-	// 1. 获取用户 ID
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
-	}
-	// 2. 转换 tagId
-	tagId64, err := strconv.ParseInt(req.TagId, 10, 64)
+	userId int64,
+	tagId string,
+	updateTagReq *dto.UpdateTagReq,
+) error {
+	// 转换 tagId
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return nil, errors.New("标签 ID 格式错误")
+		return domerr.ErrInvalidTagID
 	}
-	// 3. 转换请求体
-	tagEntity := UpdateReq2Entity(req)
-	// 4. 调用域函数 - 更新标签信息
-	err = tagApp.tagDomain.Update(ctx, userId, tagId64, tagEntity)
+	// 转换请求体
+	updateTagValueObject, err := UpdateTagReqToValueObject(updateTagReq)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// 5. 转换结果并返回
-	return &types.UpdateTagRes{TagId: req.TagId}, nil
+	// 更新标签信息
+	if err := tagApp.tagRepo.Update(ctx, userId, tagId64, updateTagValueObject); err != nil {
+		return fmt.Errorf("tag.Update: %w", err)
+	}
+	return nil
 }
 
-/*
- * Delete tag
- * 删除标签
- */
+// DeleteTag 删除标签
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagId 标签 ID
+// @return error
 func (tagApp *TagAppImpl) DeleteTag(
 	ctx context.Context,
+	userId int64,
 	tagId string,
-) (*types.DeleteTagRes, error) {
-	// 1. 获取用户 ID
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
-	}
-	// 2. 转换 tagId
-	tagId64, err := strconv.ParseInt(tagId, 10, 64)
+) error {
+	// 转换 tagId
+	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return nil, errors.New("标签 ID 格式错误")
+		return domerr.ErrInvalidTagID
 	}
-	// 3. 调用域函数 - 删除标签信息
-	err = tagApp.tagDomain.Delete(ctx, userId, tagId64)
+	// 事务内级联删除：软删标签 + 从所有任务中移除该标签引用
+	err = tagApp.txManager.Do(ctx, func(ctx context.Context) error {
+		// 1. 软删标签（领域服务负责 Tag 自身 + Preference）
+		if err := tagApp.tagDomain.Delete(ctx, userId, tagId64); err != nil {
+			return err
+		}
+		// 2. 级联清理任务中的标签引用（推进任务 updated_at，增量同步可发现）
+		return tagApp.taskDomain.RemoveTagFromTasks(ctx, userId, tagId64)
+	})
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("tag.Delete: %w", err)
 	}
-	// 5. 转换结果并返回
-	return &types.DeleteTagRes{TagId: tagId}, nil
+	// 转换结果并返回
+	return nil
 }
 
-/*
- * List tag
- * 获取所有标签信息
- */
+// ListTag 获取所有标签信息
+// @param ctx 上下文
+// @param userId 用户 ID
+// @return 标签响应体
+// @return error
 func (tagApp *TagAppImpl) ListTag(
 	ctx context.Context,
-) (types.ListTagRes, error) {
-	// 1. 获取用户 ID
-	userId := iCtx.GetUserId(ctx)
-	if userId <= 0 {
-		return nil, errors.New("用户 ID 无效")
-	}
-	// 2. 调用域函数 - 删除标签信息
-	tagEntities, err := tagApp.tagDomain.List(ctx, userId)
+	userId int64,
+) ([]*dto.GetTagRes, error) {
+	// 获取所有标签信息
+	tagEntities, err := tagApp.tagRepo.Get(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
-	// 5. 转换结果并返回
-	return TagEntities2ListRes(tagEntities), nil
+	// 转换结果并返回
+	return TagEntitiesToGetResList(tagEntities), nil
 }
 
-/*
- * Update tag preference
- * 更新标签偏好设置
- */
+// ListTagSync 增量同步标签列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
+func (tagApp *TagAppImpl) ListTagSync(
+	ctx context.Context,
+	userId int64,
+	updatedAt string,
+	cursorId string,
+	limit int,
+) ([]*dto.GetTagRes, error) {
+	cursor, err := idutil.ParseUpdatedAtCursor(updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	var cursorID int64
+	if cursorId != "" {
+		cursorID, err = idutil.ParseID(cursorId)
+		if err != nil {
+			return nil, fmt.Errorf("cursorId 格式错误: %w", err)
+		}
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	tagEntities, err := tagApp.tagRepo.ListSync(ctx, userId, cursor, cursorID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("tag.ListSync: %w", err)
+	}
+	return TagEntitiesToGetResList(tagEntities), nil
+}
+
+// ListTagByIds 根据标签ID列表获取标签列表
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagIds 标签 ID列表
+// @return 标签响应体列表
+// @return error
+func (tagApp *TagAppImpl) ListTagByIds(
+	ctx context.Context,
+	userId int64,
+	tagIds []string,
+) ([]*dto.GetTagRes, error) {
+	// 转换 tagIds 为 int64 列表 - idutil.ParseID(tagId)
+	tagIds64 := make([]int64, 0, len(tagIds))
+	for _, tagId := range tagIds {
+		tagId64, err := idutil.ParseID(tagId)
+		if err != nil {
+			return nil, domerr.ErrInvalidTagID
+		}
+		tagIds64 = append(tagIds64, tagId64)
+	}
+	// 获取标签信息
+	tagEntities, err := tagApp.tagRepo.GetByIds(ctx, userId, tagIds64)
+	if err != nil {
+		return nil, err
+	}
+	// 转换结果并返回
+	return TagEntitiesToGetResList(tagEntities), nil
+}
+
+// BatchUpdateTags 批量更新标签
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param req 批量更新标签请求体
+// @return 批量更新标签响应体
+// @return error
+func (tagApp *TagAppImpl) BatchUpdateTags(
+	ctx context.Context,
+	userId int64,
+	req *dto.BatchUpdateTagReq,
+) (*dto.BatchUpdateTagRes, error) {
+	// 请求体转换值对象
+	batchVOs, err := BatchUpdateTagReqToValueObjects(req)
+	if err != nil {
+		return nil, err
+	}
+	updatedEntities, err := tagApp.tagRepo.BatchUpdate(ctx, userId, batchVOs)
+	if err != nil {
+		return nil, err
+	}
+	// 实体转换响应体
+	tagResList := TagEntitiesToGetResList(updatedEntities)
+	// 返回结果
+	return &dto.BatchUpdateTagRes{
+		UpdatedCount: int64(len(tagResList)),
+		Tags:         tagResList,
+	}, nil
+}
+
+// GetTagPreference 获取标签偏好设置
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagId 标签 ID
+// @return 标签偏好设置响应体
+// @return error
+func (tagApp *TagAppImpl) GetTagPreference(
+	ctx context.Context,
+	userId int64,
+	tagId string,
+) (*dto.GetTagPreferenceRes, error) {
+	// 获取标签 ID
+	tagId64, err := idutil.ParseID(tagId)
+	if err != nil {
+		return nil, domerr.ErrInvalidTagID
+	}
+	// 获取标签偏好设置
+	tagPreferenceEntity, err := tagApp.preferenceRepo.Get(ctx, userId, tagId64)
+	if err != nil {
+		return nil, err
+	}
+	// 响应体转换并返回结果
+	return TagPreferenceEntityToGetRes(tagPreferenceEntity), nil
+}
+
+// UpdateTagPreference 更新标签偏好设置
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param tagId 标签 ID
+// @param req 更新标签偏好设置请求体
+// @return error
 func (tagApp *TagAppImpl) UpdateTagPreference(
 	ctx context.Context,
+	userId int64,
 	tagId string,
-	req *types.UpdateTagPreferenceReq,
-) (*types.UpdateTagPreferenceRes, error) {
-	panic("unimplemented")
+	updateTagPreferenceReq *dto.UpdateTagPreferenceReq,
+) error {
+	// 获取标签 ID
+	tagId64, err := idutil.ParseID(tagId)
+	if err != nil {
+		return domerr.ErrInvalidTagID
+	}
+	// 数据转换
+	saveTagPreferenceValueObject, err := UpdateTagPreferenceReqToValueObject(updateTagPreferenceReq)
+	if err != nil {
+		return err
+	}
+	// 更新标签偏好设置
+	return tagApp.preferenceRepo.Save(
+		ctx,
+		userId,
+		tagId64,
+		saveTagPreferenceValueObject,
+	)
 }

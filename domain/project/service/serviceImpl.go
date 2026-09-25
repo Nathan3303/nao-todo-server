@@ -2,104 +2,165 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
-	"naotodoserver/domain/project/vo"
+	"naotodoserver/domain/project/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
-func NewProjectDomain(repo repositories.Project) ProjectDomain {
-	return &ProjectDomainImpl{repo: repo}
+// NewProjectDomain 创建任务清单领域服务实现
+func NewProjectDomain(
+	repo repositories.Project,
+	preferenceRepo repositories.ProjectPreference,
+) ProjectDomain {
+	return &ProjectDomainImpl{
+		repo:           repo,
+		preferenceRepo: preferenceRepo,
+	}
 }
 
-/*
- * Create project
- */
+// Create 创建任务清单
 func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
-	projectEntity *entities.Project,
-) (*entities.Project, error) {
-	projectPreference := vo.MakeDefaultProjectPreference(projectEntity.UserId)
-	projectEntity.Preference = projectPreference
-	return p.repo.Create(ctx, projectEntity)
-}
-
-/*
- * Get project by userId and projectId
- */
-func (p *ProjectDomainImpl) GetById(
-	ctx context.Context,
-	userId int64,
-	projectId int64,
-) (*entities.Project, error) {
-	return p.repo.GetById(ctx, userId, projectId)
-}
-
-/*
- * Update project
- */
-func (p *ProjectDomainImpl) Update(
-	ctx context.Context,
-	userId int64,
-	projectId int64,
-	updateEntity *entities.Project,
-) error {
-	return p.repo.Update(
+	createProjectValueObject *valueobjects.CreateProject,
+) (*entities.Project, domaintypes.UpsertResult, error) {
+	// 设置排序 ID
+	createProjectValueObject.SortId = p.repo.GetMaxSortId(ctx, createProjectValueObject.UserId) + 1
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
+	projectEntity, result, err := p.repo.Upsert(
 		ctx,
-		&entities.Project{UserId: userId, Id: projectId},
-		updateEntity,
+		createProjectValueObject.UserId,
+		createProjectValueObject,
 	)
+	if err != nil {
+		return nil, domaintypes.UpsertResult{}, err
+	}
+	// 仅首次新建时初始化基础偏好；覆盖/重试场景保留用户已有偏好
+	if !result.Created {
+		return projectEntity, result, nil
+	}
+	// 创建任务清单基础偏好值对象
+	projectPreferenceValueObject, err := valueobjects.NewSaveProjectPreference(
+		"table",
+		fmt.Sprintf("{\"projectId\": \"%d\"}", projectEntity.Id),
+		"{}",
+	)
+	if err != nil {
+		return nil, domaintypes.UpsertResult{}, err
+	}
+	// 保存任务清单基础偏好值对象
+	err = p.preferenceRepo.Save(
+		ctx,
+		createProjectValueObject.UserId,
+		projectEntity.Id,
+		projectPreferenceValueObject,
+	)
+	if err != nil {
+		return nil, domaintypes.UpsertResult{}, err
+	}
+	// 返回任务清单实体
+	return projectEntity, result, nil
 }
 
-/*
- * Delete project
- */
+// Delete 删除任务清单
 func (p *ProjectDomainImpl) Delete(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Delete(ctx, &entities.Project{UserId: userId, Id: projectId})
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 2. 应用实体删除方法（软删除，设置停用时间）
+	projectEntity.Delete()
+	// 3. 持久化实体状态
+	err = p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
+	if err != nil {
+		return err
+	}
+	// 4. 删除任务清单偏好
+	return p.preferenceRepo.Delete(ctx, userId, projectId)
 }
 
-/*
- * Restore project
- */
+// Restore 恢复任务清单
 func (p *ProjectDomainImpl) Restore(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Restore(ctx, &entities.Project{UserId: userId, Id: projectId})
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 2. 应用实体恢复方法（清空停用时间）
+	projectEntity.Restore()
+	// 3. 持久化实体状态
+	err = p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
+	if err != nil {
+		return err
+	}
+	// 4. 恢复任务清单偏好
+	return p.preferenceRepo.Restore(ctx, userId, projectId)
 }
 
-/*
- * Archive project
- */
+// Archive 归档任务清单
 func (p *ProjectDomainImpl) Archive(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Archive(ctx, &entities.Project{UserId: userId, Id: projectId})
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 2. 应用实体归档方法（幂等重设归档时间）
+	projectEntity.Archive()
+	// 3. 持久化实体状态
+	return p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
 }
 
-/*
- * Unarchive project
- */
+// Unarchive 取消归档任务清单
 func (p *ProjectDomainImpl) Unarchive(
 	ctx context.Context,
 	userId int64,
 	projectId int64,
 ) error {
-	return p.repo.Unarchive(ctx, &entities.Project{UserId: userId, Id: projectId})
-}
-
-/*
- * Get projects by userId
- */
-func (p *ProjectDomainImpl) GetByUserId(
-	ctx context.Context,
-	userId int64,
-) ([]*entities.Project, error) {
-	return p.repo.GetByUserId(ctx, userId)
+	// 1. 加载任务清单实体
+	projectEntity, err := p.repo.GetById(ctx, userId, projectId)
+	if err != nil {
+		return err
+	}
+	// 2. 应用实体取消归档方法（清空归档时间）
+	projectEntity.Unarchive()
+	// 3. 持久化实体状态
+	return p.repo.UpdateState(
+		ctx,
+		userId,
+		projectId,
+		projectEntity.ArchivedAt,
+		projectEntity.DeactivedAt,
+	)
 }

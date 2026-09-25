@@ -1,0 +1,57 @@
+package repositories
+
+import (
+	"context"
+	"time"
+
+	"naotodoserver/domain/task/entities"
+	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
+)
+
+// TaskComment 任务评论仓库接口
+type TaskComment interface {
+	// GetCommentById 获取单个任务评论信息
+	GetCommentById(ctx context.Context, userId, commentId int64) (*entities.TaskComment, error)
+
+	// CreateComment 创建任务评论
+	CreateComment(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreateTaskComment,
+	) (*entities.TaskComment, error)
+
+	// UpsertComment 幂等写入：客户端指定 id 时创建/覆盖（LWW 判定 + create 冲突检测）
+	// 返回 UpsertResult：Outcome 与 DecideUpsert 判定同源；Created=true 表示本次为新建
+	UpsertComment(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreateTaskComment,
+	) (*entities.TaskComment, domaintypes.UpsertResult, error)
+
+	// UpdateComment 更新任务评论
+	UpdateComment(
+		ctx context.Context,
+		userId int64,
+		commentId int64,
+		vo *valueobjects.UpdateTaskComment,
+	) error
+
+	// DeleteComment 删除任务评论
+	DeleteComment(ctx context.Context, userId, commentId int64) error
+
+	// ListComments 获取任务评论列表
+	ListComments(ctx context.Context, userId, taskId int64) ([]*entities.TaskComment, error)
+
+	// ListCommentsSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+	ListCommentsSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.TaskComment, error)
+
+	// SyncCommentUserProfile 同步任务评论用户信息
+	SyncCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
+}

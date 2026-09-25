@@ -1,0 +1,28 @@
+package task
+
+import (
+	"context"
+	"naotodoserver/application/task/dto"
+	domaintypes "naotodoserver/domain/types"
+)
+
+// TaskCommentApp 任务评论应用接口
+type TaskCommentApp interface {
+	GetTaskCommentById(
+		ctx context.Context, userId int64, commentId string,
+	) (*dto.TaskCommentRes, error)
+	CreateTaskComment(
+		ctx context.Context, userId int64, req *dto.CreateTaskCommentReq,
+	) (*dto.TaskCommentRes, domaintypes.UpsertResult, error)
+	UpdateTaskComment(
+		ctx context.Context, userId int64, commentId string, req *dto.UpdateTaskCommentReq,
+	) error
+	DeleteTaskComment(ctx context.Context, userId int64, commentId string) error
+	ListTaskComments(
+		ctx context.Context, userId int64, taskId string,
+	) ([]*dto.TaskCommentRes, error)
+	ListTaskCommentSync(
+		ctx context.Context, userId int64, updatedAt, cursorId string, limit int,
+	) ([]*dto.TaskCommentRes, error)
+	SyncTaskCommentUserProfile(ctx context.Context, userId int64, nickname, avatar string) error
+}

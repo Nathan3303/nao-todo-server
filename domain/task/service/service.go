@@ -2,30 +2,63 @@ package service
 
 import (
 	"context"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
-	"naotodoserver/domain/task/vo"
+	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
+// TaskDomain 任务域接口
 type TaskDomain interface {
-	GetById(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
-	Create(ctx context.Context, userId int64, createEntity *entities.Task) (*entities.Task, error)
-	Update(
+	// --- Task ---
+	Copy(ctx context.Context, userId int64, taskId int64) (*entities.Task, error)
+	// CreateTask 创建任务（幂等 upsert）
+	// 返回 UpsertResult.Created=true 表示本次为新建（含墓碑复活，B6），
+	// 供调用方按计数口径决定是否 +1；UpsertResult.Outcome 供同步回执使用
+	CreateTask(
 		ctx context.Context,
 		userId int64,
-		taskId int64,
-		updateEntity *entities.Task,
-	) error
-	Delete(ctx context.Context, userId int64, taskId int64) error
-	Restore(ctx context.Context, userId int64, taskId int64) error
+		vo *valueobjects.CreateTask,
+	) (*entities.Task, domaintypes.UpsertResult, error)
 	List(
 		ctx context.Context,
 		userId int64,
-		whereEntity *entities.Task,
-		pagination *vo.Pagination,
-	) ([]*entities.Task, *vo.Pagination, error)
+		query *valueobjects.QueryTask,
+		pagination *valueobjects.Pagination,
+	) ([]*entities.Task, *valueobjects.Pagination, error)
+
+	// ListSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+	ListSync(
+		ctx context.Context,
+		userId int64,
+		cursor time.Time,
+		cursorID int64,
+		limit int,
+	) ([]*entities.Task, error)
+
+	// --- CheckItem ---
+	// CreateCheckItem 创建检查项（幂等 upsert）
+	// 返回 UpsertResult.Created=true 表示本次为新建（含墓碑复活，B6），
+	// 供调用方按计数口径决定是否 +1；UpsertResult.Outcome 供同步回执使用
+	CreateCheckItem(
+		ctx context.Context,
+		userId int64,
+		vo *valueobjects.CreateTaskCheckItem,
+	) (*entities.TaskCheckItem, domaintypes.UpsertResult, error)
+
+	// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
+	// 同时推进任务 updated_at，保证清理结果可被增量同步发现
+	RemoveTagFromTasks(ctx context.Context, userId int64, tagId int64) error
+
+	// --- Snooze ---
+	Snooze(ctx context.Context, userId int64, taskId int64, durationMinutes int) (string, error)
+	ProcessReminders(ctx context.Context) ([]*entities.Task, error)
 }
 
+// TaskDomainImpl 任务域实现
 type TaskDomainImpl struct {
-	taskRepo repositories.Task
+	taskRepo      repositories.Task
+	checkItemRepo repositories.TaskCheckItem
 }

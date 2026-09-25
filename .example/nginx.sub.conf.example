@@ -1,0 +1,174 @@
+##
+# 注意：当前项目已默认不启用 Nginx，Go 直接处理 HTTPS。
+#       本文件仅作为需要在 Nginx 前再加一层反向代理时的参考。
+#
+# Docker 部署方式（生产环境，启用 HTTPS）：
+#   1. mkdir -p /opt/nao-todo-server/nginx/{conf,ssl,logs}
+#   2. cp .example/nginx.sub.conf.example /opt/nao-todo-server/nginx/conf/naotodo.sub.conf
+#   3. 编辑替换 your-domain.com 为实际域名
+#   4. 放置 SSL 证书到 /opt/nao-todo-server/nginx/ssl/
+#   5. 启动 docker compose（需自行添加 nginx 服务）
+#
+# 开发环境：直接访问 app 端口，无需 Nginx
+#
+# 宿主机部署方式（不使用 Docker nginx 服务时）：
+#   sudo mkdir -p /etc/nginx/ssl
+#   cp -r your-key-and-pem-files /etc/nginx/ssl
+#   sudo chmod 600 /etc/nginx/ssl/*.key
+#   sudo cp nginx.sub.conf.example /etc/nginx/sites-available/xxx
+#   sudo ln -s /etc/nginx/sites-available/xxx /etc/nginx/sites-enabled/
+#   sudo nginx -t && systemctl reload nginx
+
+
+# ─── HTTP → HTTPS 强制跳转 ───
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Let's Encrypt ACME 证书验证（可不配，但预留无妨）
+    location /.well-known/acme-challenge/ {
+        root /var/www/acme;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+
+# ─── HTTPS 服务 ───
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name your-domain.com;
+
+    # ═══════════════════════════════════════════════════════════
+    # SSL 证书
+    # ═══════════════════════════════════════════════════════════
+    ssl_certificate     /etc/nginx/ssl/your-domain.com.pem;
+    ssl_certificate_key /etc/nginx/ssl/your-domain.com.key;
+
+    # ── 协议与加密套件 ──
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    # ── Session 缓存（复用握手，减少延迟） ──
+    ssl_session_timeout 1d;
+    ssl_session_cache   shared:SSL:50m;
+    ssl_session_tickets off;
+
+    # ── 安全响应头 ──
+    add_header X-Frame-Options          SAMEORIGIN                          always;
+    add_header X-Content-Type-Options   nosniff                             always;
+    add_header X-XSS-Protection        "1; mode=block"                     always;
+    add_header Referrer-Policy         "strict-origin-when-cross-origin"    always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # ═══════════════════════════════════════════════════════════
+    # SSE 长连接（必须放在 /api 之前，nginx 取最长前缀匹配）
+    # ═══════════════════════════════════════════════════════════
+    location ^~ /api/sse/ {
+        proxy_pass http://app:3302;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+
+        # 透传客户端信息
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Port  $server_port;
+
+        # SSE 长连接：禁用超时、禁用缓冲、禁用缓存
+        proxy_read_timeout 0;
+        proxy_buffering    off;
+        proxy_cache        off;
+        send_timeout       0;
+
+        # SSE 响应不缓存
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # ═══════════════════════════════════════════════════════════
+    # API 反向代理
+    # ═══════════════════════════════════════════════════════════
+    location ^~ /api {
+        proxy_pass http://app:3302;
+
+        # 长连接 + WebSocket 支持
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+
+        # 透传客户端信息
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Port  $server_port;
+
+        # API 响应不缓存
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # ── 健康检查（独立 location，关闭 access_log 减少噪音） ──
+    location = /api/ping {
+        access_log off;
+        proxy_pass http://app:3302;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ═══════════════════════════════════════════════════════════
+    # 静态资源（用户上传文件）
+    # ═══════════════════════════════════════════════════════════
+    # 注意：头像文件已改为需登录（JWT 鉴权）的接口提供（Go 侧路由
+    # /static/uploads/avatars/:filename），因此必须通过 proxy 转发到
+    # Go 服务进行鉴权，【严禁】启用下方 alias 直连静态目录，否则会
+    # 绕过 JWT 鉴权导致任意用户头像文件被公开访问。
+    location ^~ /static/uploads {
+        proxy_pass http://app:3302;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 禁止启用（会绕过鉴权）：
+        # alias /app/uploads/;
+        # expires 30d;
+        # add_header Cache-Control "public, immutable";
+        # access_log off;
+
+        # 禁止访问隐藏文件和目录遍历
+        location ~ /\. {
+            deny all;
+            return 404;
+        }
+    }
+
+    # ── 错误页面 ──
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+
+
+##
+# Docker 部署验证（生产环境）：
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs nginx
+#
+# 宿主机部署验证：
+#   sudo nginx -t && systemctl reload nginx

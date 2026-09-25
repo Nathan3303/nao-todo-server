@@ -2,6 +2,8 @@ package conf
 
 import (
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -9,9 +11,42 @@ import (
 var Conf *Config
 
 type Config struct {
-	Server *Server `yaml:"server"`
-	MySQL  *MySQL  `yaml:"mysql"`
-	Redis  *Redis  `yaml:"redis"`
+	Server  *Server    `yaml:"server"`
+	MySQL   *MySQL     `yaml:"mysql"`
+	Redis   *Redis     `yaml:"redis"`
+	Log     *LogConfig `yaml:"log"`
+	Uploads *Uploads   `yaml:"uploads"`
+}
+
+type Uploads struct {
+	UploadDir   string `yaml:"uploadDir"`   // 文件上传根目录
+	AvatarDir   string `yaml:"avatarDir"`   // 头像存储子目录
+	MaxFileSize int64  `yaml:"maxFileSize"` // 最大文件大小（字节）
+	StaticPath  string `yaml:"staticPath"`  // 静态文件访问路径
+	ServerURL   string `yaml:"serverURL"`   // 服务器地址（用于拼接头像完整 URL）
+}
+
+// AvatarURL 将相对路径的头像 URL 拼接为完整 URL。
+// 若 avatar 为空、已是绝对 URL、或 ServerURL 未配置，则原样返回。
+func (u *Uploads) AvatarURL(avatar string) string {
+	if avatar == "" || u.ServerURL == "" {
+		return avatar
+	}
+	if strings.HasPrefix(avatar, "http://") ||
+		strings.HasPrefix(avatar, "https://") {
+		return avatar
+	}
+	return u.ServerURL + avatar
+}
+
+type LogConfig struct {
+	Level         string `yaml:"level"`         // 日志级别：debug, info, warn, error, fatal, panic
+	FilePath      string `yaml:"filePath"`      // 日志文件路径
+	MaxSize       int    `yaml:"maxSize"`       // 单个日志文件最大大小（MB）
+	MaxAge        int    `yaml:"maxAge"`        // 日志文件保留天数
+	MaxBackups    uint   `yaml:"maxBackups"`    // 保留的日志文件副本数量
+	Compress      bool   `yaml:"compress"`      // 是否压缩日志文件
+	OutputConsole bool   `yaml:"outputConsole"` // 是否同时输出到控制台
 }
 
 type Server struct {
@@ -19,6 +54,10 @@ type Server struct {
 	Port      string `yaml:"port"`
 	Version   string `yaml:"version"`
 	JwtSecret string `yaml:"jwtSecret"`
+	GoMaxProc int    `yaml:"goMaxProc"`
+	CertFile  string `yaml:"certFile"` // TLS 证书路径（空=HTTP）
+	KeyFile   string `yaml:"keyFile"`  // TLS 私钥路径（空=HTTP）
+	Debug     bool   `yaml:"debug"`    // 是否开启调试模式
 }
 
 type MySQL struct {
@@ -41,26 +80,83 @@ type Redis struct {
 }
 
 func InitConfig() {
-	// @step 1. 获取当前目录
 	configDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
-	// @step 2. 设置配置文件名称预类型，并拼接配置文件路径
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir + "/conf")
 
-	// @step 3. 读取配置文件
 	err = viper.ReadInConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	// @step 4. 将配置文件内容解析到 Conf 中
 	err = viper.Unmarshal(&Conf)
 	if err != nil {
 		panic(err)
+	}
+
+	overrideWithEnv()
+}
+
+func overrideWithEnv() {
+	var env string
+	if env = os.Getenv("JWT_SECRET"); env != "" {
+		Conf.Server.JwtSecret = env
+	}
+	if env = os.Getenv("MYSQL_HOST"); env != "" {
+		Conf.MySQL.Host = env
+	}
+	if env = os.Getenv("MYSQL_PORT"); env != "" {
+		Conf.MySQL.Port = env
+	}
+	if env = os.Getenv("MYSQL_USER"); env != "" {
+		Conf.MySQL.Username = env
+	}
+	if env = os.Getenv("MYSQL_PASSWORD"); env != "" {
+		Conf.MySQL.Password = env
+	}
+	if env = os.Getenv("MYSQL_DATABASE"); env != "" {
+		Conf.MySQL.Database = env
+	}
+	if env = os.Getenv("REDIS_HOST"); env != "" {
+		Conf.Redis.Host = env
+	}
+	if env = os.Getenv("REDIS_PORT"); env != "" {
+		Conf.Redis.Port = env
+	}
+	if env = os.Getenv("REDIS_PASSWORD"); env != "" {
+		Conf.Redis.Password = env
+	}
+	if env = os.Getenv("REDIS_DB"); env != "" {
+		if db, err := strconv.Atoi(env); err == nil {
+			Conf.Redis.DB = db
+		}
+	}
+	if env = os.Getenv("APP_PORT"); env != "" {
+		Conf.Server.Port = env
+	}
+	Conf.Server.Debug = os.Getenv("APP_DEBUG") == "true"
+	if env = os.Getenv("GOMAXPROCS"); env != "" {
+		if maxProc, err := strconv.Atoi(env); err == nil {
+			Conf.Server.GoMaxProc = maxProc
+		}
+	}
+	if env = os.Getenv("APP_SERVER_URL"); env != "" {
+		Conf.Uploads.ServerURL = env
+	}
+	if Conf.Server.Debug {
+		Conf.Server.CertFile = ""
+		Conf.Server.KeyFile = ""
+	} else {
+		if env = os.Getenv("TLS_CERT_FILE"); env != "" {
+			Conf.Server.CertFile = env
+		}
+		if env = os.Getenv("TLS_KEY_FILE"); env != "" {
+			Conf.Server.KeyFile = env
+		}
 	}
 }

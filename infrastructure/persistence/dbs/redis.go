@@ -17,9 +17,8 @@ func InitRedis() {
 	ctx := context.Background()
 	redisConfig := conf.Conf.Redis
 	client := redis.NewClient(&redis.Options{
-		Addr: redisConfig.Host + ":" + redisConfig.Port,
-		// Password: redisConfig.Password,
-		Password: "",
+		Addr:     redisConfig.Host + ":" + redisConfig.Port,
+		Password: redisConfig.Password,
 		DB:       redisConfig.DB,
 	})
 

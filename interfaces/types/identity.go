@@ -1,0 +1,46 @@
+package types
+
+// SignInReq 登录请求结构体
+type SignInReq struct {
+	Email    string `json:"email" form:"email" binding:"required,email"`
+	Password string `json:"password" form:"password" binding:"required"`
+}
+
+// SignInRes 登录响应结构体
+type SignInRes struct {
+	Token           string `json:"jwt"`
+	PendingDeletion bool   `json:"pendingDeletion"`
+	DeletedAt       string `json:"deletedAt,omitempty"`
+}
+
+// SignUpReq 注册请求结构体
+type SignUpReq struct {
+	Email    string `json:"email" form:"email" binding:"required,email"`
+	Password string `json:"password" form:"password" binding:"required"`
+	Nickname string `json:"nickname" form:"nickname"`
+}
+
+// SignOutReq 登出请求结构体
+type SignOutReq struct {
+	Token      string `json:"jwt" form:"jwt" binding:"required"`
+	DeviceType string `json:"deviceType" form:"deviceType"`
+}
+
+// SignOutRes 登出响应结构体
+type SignOutRes struct{}
+
+// CheckInReq 检入请求结构体
+type CheckInReq struct {
+	Token      string `json:"jwt" form:"jwt" binding:"required"`
+	DeviceType string `json:"deviceType" form:"deviceType"`
+}
+
+// CheckInRes 检入响应结构体
+type CheckInRes struct {
+	Token           string `json:"jwt"`
+	PendingDeletion bool   `json:"pendingDeletion"`
+	DeletedAt       string `json:"deletedAt,omitempty"`
+	// ServerTime 服务器当前时间（UTC Unix 毫秒，字符串避免 JS 大整数精度问题）
+	// 前端据此计算 serverTimeOffset 校准本地时钟（LWW 时间基准）
+	ServerTime string `json:"serverTime,omitempty"`
+}

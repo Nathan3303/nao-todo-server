@@ -2,38 +2,84 @@ package project
 
 import (
 	"context"
+	"naotodoserver/application/project/dto"
+	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
-	"naotodoserver/interfaces/types"
-	"sync"
+	taskRepo "naotodoserver/domain/task/repositories"
+	domaintypes "naotodoserver/domain/types"
 )
 
+// ProjectApp 任务清单应用接口
 type ProjectApp interface {
-	Create(ctx context.Context, req *types.CreateProjectReq) (*types.CreateProjectRes, error)
-	Get(ctx context.Context, req *types.GetProjectReq) (*types.GetProjectRes, error)
-	Update(ctx context.Context, req *types.UpdateProjectReq) (*types.UpdateProjectRes, error)
-	Delete(ctx context.Context, req *types.DeleteProjectReq) (*types.DeleteProjectRes, error)
-	Restore(ctx context.Context, req *types.RestoreProjectReq) (*types.RestoreProjectRes, error)
-	HardDelete(
+	// 获取任务清单
+	Get(ctx context.Context, userId int64, projectId string) (*dto.GetProjectRes, error)
+
+	// 创建任务清单
+	Create(
 		ctx context.Context,
-		req *types.HardDeleteProjectReq,
-	) (*types.HardDeleteProjectRes, error)
-	Archive(ctx context.Context, req *types.ArchiveProjectReq) (*types.ArchiveProjectRes, error)
-	Unarchive(
+		userId int64,
+		createProjectReq *dto.CreateProjectReq,
+	) (*dto.CreateProjectRes, domaintypes.UpsertResult, error)
+
+	// 更新任务清单
+	Update(
+		ctx context.Context, userId int64, projectId string, updateProjectReq *dto.UpdateProjectReq,
+	) error
+
+	// 删除任务清单
+	Delete(ctx context.Context, userId int64, projectId string) error
+
+	// 恢复任务清单
+	Restore(ctx context.Context, userId int64, projectId string) error
+
+	// 归档任务清单
+	Archive(ctx context.Context, userId int64, projectId string) error
+
+	// 取消归档任务清单
+	Unarchive(ctx context.Context, userId int64, projectId string) error
+
+	// 获取任务清单列表（isArchived=false/未传 ⇒ 默认排除已归档，DP-1=(b)）
+	List(ctx context.Context, userId int64, isArchived bool) (dto.ListProjectRes, error)
+	// ListSync 增量同步任务清单列表（包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页）
+	ListSync(
 		ctx context.Context,
-		req *types.UnarchiveProjectReq,
-	) (*types.UnarchiveProjectRes, error)
-	UpdatePreference(
+		userId int64,
+		updatedAt string,
+		cursorId string,
+		limit int,
+	) (dto.ListProjectRes, error)
+
+	// 批量更新任务清单
+	BatchUpdate(
 		ctx context.Context,
-		req *types.UpdateProjectPreferenceReq,
-	) (*types.UpdateProjectPreferenceRes, error)
-	List(ctx context.Context) (types.ListProjectRes, error)
+		userId int64,
+		req *dto.BatchUpdateProjectReq,
+	) (*dto.BatchUpdateProjectRes, error)
+
+	// 获取任务清单偏好
+	GetPreference(
+		ctx context.Context, userId int64, projectId string,
+	) (*dto.GetProjectPreferenceRes, error)
+
+	// 保存任务清单偏好
+	// 返回保存后回读的偏好（含服务端权威 updatedAt，additive T163）
+	SavePreference(
+		ctx context.Context,
+		userId int64,
+		projectId string,
+		updateProjectPreferenceReq *dto.UpdateProjectPreferenceReq,
+	) (*dto.GetProjectPreferenceRes, error)
+
+	// 删除已注销的任务清单（供定时任务调用）
+	DeleteDeactivatedProjects(ctx context.Context, dayOffset int8) error
 }
 
+// projectAppImpl 任务清单应用实现
 type projectAppImpl struct {
-	projectDomain service.ProjectDomain
+	projectDomain  service.ProjectDomain
+	txManager      domaintypes.TxManager
+	repo           repositories.Project
+	preferenceRepo repositories.ProjectPreference
+	taskRepo       taskRepo.Task                   // 用于级联操作
+	countPublisher domaintypes.CountEventPublisher // 计数事件发布（E7）
 }
-
-var (
-	App  *projectAppImpl
-	once sync.Once
-)

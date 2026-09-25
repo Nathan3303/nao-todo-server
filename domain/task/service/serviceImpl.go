@@ -2,98 +2,274 @@ package service
 
 import (
 	"context"
-	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
-	"naotodoserver/domain/task/vo"
+	"naotodoserver/domain/task/valueobjects"
+	domaintypes "naotodoserver/domain/types"
 )
 
-func NewTaskDomain(taskRepo repositories.Task) TaskDomain {
-	return &TaskDomainImpl{taskRepo: taskRepo}
+// NewTaskDomain 任务域实现
+func NewTaskDomain(
+	taskRepo repositories.Task,
+	checkItemRepo repositories.TaskCheckItem,
+) TaskDomain {
+	return &TaskDomainImpl{taskRepo: taskRepo, checkItemRepo: checkItemRepo}
 }
 
-/*
- * Get task by id
- * 获取单个任务信息
- */
-func (taskDomain *TaskDomainImpl) GetById(
+// CreateTask 创建任务
+func (d *TaskDomainImpl) CreateTask(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTask,
+) (*entities.Task, domaintypes.UpsertResult, error) {
+	// SortId 赋值决策已上移到 app 层（ADR §4 生成优先级矩阵 G1–G5）：领域层无旧值，
+	// 无法区分「新建 / 覆盖且父变 / 覆盖且父未变」，无条件 max+1 会把 G4 变成「每次 push 都重排到组末」。
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
+	entity, result, err := d.taskRepo.Upsert(ctx, userId, vo)
+	return entity, result, err
+}
+
+// Copy 复制任务
+func (d *TaskDomainImpl) Copy(
 	ctx context.Context,
 	userId int64,
 	taskId int64,
 ) (*entities.Task, error) {
-	return taskDomain.taskRepo.GetById(ctx, &entities.Task{UserId: userId, Id: taskId})
-}
-
-/*
- * Create task
- * 创建任务
- */
-func (taskDomain *TaskDomainImpl) Create(
-	ctx context.Context,
-	userId int64,
-	createEntity *entities.Task,
-) (*entities.Task, error) {
-	if !createEntity.IsEndAtValid() {
-		return nil, errors.New("时间参数无效 - 结束时间必须晚于开始时间")
-	}
-	createEntity.UserId = userId
-	return taskDomain.taskRepo.Create(ctx, createEntity)
-}
-
-/*
- * Update task
- * 更新任务
- */
-func (taskDomain *TaskDomainImpl) Update(
-	ctx context.Context,
-	userId int64,
-	taskId int64,
-	updateEntity *entities.Task,
-) error {
-	err := updateEntity.IsDatesValid()
+	// 检查任务是否存在
+	task, err := d.taskRepo.GetById(ctx, userId, taskId, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	whereEntity := &entities.Task{UserId: userId, Id: taskId}
-	return taskDomain.taskRepo.Update(ctx, whereEntity, updateEntity)
+	// 创建新任务VO
+	var vo valueobjects.CreateTask
+	vo.ParentTaskId = task.ParentTaskId
+	vo.Name = task.Name + "的复制"
+	vo.Description = task.Description
+	vo.State = task.State
+	vo.Priority = task.Priority
+	vo.StartAt = task.StartAt
+	vo.EndAt = task.EndAt
+	vo.ProjectId = task.ProjectId
+	vo.Tags = task.Tags
+	// vo.RemindAt = task.RemindAt
+	// vo.RemindRepeat = task.RemindRepeat
+	// vo.RemindTime = task.RemindTime
+	// vo.RemindWeekdays = task.RemindWeekdays
+	// 校验源任务派生的复制 VO（名称追加“的复制”后可能超长）——必须返回真实校验错误，
+	// 不得吞错（原写法 `if vo.Validate() != nil { return nil, err }` 中 err 为 nil ⇒ 静默失效/上层空指针）
+	if err := vo.Validate(); err != nil {
+		return nil, err
+	}
+	// G9：复制品置源父组组末（职责上移后必须显式赋值，否则为 0 落到组首）
+	maxSortId, err := d.taskRepo.GetMaxSortId(ctx, userId, int64(vo.ParentTaskId))
+	if err != nil {
+		return nil, err
+	}
+	vo.SortId = maxSortId + 1
+	// 创建新任务并返回新任务实体
+	entity, _, err := d.CreateTask(ctx, userId, &vo)
+	return entity, err
 }
 
-/*
- * Delete task
- * 删除任务
- */
-func (taskDomain *TaskDomainImpl) Delete(
+// List 获取任务列表
+func (d *TaskDomainImpl) List(
+	ctx context.Context,
+	userId int64,
+	query *valueobjects.QueryTask,
+	pagination *valueobjects.Pagination,
+) ([]*entities.Task, *valueobjects.Pagination, error) {
+	query.UserId = userId
+	query.Page = pagination.Page
+	query.Limit = pagination.Limit
+	return d.taskRepo.List(ctx, userId, query, pagination)
+}
+
+// --- 检查项相关 ---
+
+// CreateCheckItem 创建检查项
+func (d *TaskDomainImpl) CreateCheckItem(
+	ctx context.Context,
+	userId int64,
+	vo *valueobjects.CreateTaskCheckItem,
+) (*entities.TaskCheckItem, domaintypes.UpsertResult, error) {
+	// 客户端未提供 sortId（0）时由服务端自动生成，保持既有创建语义
+	if vo.SortId == 0 {
+		vo.SortId = d.checkItemRepo.GetMaxCheckItemSortId(ctx, userId, vo.TaskId) + 1
+	}
+	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测；墓碑复活=created，B6）
+	entity, result, err := d.checkItemRepo.UpsertCheckItem(ctx, userId, vo)
+	return entity, result, err
+}
+
+// ListSync 增量同步任务列表（包含软删墓碑，keyset 游标稳定排序分页）
+func (d *TaskDomainImpl) ListSync(
+	ctx context.Context,
+	userId int64,
+	cursor time.Time,
+	cursorID int64,
+	limit int,
+) ([]*entities.Task, error) {
+	return d.taskRepo.ListSync(ctx, userId, cursor, cursorID, limit)
+}
+
+// RemoveTagFromTasks 从所有任务中移除指定标签引用（标签删除时级联清理用）
+// 同时推进任务 updated_at，保证清理结果可被增量同步发现
+func (d *TaskDomainImpl) RemoveTagFromTasks(
+	ctx context.Context,
+	userId int64,
+	tagId int64,
+) error {
+	return d.taskRepo.RemoveTagFromTasks(ctx, userId, tagId)
+}
+
+// --- 任务提醒相关 ---
+
+// Snooze 延迟任务
+func (d *TaskDomainImpl) Snooze(
 	ctx context.Context,
 	userId int64,
 	taskId int64,
-) error {
-	whereEntity := &entities.Task{UserId: userId, Id: taskId}
-	return taskDomain.taskRepo.Delete(ctx, whereEntity)
+	durationMinutes int,
+) (string, error) {
+	if _, err := d.taskRepo.GetById(ctx, userId, taskId, false); err != nil {
+		return "", err
+	}
+	newRemindAt := time.
+		Now().
+		Add(time.Duration(durationMinutes) * time.Minute).
+		Format(time.RFC3339)
+	if err := d.taskRepo.Snooze(ctx, userId, taskId, newRemindAt); err != nil {
+		return "", err
+	}
+	return newRemindAt, nil
 }
 
-/*
- * Restore task
- * 恢复任务
- */
-func (taskDomain *TaskDomainImpl) Restore(
-	ctx context.Context,
-	userId int64,
-	taskId int64,
-) error {
-	whereEntity := &entities.Task{UserId: userId, Id: taskId}
-	return taskDomain.taskRepo.Restore(ctx, whereEntity)
+// ProcessReminders 处理任务提醒
+func (d *TaskDomainImpl) ProcessReminders(ctx context.Context) ([]*entities.Task, error) {
+	// 获取所有待提醒任务
+	tasks, err := d.taskRepo.GetDueReminders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// 处理每个任务的提醒时间
+	for _, task := range tasks {
+		// CAS 期望值：扫描时的 remind_at（毫秒截断与 DATETIME(3) 精度对齐）。
+		// 若用户在扫描与更新之间 Snooze/改期，remind_at 已变化，条件更新不生效，
+		// 返回 false 时跳过，避免覆盖用户新设置的提醒。
+		expectedRemindAt := task.RemindAt.Time.Truncate(time.Millisecond)
+		if task.RemindRepeat != 0 {
+			// H4：仅当 end_at 实际存在（Valid 且非 NULL）时传终止边界；
+			// 否则传 nil，避免零值 end_at 使 next.After(zero) 恒真而误判「已越过终点」清空。
+			var endAtPtr *time.Time
+			if endAt, ok := task.EndAt.Value(); ok {
+				endAtPtr = &endAt
+			}
+			next := d.calculateNextRemindAt(
+				task.RemindAt.Time,
+				task.RemindRepeat,
+				task.RemindTime,
+				task.RemindWeekdays,
+				endAtPtr,
+			)
+			if next != nil {
+				changed, err := d.taskRepo.UpdateRemindAt(
+					ctx,
+					task.Id,
+					expectedRemindAt,
+					next.Format(time.RFC3339),
+				)
+				if err != nil {
+					return nil, err
+				}
+				if !changed {
+					continue
+				}
+			} else {
+				changed, err := d.taskRepo.ClearRemindRepeat(ctx, task.Id, expectedRemindAt)
+				if err != nil {
+					return nil, err
+				}
+				if !changed {
+					continue
+				}
+			}
+		} else {
+			// 不重复提醒触发后整体复位提醒配置（与重复提醒自然终止一致），
+			// 避免 remind_time/remind_weekdays 残留被后续重复提醒规则复用
+			changed, err := d.taskRepo.ClearRemindRepeat(ctx, task.Id, expectedRemindAt)
+			if err != nil {
+				return nil, err
+			}
+			if !changed {
+				continue
+			}
+		}
+	}
+	return tasks, nil
 }
 
-/*
- * List task
- * 获取任务列表
- */
-func (taskDomain *TaskDomainImpl) List(
-	ctx context.Context,
-	userId int64,
-	whereEntity *entities.Task,
-	pagination *vo.Pagination,
-) ([]*entities.Task, *vo.Pagination, error) {
-	whereEntity.UserId = userId
-	return taskDomain.taskRepo.List(ctx, whereEntity, pagination)
+// calculateNextRemindAt 计算下一个提醒时间
+func (d *TaskDomainImpl) calculateNextRemindAt(
+	remindAt time.Time,
+	repeat uint8,
+	remindTime string,
+	remindWeekdays uint8,
+	endAt *time.Time,
+) *time.Time {
+	var hour, minute int
+	if remindTime != "" {
+		parts := strings.Split(remindTime, ":")
+		if len(parts) == 2 {
+			h, _ := strconv.Atoi(parts[0])
+			m, _ := strconv.Atoi(parts[1])
+			if h >= 0 && h <= 23 && m >= 0 && m <= 59 {
+				hour = h
+				minute = m
+			}
+		}
+	}
+	target := time.Date(
+		remindAt.Year(),
+		remindAt.Month(),
+		remindAt.Day(),
+		hour,
+		minute,
+		0,
+		0,
+		remindAt.Location(),
+	)
+	var next time.Time
+	switch repeat {
+	case 1:
+		next = target.AddDate(0, 0, 1)
+	case 2:
+		next = calculateNextWeekly(target, remindWeekdays)
+		if next.IsZero() {
+			return nil
+		}
+	case 3:
+		next = target.AddDate(0, 1, 0)
+	default:
+		return nil
+	}
+	if endAt != nil && next.After(*endAt) {
+		return nil
+	}
+	return &next
+}
+
+// calculateNextWeekly 计算下一个周日
+func calculateNextWeekly(from time.Time, weekdays uint8) time.Time {
+	for i := 1; i <= 7; i++ {
+		candidate := from.AddDate(0, 0, i)
+		bit := uint8(1 << candidate.Weekday())
+		if weekdays&bit != 0 {
+			return candidate
+		}
+	}
+	return time.Time{}
 }

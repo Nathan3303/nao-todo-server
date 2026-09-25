@@ -19,7 +19,6 @@ type CronServiceImpl struct {
 
 var (
 	cronService *CronServiceImpl
-	once        sync.Once
 	taskMutex   sync.RWMutex
 	isRunning   = false
 )
