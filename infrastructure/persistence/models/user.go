@@ -84,7 +84,8 @@ type UserSession struct {
 	// 用户 ID
 	// 用于关联用户表，获取用户会话信息
 	// 一用户可同时保留多个会话（多设备登录）
-	UserId int64 `gorm:"not null;uniqueIndex:idx_user_session_user_device,priority:1;index:idx_user_session_user"`
+	// 索引名 idx_user_session_user_device / idx_user_session_user 已落库，改名会改变 DDL ⇒ 无法换行
+	UserId int64 `gorm:"not null;uniqueIndex:idx_user_session_user_device,priority:1;index:idx_user_session_user"` //nolint:lll
 
 	// 会话令牌
 	// 用于验证用户会话，防止未授权访问
@@ -102,7 +103,8 @@ type UserSession struct {
 	// 设备 ID
 	// 客户端持久化生成的可选稳定标识；同一用户同一设备重复登录时覆盖旧会话
 	// 为空（NULL）时不参与去重（老客户端每次登录新增会话）
-	DeviceId sql.NullString `gorm:"null;size:64;uniqueIndex:idx_user_session_user_device,priority:2"`
+	// 同上：唯一索引名不可缩短 ⇒ 无法换行
+	DeviceId sql.NullString `gorm:"null;size:64;uniqueIndex:idx_user_session_user_device,priority:2"` //nolint:lll
 
 	// IP4 地址
 	IP4 string `gorm:"not null;size:64"`
