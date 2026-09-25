@@ -137,9 +137,9 @@ func (jwtService *JWTServiceImpl) IsTokenExpired(jwtString string) bool {
 // @note 该方法会检查提供的 JWT 断言是否过期，返回是否过期的结果
 func (jwtService *JWTServiceImpl) IsExpired(claims *Claims) bool {
 	// 检查断言是否为空或过期时间是否为空
-	if claims == nil || claims.RegisteredClaims.ExpiresAt == nil {
+	if claims == nil || claims.ExpiresAt == nil {
 		return true
 	}
 	// 检查过期时间是否已过期
-	return claims.RegisteredClaims.ExpiresAt.Before(time.Now())
+	return claims.ExpiresAt.Before(time.Now())
 }
