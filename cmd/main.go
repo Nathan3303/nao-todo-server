@@ -3,12 +3,13 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"naotodoserver/conf"
-	"naotodoserver/infrastructure"
-	"naotodoserver/interfaces/routers"
 	"net/http"
 	"runtime"
 	"time"
+
+	"naotodoserver/conf"
+	"naotodoserver/infrastructure"
+	"naotodoserver/interfaces/routers"
 )
 
 func main() {

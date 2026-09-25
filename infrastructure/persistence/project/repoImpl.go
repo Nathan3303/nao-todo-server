@@ -3,6 +3,8 @@ package project
 import (
 	"context"
 	"errors"
+	"time"
+
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
@@ -11,7 +13,6 @@ import (
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
-	"time"
 
 	"gorm.io/gorm"
 )

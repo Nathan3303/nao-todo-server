@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"strings"
+
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/ip2region"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	"naotodoserver/interfaces/types"
 	"net/http"
+
+	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,11 +1,12 @@
 package user
 
 import (
+	"time"
+
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/user/dto"
 	"naotodoserver/conf"
 	"naotodoserver/domain/identity/entities"
-	"time"
 )
 
 // UserEntity2Res 用户实体转换为获取用户响应

@@ -3,6 +3,8 @@ package tag
 import (
 	"context"
 	"errors"
+	"time"
+
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
@@ -11,7 +13,6 @@ import (
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
-	"time"
 
 	"gorm.io/gorm"
 )

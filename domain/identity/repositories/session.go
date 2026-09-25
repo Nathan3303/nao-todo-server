@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/types"
 )

@@ -1,8 +1,9 @@
 package query
 
 import (
-	"naotodoserver/infrastructure/utils"
 	"strings"
+
+	"naotodoserver/infrastructure/utils"
 
 	"gorm.io/gorm"
 )

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
+
 	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
@@ -12,7 +14,6 @@ import (
 	"naotodoserver/infrastructure/ip2region"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
-	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
