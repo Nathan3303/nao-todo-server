@@ -183,7 +183,7 @@ func (r *UserRepoImpl) Deactive(ctx context.Context, userId types.UserID) error 
 		Model(&models.User{}).
 		Where("id = ?", int64(userId)).
 		Updates(map[string]interface{}{
-			"deactived_at":          &sql.NullTime{Time: now, Valid: true},
+			"deactived_at":           &sql.NullTime{Time: now, Valid: true},
 			"last_cancel_restore_at": &sql.NullTime{Time: now, Valid: true},
 		}).
 		Error; err != nil {
@@ -202,7 +202,7 @@ func (r *UserRepoImpl) Active(ctx context.Context, userId types.UserID) error {
 		Model(&models.User{}).
 		Where("id = ?", int64(userId)).
 		Updates(map[string]interface{}{
-			"deactived_at":          &sql.NullTime{Time: time.Time{}, Valid: false},
+			"deactived_at":           &sql.NullTime{Time: time.Time{}, Valid: false},
 			"last_cancel_restore_at": &sql.NullTime{Time: now, Valid: true},
 		}).
 		Error; err != nil {

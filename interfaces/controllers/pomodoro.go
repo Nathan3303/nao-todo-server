@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	iCtx "naotodoserver/infrastructure/context"
 	pomodoroApp "naotodoserver/application/pomodoro"
 	pomodoroDto "naotodoserver/application/pomodoro/dto"
+	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"

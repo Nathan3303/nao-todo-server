@@ -14,16 +14,16 @@ type ResBase struct {
 
 // CreatePomodoroRecordReq 创建番茄工作记录入参
 type CreatePomodoroRecordReq struct {
-	SessionId   string // Like uuidv4
-	PomodoroId  string // 关联的常用番茄工作 ID（弱关联，可为空）
-	Type        uint8  // 番茄工作类型
-	TaskId      string // 关联的任务 ID（弱关联，可为空）
-	TaskName    string // 任务名称
-	Description string // 描述
-	StartAt     string // 开始时间（RFC3339）
-	EndAt       string // 结束时间（RFC3339）
-	Duration    uint16 // 时长（秒）
-	Note        string // 备注
+	SessionId   string  // Like uuidv4
+	PomodoroId  string  // 关联的常用番茄工作 ID（弱关联，可为空）
+	Type        uint8   // 番茄工作类型
+	TaskId      string  // 关联的任务 ID（弱关联，可为空）
+	TaskName    string  // 任务名称
+	Description string  // 描述
+	StartAt     string  // 开始时间（RFC3339）
+	EndAt       string  // 结束时间（RFC3339）
+	Duration    uint16  // 时长（秒）
+	Note        string  // 备注
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
@@ -75,9 +75,9 @@ type ListPomodoroRecordReq struct {
 
 // CreatePomodoroReq 创建常用番茄工作入参
 type CreatePomodoroReq struct {
-	Type        uint8  // 番茄工作类型
-	Name        string // 名称
-	Description string // 描述
+	Type        uint8   // 番茄工作类型
+	Name        string  // 名称
+	Description string  // 描述
 	Duration    uint16  // 时长（秒）
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt

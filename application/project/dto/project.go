@@ -77,14 +77,14 @@ type ListProjectRes []*GetProjectRes
 
 // GetProjectPreferenceRes 获取任务清单偏好出参
 type GetProjectPreferenceRes struct {
-	Id          string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
-	ProjectId   string
-	ViewType    string
-	GetOptions  string
-	Columns     string
+	Id         string
+	CreatedAt  string
+	UpdatedAt  string
+	DeletedAt  string
+	ProjectId  string
+	ViewType   string
+	GetOptions string
+	Columns    string
 }
 
 // UpdateProjectPreferenceReq 更新任务清单偏好入参

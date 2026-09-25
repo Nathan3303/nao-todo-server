@@ -71,12 +71,12 @@ type BatchUpdateTagRes struct {
 
 // GetTagPreferenceRes 获取标签偏好出参
 type GetTagPreferenceRes struct {
-	Id        string
-	CreatedAt string
-	UpdatedAt string
-	DeletedAt string
-	TagId     string
-	ViewType  string
+	Id         string
+	CreatedAt  string
+	UpdatedAt  string
+	DeletedAt  string
+	TagId      string
+	ViewType   string
 	GetOptions string
 	Columns    string
 }

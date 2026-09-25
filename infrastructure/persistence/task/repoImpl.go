@@ -87,9 +87,9 @@ func (taskRepo *TaskRepoImpl) Create(
 }
 
 // Upsert 幂等写入任务：客户端指定 id 时创建或覆盖
-// - 记录不存在：带 id 创建
-// - 记录存在：create 语义冲突检测（请求携带 createdAt 且与库中 created_at 相差 > 1 分钟 → ErrIDConflict）；
-//   LWW 判定：请求 updatedAt 更旧则 no-op 返回当前版本，否则覆盖（仅更新 Create VO 表达的字段 + updated_at）
+//   - 记录不存在：带 id 创建
+//   - 记录存在：create 语义冲突检测（请求携带 createdAt 且与库中 created_at 相差 > 1 分钟 → ErrIDConflict）；
+//     LWW 判定：请求 updatedAt 更旧则 no-op 返回当前版本，否则覆盖（仅更新 Create VO 表达的字段 + updated_at）
 func (taskRepo *TaskRepoImpl) Upsert(
 	ctx context.Context,
 	userId int64,

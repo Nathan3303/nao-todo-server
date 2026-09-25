@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	iCtx "naotodoserver/infrastructure/context"
 	taskApp "naotodoserver/application/task"
+	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
