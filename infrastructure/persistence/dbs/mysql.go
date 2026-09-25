@@ -78,8 +78,8 @@ func DoMigration() {
 	// 移除旧版「一用户一会话」唯一索引，支持多会话（幂等）
 	var legacyUniqueCnt int64
 	DB.Raw(
-		"SELECT COUNT(*) FROM information_schema.statistics "+
-			"WHERE table_schema = DATABASE() AND table_name = 'user_sessions' "+
+		"SELECT COUNT(*) FROM information_schema.statistics " +
+			"WHERE table_schema = DATABASE() AND table_name = 'user_sessions' " +
 			"AND index_name = 'idx_user_session_user_id' AND non_unique = 0",
 	).Scan(&legacyUniqueCnt)
 	if legacyUniqueCnt > 0 {
@@ -120,7 +120,7 @@ func DoMigration() {
 			continue
 		}
 		if err := DB.Exec(
-			"CREATE INDEX "+item.index+" ON "+item.table+" (user_id, updated_at, id)",
+			"CREATE INDEX " + item.index + " ON " + item.table + " (user_id, updated_at, id)",
 		).Error; err != nil {
 			logging.Logger.
 				WithFields(map[string]any{"index": item.index, "table": item.table}).

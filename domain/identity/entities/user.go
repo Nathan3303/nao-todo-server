@@ -15,17 +15,17 @@ import (
 // 包含用户账号、邮箱、密码、昵称、头像、创建来源、角色、状态、配置等属性
 type User struct {
 	types.EntityBase
-	Account     string
-	Email       string
-	Password    string
-	Nickname    string
-	Avatar      string
-	CreatedFrom string
-	Role        UserRole
-	State       UserState
-	DeactivedAt types.NullableTime
+	Account             string
+	Email               string
+	Password            string
+	Nickname            string
+	Avatar              string
+	CreatedFrom         string
+	Role                UserRole
+	State               UserState
+	DeactivedAt         types.NullableTime
 	LastCancelRestoreAt types.NullableTime
-	Config      *UserConfig
+	Config              *UserConfig
 }
 
 // IsIdValid 检查用户 ID 是否有效

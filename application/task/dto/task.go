@@ -158,8 +158,8 @@ type CreateTaskCheckItemReq struct {
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
 	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
 	BaseUpdatedAt *string `json:"-"`
-	IsDone      bool    // 是否已完成（可选，默认 false；push 同步时更新完成状态）
-	SortId      uint16  // 排序值（可选，默认 0 由服务端自动生成；push 同步时保持排序）
+	IsDone        bool    // 是否已完成（可选，默认 false；push 同步时更新完成状态）
+	SortId        uint16  // 排序值（可选，默认 0 由服务端自动生成；push 同步时保持排序）
 }
 
 // CreateTaskCheckItemRes 创建任务检查项出参
@@ -225,8 +225,8 @@ type TaskCommentRes struct {
 
 // CreateTaskCommentReq 创建任务评论入参
 type CreateTaskCommentReq struct {
-	TaskId    string // 所属任务 ID
-	Content   string // 评论内容
+	TaskId    string  // 所属任务 ID
+	Content   string  // 评论内容
 	Id        *string // 同步元数据：客户端预置 id
 	CreatedAt *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt *string // 同步元数据：客户端预置 updatedAt

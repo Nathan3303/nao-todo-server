@@ -1,0 +1,82 @@
+# 服务端门禁（T202）：build/vet/unit + 真实 MySQL/Redis 集成测试
+# 约定：Go 1.27（与本地一致）· 不使用 golangci-lint（v1.64.8 解析不了 go1.27 导出数据）
+# 集成测试口径固定 -p 1：多个包的 TestMain 会各自 AutoMigrate 同一测试库，并行必竞态
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# 同一 ref 的旧运行自动取消
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TZ: UTC
+
+jobs:
+  build:
+    name: build/vet/unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27"
+      - name: go build
+        run: go build ./...
+      - name: go vet
+        run: go vet ./...
+      - name: unit tests
+        run: go test ./... -count=1
+      # 放在最后：即使格式债未清，build/vet/unit 的证据也已产出
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::以下 Go 文件未通过 gofmt（.editorconfig 要求缩进用 tab）："
+            echo "$unformatted"
+            exit 1
+          fi
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.9
+        env:
+          MYSQL_ROOT_PASSWORD: dev_password
+          MYSQL_DATABASE: nao_todo_test
+          TZ: UTC
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pdev_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:8.8.0
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      NAO_TEST_MYSQL_DSN: root:dev_password@tcp(127.0.0.1:3306)/nao_todo_test?parseTime=true&loc=UTC&charset=utf8mb4
+      NAO_TEST_REDIS_ADDR: 127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27"
+      - name: integration tests
+        run: go test -tags integration -p 1 -count=1 ./...

@@ -79,16 +79,16 @@ func TestSyncPush_ClearStartAt_EndToEnd(t *testing.T) {
 	push := func(updated time.Time, startAt, endAt, remindAt *string) {
 		t.Helper()
 		req := &dto.CreateTaskReq{
-			Id:             &idStr,
-			CreatedAt:      &createdStr,
-			UpdatedAt:      func() *string { s := updated.Format(time.RFC3339); return &s }(),
-			Name:           "任务",
-			State:          "pending",
-			Priority:       "medium",
-			StartAt:        startAt,
-			EndAt:          endAt,
-			RemindAt:       remindAt,
-			ProjectId:      "",
+			Id:        &idStr,
+			CreatedAt: &createdStr,
+			UpdatedAt: func() *string { s := updated.Format(time.RFC3339); return &s }(),
+			Name:      "任务",
+			State:     "pending",
+			Priority:  "medium",
+			StartAt:   startAt,
+			EndAt:     endAt,
+			RemindAt:  remindAt,
+			ProjectId: "",
 		}
 		vo, err := apptask.CreateTaskReqToValueObject(userID, req)
 		if err != nil {
