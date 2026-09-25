@@ -100,7 +100,7 @@ func UpdateTagReqToValueObject(updateTagReq *dto.UpdateTagReq) (*valueobjects.Up
 // @param tagEntities 标签实体列表
 // @return 标签响应体列表
 func TagEntitiesToGetResList(tagEntities []*entities.Tag) []*dto.GetTagRes {
-	getResList := []*dto.GetTagRes{}
+	getResList := make([]*dto.GetTagRes, 0, len(tagEntities))
 	for _, entity := range tagEntities {
 		getResList = append(getResList, TagEntityToGetRes(entity))
 	}
