@@ -60,7 +60,10 @@ func (taskApp *TaskAppImpl) nextGroupSortId(
 
 // publishCountEvent 发布计数事件（同事务同步分发，ADR §4.1）
 // 无发布器时静默跳过（单元测试/退化场景）；返回错误 ⇒ 调用方事务整体回滚。
-func (taskApp *TaskAppImpl) publishCountEvent(ctx context.Context, event domaintypes.CountEvent) error {
+func (taskApp *TaskAppImpl) publishCountEvent(
+	ctx context.Context,
+	event domaintypes.CountEvent,
+) error {
 	if taskApp.countPublisher == nil {
 		return nil
 	}

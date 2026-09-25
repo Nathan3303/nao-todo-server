@@ -65,8 +65,10 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 	tx := sr.db.WithContext(ctx)
 	if deviceId != "" {
 		tx = tx.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "user_id"}, {Name: "device_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"token", "expired_at", "ip4", "region", "device_type", "updated_at"}),
+			Columns: []clause.Column{{Name: "user_id"}, {Name: "device_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{
+				"token", "expired_at", "ip4", "region", "device_type", "updated_at",
+			}),
 		})
 	}
 	if err := tx.Create(createCond).Error; err != nil {
@@ -114,7 +116,11 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, toke
 // @param userId 用户 ID
 // @param sessionId 会话 ID
 // @return error 错误
-func (sr *sessionRepoImpl) DeleteById(ctx context.Context, userId types.UserID, sessionId int64) error {
+func (sr *sessionRepoImpl) DeleteById(
+	ctx context.Context,
+	userId types.UserID,
+	sessionId int64,
+) error {
 	// 1. 查询会话（限定 user_id + id，避免越权删除他人会话），拿 token 用于失效缓存
 	session := &models.UserSession{}
 	err := sr.db.
@@ -180,7 +186,11 @@ func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.User
 // @param userId 用户 ID
 // @param keepToken 保留的会话令牌
 // @return error 错误
-func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(ctx context.Context, userId types.UserID, keepToken string) error {
+func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(
+	ctx context.Context,
+	userId types.UserID,
+	keepToken string,
+) error {
 	// 1. 获取待删除会话的 token（用于失效缓存）
 	var tokens []string
 	if err := sr.db.

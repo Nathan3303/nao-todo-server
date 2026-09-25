@@ -14,7 +14,11 @@ type TaskApp interface {
 	GetTaskById(
 		ctx context.Context, userId int64, taskId string, includeDeleted bool,
 	) (*dto.GetTaskRes, error)
-	CreateTask(ctx context.Context, userId int64, req *dto.CreateTaskReq) (*dto.GetTaskRes, domaintypes.UpsertResult, error)
+	CreateTask(
+		ctx context.Context,
+		userId int64,
+		req *dto.CreateTaskReq,
+	) (*dto.GetTaskRes, domaintypes.UpsertResult, error)
 	UpdateTask(ctx context.Context, userId int64, taskId string, req *dto.UpdateTaskReq) error
 	DeleteTask(ctx context.Context, userId int64, taskId string) error
 	RestoreTask(ctx context.Context, userId int64, taskId string) error

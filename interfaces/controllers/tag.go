@@ -336,7 +336,9 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 		if updatedAt := ctx.Query("updatedAt"); updatedAt != "" {
 			cursorId := ctx.Query("cursorId")
 			limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "100"))
-			res, err := c.tagApp.ListTagSync(ctx.Request.Context(), userId, updatedAt, cursorId, limit)
+			res, err := c.tagApp.ListTagSync(
+				ctx.Request.Context(), userId, updatedAt, cursorId, limit,
+			)
 			if err != nil {
 				Failure(ctx, types.ResponseData{
 					Code:    30041,
