@@ -4,6 +4,8 @@
 #       老仓首次全量跑有 124 条存量发现（按 linter 分组见 T205 回执），故先 **report-only**：
 #       该步骤 continue-on-error，只输出结果、不阻断；build/vet/unit 与 integration 仍是唯一的必需检查。
 #       存量清扫单落地后，再去掉 continue-on-error（或改为 only-new-issues）转为阻断。
+#       另加 **errcheck 独立阻断步骤**（--enable-only=errcheck）：本项目配置下实测 0 条 ⇒ 不阻断存量，
+#       但今后 db.*/tx/repo.* 或类型断言漏判错会直接红。
 # 集成测试口径固定 -p 1：多个包的 TestMain 会各自 AutoMigrate 同一测试库，并行必竞态
 name: CI
 
@@ -57,6 +59,16 @@ jobs:
           version: v2.14.0
           # 保留 v1 配置里的 run.timeout: 5m 意图（v2 schema 已移除该字段）
           args: --timeout=5m
+      # T205：errcheck 独立阻断步骤（缺省即阻断，无 continue-on-error）。
+      # --enable-only=errcheck 只启用 errcheck，其余 linter/enable 集被覆写；
+      # linters.settings.errcheck（check-type-assertions: true / check-blank: false）与
+      # exclusions/presets（含 std-error-handling，即 defer Close() 等暂不管）继续生效。
+      # 当前树实测 0 条 ⇒ CI 绿；一旦漏判错，本步骤 rc=1，build/vet/unit 直接红并挡住合并。
+      - name: errcheck (blocking)
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.14.0
+          args: --enable-only=errcheck --timeout=5m
 
   integration:
     name: integration
