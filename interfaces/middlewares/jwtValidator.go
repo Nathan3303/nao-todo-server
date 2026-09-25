@@ -1,11 +1,12 @@
 package middlewares
 
 import (
+	"strings"
+
 	authApp "naotodoserver/application/auth"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )

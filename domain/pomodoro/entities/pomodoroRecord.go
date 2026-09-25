@@ -1,8 +1,9 @@
 package entities
 
 import (
-	"naotodoserver/domain/types"
 	"time"
+
+	"naotodoserver/domain/types"
 )
 
 // PomodoroRecord 待办任务番茄工作记录实体

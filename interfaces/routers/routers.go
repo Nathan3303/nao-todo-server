@@ -1,11 +1,12 @@
 package routers
 
 import (
+	"time"
+
 	"naotodoserver/application"
 	"naotodoserver/conf"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"

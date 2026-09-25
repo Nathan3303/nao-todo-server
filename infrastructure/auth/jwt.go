@@ -2,9 +2,10 @@ package auth
 
 import (
 	"errors"
-	"naotodoserver/conf"
 	"sync"
 	"time"
+
+	"naotodoserver/conf"
 
 	"github.com/golang-jwt/jwt/v4"
 )

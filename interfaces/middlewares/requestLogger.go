@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"time"
+
 	"naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/logging"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )

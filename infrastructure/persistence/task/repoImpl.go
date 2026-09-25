@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"strconv"
+	"time"
+
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
@@ -12,8 +15,6 @@ import (
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
-	"strconv"
-	"time"
 
 	"gorm.io/gorm"
 )

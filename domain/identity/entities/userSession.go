@@ -1,8 +1,9 @@
 package entities
 
 import (
-	"naotodoserver/domain/types"
 	"time"
+
+	"naotodoserver/domain/types"
 )
 
 // UserSession 用户会话实体

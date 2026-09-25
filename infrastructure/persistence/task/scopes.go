@@ -1,9 +1,10 @@
 package task
 
 import (
-	"naotodoserver/domain/task/entities"
 	"strings"
 	"time"
+
+	"naotodoserver/domain/task/entities"
 
 	"gorm.io/gorm"
 )

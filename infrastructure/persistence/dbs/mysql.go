@@ -1,11 +1,12 @@
 package dbs
 
 import (
+	"strings"
+	"time"
+
 	"naotodoserver/conf"
 	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/persistence/models"
-	"strings"
-	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
