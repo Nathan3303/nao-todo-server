@@ -10,6 +10,7 @@ import (
 	pomodoroApp "naotodoserver/application/pomodoro"
 	pomodoroDto "naotodoserver/application/pomodoro/dto"
 	projectApp "naotodoserver/application/project"
+	projectDto "naotodoserver/application/project/dto"
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
@@ -163,7 +164,7 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		})
 	}
 	for i := range req.Projects {
-		projectReq := toCreateProjectInput(&req.Projects[i].CreateProjectReq)
+		projectReq := toCreateProjectInputFromSync(&req.Projects[i])
 		projectReq.BaseUpdatedAt = basePtr(req.Projects[i].BaseUpdatedAt)
 		res, upsert, err := c.projectApp.Create(ctx.Request.Context(), userId, projectReq)
 		if err != nil {
@@ -312,6 +313,20 @@ func toCreateTaskReqFromSync(item *types.SyncTaskPushItem) *taskDto.CreateTaskRe
 	req.StarMarkAt = syncNullableTime(item.StarMarkAt, req.StarMarkAt)
 	req.GivenUpAt = syncNullableTime(item.GivenUpAt, req.GivenUpAt)
 	req.RemindAt = syncNullableTime(item.RemindAt, req.RemindAt)
+	return req
+}
+
+// toCreateProjectInputFromSync 将 /sync/push 清单条目转换为应用层入参：
+// 先按共享 create 语义整体转换（非三态字段零差异），再用三态承载 archivedAt
+// （null / "" ⇒ ptr("")「显式清空」；absent ⇒ nil「不写列」；值 ⇒ 值）。
+// ⛔ 服务端只做行级落地，**不级联**归档清单下的任务：级联由客户端逐任务推送
+// （/sync/push tasks 携带各自 archivedAt）完成，服务端不得隐式改他行。
+//
+// @param item sync 推送条目
+// @return 应用层创建清单入参
+func toCreateProjectInputFromSync(item *types.SyncProjectPushItem) *projectDto.CreateProjectReq {
+	req := toCreateProjectInput(&item.CreateProjectReq)
+	req.ArchivedAt = syncNullableTime(item.ArchivedAt, nil)
 	return req
 }
 
