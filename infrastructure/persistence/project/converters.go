@@ -27,17 +27,25 @@ func CreateProjectValueObject2Model(
 	m.Name = createProjectValueObject.Name
 	m.Description = createProjectValueObject.Description
 	m.SortId = createProjectValueObject.SortId
+	// 归档时间三态（T322 / DEF-42）：缺省（Valid=false）⇒ NULL，与改动前一致
+	m.ArchivedAt = createProjectValueObject.ArchivedAt.ToSqlNullTime()
 	return m
 }
 
 // CreateProjectVOToUpdateMap 创建项目值对象转换为全量更新映射（Upsert 覆盖用）
-// 仅包含 Create VO 表达的字段，不触碰 archived_at/deactived_at 等列
+// 仅包含 Create VO 表达的字段，不触碰 deactived_at 等列；
+// archived_at 自 T322 / DEF-42 起纳入，但**仅当三态显式给出**（ShouldUpdate ⇒ null/值）才写列：
+// 缺省（REST create 与旧客户端推送）⇒ 不产键 ⇒ 不写列，REST 契约与旧行为不变。
 // 客户端携带删除时间（本地墓碑）时写入 deleted_at；未携带时由 Upsert 兜底清空复活
 func CreateProjectVOToUpdateMap(vo *valueobjects.CreateProject) map[string]any {
 	updateMap := map[string]any{
 		"Name":        vo.Name,
 		"Description": vo.Description,
 		"SortId":      vo.SortId,
+	}
+	// 归档时间三态（T322 / DEF-42）：Valid=true 时写列（IsNull=true ⇒ 写 NULL 清空）
+	if vo.ArchivedAt.ShouldUpdate() {
+		updateMap["archived_at"] = vo.ArchivedAt.ToSqlNullTime()
 	}
 	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
 		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()

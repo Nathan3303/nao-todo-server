@@ -52,6 +52,10 @@ type SyncCommentPushItem struct {
 type SyncProjectPushItem struct {
 	CreateProjectReq
 	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+	// ArchivedAt 清单归档时间三态（T322 / DEF-42）：CreateProjectReq 无同名字段，直接承载。
+	// absent ⇒ 不写列（旧客户端行为不变）；null / "" ⇒ 清空；值 ⇒ 写入。
+	// ⛔ 服务端不级联：清单下任务的归档态由客户端逐任务推送（同 /sync/push tasks）。
+	ArchivedAt NullableString `json:"archivedAt"`
 }
 
 type SyncTagPushItem struct {

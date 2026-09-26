@@ -19,6 +19,12 @@ type CreateProject struct {
 	Description string
 	SortId      uint16
 
+	// ArchivedAt 归档时间三态（sync push 专用，T322 / DEF-42）：
+	// Valid=false（缺省；REST create 与旧客户端推送）⇒ 不写列；
+	// Valid=true,IsNull=true（null / ""）⇒ 显式清空写 NULL；Valid=true,IsNull=false ⇒ 写入该时间。
+	// ⛔ 服务端只做行级落地，不级联归档清单下的任务（级联由客户端逐任务推送完成）。
+	ArchivedAt types.NullableTime
+
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
 	BaseUpdatedAt time.Time
 }
