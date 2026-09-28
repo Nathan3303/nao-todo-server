@@ -12,6 +12,7 @@ import (
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/domain/types"
+	"naotodoserver/infrastructure/derived"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
@@ -998,14 +999,24 @@ func (taskRepo *TaskRepoImpl) adjustCountColumn(
 	if taskId <= 0 {
 		return nil
 	}
+	// now 毫秒截断：与 DB datetime(3) 落库值逐字相等，派生行回执才能直接作为客户端 base（T327）
+	now := time.Now().Truncate(time.Millisecond)
 	db := dbs.DBFrom(ctx, taskRepo.db)
-	return db.WithContext(ctx).
+	res := db.WithContext(ctx).
 		Model(&models.Task{}).
 		Where("id = ? AND user_id = ? AND deleted_at IS NULL", taskId, userId).
 		UpdateColumns(map[string]any{
 			column:       gorm.Expr(column+" + ?", delta),
-			"updated_at": time.Now(),
-		}).Error
+			"updated_at": now,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	// 仅实际命中行才登记（已删/不存在 ⇒ 0 行 ⇒ 不把未落库的版本误报给客户端，T327）
+	if res.RowsAffected > 0 {
+		derived.Record(ctx, derived.TableTasks, taskId, now)
+	}
+	return nil
 }
 
 // AdjustCheckItemCount 调整任务检查项计数（E1）
@@ -1031,7 +1042,8 @@ func (taskRepo *TaskRepoImpl) AdjustSubTaskCount(
 
 // SoftDeleteByProjectId 软删除指定项目下的所有任务
 // 用于项目删除时的级联操作
-// 内部走实体 Delete() 维护状态语义，与单条删除路径一致
+// 单条批量 UpdateColumns（deleted_at/updated_at）而非逐条 Save，
+// 避免 GORM slice Save 的 update_track_time 重写 updated_at（T327 派生行回执需与库中逐字相等）
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
@@ -1049,20 +1061,30 @@ func (repo *TaskRepoImpl) SoftDeleteByProjectId(
 	if len(taskModels) == 0 {
 		return nil
 	}
-	for i := range taskModels {
-		taskModels[i].DeletedAt = gorm.DeletedAt{
-			Time:  time.Now(),
-			Valid: true,
-		}
-		// 显式推进 updated_at：Save 对非零 UpdatedAt 不覆盖，需手动置位以保证墓碑可增量发现
-		taskModels[i].UpdatedAt = time.Now()
+	// now 毫秒截断：与 DB datetime(3) 逐字相等，派生行回执才能作为客户端 base（T327）。
+	// 用单条批量 UpdateColumns（仅 deleted_at/updated_at）而非 slice Save：
+	// Save 的 slice 分支带 gorm:update_track_time，会强制用新的 now 重写 updated_at，
+	// 令回执值与库中不一致（T327 实测）。
+	now := time.Now().Truncate(time.Millisecond)
+	if err := db.WithContext(ctx).
+		Model(&models.Task{}).
+		Where("user_id = ? AND project_id = ?", userId, projectId).
+		UpdateColumns(map[string]any{
+			"deleted_at": now,
+			"updated_at": now,
+		}).Error; err != nil {
+		return err
 	}
-	return db.WithContext(ctx).Save(&taskModels).Error
+	// 级联软删是「项目删除」的派生写：登记被触及任务行版本（T327）
+	for i := range taskModels {
+		derived.Record(ctx, derived.TableTasks, taskModels[i].ID, now)
+	}
+	return nil
 }
 
 // RestoreByProjectId 恢复指定项目下的所有任务
 // 用于项目恢复时的级联操作
-// 内部逐条加载实体并恢复 deleted_at，与单条恢复路径一致
+// 单条批量 UpdateColumns（deleted_at/updated_at），与 SoftDeleteByProjectId 同型
 // @param ctx 上下文
 // @param userId 用户ID
 // @param projectId 项目ID
@@ -1081,12 +1103,23 @@ func (repo *TaskRepoImpl) RestoreByProjectId(
 	if len(taskModels) == 0 {
 		return nil
 	}
-	for i := range taskModels {
-		taskModels[i].DeletedAt = gorm.DeletedAt{Valid: false}
-		// 显式推进 updated_at，保证恢复事件可增量发现
-		taskModels[i].UpdatedAt = time.Now()
+	// 同 SoftDeleteByProjectId：避免 slice Save 的 gorm:update_track_time 回写，
+	// 用单条批量 UpdateColumns 保证回执值与库中逐字相等（T327）。
+	now := time.Now().Truncate(time.Millisecond)
+	if err := db.WithContext(ctx).Unscoped().
+		Model(&models.Task{}).
+		Where("user_id = ? AND project_id = ?", userId, projectId).
+		UpdateColumns(map[string]any{
+			"deleted_at": nil,
+			"updated_at": now,
+		}).Error; err != nil {
+		return err
 	}
-	return db.WithContext(ctx).Unscoped().Save(&taskModels).Error
+	// 级联恢复是「项目恢复」的派生写：登记被触及任务行版本（T327）
+	for i := range taskModels {
+		derived.Record(ctx, derived.TableTasks, taskModels[i].ID, now)
+	}
+	return nil
 }
 
 // RemoveTagFromTasks 从所有任务中移除指定标签引用
@@ -1112,7 +1145,7 @@ func (repo *TaskRepoImpl) RemoveTagFromTasks(
 	}
 	// 仅更新 tags 与 updated_at 两列，避免 Save 全量写回覆盖并发修改的其他字段（如 Name/State）
 	// Tags 为 serializer:json 列，UpdateColumns 需手动序列化（与 TaskCheckItemVOToUpdateMap 约定一致）
-	now := time.Now()
+	now := time.Now().Truncate(time.Millisecond)
 	for i := range taskModels {
 		filtered := make([]string, 0, len(taskModels[i].Tags))
 		itemChanged := false
@@ -1139,6 +1172,8 @@ func (repo *TaskRepoImpl) RemoveTagFromTasks(
 			}).Error; err != nil {
 			return err
 		}
+		// 标签删除的级联清理是派生写：登记被触及任务行版本（T327）
+		derived.Record(ctx, derived.TableTasks, taskModels[i].ID, now)
 	}
 	return nil
 }

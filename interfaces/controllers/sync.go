@@ -17,6 +17,7 @@ import (
 	domerr "naotodoserver/domain/errors"
 	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/derived"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -106,6 +107,10 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		return
 	}
 	// 3. 逐表幂等写入（app 层 Create 已支持客户端指定 id 的 upsert）
+	// 派生写收集（T327）：本次完成的事务中被计数联动/级联推进的行版本，事务提交后并入；
+	// 结束时去重作为 additive `derivedUpdates` 回执，让客户端把这些行的 base 收敛到库中版本。
+	derivedRec := derived.NewRecorder()
+	ctx.Request = ctx.Request.WithContext(derived.WithRecorder(ctx.Request.Context(), derivedRec))
 	total := len(req.Tasks) + len(req.TaskCheckItems) + len(req.TaskComments) +
 		len(req.Projects) + len(req.Tags) + len(req.Pomodoros) +
 		len(req.PomodoroRecords) + len(req.Deletions)
@@ -267,12 +272,23 @@ func (c *SyncController) Push(ctx *gin.Context) {
 	}
 
 	// 5. 返回结果
+	// 派生行去重：同一 (table,id) 只给最终版本（与库中 updated_at 逐字相等）
+	merged := derived.Dedupe(derivedRec.Updates())
+	derivedUpdates := make([]types.DerivedUpdate, 0, len(merged))
+	for _, u := range merged {
+		derivedUpdates = append(derivedUpdates, types.DerivedUpdate{
+			Table:     u.Table,
+			Id:        u.Id,
+			UpdatedAt: idutil.FormatTimeMilli(u.UpdatedAt.UTC()),
+		})
+	}
 	Success(ctx, types.ResponseData{
 		Code:    90010,
 		Message: "批量推送成功",
 		Data: types.SyncPushRes{
-			Results:    results,
-			ServerTime: strconv.FormatInt(time.Now().UnixMilli(), 10),
+			Results:        results,
+			ServerTime:     strconv.FormatInt(time.Now().UnixMilli(), 10),
+			DerivedUpdates: derivedUpdates,
 		},
 	})
 }

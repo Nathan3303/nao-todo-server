@@ -104,10 +104,22 @@ const (
 	SyncOutcomeError    = "error"
 )
 
+// DerivedUpdate 因服务端派生写（计数联动 / 级联）而被推进 updated_at 的行（T327）。
+// Table/Id 与 /sync/push、/sync/pull 表键一致；UpdatedAt 为库中当前版本（RFC3339Milli）。
+type DerivedUpdate struct {
+	Table     string `json:"table"`
+	Id        string `json:"id"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
 // SyncPushRes 批量推送响应
 type SyncPushRes struct {
 	Results    []SyncResult `json:"results"`
 	ServerTime string       `json:"serverTime"`
+	// DerivedUpdates 本批被服务端派生写推进的行（additive，T327）：同 (table,id) 去重后只给
+	// 最终版本。客户端据此把这些行的 base 收敛到库中最新版本，避免下次推父实体误判 stale。
+	// 为空时省略 ⇒ 旧客户端对新增字段无感（向后兼容）。
+	DerivedUpdates []DerivedUpdate `json:"derivedUpdates,omitempty"`
 }
 
 // --- SyncPull ---

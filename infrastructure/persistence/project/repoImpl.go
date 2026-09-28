@@ -9,6 +9,7 @@ import (
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/domain/types"
+	"naotodoserver/infrastructure/derived"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
@@ -360,15 +361,21 @@ func (projectRepo *ProjectRepoImpl) AdjustTaskCount(
 		return nil
 	}
 	db := dbs.DBFrom(ctx, projectRepo.db)
-	err := db.WithContext(ctx).
+	// now 毫秒截断：与 DB datetime(3) 落库值逐字相等，派生行回执才能直接作为客户端 base（T327）
+	now := time.Now().Truncate(time.Millisecond)
+	res := db.WithContext(ctx).
 		Model(&models.Project{}).
 		Where("id = ? AND user_id = ?", projectId, userId).
 		UpdateColumns(map[string]any{
 			"task_count": gorm.Expr("task_count + ?", delta),
-			"updated_at": time.Now(),
-		}).Error
-	if err != nil {
-		return err
+			"updated_at": now,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	// 仅实际命中行才登记：隐式桶无 projects 行为无害 no-op，不得回传幻影项目版本（T327）
+	if res.RowsAffected > 0 {
+		derived.Record(ctx, derived.TableProjects, projectId, now)
 	}
 	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	return nil
@@ -383,7 +390,8 @@ func (projectRepo *ProjectRepoImpl) RecountTaskCount(
 		return nil
 	}
 	db := dbs.DBFrom(ctx, projectRepo.db)
-	err := db.WithContext(ctx).
+	now := time.Now().Truncate(time.Millisecond)
+	res := db.WithContext(ctx).
 		Model(&models.Project{}).
 		Where("id = ? AND user_id = ?", projectId, userId).
 		UpdateColumns(map[string]any{
@@ -391,10 +399,14 @@ func (projectRepo *ProjectRepoImpl) RecountTaskCount(
 				"(SELECT COUNT(*) FROM tasks WHERE project_id = ? AND deleted_at IS NULL)",
 				projectId,
 			),
-			"updated_at": time.Now(),
-		}).Error
-	if err != nil {
-		return err
+			"updated_at": now,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	// 仅实际命中行才登记（项目不存在 ⇒ 0 行 ⇒ 不误报，T327）
+	if res.RowsAffected > 0 {
+		derived.Record(ctx, derived.TableProjects, projectId, now)
 	}
 	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))
 	return nil
