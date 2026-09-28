@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"naotodoserver/domain/types"
+	"naotodoserver/infrastructure/derived"
 
 	"gorm.io/gorm"
 )
@@ -31,14 +32,21 @@ func (m *txManagerImpl) Do(
 	ctx context.Context,
 	fn func(ctx context.Context) error,
 ) error {
-	// 1. 嵌套保护：已在事务中则直接复用
+	// 1. 嵌套保护：已在事务中则直接复用（派生写收集器同样复用，由最外层统一并入）
 	if _, ok := ctx.Value(txKey{}).(*gorm.DB); ok {
 		return fn(ctx)
 	}
-	// 2. 开启事务并将事务句柄注入上下文
-	return m.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return fn(context.WithValue(ctx, txKey{}, tx))
+	// 2. 开启事务并将事务句柄 + 事务级派生写收集器注入上下文
+	txRecorder := derived.NewRecorder()
+	err := m.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return fn(context.WithValue(derived.WithRecorder(ctx, txRecorder), txKey{}, tx))
 	})
+	if err != nil {
+		return err
+	}
+	// 3. 仅提交成功才并入请求级收集器（回滚丢弃，避免把未落库的派生写误报为可收敛版本）
+	derived.Merge(ctx, txRecorder)
+	return nil
 }
 
 // DBFrom 从上下文中取出事务句柄
