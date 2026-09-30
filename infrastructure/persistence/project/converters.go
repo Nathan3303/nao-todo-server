@@ -29,6 +29,8 @@ func CreateProjectValueObject2Model(
 	m.SortId = createProjectValueObject.SortId
 	// 归档时间三态（T322 / DEF-42）：缺省（Valid=false）⇒ NULL，与改动前一致
 	m.ArchivedAt = createProjectValueObject.ArchivedAt.ToSqlNullTime()
+	// 停用时间三态（T466 / DEF-46）：缺省（Valid=false）⇒ NULL，与改动前一致
+	m.DeactivedAt = createProjectValueObject.DeactivedAt.ToSqlNullTime()
 	return m
 }
 
@@ -46,6 +48,11 @@ func CreateProjectVOToUpdateMap(vo *valueobjects.CreateProject) map[string]any {
 	// 归档时间三态（T322 / DEF-42）：Valid=true 时写列（IsNull=true ⇒ 写 NULL 清空）
 	if vo.ArchivedAt.ShouldUpdate() {
 		updateMap["archived_at"] = vo.ArchivedAt.ToSqlNullTime()
+	}
+	// 停用时间三态（T466 / DEF-46）：Valid=true 时写列（IsNull=true ⇒ 写 NULL 清空）；
+	// 缺省（旧客户端 / REST）⇒ 不产键 ⇒ 不写列，不影响 UpdateState（Delete/Restore）自己的落盘
+	if vo.DeactivedAt.ShouldUpdate() {
+		updateMap["deactived_at"] = vo.DeactivedAt.ToSqlNullTime()
 	}
 	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
 		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()

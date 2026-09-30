@@ -58,6 +58,7 @@ func TestMain(m *testing.M) {
 	if err := db.AutoMigrate(
 		&models.Project{}, &models.ProjectPreference{},
 		&models.Task{}, &models.TaskCheckItem{}, &models.TaskComment{},
+		&models.Pomodoro{}, &models.PomodoroRecord{},
 	); err != nil {
 		fmt.Printf("迁移失败: %v\n", err)
 		os.Exit(1)

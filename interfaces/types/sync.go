@@ -56,6 +56,10 @@ type SyncProjectPushItem struct {
 	// absent ⇒ 不写列（旧客户端行为不变）；null / "" ⇒ 清空；值 ⇒ 写入。
 	// ⛔ 服务端不级联：清单下任务的归档态由客户端逐任务推送（同 /sync/push tasks）。
 	ArchivedAt NullableString `json:"archivedAt"`
+	// DeactivedAt 清单停用时间三态（T466 / DEF-46）：与 ArchivedAt 同口径，直接承载。
+	// 客户端 projects 载荷确实在发该键；absent ⇒ 不写列；null / "" ⇒ 清空（写 NULL）；值 ⇒ 写入。
+	// 与 REST Delete/Restore（走 UpdateState）互不冲突：本字段只在 push upsert 路径参与。
+	DeactivedAt NullableString `json:"deactivedAt"`
 }
 
 type SyncTagPushItem struct {
@@ -66,6 +70,9 @@ type SyncTagPushItem struct {
 type SyncPomodoroPushItem struct {
 	CreatePomodoroReq
 	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+	// ArchivedAt 常用番茄工作归档时间三态（T466 / DEF-43）：CreatePomodoroReq 无同名字段，直接承载。
+	// absent ⇒ 不写列（旧客户端行为不变）；null / "" ⇒ 清空；值 ⇒ 写入。
+	ArchivedAt NullableString `json:"archivedAt"`
 }
 
 type SyncPomodoroRecordPushItem struct {
@@ -92,6 +99,11 @@ type SyncResult struct {
 	Error string `json:"error,omitempty"`
 	// Skipped 本条被服务端忽略（如只追加资源不支持删除）
 	Skipped bool `json:"skipped,omitempty"`
+	// DroppedFields 本条载荷中出现、但服务端 sync 条目 DTO 不承载（会被静默丢弃）的 JSON 键，
+	// 字典序（T466 / DEF-44 护栏）。additive：为空时省略 ⇒ 旧客户端对新增字段无感，
+	// outcome 语义**不变**（仍可能是 applied）。⚠️ 客户端需消费本字段才能阻止「出队即已同步」；
+	// 服务端只负责如实上报，不在本端拒绝或改写 outcome。
+	DroppedFields []string `json:"droppedFields,omitempty"`
 }
 
 // 单条推送结果语义常量（SyncResult.Outcome）

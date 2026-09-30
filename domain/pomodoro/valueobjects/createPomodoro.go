@@ -20,6 +20,11 @@ type CreatePomodoro struct {
 	Description string
 	Duration    uint16
 
+	// ArchivedAt 归档时间三态（sync push 专用，T466 / DEF-43）：与 CreateProject.ArchivedAt 同口径。
+	// Valid=false（缺省；REST create 与旧客户端推送）⇒ 不写列；
+	// Valid=true,IsNull=true（null / ""）⇒ 显式清空写 NULL；Valid=true,IsNull=false ⇒ 写入该时间。
+	ArchivedAt types.NullableTime
+
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
 	BaseUpdatedAt time.Time
 }

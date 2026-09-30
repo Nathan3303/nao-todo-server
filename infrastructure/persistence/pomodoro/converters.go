@@ -80,6 +80,8 @@ func CreatePomodoroVOToModel(vo *valueobjects.CreatePomodoro) *models.Pomodoro {
 	m.Name = vo.Name
 	m.Description = vo.Description
 	m.Duration = vo.Duration
+	// 归档时间三态（T466 / DEF-43）：缺省（Valid=false）⇒ NULL，与改动前一致
+	m.ArchivedAt = vo.ArchivedAt.ToSqlNullTime()
 	return &m
 }
 
@@ -95,6 +97,11 @@ func CreatePomodoroVOToUpdateMap(vo *valueobjects.CreatePomodoro) map[string]any
 	}
 	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
 		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()
+	}
+	// 归档时间三态（T466 / DEF-43）：Valid=true 时写列（IsNull=true ⇒ 写 NULL 清空）；
+	// 缺省（旧客户端 / REST）⇒ 不产键 ⇒ 不写列，不影响 Archive/Unarchive REST 路径
+	if vo.ArchivedAt.ShouldUpdate() {
+		updateMap["archived_at"] = vo.ArchivedAt.ToSqlNullTime()
 	}
 	return updateMap
 }

@@ -38,6 +38,8 @@ func CreateProjectReqToValueObject(
 	// 归档时间三态（T322 / DEF-42）：nil ⇒ 缺省不写列；"" ⇒ 显式清空；时间串 ⇒ 写入。
 	// REST create 不赋值该字段（dto 带 json:"-"）⇒ 行为与本单前一致。
 	createProjectValueObject.ArchivedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.ArchivedAt)
+	// 停用时间三态（T466 / DEF-46）：与 ArchivedAt 同口径；REST create 不赋值（json:"-"）⇒ 恒为缺省
+	createProjectValueObject.DeactivedAt = domaintypes.NewNullableTimeByTimeStrPtr(req.DeactivedAt)
 	baseUpdatedAt, err := idutil.ParseBaseUpdatedAt(req.BaseUpdatedAt)
 	if err != nil {
 		return nil, err

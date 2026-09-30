@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 // SyncController 数据同步控制器
@@ -96,9 +98,11 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		})
 		return
 	}
-	// 2. 绑定请求参数
+	// 2. 绑定请求参数（保留 gin 校验语义：先取原始字节，再按 binding.JSON 绑定，
+	// 原始字节同时供 DEF-44 护栏比对「载荷含而 DTO 不承载」的键）
 	var req types.SyncPushReq
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	rawBody, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
 		Failure(ctx, types.ResponseData{
 			Code:    90011,
 			Message: "参数错误",
@@ -106,6 +110,16 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		})
 		return
 	}
+	if err := binding.JSON.BindBody(rawBody, &req); err != nil {
+		Failure(ctx, types.ResponseData{
+			Code:    90011,
+			Message: "参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 护栏（T466 / DEF-44）：逐条记录被静默丢弃的键，随结果 additive 回执。
+	dropped := newSyncDroppedFields(rawBody)
 	// 3. 逐表幂等写入（app 层 Create 已支持客户端指定 id 的 upsert）
 	// 派生写收集（T327）：本次完成的事务中被计数联动/级联推进的行版本，事务提交后并入；
 	// 结束时去重作为 additive `derivedUpdates` 回执，让客户端把这些行的 base 收敛到库中版本。
@@ -201,7 +215,7 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		})
 	}
 	for i := range req.Pomodoros {
-		pomodoroReq := toCreatePomodoroInput(req.Pomodoros[i].CreatePomodoroReq)
+		pomodoroReq := toCreatePomodoroInputFromSync(&req.Pomodoros[i])
 		pomodoroReq.BaseUpdatedAt = basePtr(req.Pomodoros[i].BaseUpdatedAt)
 		res, upsert, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), userId, pomodoroReq)
 		if err != nil {
@@ -232,6 +246,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			Outcome: syncOutcomeOf(upsert),
 		})
 	}
+
+	// 3b. 护栏回填（T466 / DEF-44）：仅覆盖上面 7 表 create 结果（删除墓碑不参与）。
+	dropped.attach(results)
 
 	// 4. 删除墓碑（软删，服务端推进 updated_at）
 	now := time.Now()
@@ -342,6 +359,21 @@ func toCreateTaskReqFromSync(item *types.SyncTaskPushItem) *taskDto.CreateTaskRe
 // @return 应用层创建清单入参
 func toCreateProjectInputFromSync(item *types.SyncProjectPushItem) *projectDto.CreateProjectReq {
 	req := toCreateProjectInput(&item.CreateProjectReq)
+	req.ArchivedAt = syncNullableTime(item.ArchivedAt, nil)
+	req.DeactivedAt = syncNullableTime(item.DeactivedAt, nil)
+	return req
+}
+
+// toCreatePomodoroInputFromSync 将 /sync/push 常用番茄工作条目转换为应用层入参：
+// 先按共享 create 语义整体转换（非三态字段零差异），再用三态承载 archivedAt
+// （null / "" ⇒ ptr("")「显式清空」；absent ⇒ nil「不写列」；值 ⇒ 值）。
+//
+// @param item sync 推送条目
+// @return 应用层创建常用番茄工作入参
+func toCreatePomodoroInputFromSync(
+	item *types.SyncPomodoroPushItem,
+) *pomodoroDto.CreatePomodoroReq {
+	req := toCreatePomodoroInput(item.CreatePomodoroReq)
 	req.ArchivedAt = syncNullableTime(item.ArchivedAt, nil)
 	return req
 }
