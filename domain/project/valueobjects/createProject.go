@@ -25,6 +25,10 @@ type CreateProject struct {
 	// ⛔ 服务端只做行级落地，不级联归档清单下的任务（级联由客户端逐任务推送完成）。
 	ArchivedAt types.NullableTime
 
+	// DeactivedAt 停用时间三态（sync push 专用，T466 / DEF-46）：与 ArchivedAt 同口径。
+	// 客户端 projects 载荷含该键；REST create 恒缺省（dto json:"-"）⇒ 不写列。
+	DeactivedAt types.NullableTime
+
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
 	BaseUpdatedAt time.Time
 }
