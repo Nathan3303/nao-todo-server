@@ -1,0 +1,2 @@
+# 跨平台行尾：文本文件统一 LF（内容已是 LF，零 churn）；二进制不受影响
+* text=auto eol=lf
