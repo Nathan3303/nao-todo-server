@@ -260,7 +260,7 @@ pin="$(node -e 'const s=require(process.argv[1]);const a=(s.packages||[]).filter
 assert_eq "$PIN_SPEC" "$pin" "AC4: settings pin = $PIN_SPEC"
 compact="$(tr -d '[:space:]' < "$PROJ/.pi/settings.json" 2>/dev/null)"
 if [ "$compact" = '{"packages":["npm:@nathan33/nao-skill@0.12.0"]}' ]; then
-  pass "AC4: settings 原文与 AC4 字面一致"
+  pass "AC4: settings 内容与 AC4 字面 JSON 等价（pin 相符；空白不敏感）"
 else
   info "AC4: settings 原文为 pi install 生成的多行格式（与 AC4 字面存空白差异，JSON 等价；pin 值相符）"
 fi
