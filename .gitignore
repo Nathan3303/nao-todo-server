@@ -65,4 +65,10 @@ deploy/
 naotodoserver
 .omo/run-continuation
 .golangci-cache
-.pi
+
+# nao 机制：pin 入库，其余本地物化产物忽略
+.pi/*
+!.pi/settings.json
+
+# nao 迁移备份（BR4 不入库）
+.agents/.nao-obsolete/
