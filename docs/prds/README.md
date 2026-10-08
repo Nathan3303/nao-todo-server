@@ -5,4 +5,4 @@
 
 | 日期 | 主题 | Issue | 版本 | 状态 |
 | :--- | :--- | :--- | :--- | :--- |
-| 2026-10-08 | [nao 舰队机制迁移到 0.12.0（pi 原生包形态）](2026-10-08-nao-fleet-0.12.0-migration.md) | [#48](https://github.com/Nathan3303/nao-todo-server/issues/48) | 无（机制形态变更） | 待合并（PR [#49](https://github.com/Nathan3303/nao-todo-server/pull/49) · 验收已通过） |
+| 2026-10-08 | [nao 舰队机制迁移到 0.12.0（pi 原生包形态）](2026-10-08-nao-fleet-0.12.0-migration.md) | [#48](https://github.com/Nathan3303/nao-todo-server/issues/48) | 无（机制形态变更） | 已交付（PR [#49](https://github.com/Nathan3303/nao-todo-server/pull/49) 合并 `abc7a22`） |
