@@ -1,14 +1,11 @@
 package routers
 
 import (
-	"time"
-
 	"naotodoserver/application"
 	"naotodoserver/conf"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/middlewares"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
@@ -49,26 +46,8 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		gzip.WithExcludedPaths([]string{"/api/sse/"}),
 	))
 
-	// 添加 CORS 中间件
-	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://localhost:5173",
-			"http://localhost:5174",
-			"https://todo.nathanao.space",
-			"https://todobe.nathanao.space",
-		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Device-Id"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		// AllowOriginFunc: func(origin string) bool {
-		// 	logging.Logger.
-		// 		WithFields(map[string]any{"origin": origin}).
-		// 		Info("CORS 允许来源")
-		// 	return true
-		// },
-		MaxAge: 12 * time.Hour,
-	}))
+	// 添加 CORS 中间件（放行规则见 cors.go：精确白名单 + 预览域 + 局域网，仅 debug 放局域网）
+	router.Use(newCORSMiddleware(conf.Conf.Server.Debug))
 
 	// 创建 API v1 路由组 - 应用 ClientInfo 和 RequestLogger 中间件
 	userCtrl := controllers.NewUserController(svc.User)
