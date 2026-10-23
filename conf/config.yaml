@@ -40,3 +40,10 @@ uploads:
     maxFileSize: 2097152
     staticPath: /static/uploads
     serverURL: "http://localhost:3302"
+
+reminder:
+    # 提醒 cron 字段改写开关（nao-todo-server#54 / T528）。
+    # false（默认）= 停用：提醒判定下移到客户端，服务端不再清空一次性 remind_at、
+    #                不再推进重复提醒（同时跳过 /sse/reminders 事件推送），保留到期痕迹以支持补弹。
+    # true = 回滚到旧行为：cron 每分钟扫描到期提醒并改写字段 + 推送 /sse/reminders。
+    cronFieldWriteBack: false

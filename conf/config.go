@@ -11,11 +11,21 @@ import (
 var Conf *Config
 
 type Config struct {
-	Server  *Server    `yaml:"server"`
-	MySQL   *MySQL     `yaml:"mysql"`
-	Redis   *Redis     `yaml:"redis"`
-	Log     *LogConfig `yaml:"log"`
-	Uploads *Uploads   `yaml:"uploads"`
+	Server   *Server    `yaml:"server"`
+	MySQL    *MySQL     `yaml:"mysql"`
+	Redis    *Redis     `yaml:"redis"`
+	Log      *LogConfig `yaml:"log"`
+	Uploads  *Uploads   `yaml:"uploads"`
+	Reminder Reminder   `yaml:"reminder"` // 值类型：配置缺省时取零值，等价于「停用字段改写」
+}
+
+// Reminder 提醒相关开关
+type Reminder struct {
+	// CronFieldWriteBack 提醒 cron 是否把判定结果写回任务字段
+	// （清空一次性 remind_at / 推进重复提醒，并推送 /sse/reminders 事件）。
+	// 默认 false = 停用：提醒判定下移到客户端，服务端保留到期痕迹以支持客户端补弹；
+	// 置 true 即回滚到旧行为。
+	CronFieldWriteBack bool `yaml:"cronFieldWriteBack"`
 }
 
 type Uploads struct {
