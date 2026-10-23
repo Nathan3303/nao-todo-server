@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"fmt"
 
 	"naotodoserver/application"
 	authApp "naotodoserver/application/auth"
@@ -11,6 +12,7 @@ import (
 	tagApp "naotodoserver/application/tag"
 	taskApp "naotodoserver/application/task"
 	userApp "naotodoserver/application/user"
+	"naotodoserver/conf"
 	identityService "naotodoserver/domain/identity/service"
 	pomodoroService "naotodoserver/domain/pomodoro/service"
 	projectService "naotodoserver/domain/project/service"
@@ -160,7 +162,17 @@ func LoadCron(svc *application.Services) {
 		panic("删除注销用户定时任务添加失败：" + err.Error())
 	}
 	// 添加定时任务 - 任务提醒扫描
-	_, err = cronService.AddJob("* * * * *", cron.NewReminderJob(svc.Task))
+	// 字段改写默认停用（reminder.cronFieldWriteBack=false，提醒判定下移到客户端）；
+	// 置 true 可回滚到旧的「每分钟改写 remind_at + 推送提醒事件」行为。
+	if conf.Conf.Reminder.CronFieldWriteBack {
+		fmt.Println("提醒 cron 字段改写已启用（回滚模式）")
+	} else {
+		fmt.Println("提醒 cron 字段改写已停用（提醒判定下移到客户端）")
+	}
+	_, err = cronService.AddJob(
+		"* * * * *",
+		cron.NewReminderJob(svc.Task, conf.Conf.Reminder.CronFieldWriteBack),
+	)
 	if err != nil {
 		panic("任务提醒扫描定时任务添加失败：" + err.Error())
 	}
