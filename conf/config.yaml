@@ -47,3 +47,20 @@ reminder:
     #                不再推进重复提醒（同时跳过 /sse/reminders 事件推送），保留到期痕迹以支持补弹。
     # true = 回滚到旧行为：cron 每分钟扫描到期提醒并改写字段 + 推送 /sse/reminders。
     cronFieldWriteBack: false
+
+session:
+    # 过期会话清理（nao-todo-server#56 / DEF-14）。无 DDL；回滚 = enabled: false + 重启。
+    cleanup:
+        # 是否启用清理任务；false 时不注册 cron、不删除任何行
+        enabled: true
+        # 执行周期：每日 03:10（避开 04:00 删注销用户、避开每分钟提醒扫描）
+        cron: "10 3 * * *"
+        # 过期会话宽限期（天）：仅 expired_at < now-7d 且未登出的行
+        retentionDays: 7
+        # 已登出会话宽限期（小时）：仅 deleted_at < now-1h*24 的行
+        revokedRetentionHours: 24
+        # 单批删除行数、单次最多批数（过期 + 已登出共享批数预算）
+        batchSize: 500
+        maxBatches: 20
+        # 进程启动后立即执行一次（仅部署验证窗口临时开，验证完改回 false）
+        runOnStart: false

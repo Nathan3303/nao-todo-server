@@ -218,6 +218,55 @@ func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(
 	return nil
 }
 
+// DeleteExpiredBefore 硬删除过期时间早于 cutoff 的未登出会话
+// @param ctx 上下文
+// @param cutoff 过期时间上界（不含）
+// @param limit 单批最多删除行数
+// @return 实际删除行数
+// @return error 错误
+// @note 使用 raw DELETE + LIMIT 物理删除：绕过 GORM 软删语义，无 DDL、不触及 token 缓存
+// @note deleted_at IS NULL 保证已登出会话只走登出宽限期，不被过期条件提前回收
+func (sr *sessionRepoImpl) DeleteExpiredBefore(
+	ctx context.Context,
+	cutoff time.Time,
+	limit int,
+) (int64, error) {
+	tx := sr.db.WithContext(ctx).Exec(
+		"DELETE FROM user_sessions WHERE expired_at < ? AND deleted_at IS NULL "+
+			"ORDER BY expired_at LIMIT ?",
+		cutoff,
+		limit,
+	)
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	return tx.RowsAffected, nil
+}
+
+// DeleteRevokedBefore 硬删除登出时间早于 cutoff 的会话
+// @param ctx 上下文
+// @param cutoff 登出时间上界（不含）
+// @param limit 单批最多删除行数
+// @return 实际删除行数
+// @return error 错误
+// @note 使用 raw DELETE + LIMIT 物理删除：绕过 GORM 软删语义，无 DDL、不触及 token 缓存
+func (sr *sessionRepoImpl) DeleteRevokedBefore(
+	ctx context.Context,
+	cutoff time.Time,
+	limit int,
+) (int64, error) {
+	tx := sr.db.WithContext(ctx).Exec(
+		"DELETE FROM user_sessions WHERE deleted_at IS NOT NULL AND deleted_at < ? "+
+			"ORDER BY deleted_at LIMIT ?",
+		cutoff,
+		limit,
+	)
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	return tx.RowsAffected, nil
+}
+
 // FindByUserIdAndToken 根据用户 ID和会话令牌查找会话
 // @param ctx 上下文
 // @param userId 用户 ID
