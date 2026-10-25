@@ -17,6 +17,51 @@ type Config struct {
 	Log      *LogConfig `yaml:"log"`
 	Uploads  *Uploads   `yaml:"uploads"`
 	Reminder Reminder   `yaml:"reminder"` // 值类型：配置缺省时取零值，等价于「停用字段改写」
+	Session  Session    `yaml:"session"`  // 值类型：配置缺省时取零值，等价于「停用会话清理」
+}
+
+// Session 会话相关配置
+type Session struct {
+	Cleanup SessionCleanup `yaml:"cleanup"`
+}
+
+// SessionCleanup 过期会话清理任务配置（nao-todo-server#56 / DEF-14）
+// 无 DDL：删除对象仅为 user_sessions 历史行；回滚方式为 enabled=false + 重启。
+type SessionCleanup struct {
+	// Enabled 是否启用清理任务；零值 false = 停用（缺省配置下不会删除任何行）
+	Enabled bool `yaml:"enabled"`
+	// Cron 清理任务执行周期，默认每日 03:10（避开 04:00 删注销用户与每分钟提醒扫描）
+	Cron string `yaml:"cron"`
+	// RetentionDays 过期会话保留宽限期（天）：expired_at < now - RetentionDays 才回收
+	RetentionDays int `yaml:"retentionDays"`
+	// RevokedRetentionHours 已登出会话保留宽限期（小时）：deleted_at < now - RevokedRetentionHours 才回收
+	RevokedRetentionHours int `yaml:"revokedRetentionHours"`
+	// BatchSize 单批删除行数上限
+	BatchSize int `yaml:"batchSize"`
+	// MaxBatches 单次执行最多批数（过期 + 已登出共享该预算）
+	MaxBatches int `yaml:"maxBatches"`
+	// RunOnStart 进程启动后立即执行一次（仅部署验证窗口临时开启，默认 false）
+	RunOnStart bool `yaml:"runOnStart"`
+}
+
+// applyDefaults 为缺省字段补默认值（batchSize/maxBatches 为 0 会让清理静默失效，故必须兜底）。
+// enabled 不做兜底：零值即停用，缺失配置时宁可不删，避免误删。
+func (sc *SessionCleanup) applyDefaults() {
+	if sc.Cron == "" {
+		sc.Cron = "10 3 * * *"
+	}
+	if sc.RetentionDays <= 0 {
+		sc.RetentionDays = 7
+	}
+	if sc.RevokedRetentionHours <= 0 {
+		sc.RevokedRetentionHours = 24
+	}
+	if sc.BatchSize <= 0 {
+		sc.BatchSize = 500
+	}
+	if sc.MaxBatches <= 0 {
+		sc.MaxBatches = 20
+	}
 }
 
 // Reminder 提醒相关开关
@@ -167,6 +212,46 @@ func overrideWithEnv() {
 		}
 		if env = os.Getenv("TLS_KEY_FILE"); env != "" {
 			Conf.Server.KeyFile = env
+		}
+	}
+	overrideSessionCleanupWithEnv(&Conf.Session.Cleanup)
+	Conf.Session.Cleanup.applyDefaults()
+}
+
+// overrideSessionCleanupWithEnv 用 SESSION_CLEANUP_* 环境变量覆盖会话清理配置
+func overrideSessionCleanupWithEnv(sc *SessionCleanup) {
+	var env string
+	if env = os.Getenv("SESSION_CLEANUP_ENABLED"); env != "" {
+		if enabled, err := strconv.ParseBool(env); err == nil {
+			sc.Enabled = enabled
+		}
+	}
+	if env = os.Getenv("SESSION_CLEANUP_CRON"); env != "" {
+		sc.Cron = env
+	}
+	if env = os.Getenv("SESSION_CLEANUP_RETENTION_DAYS"); env != "" {
+		if days, err := strconv.Atoi(env); err == nil {
+			sc.RetentionDays = days
+		}
+	}
+	if env = os.Getenv("SESSION_CLEANUP_REVOKED_RETENTION_HOURS"); env != "" {
+		if hours, err := strconv.Atoi(env); err == nil {
+			sc.RevokedRetentionHours = hours
+		}
+	}
+	if env = os.Getenv("SESSION_CLEANUP_BATCH_SIZE"); env != "" {
+		if size, err := strconv.Atoi(env); err == nil {
+			sc.BatchSize = size
+		}
+	}
+	if env = os.Getenv("SESSION_CLEANUP_MAX_BATCHES"); env != "" {
+		if batches, err := strconv.Atoi(env); err == nil {
+			sc.MaxBatches = batches
+		}
+	}
+	if env = os.Getenv("SESSION_CLEANUP_RUN_ON_START"); env != "" {
+		if runOnStart, err := strconv.ParseBool(env); err == nil {
+			sc.RunOnStart = runOnStart
 		}
 	}
 }

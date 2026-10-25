@@ -243,3 +243,135 @@ func TestDeleteByUserIdExceptToken(t *testing.T) {
 		t.Fatalf("仅应保留 t2, got %v", tokens)
 	}
 }
+
+// seedSessionRow 直插一行会话（可指定过期时间，可选置为已登出），用于清理谓词断言
+func seedSessionRow(
+	t *testing.T,
+	userId int64,
+	token string,
+	expiredAt time.Time,
+	deletedAt *time.Time,
+) {
+	t.Helper()
+	row := &models.UserSession{
+		UserId:     userId,
+		Token:      token,
+		ExpiredAt:  expiredAt,
+		DeviceType: "test",
+		IP4:        "127.0.0.1",
+		Region:     "测试",
+	}
+	if err := testDB.Create(row).Error; err != nil {
+		t.Fatalf("种子 %s 写入失败: %v", token, err)
+	}
+	if deletedAt != nil {
+		err := testDB.Model(&models.UserSession{}).
+			Where("id = ?", row.ID).
+			Update("deleted_at", *deletedAt).
+			Error
+		if err != nil {
+			t.Fatalf("种子 %s 置登出失败: %v", token, err)
+		}
+	}
+}
+
+// sessionRowExists 物理存在性（Unscoped ⇒ 含软删行），用于确认「真的从表里删除」
+func sessionRowExists(t *testing.T, token string) bool {
+	t.Helper()
+	var count int64
+	if err := testDB.
+		Unscoped().
+		Model(&models.UserSession{}).
+		Where("token = ?", token).
+		Count(&count).
+		Error; err != nil {
+		t.Fatalf("查询 %s 失败: %v", token, err)
+	}
+	return count > 0
+}
+
+// TestDeleteExpiredBefore_OnlyBeyondGrace 过期清理：仅越过 7d 宽限且未登出的行被物理删除
+func TestDeleteExpiredBefore_OnlyBeyondGrace(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	now := time.Now()
+	revokedAt := now.Add(-2 * time.Hour)
+	seedSessionRow(t, 4001, "expired-8d", now.AddDate(0, 0, -8), nil)
+	seedSessionRow(t, 4002, "expired-6d", now.AddDate(0, 0, -6), nil)
+	seedSessionRow(t, 4003, "active", now.AddDate(0, 0, 1), nil)
+	// 过期 8d 但 2h 前才登出：登出宽限期未到 ⇒ 过期谓词不得回收
+	seedSessionRow(t, 4004, "expired-8d-revoked-2h", now.AddDate(0, 0, -8), &revokedAt)
+
+	removed, err := repo.DeleteExpiredBefore(context.Background(), now.AddDate(0, 0, -7), 500)
+	if err != nil {
+		t.Fatalf("DeleteExpiredBefore: %v", err)
+	}
+	if removed != 1 {
+		t.Fatalf("删除行数 = %d, want 1", removed)
+	}
+	if sessionRowExists(t, "expired-8d") {
+		t.Fatal("过期 8d 的行应被物理删除")
+	}
+	for _, token := range []string{"expired-6d", "active", "expired-8d-revoked-2h"} {
+		if !sessionRowExists(t, token) {
+			t.Fatalf("%s 不应被删除", token)
+		}
+	}
+}
+
+// TestDeleteRevokedBefore_OnlyBeyondGrace 登出清理：仅越过 24h 宽限的行被物理删除
+func TestDeleteRevokedBefore_OnlyBeyondGrace(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	now := time.Now()
+	revoked2d := now.Add(-48 * time.Hour)
+	revoked2h := now.Add(-2 * time.Hour)
+	seedSessionRow(t, 4101, "revoked-2d", revoked2d, &revoked2d)
+	seedSessionRow(t, 4102, "revoked-2h", revoked2h, &revoked2h)
+	seedSessionRow(t, 4103, "active", now.AddDate(0, 0, 1), nil)
+
+	removed, err := repo.DeleteRevokedBefore(context.Background(), now.Add(-24*time.Hour), 500)
+	if err != nil {
+		t.Fatalf("DeleteRevokedBefore: %v", err)
+	}
+	if removed != 1 {
+		t.Fatalf("删除行数 = %d, want 1", removed)
+	}
+	if sessionRowExists(t, "revoked-2d") {
+		t.Fatal("登出 2d 的行应被物理删除")
+	}
+	for _, token := range []string{"revoked-2h", "active"} {
+		if !sessionRowExists(t, token) {
+			t.Fatalf("%s 不应被删除", token)
+		}
+	}
+}
+
+// TestDeleteExpiredBefore_Limit 批量上限：raw DELETE ... LIMIT 每批最多删 limit 行
+func TestDeleteExpiredBefore_Limit(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	now := time.Now()
+	cutoff := now.AddDate(0, 0, -7)
+	var tokens []string
+	for i := 0; i < 5; i++ {
+		token := fmt.Sprintf("batch-expired-%d", i)
+		tokens = append(tokens, token)
+		seedSessionRow(t, int64(4200+i), token, now.AddDate(0, 0, -8), nil)
+	}
+
+	for _, want := range []int64{2, 2, 1} {
+		removed, err := repo.DeleteExpiredBefore(context.Background(), cutoff, 2)
+		if err != nil {
+			t.Fatalf("DeleteExpiredBefore: %v", err)
+		}
+		if removed != want {
+			t.Fatalf("单批删除行数 = %d, want %d", removed, want)
+		}
+	}
+	for _, token := range tokens {
+		if sessionRowExists(t, token) {
+			t.Fatalf("%s 应已被删除", token)
+		}
+	}
+}

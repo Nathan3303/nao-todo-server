@@ -38,6 +38,13 @@ type AuthApp interface {
 
 	// 处理用户限流
 	RateLimit(ctx context.Context, clientIP string, limit int64) error
+
+	// CleanupExpiredSessions 回收过期 / 已登出的历史会话（cron 调用，无 HTTP 入口）
+	// @return removedExpired 本次物理删除的过期会话行数
+	// @return removedRevoked 本次物理删除的已登出会话行数
+	CleanupExpiredSessions(ctx context.Context, opts dto.CleanupSessionsOptions) (
+		removedExpired int64, removedRevoked int64, err error,
+	)
 }
 
 // authAppImpl 认证应用实现

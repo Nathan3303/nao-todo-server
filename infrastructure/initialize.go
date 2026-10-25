@@ -153,6 +153,17 @@ func WireSSE() {
 func LoadCron(svc *application.Services) {
 	// 初始化定时任务
 	cronService := cron.GetCronServiceImpl()
+	registerJobs(cronService, svc, conf.Conf)
+	// 启动定时任务
+	cronService.Start()
+}
+
+// registerJobs 注册全部定时任务（不启动调度器，便于单测断言门控）
+func registerJobs(
+	cronService cron.CronService,
+	svc *application.Services,
+	cfg *conf.Config,
+) {
 	// 添加定时任务 - 删除注销用户
 	_, err := cronService.AddJob(
 		"0 4 * * *",
@@ -164,18 +175,48 @@ func LoadCron(svc *application.Services) {
 	// 添加定时任务 - 任务提醒扫描
 	// 字段改写默认停用（reminder.cronFieldWriteBack=false，提醒判定下移到客户端）；
 	// 置 true 可回滚到旧的「每分钟改写 remind_at + 推送提醒事件」行为。
-	if conf.Conf.Reminder.CronFieldWriteBack {
+	if cfg.Reminder.CronFieldWriteBack {
 		fmt.Println("提醒 cron 字段改写已启用（回滚模式）")
 	} else {
 		fmt.Println("提醒 cron 字段改写已停用（提醒判定下移到客户端）")
 	}
 	_, err = cronService.AddJob(
 		"* * * * *",
-		cron.NewReminderJob(svc.Task, conf.Conf.Reminder.CronFieldWriteBack),
+		cron.NewReminderJob(svc.Task, cfg.Reminder.CronFieldWriteBack),
 	)
 	if err != nil {
 		panic("任务提醒扫描定时任务添加失败：" + err.Error())
 	}
-	// 启动定时任务
-	cronService.Start()
+	// 添加定时任务 - 过期会话清理（nao-todo-server#56）
+	// 开关关闭 ⇒ 不注册、不执行；回滚 = enabled=false + 重启（无 DDL）
+	registerSessionCleanupJob(cronService, svc, cfg.Session.Cleanup)
+}
+
+// registerSessionCleanupJob 注册过期会话清理任务（含 runOnStart 一次性执行）
+func registerSessionCleanupJob(
+	cronService cron.CronService,
+	svc *application.Services,
+	cfg conf.SessionCleanup,
+) {
+	if !cfg.Enabled {
+		fmt.Println("会话清理已停用（session.cleanup.enabled=false）")
+		return
+	}
+	job := cron.NewCleanExpiredSessionsJob(svc.Auth, cfg)
+	if _, err := cronService.AddJob(cfg.Cron, job); err != nil {
+		panic("过期会话清理定时任务添加失败：" + err.Error())
+	}
+	fmt.Printf(
+		"会话清理已启用：cron=%q 保留=%d天/%d小时 批量=%d×%d runOnStart=%t\n",
+		cfg.Cron,
+		cfg.RetentionDays,
+		cfg.RevokedRetentionHours,
+		cfg.BatchSize,
+		cfg.MaxBatches,
+		cfg.RunOnStart,
+	)
+	// 仅部署验证窗口临时开启：启动后异步跑一次，不阻塞就绪
+	if cfg.RunOnStart {
+		go job.Run()
+	}
 }

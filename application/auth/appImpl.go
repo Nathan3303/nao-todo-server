@@ -303,3 +303,74 @@ func (as *authAppImpl) RateLimit(
 	}
 	return nil
 }
+
+/*
+ * CleanupExpiredSessions 回收过期 / 已登出的历史会话
+ * 两条独立谓词分开执行（各自宽限期）：expired_at < ExpiredBefore 且未登出；
+ * deleted_at 非空且 < RevokedBefore。单次执行批数预算由过期 + 已登出共享。
+ */
+func (as *authAppImpl) CleanupExpiredSessions(
+	ctx context.Context,
+	opts dto.CleanupSessionsOptions,
+) (removedExpired int64, removedRevoked int64, err error) {
+	// 1. 回收过期会话（独立宽限期）
+	budget := opts.MaxBatches
+	removedExpired, budget, err = purgeInBatches(
+		ctx,
+		budget,
+		opts.BatchSize,
+		opts.BatchPause,
+		func(ctx context.Context) (int64, error) {
+			return as.sessionRepo.DeleteExpiredBefore(ctx, opts.ExpiredBefore, opts.BatchSize)
+		},
+	)
+	if err != nil {
+		return removedExpired, 0, err
+	}
+	// 2. 回收已登出会话（独立宽限期），复用剩余批数预算
+	removedRevoked, _, err = purgeInBatches(
+		ctx,
+		budget,
+		opts.BatchSize,
+		opts.BatchPause,
+		func(ctx context.Context) (int64, error) {
+			return as.sessionRepo.DeleteRevokedBefore(ctx, opts.RevokedBefore, opts.BatchSize)
+		},
+	)
+	if err != nil {
+		return removedExpired, removedRevoked, err
+	}
+	// 3. 返回结果
+	return removedExpired, removedRevoked, nil
+}
+
+// purgeInBatches 按批执行一次删除谓词，返回累计删除行数与剩余批数预算
+// @param deleteBatch 单批删除函数（仓储实现 raw DELETE ... LIMIT）
+// @param budget 剩余批数预算；<=0 时不执行
+// @note 单批删除行数不足 batchSize 视为已删完，提前结束
+func purgeInBatches(
+	ctx context.Context,
+	budget int,
+	batchSize int,
+	batchPause time.Duration,
+	deleteBatch func(ctx context.Context) (int64, error),
+) (removed int64, remaining int, err error) {
+	for batch := 0; batch < budget; batch++ {
+		var count int64
+		count, err = deleteBatch(ctx)
+		if err != nil {
+			return removed, budget - batch, fmt.Errorf("auth.CleanupExpiredSessions: %w", err)
+		}
+		removed += count
+		if count < int64(batchSize) {
+			return removed, budget - batch - 1, nil
+		}
+		// 批间暂停，减轻主库压力；ctx 取消时立即退出
+		select {
+		case <-ctx.Done():
+			return removed, budget - batch - 1, ctx.Err()
+		case <-time.After(batchPause):
+		}
+	}
+	return removed, 0, nil
+}
