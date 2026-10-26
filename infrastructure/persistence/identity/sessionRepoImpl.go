@@ -168,9 +168,15 @@ func (sr *sessionRepoImpl) Delete(ctx context.Context, userId types.UserID, toke
 	if tx.Error != nil {
 		return tx.Error
 	}
-	// 3. 失效该会话缓存
+	// 3. 删除未命中任何行 ⇒ 该 (user_id, token) 已不存在（token 已被 checkin 轮换、
+	//    会话已被删除或已登出），必须上抛而不是回「登出成功」：
+	//    否则调用方无法区分「已登出」与「什么都没做」，客户端会误以为会话已撤销
+	if tx.RowsAffected == 0 {
+		return domerr.ErrSessionNotFound
+	}
+	// 4. 失效该会话缓存
 	sr.cache.Del(ctx, cache.SessionKey(int64(userId), token))
-	// 4. 返回结果
+	// 5. 返回结果
 	return nil
 }
 

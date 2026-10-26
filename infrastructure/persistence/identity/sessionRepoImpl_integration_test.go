@@ -563,3 +563,66 @@ func TestCreate_GuardReportsInvisibleSession(t *testing.T) {
 		t.Fatalf("复活后校验应通过，got %v", err)
 	}
 }
+
+// TestDelete_FreshTokenRemovesSession 新鲜 token 登出 ⇒ 真删；重复登出必须报「会话不存在」而不是再次假成功
+// 回归 nao-todo-server#60：Delete 只判 tx.Error、不判 RowsAffected ⇒ 删不到也回 10030「登出成功」
+func TestDelete_FreshTokenRemovesSession(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	const userID = types.UserID(6001)
+
+	if err := repo.Create(ctxWithClient("dev-signout"), &entities.UserSession{UserId: userID, Token: "token-fresh-so"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	// ① 新鲜 token 登出 ⇒ 成功
+	if err := repo.Delete(context.Background(), userID, "token-fresh-so"); err != nil {
+		t.Fatalf("Delete(新鲜 token) 应成功, got %v", err)
+	}
+	// ③ 正常路径不变：此后鉴权查不到该 token，行是软删行
+	if repo.FindByUserIdAndToken(context.Background(), userID, "token-fresh-so").IsValid() {
+		t.Fatal("登出后会话不应再被鉴权查询命中")
+	}
+	if row := readSessionRow(t, userID, "token-fresh-so"); !row.DeletedAt.Valid {
+		t.Fatal("登出应软删该行（deleted_at 非 NULL）")
+	}
+	// ② 重复登出（该 token 已不存在）⇒ 必须 ErrSessionNotFound，不得静默成功
+	if err := repo.Delete(context.Background(), userID, "token-fresh-so"); !errors.Is(err, domerr.ErrSessionNotFound) {
+		t.Fatalf("重复登出应返回 ErrSessionNotFound, got %v", err)
+	}
+}
+
+// TestDelete_StaleTokenReportsNotFoundAndDeletesNothing token 已被 checkin 轮换 ⇒ 登出必须失败且不误删
+// 现场语义（qa-T556 A/B 对照）：旧 token 登出若「假成功」，用户以为已退出、实际会话仍然有效
+func TestDelete_StaleTokenReportsNotFoundAndDeletesNothing(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	const userID = types.UserID(6002)
+
+	if err := repo.Create(ctxWithClient("dev-rotate"), &entities.UserSession{UserId: userID, Token: "token-old-so"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	// 模拟 checkin 原地轮换：token-old-so → token-new-so
+	err := repo.UpdateToken(
+		context.Background(),
+		&entities.UserSession{UserId: userID, Token: "token-new-so"},
+		"token-old-so",
+	)
+	if err != nil {
+		t.Fatalf("UpdateToken(轮换): %v", err)
+	}
+	rowsBefore := countSessionRows(t, userID)
+
+	// 用轮换前的旧 token 登出 ⇒ 必须报错（不得假成功）
+	err = repo.Delete(context.Background(), userID, "token-old-so")
+	if !errors.Is(err, domerr.ErrSessionNotFound) {
+		t.Fatalf("旧 token 登出应返回 ErrSessionNotFound（不得假成功）, got %v", err)
+	}
+	// 且不误删任何行，轮换后的新 token 仍然可用
+	if rowsAfter := countSessionRows(t, userID); rowsAfter != rowsBefore {
+		t.Fatalf("登出失败不得误删行: rows %d → %d", rowsBefore, rowsAfter)
+	}
+	if !repo.FindByUserIdAndToken(context.Background(), userID, "token-new-so").IsValid() {
+		t.Fatal("轮换后的新 token 不应受影响")
+	}
+	t.Logf("旧 token 登出被正确拒绝：err=%v，行数仍为 %d，新 token 仍可鉴权", err, rowsBefore)
+}
