@@ -202,8 +202,11 @@ func (u *userAppImpl) DeleteUser(ctx context.Context, userId int64, req dto.Dele
 		return fmt.Errorf("user.Deactive: %w", err)
 	}
 	// 6. 删除当次会话 Token（注销后当次登录立即失效；等待期内仍可重新登录读取数据/反悔）
+	// 会话可能已被 checkin 轮换或已登出 ⇒ ErrSessionNotFound 表示「已经不存在」，目标已达成，
+	// 不应让注销在上方 Deactive 已生效后返回失败；其余错误照旧上抛
 	if req.Token != "" {
-		if err := u.sessionRepo.Delete(ctx, domaintypes.UserID(userId), req.Token); err != nil {
+		err := u.sessionRepo.Delete(ctx, domaintypes.UserID(userId), req.Token)
+		if err != nil && !errors.Is(err, domerr.ErrSessionNotFound) {
 			return fmt.Errorf("user.DeleteUser.DeleteSession: %w", err)
 		}
 	}
