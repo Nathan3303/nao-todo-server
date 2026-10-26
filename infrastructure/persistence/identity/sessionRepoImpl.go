@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	domerr "naotodoserver/domain/errors"
@@ -12,6 +13,7 @@ import (
 	"naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/ip2region"
+	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
 
@@ -63,13 +65,21 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 	}
 	// 4. 写入会话；deviceId 非空时依赖 (user_id, device_id) 唯一索引做 upsert，避免并发产生孤儿行
 	//    updated_at 一并刷新，与 CheckIn 换发（GORM 自动更新）保持行为一致
+	//    deleted_at 必须显式置 NULL：同 (user_id, device_id) 若是被登出/下线的软删行（墓碑），
+	//    本次登录已验密码，应当接管并复活该行；否则 token 会写进「已删」行，
+	//    客户端拿到的新 token 永远无法通过带软删作用域的鉴权/checkin 查询（10041 / 10022）
 	tx := sr.db.WithContext(ctx)
 	if deviceId != "" {
+		doUpdates := clause.AssignmentColumns([]string{
+			"token", "expired_at", "ip4", "region", "device_type", "updated_at",
+		})
+		doUpdates = append(doUpdates, clause.Assignment{
+			Column: clause.Column{Name: "deleted_at"},
+			Value:  gorm.Expr("NULL"),
+		})
 		tx = tx.Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "user_id"}, {Name: "device_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"token", "expired_at", "ip4", "region", "device_type", "updated_at",
-			}),
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "device_id"}},
+			DoUpdates: doUpdates,
 		})
 	}
 	if err := tx.Create(createCond).Error; err != nil {
@@ -86,7 +96,59 @@ func (sr *sessionRepoImpl) Create(ctx context.Context, sessionEntity *entities.U
 		int64(sessionEntity.UserId),
 		sessionEntity.Token,
 	))
-	return nil
+	// 6. 写后回读：确认新 token 能被鉴权路径（deleted_at IS NULL 且未过期）命中，
+	//    禁止「登录 200 却发出死 token」再次静默发生
+	return sr.assertSessionVisible(ctx, sessionEntity.UserId, sessionEntity.Token)
+}
+
+// assertSessionVisible 写后回读校验：新 token 必须能被鉴权路径命中
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param token 期望可用的会话令牌（仅用于查询，不写日志）
+// @return error 不可见时返回带原因分类的错误（软删行未复活 / 行未落库 / 会话已过期）
+func (sr *sessionRepoImpl) assertSessionVisible(
+	ctx context.Context,
+	userId types.UserID,
+	token string,
+) error {
+	// 1. 走与鉴权相同的读路径（GORM 软删作用域 + IsValid 过期判定）
+	if session := sr.FindByUserIdAndToken(ctx, userId, token); session.IsValid() {
+		return nil
+	}
+	// 2. 失败路径诊断：raw 查询绕过软删作用域，区分具体原因（便于线上一次定位）
+	var row struct {
+		ID        int64
+		DeletedAt sql.NullTime
+		ExpiredAt sql.NullTime
+	}
+	err := sr.db.WithContext(ctx).Raw(
+		"SELECT id, deleted_at, expired_at FROM user_sessions "+
+			"WHERE user_id = ? AND token = ? LIMIT 1",
+		int64(userId),
+		token,
+	).Scan(&row).Error
+	switch {
+	case err != nil:
+		return fmt.Errorf(
+			"会话写入后不可见（回读查询失败）: user_id=%d token_len=%d: %w",
+			int64(userId), len(token), err,
+		)
+	case row.ID == 0:
+		return fmt.Errorf(
+			"会话写入后不可见（行未落库）: user_id=%d token_len=%d",
+			int64(userId), len(token),
+		)
+	case row.DeletedAt.Valid:
+		return fmt.Errorf(
+			"会话写入后不可见（软删行未复活）: session_id=%d user_id=%d deleted_at=%s",
+			row.ID, int64(userId), row.DeletedAt.Time.Format(time.RFC3339),
+		)
+	default:
+		return fmt.Errorf(
+			"会话写入后不可见（会话已过期）: session_id=%d user_id=%d expired_at=%s",
+			row.ID, int64(userId), row.ExpiredAt.Time.Format(time.RFC3339),
+		)
+	}
 }
 
 // Delete 删除会话
@@ -283,11 +345,19 @@ func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	// 2. 创建查找模型（仅按用户 ID 与令牌匹配；Region/DeviceType 仅为记录字段，不参与匹配）
 	findCond := &models.UserSession{UserId: int64(userId), Token: token}
 	// 3. 执行查找
-	sr.db.
+	// 查不到（软删/无此行）是正常结果；其余 DB 故障必须留痕，否则会被上层统一折叠成
+	// 「用户凭证验证失败（10041）」，线上无法区分「会话不存在」与「数据库故障」
+	if err := sr.db.
 		WithContext(ctx).
 		Model(&models.UserSession{}).
 		Where(findCond).
-		First(&session)
+		First(&session).
+		Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		logging.Warnf(
+			"会话查询失败（按 user_id + token）: user_id=%d token_len=%d err=%v",
+			int64(userId), len(token), err,
+		)
+	}
 	// 4. 模型转换并返回
 	return SessionModel2Entity(session)
 }

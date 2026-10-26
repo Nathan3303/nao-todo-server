@@ -14,9 +14,11 @@ package identity
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -373,5 +375,191 @@ func TestDeleteExpiredBefore_Limit(t *testing.T) {
 		if sessionRowExists(t, token) {
 			t.Fatalf("%s 应已被删除", token)
 		}
+	}
+}
+
+// sessionRawRow 会话行原始状态（raw 查询绕过 GORM 软删作用域）
+type sessionRawRow struct {
+	ID        int64
+	Token     string
+	DeviceId  sql.NullString
+	ExpiredAt time.Time
+	DeletedAt sql.NullTime
+}
+
+// readSessionRow 按 user_id + token 读一条会话行（含已软删行），不存在即失败
+func readSessionRow(t *testing.T, userId types.UserID, token string) sessionRawRow {
+	t.Helper()
+	var row sessionRawRow
+	err := testDB.Raw(
+		"SELECT id, token, device_id, expired_at, deleted_at FROM user_sessions "+
+			"WHERE user_id = ? AND token = ? LIMIT 1",
+		int64(userId),
+		token,
+	).Scan(&row).Error
+	if err != nil {
+		t.Fatalf("读取会话行 %s 失败: %v", token, err)
+	}
+	if row.ID == 0 {
+		t.Fatalf("会话行不存在: user_id=%d token=%s", userId, token)
+	}
+	return row
+}
+
+// countSessionRows 统计该用户全部会话行数（含已软删行）
+func countSessionRows(t *testing.T, userId types.UserID) int64 {
+	t.Helper()
+	var count int64
+	if err := testDB.
+		Unscoped().
+		Model(&models.UserSession{}).
+		Where("user_id = ?", int64(userId)).
+		Count(&count).
+		Error; err != nil {
+		t.Fatalf("统计会话行数失败: %v", err)
+	}
+	return count
+}
+
+// TestCreate_RevivesSoftDeletedSameDevice 同 (user_id, device_id) 存在墓碑行时，signin 必须复活该行
+// 回归 nao-todo-server#58：upsert 未回置 deleted_at ⇒ 新 token 写进「已删」行，
+// 鉴权查询（deleted_at IS NULL）永远命中不到 ⇒ 客户端拿到的 token 一律 10041、checkin 一律 10022
+func TestCreate_RevivesSoftDeletedSameDevice(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	const userID = types.UserID(5001)
+	deviceCtx := ctxWithClient("dev-tombstone")
+
+	// 1. 首次登录 → 活行
+	if err := repo.Create(deviceCtx, &entities.UserSession{UserId: userID, Token: "token-old"}); err != nil {
+		t.Fatalf("首次 Create: %v", err)
+	}
+	oldRow := readSessionRow(t, userID, "token-old")
+	// 2. 登出（软删，制造墓碑）
+	if err := repo.Delete(context.Background(), userID, "token-old"); err != nil {
+		t.Fatalf("Delete(登出): %v", err)
+	}
+	tomb := readSessionRow(t, userID, "token-old")
+	if !tomb.DeletedAt.Valid {
+		t.Fatalf("前置不成立：登出后 deleted_at 应非 NULL")
+	}
+	t.Logf("复活前：id=%d token=%s deleted_at=%s",
+		tomb.ID, tomb.Token, tomb.DeletedAt.Time.Format(time.RFC3339))
+
+	// 3. 同设备重新登录 → upsert 命中墓碑行并复活
+	if err := repo.Create(deviceCtx, &entities.UserSession{UserId: userID, Token: "token-new"}); err != nil {
+		t.Fatalf("重登 Create 应成功（墓碑应被复活），got err: %v", err)
+	}
+	revived := readSessionRow(t, userID, "token-new")
+	if revived.DeletedAt.Valid {
+		t.Fatalf("墓碑未复活：deleted_at=%s", revived.DeletedAt.Time.Format(time.RFC3339))
+	}
+	if revived.ID != oldRow.ID {
+		t.Fatalf("应复用原会话行（id 不变），got id=%d want %d", revived.ID, oldRow.ID)
+	}
+	if got := countSessionRows(t, userID); got != 1 {
+		t.Fatalf("复活不应新增行，got %d 行 want 1", got)
+	}
+	// 4. 鉴权路径（软删作用域 + 过期判定）必须命中新 token
+	session := repo.FindByUserIdAndToken(context.Background(), userID, "token-new")
+	if !session.IsValid() {
+		t.Fatalf("复活后新 token 仍不可被鉴权查询命中（session=%+v）", session)
+	}
+	t.Logf("复活后：id=%d token=%s deleted_at=<NULL>，鉴权查询命中 session_id=%d",
+		revived.ID, revived.Token, session.Id)
+}
+
+// TestCreate_InsertBranchUnaffected 无墓碑行时行为不变：新增一行且立即可鉴权
+func TestCreate_InsertBranchUnaffected(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	const userID = types.UserID(5002)
+	deviceCtx := ctxWithClient("dev-fresh")
+
+	if err := repo.Create(deviceCtx, &entities.UserSession{UserId: userID, Token: "token-fresh"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	row := readSessionRow(t, userID, "token-fresh")
+	if row.DeletedAt.Valid {
+		t.Fatalf("新建设备行不应是软删行")
+	}
+	if !row.DeviceId.Valid || row.DeviceId.String != "dev-fresh" {
+		t.Fatalf("device_id 应落库为 dev-fresh，got %v", row.DeviceId)
+	}
+	if got := countSessionRows(t, userID); got != 1 {
+		t.Fatalf("应有 1 行，got %d", got)
+	}
+	if !repo.FindByUserIdAndToken(context.Background(), userID, "token-fresh").IsValid() {
+		t.Fatal("新 token 应可被鉴权查询命中")
+	}
+}
+
+// TestCreate_OtherDeviceTombstoneUntouched 只复活本次登录的设备行，其他设备的墓碑不受影响
+func TestCreate_OtherDeviceTombstoneUntouched(t *testing.T) {
+	cleanSessions(t)
+	repo := newTestRepo()
+	const userID = types.UserID(5003)
+	otherCtx := ctxWithClient("dev-other")
+	selfCtx := ctxWithClient("dev-self")
+
+	// dev-other 先登录再登出 → 墓碑
+	if err := repo.Create(otherCtx, &entities.UserSession{UserId: userID, Token: "token-other"}); err != nil {
+		t.Fatalf("Create(dev-other): %v", err)
+	}
+	if err := repo.Delete(context.Background(), userID, "token-other"); err != nil {
+		t.Fatalf("Delete(dev-other): %v", err)
+	}
+	// dev-self 登录
+	if err := repo.Create(selfCtx, &entities.UserSession{UserId: userID, Token: "token-self"}); err != nil {
+		t.Fatalf("Create(dev-self): %v", err)
+	}
+	// dev-self 再次登录（同设备 upsert 走更新分支）
+	if err := repo.Create(selfCtx, &entities.UserSession{UserId: userID, Token: "token-self-2"}); err != nil {
+		t.Fatalf("Create(dev-self 二次): %v", err)
+	}
+
+	if !readSessionRow(t, userID, "token-other").DeletedAt.Valid {
+		t.Fatal("其他设备的墓碑行不应被复活")
+	}
+	if readSessionRow(t, userID, "token-self-2").DeletedAt.Valid {
+		t.Fatal("本次登录的设备行不应为软删行")
+	}
+	if got := countSessionRows(t, userID); got != 2 {
+		t.Fatalf("应有 2 行（1 活 + 1 墓碑），got %d", got)
+	}
+}
+
+// TestCreate_GuardReportsInvisibleSession 写后回读校验：墓碑未复活 / 行未落库两种失败可区分
+func TestCreate_GuardReportsInvisibleSession(t *testing.T) {
+	cleanSessions(t)
+	repo := NewSessionRepo(testDB, testCache).(*sessionRepoImpl)
+	const userID = types.UserID(5004)
+	deviceCtx := ctxWithClient("dev-guard")
+
+	// 1. 行未落库 ⇒ 错误信息应指出「行未落库」
+	err := repo.assertSessionVisible(context.Background(), userID, "token-never-written")
+	if err == nil || !strings.Contains(err.Error(), "行未落库") {
+		t.Fatalf("未落库应返回「行未落库」错误，got %v", err)
+	}
+
+	// 2. 存在墓碑行且未复活 ⇒ 错误信息应指出「软删行未复活」（并带 session_id/deleted_at）
+	if err := repo.Create(deviceCtx, &entities.UserSession{UserId: userID, Token: "token-ghost"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := repo.Delete(context.Background(), userID, "token-ghost"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	err = repo.assertSessionVisible(context.Background(), userID, "token-ghost")
+	if err == nil || !strings.Contains(err.Error(), "软删行未复活") {
+		t.Fatalf("墓碑行应返回「软删行未复活」错误，got %v", err)
+	}
+	t.Logf("墓碑未复活时的报错样本: %v", err)
+
+	// 3. 同设备重登复活后 ⇒ 校验通过
+	if err := repo.Create(deviceCtx, &entities.UserSession{UserId: userID, Token: "token-alive"}); err != nil {
+		t.Fatalf("重登 Create: %v", err)
+	}
+	if err := repo.assertSessionVisible(context.Background(), userID, "token-alive"); err != nil {
+		t.Fatalf("复活后校验应通过，got %v", err)
 	}
 }
