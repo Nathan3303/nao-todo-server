@@ -410,10 +410,7 @@ func (c *TaskController) GetTask(ctx *gin.Context) {
 		includeDeleted,
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40002,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40002, "获取待办任务失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -440,21 +437,13 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 	var req types.CreateTaskReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40011,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 40011, "参数错误", err)
 		return
 	}
 	// 3. 调用应用层创建任务
 	res, _, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, toCreateTaskReq(&req))
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40012,
-			Message: "创建待办任务失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 40012, "创建待办任务失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -481,10 +470,7 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 	var req types.UpdateTaskReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40021,
-			Message: err.Error(),
-		})
+		failBadRequestBind(ctx, 40021, "参数错误", err)
 		return
 	}
 	// 3. 获取任务 ID
@@ -499,10 +485,7 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 	// 4. 调用应用层更新任务
 	err = c.taskApp.UpdateTask(ctx.Request.Context(), userId, taskId, toUpdateTaskReq(&req))
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40023,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40023, "更新待办任务失败", err)
 		return
 	}
 	// 5. 返回结果
@@ -537,10 +520,7 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 	// 3. 调用应用层删除任务
 	err := c.taskApp.DeleteTask(ctx.Request.Context(), userId, taskId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40032,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40032, "删除待办任务失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -575,10 +555,7 @@ func (c *TaskController) RestoreTask(ctx *gin.Context) {
 	// 3. 调用应用层恢复任务
 	err := c.taskApp.RestoreTask(ctx.Request.Context(), userId, taskId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40042,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40042, "恢复待办任务失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -613,10 +590,7 @@ func (c *TaskController) CopyTask(ctx *gin.Context) {
 	// 3. 调用应用层复制任务
 	res, err := c.taskApp.CopyTask(ctx.Request.Context(), userId, taskId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40062,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40062, "复制待办任务失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -643,10 +617,7 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 	var req types.ListTaskReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40051,
-			Message: err.Error(),
-		})
+		failBadRequestBind(ctx, 40051, "参数错误", err)
 		return
 	}
 	// 分页上限（SEC-01）：游标同步不使用 page，仅夹取 limit；分页列表才做深分页拒绝
@@ -663,10 +634,7 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 			toListTaskReq(&req),
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    40052,
-				Message: err.Error(),
-			})
+			failWithErrMessage(ctx, 40052, "获取待办任务列表失败", err)
 			return
 		}
 		Success(ctx, types.ResponseData{
@@ -688,10 +656,7 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 		toListTaskReq(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40052,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40052, "获取待办任务列表失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -728,11 +693,7 @@ func (c *TaskController) SnoozeTask(ctx *gin.Context) {
 	var req types.SnoozeTaskReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40092,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 40092, "参数错误", err)
 		return
 	}
 	// 4. 调用应用层设置稍后提醒
@@ -743,10 +704,7 @@ func (c *TaskController) SnoozeTask(ctx *gin.Context) {
 		toSnoozeTaskReq(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    40093,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 40093, "延后待办任务失败", err)
 		return
 	}
 	// 5. 返回结果

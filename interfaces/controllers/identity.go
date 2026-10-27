@@ -98,11 +98,7 @@ func (c *AuthController) UserSignIn(ctx *gin.Context) {
 	req := types.SignInReq{}
 	err := ctx.ShouldBind(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10011,
-			Message: "参数错误",
-			Data:    err.Error(),
-		})
+		failBadRequestBind(ctx, 10011, "参数错误", err)
 		return
 	}
 	// @step 2. 调用用户服务 - 登录
@@ -140,11 +136,7 @@ func (c *AuthController) UserSignUp(ctx *gin.Context) {
 	var req = types.SignUpReq{}
 	err := ctx.ShouldBind(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10001,
-			Message: "参数错误",
-			Data:    err.Error(),
-		})
+		failBadRequestBind(ctx, 10001, "参数错误", err)
 		return
 	}
 	// @step 2. 调用用户服务 - 注册
@@ -183,11 +175,7 @@ func (c *AuthController) UserCheckIn(ctx *gin.Context) {
 	var req = types.CheckInReq{}
 	err := ctx.ShouldBind(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10021,
-			Message: "参数错误",
-			Data:    err.Error(),
-		})
+		failBadRequestBind(ctx, 10021, "参数错误", err)
 		return
 	}
 	// @step 2. 调用用户服务 - 检入
@@ -214,11 +202,7 @@ func (c *AuthController) UserSignOut(ctx *gin.Context) {
 	var req = types.SignOutReq{}
 	err := ctx.ShouldBind(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10031,
-			Message: "参数错误",
-			Data:    err.Error(),
-		})
+		failBadRequestBind(ctx, 10031, "参数错误", err)
 		return
 	}
 	// @step 2. 调用用户服务 - 登出

@@ -109,9 +109,12 @@ func TestSyncPushOverLimitBatchReturns400(t *testing.T) {
 	if res.Code != 90011 {
 		t.Fatalf("code = %d, want 90011", res.Code)
 	}
-	for _, want := range []string{"tasks", "500", "501"} {
-		if !strings.Contains(res.Error, want) {
-			t.Fatalf("error 缺少 %q，实际: %q", want, res.Error)
+	if !strings.Contains(res.Error, "500") {
+		t.Fatalf("error 应包含上限 500，实际: %q", res.Error)
+	}
+	for _, leak := range []string{"tasks", "taskCheckItems", "projects", "tags", "pomodoro"} {
+		if strings.Contains(res.Error, leak) {
+			t.Fatalf("error 不得包含表名 %q（SEC-12），实际: %q", leak, res.Error)
 		}
 	}
 }

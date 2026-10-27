@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
@@ -56,7 +57,7 @@ func (d *identityDomainImpl) FindSessionByUserIdAndToken(
 ) (*entities.UserSession, error) {
 	session := d.userSessionRepo.FindByUserIdAndToken(ctx, userId, token)
 	if !session.IsValid() {
-		return nil, errors.New("会话不存在")
+		return nil, domerr.ErrSessionNotFound
 	}
 	return session, nil
 }

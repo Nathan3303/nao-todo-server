@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/textutils"
 	"naotodoserver/domain/types"
@@ -50,7 +51,7 @@ func (updateTask *UpdateTask) Validate() error {
 		endTime, endOk := updateTask.EndAt.Value()
 		startTime, startOk := updateTask.StartAt.Value()
 		if endOk && startOk && endTime.Before(startTime) {
-			return errors.New("结束时间不能早于开始时间")
+			return domerr.Publicf("结束时间不能早于开始时间")
 		}
 	}
 	return nil

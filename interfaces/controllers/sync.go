@@ -20,6 +20,7 @@ import (
 	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/derived"
+	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/utils/query"
 	"naotodoserver/interfaces/types"
 
@@ -77,6 +78,45 @@ func basePtr(s string) *string {
 }
 
 // syncErrOutcome 失败条目语义：create 语义 ID 碰撞 = conflict，其余 = error
+// 逐条结果的 Error 文案白名单（SEC-12）：只允许这三个词
+const (
+	syncErrInvalid     = "invalid"
+	syncErrConflict    = "conflict"
+	syncErrServerError = "server_error"
+)
+
+// syncItemErrText 把逐条错误归一为白名单词（不回显 MySQL/GORM 原文与主键值）
+// @param err 逐条写入错误
+// @return invalid / conflict / server_error（nil 返回空串）
+func syncItemErrText(err error) string {
+	switch {
+	case err == nil:
+		return ""
+	case errors.Is(err, domerr.ErrIDConflict):
+		return syncErrConflict
+	case isPublicErr(err):
+		return syncErrInvalid
+	default:
+		return syncErrServerError
+	}
+}
+
+// logSyncItemErr 记录逐条服务端错误：原文只进日志（含 request_id），不回显
+// @param ctx 请求上下文
+// @param table 表名（仅日志用）
+// @param err 原始错误
+func logSyncItemErr(ctx *gin.Context, table string, err error) {
+	if syncItemErrText(err) != syncErrServerError {
+		return
+	}
+	logging.ErrorWithFields(map[string]any{
+		"event":      "sync.item_error",
+		"request_id": iCtx.GetRequestId(ctx.Request.Context()),
+		"table":      table,
+		"error":      err.Error(),
+	}, "同步逐条写入失败（原始错误仅记录在服务端）")
+}
+
 func syncErrOutcome(err error) string {
 	if errors.Is(err, domerr.ErrIDConflict) {
 		return types.SyncOutcomeConflict
@@ -108,9 +148,10 @@ func validateSyncPushBatch(req *types.SyncPushReq) error {
 	}
 	for _, batch := range batches {
 		if batch.count > maxSyncPushBatch {
-			return fmt.Errorf(
-				"%s 单次最多 %d 条，本次 %d 条",
-				batch.table, maxSyncPushBatch, batch.count,
+			// 文案不回显表名（内部 schema 名，SEC-12）
+			return domerr.Publicf(
+				"单次推送数据条数超出上限（最多 %d 条），请拆分后重试",
+				maxSyncPushBatch,
 			)
 		}
 	}
@@ -138,19 +179,11 @@ func (c *SyncController) Push(ctx *gin.Context) {
 	var req types.SyncPushReq
 	rawBody, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    90011,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 90011, "参数错误", err)
 		return
 	}
 	if err := binding.JSON.BindBody(rawBody, &req); err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    90011,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 90011, "参数错误", err)
 		return
 	}
 	// 批量上限（SEC-01）：单表 > maxSyncPushBatch 直接 400，不再逐条落库（避免长事务/连接池耗尽）
@@ -158,7 +191,7 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		FailureByHttpStatus(ctx, http.StatusBadRequest, types.ResponseData{
 			Code:    90011,
 			Message: "参数错误",
-			Error:   err.Error(),
+			Error:   publicErrText(err),
 		})
 		return
 	}
@@ -179,8 +212,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		taskReq.BaseUpdatedAt = basePtr(req.Tasks[i].BaseUpdatedAt)
 		res, upsert, err := c.taskApp.CreateTask(ctx.Request.Context(), userId, taskReq)
 		if err != nil {
+			logSyncItemErr(ctx, "tasks", err)
 			results = append(results, types.SyncResult{
-				Table: "tasks", Id: syncID(req.Tasks[i].Id), Error: err.Error(),
+				Table: "tasks", Id: syncID(req.Tasks[i].Id), Error: syncItemErrText(err),
 				Outcome: syncErrOutcome(err),
 			})
 			continue
@@ -199,9 +233,10 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			ctx.Request.Context(), userId, itemReq,
 		)
 		if err != nil {
+			logSyncItemErr(ctx, "taskCheckItems", err)
 			results = append(results, types.SyncResult{
 				Table: "taskCheckItems", Id: syncID(req.TaskCheckItems[i].Id),
-				Error: err.Error(), Outcome: syncErrOutcome(err),
+				Error: syncItemErrText(err), Outcome: syncErrOutcome(err),
 			})
 			continue
 		}
@@ -217,9 +252,10 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			ctx.Request.Context(), userId, commentReq,
 		)
 		if err != nil {
+			logSyncItemErr(ctx, "taskComments", err)
 			results = append(results, types.SyncResult{
-				Table: "taskComments", Id: syncID(req.TaskComments[i].Id), Error: err.Error(),
-				Outcome: syncErrOutcome(err),
+				Table: "taskComments", Id: syncID(req.TaskComments[i].Id),
+				Error: syncItemErrText(err), Outcome: syncErrOutcome(err),
 			})
 			continue
 		}
@@ -233,8 +269,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		projectReq.BaseUpdatedAt = basePtr(req.Projects[i].BaseUpdatedAt)
 		res, upsert, err := c.projectApp.Create(ctx.Request.Context(), userId, projectReq)
 		if err != nil {
+			logSyncItemErr(ctx, "projects", err)
 			results = append(results, types.SyncResult{
-				Table: "projects", Id: syncID(req.Projects[i].Id), Error: err.Error(),
+				Table: "projects", Id: syncID(req.Projects[i].Id), Error: syncItemErrText(err),
 				Outcome: syncErrOutcome(err),
 			})
 			continue
@@ -249,8 +286,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		tagReq.BaseUpdatedAt = basePtr(req.Tags[i].BaseUpdatedAt)
 		res, upsert, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, tagReq)
 		if err != nil {
+			logSyncItemErr(ctx, "tags", err)
 			results = append(results, types.SyncResult{
-				Table: "tags", Id: syncID(req.Tags[i].Id), Error: err.Error(),
+				Table: "tags", Id: syncID(req.Tags[i].Id), Error: syncItemErrText(err),
 				Outcome: syncErrOutcome(err),
 			})
 			continue
@@ -265,8 +303,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		pomodoroReq.BaseUpdatedAt = basePtr(req.Pomodoros[i].BaseUpdatedAt)
 		res, upsert, err := c.pomodoroApp.CreatePomodoro(ctx.Request.Context(), userId, pomodoroReq)
 		if err != nil {
+			logSyncItemErr(ctx, "pomodoros", err)
 			results = append(results, types.SyncResult{
-				Table: "pomodoros", Id: syncID(req.Pomodoros[i].Id), Error: err.Error(),
+				Table: "pomodoros", Id: syncID(req.Pomodoros[i].Id), Error: syncItemErrText(err),
 				Outcome: syncErrOutcome(err),
 			})
 			continue
@@ -281,9 +320,10 @@ func (c *SyncController) Push(ctx *gin.Context) {
 		recordReq.BaseUpdatedAt = basePtr(req.PomodoroRecords[i].BaseUpdatedAt)
 		res, upsert, err := c.pomodoroApp.Create(ctx.Request.Context(), userId, recordReq)
 		if err != nil {
+			logSyncItemErr(ctx, "pomodoroRecords", err)
 			results = append(results, types.SyncResult{
 				Table: "pomodoroRecords", Id: syncID(req.PomodoroRecords[i].Id),
-				Error: err.Error(), Outcome: syncErrOutcome(err),
+				Error: syncItemErrText(err), Outcome: syncErrOutcome(err),
 			})
 			continue
 		}
@@ -323,8 +363,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			err = fmt.Errorf("未知删除表: %s", d.Table)
 		}
 		if err != nil {
+			logSyncItemErr(ctx, d.Table, err)
 			results = append(results, types.SyncResult{
-				Table: d.Table, Id: d.Id, Error: err.Error(), Outcome: syncErrOutcome(err),
+				Table: d.Table, Id: d.Id, Error: syncItemErrText(err), Outcome: syncErrOutcome(err),
 			})
 			continue
 		}
@@ -459,11 +500,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 	// 2. 绑定请求参数
 	var req types.SyncPullReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    90021,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 90021, "参数错误", err)
 		return
 	}
 	// 分页上限（SEC-01）：各表 limit 夹取到上限，避免单次拉取长时间占用连接池
@@ -483,7 +520,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 			UpdatedAt: t.UpdatedAt, CursorId: t.CursorId, Limit: t.Limit,
 		})
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "任务增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "任务增量拉取失败", err)
 			return
 		}
 		res := toGetTaskResList(items)
@@ -497,7 +534,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 			ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit,
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "检查项增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "检查项增量拉取失败", err)
 			return
 		}
 		res := toGetTaskCheckItemResList(items)
@@ -511,7 +548,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 			ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit,
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "评论增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "评论增量拉取失败", err)
 			return
 		}
 		res := toTaskCommentResList(items)
@@ -525,7 +562,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 			ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit,
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "清单增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "清单增量拉取失败", err)
 			return
 		}
 		res := toGetProjectResList(items)
@@ -539,7 +576,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 			ctx.Request.Context(), userId, t.UpdatedAt, t.CursorId, t.Limit,
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "标签增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "标签增量拉取失败", err)
 			return
 		}
 		res := toGetTagResList(items)
@@ -554,7 +591,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 		}
 		items, err := c.pomodoroApp.ListPomodoroSync(ctx.Request.Context(), userId, &listReq)
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "常用番茄增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "常用番茄增量拉取失败", err)
 			return
 		}
 		res := toPomodoroReses(items)
@@ -569,7 +606,7 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 		}
 		items, err := c.pomodoroApp.ListSync(ctx.Request.Context(), userId, &listReq)
 		if err != nil {
-			Failure(ctx, types.ResponseData{Code: 90022, Message: "番茄记录增量拉取失败", Error: err.Error()})
+			failWithErr(ctx, 90022, "番茄记录增量拉取失败", err)
 			return
 		}
 		res := toGetPomodoroRecordReses(items)

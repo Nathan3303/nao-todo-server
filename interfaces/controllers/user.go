@@ -164,7 +164,7 @@ func (c *UserController) UpdateUserNickname(ctx *gin.Context) {
 	// 4. 调用用户服务 - 更新用户昵称
 	err = c.userApp.UpdateNickname(ctx.Request.Context(), userId, toUpdateNicknameInput(req))
 	if err != nil {
-		Failure(ctx, types.ResponseData{Code: 10054, Message: err.Error()})
+		failWithErrMessage(ctx, 10054, "更新用户昵称失败", err)
 		return
 	}
 	// 5. 返回结果
@@ -186,11 +186,7 @@ func (c *UserController) GetUserProfile(ctx *gin.Context) {
 	// 2. 调用用户服务 - 获取用户详情
 	res, err := c.userApp.GetProfile(ctx.Request.Context(), userId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10065,
-			Message: "获取用户详情失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10065, "获取用户详情失败", err)
 		return
 	}
 	// 3. 返回结果
@@ -238,7 +234,7 @@ func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 			})
 			return
 		}
-		Failure(ctx, types.ResponseData{Code: 10075, Message: err.Error()})
+		failWithErrMessage(ctx, 10075, "更新用户密码失败", err)
 		return
 	}
 	// 5. 返回结果
@@ -323,11 +319,7 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 	}
 	// 4. 判断处理结果
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10082,
-			Message: "更新用户头像失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10082, "更新用户头像失败", err)
 		return
 	}
 	// 5. 返回结果
@@ -387,11 +379,7 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 	input.Token = iCtx.GetToken(ctx.Request.Context())
 	err = c.userApp.DeleteUser(ctx.Request.Context(), userId, input)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10092,
-			Message: "注销账户失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10092, "注销账户失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -422,11 +410,7 @@ func (c *UserController) RestoreUser(ctx *gin.Context) {
 	// 3. 调用用户服务 - 激活用户
 	err = c.userApp.RestoreUser(ctx.Request.Context(), userId, toRestoreUserInput(req))
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10102,
-			Message: "激活用户失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10102, "激活用户失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -447,11 +431,7 @@ func (c *UserController) GetUserConfig(ctx *gin.Context) {
 	}
 	res, err := c.userApp.GetConfig(ctx.Request.Context(), userId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10111,
-			Message: "获取用户配置失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10111, "获取用户配置失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -482,11 +462,7 @@ func (c *UserController) UpdateUserConfig(ctx *gin.Context) {
 	// additive T163：响应补服务端权威 updatedAt（供客户端推送成功后落 per-row OCC base）
 	output, err := c.userApp.UpdateConfig(ctx.Request.Context(), userId, toUpdateConfigInput(req))
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10123,
-			Message: "更新用户配置失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10123, "更新用户配置失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{

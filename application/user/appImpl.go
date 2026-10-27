@@ -160,12 +160,12 @@ func (u *userAppImpl) UpdateAvatarByFile(
 		maxSize = 1024 * 1024 * 2 // 默认 2MB
 	}
 	if size > maxSize {
-		return nil, fmt.Errorf("文件大小不能超过 %dMB", maxSize/1024/1024)
+		return nil, domerr.Publicf("文件大小不能超过 %dMB", maxSize/1024/1024)
 	}
 	ext := filepath.Ext(filename)
 	allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
 	if !allowedExts[ext] {
-		return nil, errors.New("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
+		return nil, domerr.Publicf("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
 	}
 	// 2. 记录上一张本地头像文件名（随机名后需清理，避免磁盘无界增长；查询失败不阻断上传）
 	previousFilename := ""
@@ -289,7 +289,7 @@ func (u *userAppImpl) RestoreUser(
 	}
 	// 3. 检查用户状态
 	if !user.IsDeactived() {
-		return errors.New("用户未处于注销状态")
+		return domerr.Publicf("用户未处于注销状态")
 	}
 	// 4. 更新用户状态
 	if err := u.userRepo.Active(ctx, domaintypes.UserID(userId)); err != nil {

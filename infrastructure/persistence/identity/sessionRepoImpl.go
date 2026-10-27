@@ -420,7 +420,7 @@ func (sr *sessionRepoImpl) UpdateToken(
 	}
 	if tx.RowsAffected == 0 {
 		// 会话已被其他请求轮换或删除，拒绝本次换发
-		return errors.New("会话令牌已失效，请重新登录")
+		return domerr.Publicf("会话令牌已失效，请重新登录")
 	}
 	// 3. 失效该会话缓存
 	sr.cache.Del(ctx, cache.SessionKey(

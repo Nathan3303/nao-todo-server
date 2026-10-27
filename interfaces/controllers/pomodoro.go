@@ -224,11 +224,7 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 	var req types.CreatePomodoroRecordReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70011,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 70011, "参数错误", err)
 		return
 	}
 	res, _, err := c.pomodoroApp.Create(
@@ -237,11 +233,7 @@ func (c *PomodoroController) CreatePomodoroRecord(ctx *gin.Context) {
 		toCreatePomodoroRecordInput(req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70012,
-			Message: "创建专注记录失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 70012, "创建专注记录失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -277,10 +269,7 @@ func (c *PomodoroController) GetPomodoroRecord(ctx *gin.Context) {
 		toGetPomodoroRecordInput(types.GetPomodoroRecordReq{Id: id}),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70022,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 70022, "获取专注记录失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -305,10 +294,7 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 	var req types.ListPomodoroRecordReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70031,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 70031, "获取专注记录列表失败", err)
 		return
 	}
 	// 分页上限（SEC-01）：游标同步不使用 page，仅夹取 limit；分页列表才做深分页拒绝
@@ -325,10 +311,7 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 			toListPomodoroRecordInput(req),
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    70032,
-				Message: err.Error(),
-			})
+			failWithErrMessage(ctx, 70032, "获取专注记录列表失败", err)
 			return
 		}
 		Success(ctx, types.ResponseData{
@@ -349,10 +332,7 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 		toListPomodoroRecordInput(req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70032,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 70032, "获取专注记录列表失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -395,10 +375,7 @@ func (c *PomodoroController) GetPomodoro(ctx *gin.Context) {
 		toGetPomodoroInput(types.GetPomodoroReq{Id: id}),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70042,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 70042, "获取常用番茄工作失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -423,11 +400,7 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 	var req types.CreatePomodoroReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70051,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 70051, "参数错误", err)
 		return
 	}
 	res, _, err := c.pomodoroApp.CreatePomodoro(
@@ -436,11 +409,7 @@ func (c *PomodoroController) CreatePomodoro(ctx *gin.Context) {
 		toCreatePomodoroInput(req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70052,
-			Message: "创建常用番茄工作失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 70052, "创建常用番茄工作失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -473,11 +442,7 @@ func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
 	var req types.UpdatePomodoroReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70061,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 70061, "参数错误", err)
 		return
 	}
 	err = c.pomodoroApp.UpdatePomodoro(
@@ -487,11 +452,7 @@ func (c *PomodoroController) UpdatePomodoro(ctx *gin.Context) {
 		toUpdatePomodoroInput(req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70062,
-			Message: "更新常用番茄工作失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 70062, "更新常用番茄工作失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -523,11 +484,7 @@ func (c *PomodoroController) DeletePomodoro(ctx *gin.Context) {
 	}
 	err := c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), userId, id)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70102,
-			Message: "删除常用番茄工作失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 70102, "删除常用番茄工作失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -559,11 +516,7 @@ func (c *PomodoroController) ArchivedPomodoro(ctx *gin.Context) {
 	}
 	err := c.pomodoroApp.ArchivePomodoro(ctx.Request.Context(), userId, id)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70072,
-			Message: "归档常用番茄工作失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 70072, "归档常用番茄工作失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -595,11 +548,7 @@ func (c *PomodoroController) UnarchivedPomodoro(ctx *gin.Context) {
 	}
 	err := c.pomodoroApp.UnarchivePomodoro(ctx.Request.Context(), userId, id)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70082,
-			Message: "取消归档常用番茄工作失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 70082, "取消归档常用番茄工作失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -624,10 +573,7 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 	var req types.ListPomodoroReq
 	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70091,
-			Message: err.Error(),
-		})
+		failBadRequestBind(ctx, 70091, "参数错误", err)
 		return
 	}
 	// 分页上限（SEC-01）：游标同步不使用 page，仅夹取 limit；分页列表才做深分页拒绝
@@ -644,10 +590,7 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 			toListPomodoroInput(req),
 		)
 		if err != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    70092,
-				Message: err.Error(),
-			})
+			failWithErrMessage(ctx, 70092, "获取常用番茄工作列表失败", err)
 			return
 		}
 		Success(ctx, types.ResponseData{
@@ -668,10 +611,7 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 		toListPomodoroInput(req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    70092,
-			Message: err.Error(),
-		})
+		failWithErrMessage(ctx, 70092, "获取常用番茄工作列表失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{

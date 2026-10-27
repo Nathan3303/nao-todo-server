@@ -1,6 +1,9 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // 通用领域错误
 var (
@@ -33,3 +36,31 @@ var (
 	// 对外只回统一可读文案，不回显具体命中了哪条规则。
 	ErrPasswordTooWeak = errors.New("密码不符合安全策略")
 )
+
+// PublicError 可安全回显给客户端的业务错误（SEC-12）。
+// 文案必须由服务端显式声明：不得包含 SQL、表名/列名、主键值、文件路径。
+// 接口层据 IsPublicError 判定"可回显"，其余一律用通用文案替代并落日志。
+type PublicError struct {
+	Message string
+}
+
+// Error 实现 error 接口
+func (e *PublicError) Error() string {
+	return e.Message
+}
+
+// Publicf 构造可回显的业务错误（支持格式化参数，便于保留"最多拥有 %d 个附件"等原文案）
+// @param format 文案模板
+// @param args 格式化参数
+// @return 可回显的业务错误
+func Publicf(format string, args ...any) error {
+	return &PublicError{Message: fmt.Sprintf(format, args...)}
+}
+
+// IsPublicError 判断错误是否可安全回显（含被 %w 包装的情况）
+// @param err 任意错误
+// @return 可回显返回 true
+func IsPublicError(err error) bool {
+	var publicErr *PublicError
+	return errors.As(err, &publicErr)
+}

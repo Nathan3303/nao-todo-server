@@ -5,10 +5,12 @@ import (
 	"errors"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/valueobjects"
 	"naotodoserver/domain/types"
+	"naotodoserver/infrastructure/persistence/dberrs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
 
@@ -35,6 +37,10 @@ func (r *PomodoroRecordRepoImpl) Create(
 	m := CreatePomodoroRecordVOToModel(vo)
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
+			// 同 ID 主键冲突 ⇒ 领域哨兵（不回显 MySQL 原文/主键值，SEC-12）
+			if dberrs.IsDuplicateKey(err) {
+				return domerr.ErrIDConflict
+			}
 			return err
 		}
 		if vo.PomodoroId > 0 {

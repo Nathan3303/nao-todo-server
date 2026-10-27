@@ -58,6 +58,9 @@ func InitRouters(svc *application.Services) *gin.Engine {
 		gzip.WithExcludedPaths([]string{"/api/sse/"}),
 	))
 
+	// 请求关联标识（SEC-12）：只进日志，不进响应
+	router.Use(middlewares.RequestId())
+
 	// 添加 CORS 中间件（放行规则见 cors.go：精确白名单 + 预览域 + 局域网，仅 debug 放局域网）
 	router.Use(newCORSMiddleware(conf.Conf.Server.Debug))
 

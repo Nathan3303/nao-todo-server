@@ -11,6 +11,8 @@ import (
 
 	userApp "naotodoserver/application/user"
 	"naotodoserver/conf"
+	domerr "naotodoserver/domain/errors"
+	"naotodoserver/infrastructure/logging"
 )
 
 // avatarFilenamePattern 头像文件名白名单（SEC-07）：
@@ -56,17 +58,21 @@ func (a *avatarStorageImpl) Save(
 	// 1. 确保上传目录存在
 	uploadDir := avatarDir()
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
-		return "", errors.New("创建上传目录失败 - " + err.Error())
+		// 原始错误只进日志，响应统一文案（SEC-12：不得回显绝对路径）
+		logging.Errorf("创建头像目录失败: %v", err)
+		return "", domerr.Publicf("头像保存失败，请稍后重试")
 	}
 	// 2. 写入目标文件
 	savePath := filepath.Join(uploadDir, filename)
 	dst, err := os.Create(savePath)
 	if err != nil {
-		return "", errors.New("文件保存失败 - " + err.Error())
+		logging.Errorf("保存头像文件失败: %v", err)
+		return "", domerr.Publicf("头像保存失败，请稍后重试")
 	}
 	defer dst.Close()
 	if _, err = io.Copy(dst, src); err != nil {
-		return "", errors.New("文件保存失败 - " + err.Error())
+		logging.Errorf("保存头像文件失败: %v", err)
+		return "", domerr.Publicf("头像保存失败，请稍后重试")
 	}
 	// 3. 构造可访问的相对路径
 	staticPath := conf.Conf.Uploads.StaticPath

@@ -171,10 +171,7 @@ func (c *TagController) GetTag(ctx *gin.Context) {
 	// 3. 获取标签信息
 	res, err := c.tagApp.GetTag(ctx.Request.Context(), userId, tagId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30002,
-			Message: "获取标签信息失败 - " + err.Error(),
-		})
+		failWithErrMessage(ctx, 30002, "获取标签信息失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -201,21 +198,13 @@ func (c *TagController) CreateTag(ctx *gin.Context) {
 	createTagReq := &types.CreateTagReq{}
 	err := ctx.ShouldBindJSON(createTagReq)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30011,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 30011, "请求参数错误", err)
 		return
 	}
 	// 3. 创建标签
 	res, _, err := c.tagApp.CreateTag(ctx.Request.Context(), userId, toCreateTagInput(createTagReq))
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30012,
-			Message: "创建标签失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 30012, "创建标签失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -250,11 +239,7 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 	// 3. 获取请求参数
 	var updateTagReq types.UpdateTagReq
 	if err := ctx.ShouldBindJSON(&updateTagReq); err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30022,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 30022, "请求参数错误", err)
 		return
 	}
 	// 4. 更新标签
@@ -265,11 +250,7 @@ func (c *TagController) UpdateTag(ctx *gin.Context) {
 		toUpdateTagInput(&updateTagReq),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30023,
-			Message: "更新标签失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 30023, "更新标签失败", err)
 		return
 	}
 	// 5. 返回结果
@@ -304,11 +285,7 @@ func (c *TagController) DeleteTag(ctx *gin.Context) {
 	// 3. 删除标签
 	err := c.tagApp.DeleteTag(ctx.Request.Context(), userId, tagId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30032,
-			Message: "删除标签失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 30032, "删除标签失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -344,11 +321,7 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 				ctx.Request.Context(), userId, updatedAt, cursorId, limit,
 			)
 			if err != nil {
-				Failure(ctx, types.ResponseData{
-					Code:    30041,
-					Message: "获取标签列表失败",
-					Error:   err.Error(),
-				})
+				failWithErr(ctx, 30041, "获取标签列表失败", err)
 				return
 			}
 			Success(ctx, types.ResponseData{
@@ -366,11 +339,7 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 		// 3. 获取标签列表
 		res, err := c.tagApp.ListTag(ctx.Request.Context(), userId)
 		if err != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    30041,
-				Message: "获取标签列表失败",
-				Error:   err.Error(),
-			})
+			failWithErr(ctx, 30041, "获取标签列表失败", err)
 			return
 		}
 		// 4. 返回结果
@@ -392,11 +361,7 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 		// 4. 获取标签列表
 		res, err := c.tagApp.ListTagByIds(ctx.Request.Context(), userId, tagIds)
 		if err != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    30043,
-				Message: "获取标签列表失败",
-				Error:   err.Error(),
-			})
+			failWithErr(ctx, 30043, "获取标签列表失败", err)
 			return
 		}
 		// 5. 返回结果
@@ -432,11 +397,7 @@ func (c *TagController) GetTagPreference(ctx *gin.Context) {
 	// 3. 获取标签偏好
 	res, err := c.tagApp.GetTagPreference(ctx.Request.Context(), userId, tagId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30052,
-			Message: "获取标签偏好失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 30052, "获取标签偏好失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -472,11 +433,7 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 	var req types.UpdateTagPreferenceReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30062,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 30062, "请求参数错误", err)
 		return
 	}
 	// 4. 更新标签偏好
@@ -487,11 +444,7 @@ func (c *TagController) UpdateTagPreference(ctx *gin.Context) {
 		toUpdateTagPreferenceInput(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30063,
-			Message: "更新标签偏好失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 30063, "更新标签偏好失败", err)
 		return
 	}
 	// 5. 返回结果
@@ -517,11 +470,7 @@ func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
 	var req types.BatchUpdateTagReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30071,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 30071, "请求参数错误", err)
 		return
 	}
 	res, err := c.tagApp.BatchUpdateTags(
@@ -530,11 +479,7 @@ func (c *TagController) BatchUpdateTags(ctx *gin.Context) {
 		toBatchUpdateTagInput(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    30072,
-			Message: "批量更新标签失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 30072, "批量更新标签失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
