@@ -227,7 +227,10 @@ func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 		return
 	}
 	// 4. 调用用户服务 - 更新用户密码
-	err = c.userApp.UpdatePassword(ctx.Request.Context(), userId, toUpdatePasswordInput(req))
+	// 注入当次令牌：改密成功后保留当前设备、撤销其它设备（SEC-03 / T564）
+	input := toUpdatePasswordInput(req)
+	input.Token = iCtx.GetToken(ctx.Request.Context())
+	err = c.userApp.UpdatePassword(ctx.Request.Context(), userId, input)
 	if err != nil {
 		Failure(ctx, types.ResponseData{Code: 10075, Message: err.Error()})
 		return

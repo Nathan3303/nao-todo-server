@@ -79,7 +79,9 @@ func (d *identityDomainImpl) DeleteOtherSessions(
 	userId types.UserID,
 	keepToken string,
 ) error {
-	return d.userSessionRepo.DeleteByUserIdExceptToken(ctx, userId, keepToken)
+	// 撤销条数仅供审计日志，领域层不承载可观测性
+	_, err := d.userSessionRepo.DeleteByUserIdExceptToken(ctx, userId, keepToken)
+	return err
 }
 
 // GenerateJWT 生成JWT令牌

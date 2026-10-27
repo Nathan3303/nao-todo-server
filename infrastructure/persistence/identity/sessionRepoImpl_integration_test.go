@@ -235,8 +235,12 @@ func TestDeleteByUserIdExceptToken(t *testing.T) {
 		}
 	}
 
-	if err := repo.DeleteByUserIdExceptToken(context.Background(), userID, "t2"); err != nil {
+	revoked, err := repo.DeleteByUserIdExceptToken(context.Background(), userID, "t2")
+	if err != nil {
 		t.Fatalf("DeleteByUserIdExceptToken: %v", err)
+	}
+	if revoked != 2 {
+		t.Fatalf("撤销条数 = %d, want 2", revoked)
 	}
 
 	var tokens []string

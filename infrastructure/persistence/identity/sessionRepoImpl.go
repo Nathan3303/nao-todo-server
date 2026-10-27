@@ -253,13 +253,14 @@ func (sr *sessionRepoImpl) DeleteByUserId(ctx context.Context, userId types.User
 // DeleteByUserIdExceptToken 删除用户除指定 token 外的所有会话（退出其他全部设备）
 // @param ctx 上下文
 // @param userId 用户 ID
-// @param keepToken 保留的会话令牌
+// @param keepToken 保留的会话令牌（空串 = 不保留任何会话，全部撤销）
+// @return 实际撤销的会话条数（供审计日志；不含 token）
 // @return error 错误
 func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(
 	ctx context.Context,
 	userId types.UserID,
 	keepToken string,
-) error {
+) (int64, error) {
 	// 1. 获取待删除会话的 token（用于失效缓存）
 	var tokens []string
 	if err := sr.db.
@@ -267,7 +268,7 @@ func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(
 		Model(&models.UserSession{}).
 		Where("user_id = ? AND token <> ?", int64(userId), keepToken).
 		Pluck("token", &tokens).Error; err != nil {
-		return err
+		return 0, err
 	}
 	// 2. 执行删除
 	tx := sr.db.
@@ -276,14 +277,14 @@ func (sr *sessionRepoImpl) DeleteByUserIdExceptToken(
 		Where("user_id = ? AND token <> ?", int64(userId), keepToken).
 		Delete(&models.UserSession{})
 	if tx.Error != nil {
-		return tx.Error
+		return 0, tx.Error
 	}
 	// 3. 失效所有被删会话缓存
 	for _, token := range tokens {
 		sr.cache.Del(ctx, cache.SessionKey(int64(userId), token))
 	}
-	// 4. 返回结果
-	return nil
+	// 4. 返回结果（RowsAffected = 实际软删条数）
+	return tx.RowsAffected, nil
 }
 
 // DeleteExpiredBefore 硬删除过期时间早于 cutoff 的未登出会话
