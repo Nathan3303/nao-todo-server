@@ -39,7 +39,10 @@ func CreateTagVOToUpdateMap(vo *valueobjects.CreateTag) map[string]any {
 		"Name":        vo.Name,
 		"Description": vo.Description,
 		"Color":       vo.Color,
-		"SortId":      vo.SortId,
+	}
+	// sortId 存在性（F-06）：客户端未提供 ⇒ 不产键 ⇒ 不写列（保留库中原值，修复每次 push 归零）
+	if vo.SortIdSet {
+		updateMap["SortId"] = vo.SortId
 	}
 	if vo.DeletedAt.ShouldUpdate() && !vo.DeletedAt.IsSetToNull() {
 		updateMap["deleted_at"] = vo.DeletedAt.ToSqlNullTime()

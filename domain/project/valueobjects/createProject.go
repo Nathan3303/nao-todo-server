@@ -18,6 +18,8 @@ type CreateProject struct {
 	Name        string
 	Description string
 	SortId      uint16
+	// SortIdSet sortId 是否存在（F-06）：false ⇒ update map 不写该列，保留库中原值
+	SortIdSet bool
 
 	// ArchivedAt 归档时间三态（sync push 专用，T322 / DEF-42）：
 	// Valid=false（缺省；REST create 与旧客户端推送）⇒ 不写列；

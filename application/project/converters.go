@@ -31,6 +31,11 @@ func CreateProjectReqToValueObject(
 	if err != nil {
 		return nil, err
 	}
+	// sortId 存在性（F-06）：缺省 ⇒ 不写列（保留库中原值）；显式 0 依然写入
+	if req.SortId != nil {
+		createProjectValueObject.SortId = *req.SortId
+		createProjectValueObject.SortIdSet = true
+	}
 	createProjectValueObject.Id = id
 	createProjectValueObject.CreatedAt = createdAt
 	createProjectValueObject.UpdatedAt = updatedAt

@@ -19,10 +19,12 @@ type CreateTagReq struct {
 	Name        string
 	Description string
 	Color       string
-	Id          *string // 同步元数据：客户端预置 id
-	CreatedAt   *string // 同步元数据：客户端预置 createdAt
-	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
-	DeletedAt   *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
+	// SortId 组内排序（F-06）：nil = 未提供（不写列）；显式 0 合法
+	SortId    *uint16
+	Id        *string // 同步元数据：客户端预置 id
+	CreatedAt *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt *string // 同步元数据：客户端预置 updatedAt
+	DeletedAt *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（nil/空 = 未提供，回退 LWW）
 	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
 	BaseUpdatedAt *string `json:"-"`

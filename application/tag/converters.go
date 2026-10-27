@@ -46,6 +46,11 @@ func CreateTagReqToValueObject(createTagReq *dto.CreateTagReq) (*valueobjects.Cr
 	if err != nil {
 		return nil, err
 	}
+	// sortId 存在性（F-06）：缺省 ⇒ 不写列（保留库中原值）；显式 0 依然写入
+	if createTagReq.SortId != nil {
+		vo.SortId = *createTagReq.SortId
+		vo.SortIdSet = true
+	}
 	vo.Id = id
 	vo.CreatedAt = createdAt
 	vo.UpdatedAt = updatedAt

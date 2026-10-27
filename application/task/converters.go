@@ -358,15 +358,21 @@ func CreateTaskCheckItemReqToVO(
 	if err != nil {
 		return nil, err
 	}
+	description := ""
+	if req.Description != nil {
+		description = *req.Description
+	}
 	vo, err := valueobjects.NewCreateTaskCheckItem(
 		userId,
 		taskId,
 		req.Name,
-		req.Description,
+		description,
 	)
 	if err != nil {
 		return nil, err
 	}
+	// description 存在性（F-06）：仅当调用方显式给出（REST 恒定给、sync 视载荷）才写列
+	vo.DescriptionSet = req.Description != nil
 	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -499,16 +505,27 @@ func CreateTaskCommentReqToVO(
 	if err != nil {
 		return nil, err
 	}
+	attachments := []string(nil)
+	if req.Attachments != nil {
+		attachments = *req.Attachments
+	}
+	isTopUp := false
+	if req.IsTopUp != nil {
+		isTopUp = *req.IsTopUp
+	}
 	vo, err := valueobjects.NewCreateTaskComment(
 		userId,
 		taskId,
 		req.Content,
-		nil,
-		false,
+		attachments,
+		isTopUp,
 	)
 	if err != nil {
 		return nil, err
 	}
+	// attachments / isTopUp 存在性（F-06）：缺省 ⇒ update map 不写列，保留库中原值
+	vo.AttachmentsSet = req.Attachments != nil
+	vo.IsTopUpSet = req.IsTopUp != nil
 	id, createdAt, updatedAt, err := idutil.ParseSyncMeta(req.Id, req.CreatedAt, req.UpdatedAt)
 	if err != nil {
 		return nil, err

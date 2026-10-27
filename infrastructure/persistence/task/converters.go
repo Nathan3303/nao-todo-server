@@ -112,25 +112,36 @@ func CreateTaskVOToUpdateMap(vo *valueobjects.CreateTask) map[string]any {
 	return updateMap
 }
 
-// TaskCheckItemVOToUpdateMap 创建检查项值对象转换为全量更新映射（Upsert 覆盖用）
+// TaskCheckItemVOToUpdateMap 创建检查项值对象转换为更新映射（Upsert 覆盖用）
+// description 存在性（F-06）：客户端未发送该键 ⇒ 不产键 ⇒ 不写列（保留库中原值），
+// 修复「每次 push 清空备注」；显式值（含 ""）仍照常写入，用户可正常清空。
 func TaskCheckItemVOToUpdateMap(vo *valueobjects.CreateTaskCheckItem) map[string]any {
-	return map[string]any{
-		"TaskId":      vo.TaskId,
-		"Name":        vo.Name,
-		"Description": vo.Description,
-		"IsDone":      vo.IsDone,
-		"SortId":      vo.SortId,
+	updateMap := map[string]any{
+		"TaskId": vo.TaskId,
+		"Name":   vo.Name,
+		"IsDone": vo.IsDone,
+		"SortId": vo.SortId,
 	}
+	if vo.DescriptionSet {
+		updateMap["Description"] = vo.Description
+	}
+	return updateMap
 }
 
-// TaskCommentVOToUpdateMap 创建评论值对象转换为全量更新映射（Upsert 覆盖用）
+// TaskCommentVOToUpdateMap 创建评论值对象转换为更新映射（Upsert 覆盖用）
+// attachments / isTopUp 存在性（F-06）：客户端未提供 ⇒ 不产键 ⇒ 不写列（保留库中原值）。
 func TaskCommentVOToUpdateMap(vo *valueobjects.CreateTaskComment) map[string]any {
-	attachmentsJSON, _ := json.Marshal(vo.Attachments)
-	return map[string]any{
-		"Content":     vo.Content,
-		"Attachments": string(attachmentsJSON),
-		"IsTopUp":     vo.IsTopUp,
+	updateMap := map[string]any{
+		"Content": vo.Content,
 	}
+	if vo.AttachmentsSet {
+		attachmentsJSON, _ := json.Marshal(vo.Attachments)
+		updateMap["Attachments"] = string(attachmentsJSON)
+	}
+	if vo.IsTopUpSet {
+		updateMap["IsTopUp"] = vo.IsTopUp
+	}
+	return updateMap
 }
 
 // UpdateTaskValueObjectToMap 更新任务值对象转换为任务映射

@@ -56,6 +56,7 @@ func toCreateProjectInput(req *types.CreateProjectReq) *projectDto.CreateProject
 	return &projectDto.CreateProjectReq{
 		Name:        req.Name,
 		Description: req.Description,
+		SortId:      req.SortId,
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,

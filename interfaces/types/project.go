@@ -6,6 +6,8 @@ package types
 type CreateProjectReq struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
+	// SortId 组内排序（F-06）：nil = 未提供（不写列，保留库中原值）；显式 0 是合法值
+	SortId *uint16 `json:"sortId"`
 	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
 	Id        *string `json:"id"`
 	CreatedAt *string `json:"createdAt"`

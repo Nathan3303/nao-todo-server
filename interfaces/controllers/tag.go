@@ -56,6 +56,7 @@ func toCreateTagInput(req *types.CreateTagReq) *tagDto.CreateTagReq {
 		Name:        req.Name,
 		Description: req.Description,
 		Color:       req.Color,
+		SortId:      req.SortId,
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
