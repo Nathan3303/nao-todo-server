@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/task/repositories"
 	"naotodoserver/domain/task/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/derived"
+	"naotodoserver/infrastructure/persistence/dberrs"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
@@ -82,6 +84,10 @@ func (taskRepo *TaskRepoImpl) Create(
 	db := dbs.DBFrom(ctx, taskRepo.db)
 	tx := db.WithContext(ctx).Create(createModel)
 	if tx.Error != nil {
+		// 同 ID 主键冲突 ⇒ 领域哨兵（不回显 MySQL 原文/主键值，SEC-12）
+		if dberrs.IsDuplicateKey(tx.Error) {
+			return nil, domerr.ErrIDConflict
+		}
 		return nil, tx.Error
 	}
 	// 3. 转换模型到实体并返回
@@ -522,6 +528,10 @@ func (repo *TaskRepoImpl) CreateCheckItem(
 	m := TaskCheckItemValueObjectToModel(vo)
 	tx := dbs.DBFrom(ctx, repo.db).WithContext(ctx).Model(&models.TaskCheckItem{}).Create(m)
 	if tx.Error != nil {
+		// 同 ID 主键冲突 ⇒ 领域哨兵（不回显 MySQL 原文/主键值，SEC-12）
+		if dberrs.IsDuplicateKey(tx.Error) {
+			return nil, domerr.ErrIDConflict
+		}
 		return nil, tx.Error
 	}
 	return TaskCheckItemModel2Entity(m), nil
@@ -794,6 +804,10 @@ func (repo *TaskRepoImpl) CreateComment(
 	m.Avatar = user.Avatar
 	err = db.WithContext(ctx).Create(m).Error
 	if err != nil {
+		// 同 ID 主键冲突 ⇒ 领域哨兵（不回显 MySQL 原文/主键值，SEC-12）
+		if dberrs.IsDuplicateKey(err) {
+			return nil, domerr.ErrIDConflict
+		}
 		return nil, err
 	}
 	return TaskCommentModel2Entity(m), nil

@@ -40,11 +40,7 @@ func (c *CommentController) GetComment(ctx *gin.Context) {
 	// 3. 调用服务层获取评论详情
 	comment, err := c.taskApp.GetTaskCommentById(ctx.Request.Context(), userId, commentId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60002,
-			Message: "获取评论详情失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 60002, "获取评论详情失败", err)
 		return
 	}
 	// 4. 返回评论详情
@@ -70,11 +66,7 @@ func (c *CommentController) CreateComment(ctx *gin.Context) {
 	// 2. 绑定请求参数
 	var req types.CreateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60011,
-			Message: "绑定请求参数失败",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 60011, "绑定请求参数失败", err)
 		return
 	}
 	// 3. 调用服务层新增评论
@@ -84,11 +76,7 @@ func (c *CommentController) CreateComment(ctx *gin.Context) {
 		toCreateTaskCommentReq(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60012,
-			Message: "新增评论失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 60012, "新增评论失败", err)
 		return
 	}
 	// 4. 返回评论 ID
@@ -123,11 +111,7 @@ func (c *CommentController) UpdateComment(ctx *gin.Context) {
 	// 3. 绑定请求参数
 	var req types.UpdateTaskCommentReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60022,
-			Message: "绑定请求参数失败",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 60022, "绑定请求参数失败", err)
 		return
 	}
 	// 4. 调用服务层更新评论
@@ -138,11 +122,7 @@ func (c *CommentController) UpdateComment(ctx *gin.Context) {
 		toUpdateTaskCommentReq(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60023,
-			Message: "更新评论失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 60023, "更新评论失败", err)
 		return
 	}
 	// 5. 返回评论 ID
@@ -177,11 +157,7 @@ func (c *CommentController) DeleteComment(ctx *gin.Context) {
 	// 3. 调用服务层删除评论
 	err := c.taskApp.DeleteTaskComment(ctx.Request.Context(), userId, commentId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60032,
-			Message: "删除评论失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 60032, "删除评论失败", err)
 		return
 	}
 	// 4. 返回评论 ID
@@ -216,11 +192,7 @@ func (c *CommentController) ListComment(ctx *gin.Context) {
 	// 3. 调用服务层获取评论列表
 	comments, err := c.taskApp.ListTaskComments(ctx.Request.Context(), userId, taskId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    60042,
-			Message: "获取评论列表失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 60042, "获取评论列表失败", err)
 		return
 	}
 	// 4. 返回评论列表

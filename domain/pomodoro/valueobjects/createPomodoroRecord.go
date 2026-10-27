@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/pomodoro/entities"
 	"naotodoserver/domain/types"
 )
@@ -44,10 +45,10 @@ func (vo *CreatePomodoroRecord) Validate() error {
 		return errors.New("结束时间不能为空")
 	}
 	if vo.Duration <= 0 {
-		return errors.New("专注时长必须大于 0")
+		return domerr.Publicf("专注时长必须大于 0")
 	}
 	if vo.EndAt.Time.Before(vo.StartAt.Time) {
-		return errors.New("结束时间不能早于开始时间")
+		return domerr.Publicf("结束时间不能早于开始时间")
 	}
 	return nil
 }

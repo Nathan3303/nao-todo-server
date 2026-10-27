@@ -34,6 +34,7 @@ func RequestLogger() gin.HandlerFunc {
 
 		// 构建日志字段
 		fields := map[string]interface{}{
+			"request_id":      context.GetRequestId(c.Request.Context()),
 			"method":          c.Request.Method,
 			"path":            c.Request.URL.Path,
 			"status":          c.Writer.Status(),

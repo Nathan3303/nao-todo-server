@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/textutils"
 )
 
@@ -26,7 +27,7 @@ func (updateComment *UpdateTaskComment) Validate() error {
 		return errors.New("任务评论内容最多 1000 个字符")
 	}
 	if updateComment.Attachments != nil && len(*updateComment.Attachments) > 8 {
-		return errors.New("最多拥有 8 个附件")
+		return domerr.Publicf("最多拥有 8 个附件")
 	}
 	return nil
 }

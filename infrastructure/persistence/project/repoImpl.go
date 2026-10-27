@@ -5,12 +5,14 @@ import (
 	"errors"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/derived"
 	"naotodoserver/infrastructure/persistence/cache"
+	"naotodoserver/infrastructure/persistence/dberrs"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
@@ -41,6 +43,10 @@ func (projectRepo *ProjectRepoImpl) Create(
 	// 2. 入库
 	tx := projectRepo.db.WithContext(ctx).Create(m)
 	if tx.Error != nil {
+		// 跨租户/软删同 ID ⇒ 主键冲突：映射为领域哨兵，避免把 MySQL 原文（含主键值）回显（SEC-12）
+		if dberrs.IsDuplicateKey(tx.Error) {
+			return nil, domerr.ErrIDConflict
+		}
 		return nil, tx.Error
 	}
 	// 3. 转换为实体并返回结果
@@ -225,7 +231,7 @@ func (projectRepo *ProjectRepoImpl) UpdateState(
 		return tx.Error
 	}
 	if tx.RowsAffected == 0 {
-		return errors.New("清单不存在")
+		return domerr.ErrProjectNotFound
 	}
 	// 4. 失效项目列表缓存
 	projectRepo.cache.Del(ctx, cache.ProjectListKey(userId))

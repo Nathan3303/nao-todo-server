@@ -57,11 +57,7 @@ func (c *SessionController) ListUserSessions(ctx *gin.Context) {
 	// 2. 调用认证服务 - 获取会话列表
 	sessions, err := c.authApp.ListSessions(ctx.Request.Context(), userId, token)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10132,
-			Message: "获取会话列表失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10132, "获取会话列表失败", err)
 		return
 	}
 	// 3. 返回结果
@@ -103,11 +99,7 @@ func (c *SessionController) LogoutUserSession(ctx *gin.Context) {
 			})
 			return
 		}
-		Failure(ctx, types.ResponseData{
-			Code:    10143,
-			Message: "下线失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10143, "下线失败", err)
 		return
 	}
 	// 4. 返回结果
@@ -133,11 +125,7 @@ func (c *SessionController) LogoutOtherSessions(ctx *gin.Context) {
 	// 2. 调用认证服务 - 退出其他全部设备
 	err := c.authApp.LogoutOtherSessions(ctx.Request.Context(), userId, token)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    10152,
-			Message: "退出其他设备失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 10152, "退出其他设备失败", err)
 		return
 	}
 	// 3. 返回结果

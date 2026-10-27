@@ -178,11 +178,7 @@ func (c *ProjectController) GetProject(ctx *gin.Context) {
 	// 获取清单
 	res, err := c.projectApp.Get(ctx.Request.Context(), userId, projectId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20002,
-			Message: "获取清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20002, "获取清单失败", err)
 		return
 	}
 	// 实体转换响应体并返回
@@ -209,11 +205,7 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 	var createProjectReq types.CreateProjectReq
 	err := ctx.ShouldBind(&createProjectReq)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20011,
-			Message: "创建清单失败",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 20011, "创建清单失败", err)
 		return
 	}
 	// 创建清单
@@ -223,11 +215,7 @@ func (c *ProjectController) CreateProject(ctx *gin.Context) {
 		toCreateProjectInput(&createProjectReq),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20012,
-			Message: "创建清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20012, "创建清单失败", err)
 		return
 	}
 	// 实体转换响应体并返回
@@ -264,11 +252,7 @@ func (c *ProjectController) UpdateProject(ctx *gin.Context) {
 	var updateProjectReq types.UpdateProjectReq
 	err := ctx.ShouldBind(&updateProjectReq)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20021,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 20021, "参数错误", err)
 		return
 	}
 	// 更新清单
@@ -279,11 +263,7 @@ func (c *ProjectController) UpdateProject(ctx *gin.Context) {
 		toUpdateProjectInput(&updateProjectReq),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20023,
-			Message: "更新清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20023, "更新清单失败", err)
 		return
 	}
 	// 实体转换响应体并返回
@@ -319,11 +299,7 @@ func (c *ProjectController) DeleteProject(ctx *gin.Context) {
 	// 2. 调用应用函数 - 删除清单
 	err := c.projectApp.Delete(ctx.Request.Context(), userId, projectId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20032,
-			Message: "删除清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20032, "删除清单失败", err)
 		return
 	}
 	// 3. 返回成功响应
@@ -359,11 +335,7 @@ func (c *ProjectController) RestoreProject(ctx *gin.Context) {
 	// 恢复清单
 	err := c.projectApp.Restore(ctx.Request.Context(), userId, projectId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20042,
-			Message: "恢复清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20042, "恢复清单失败", err)
 		return
 	}
 	// 返回成功响应
@@ -399,11 +371,7 @@ func (c *ProjectController) ArchiveProject(ctx *gin.Context) {
 	// 归档清单
 	err := c.projectApp.Archive(ctx.Request.Context(), userId, projectId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20052,
-			Message: "归档清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20052, "归档清单失败", err)
 		return
 	}
 	// 返回成功响应
@@ -439,11 +407,7 @@ func (c *ProjectController) UnarchiveProject(ctx *gin.Context) {
 	// 2. 调用应用函数 - 取消归档清单
 	err := c.projectApp.Unarchive(ctx.Request.Context(), userId, projectId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20062,
-			Message: "取消归档清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20062, "取消归档清单失败", err)
 		return
 	}
 	// 3. 返回成功响应
@@ -484,11 +448,7 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 		limit = query.ClampLimit(limit)
 		res, err := c.projectApp.ListSync(ctx.Request.Context(), userId, updatedAt, cursorId, limit)
 		if err != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    20073,
-				Message: "获取清单列表失败",
-				Error:   err.Error(),
-			})
+			failWithErr(ctx, 20073, "获取清单列表失败", err)
 			return
 		}
 		Success(ctx, types.ResponseData{
@@ -517,11 +477,7 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 	// 获取清单列表
 	res, err := c.projectApp.List(ctx.Request.Context(), userId, isArchived)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20071,
-			Message: "获取清单列表失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20071, "获取清单列表失败", err)
 		return
 	}
 	// 返回成功响应
@@ -557,11 +513,7 @@ func (c *ProjectController) GetProjectPreference(ctx *gin.Context) {
 	// 获取清单偏好
 	res, err := c.projectApp.GetPreference(ctx.Request.Context(), userId, projectId)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20082,
-			Message: "获取清单偏好失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20082, "获取清单偏好失败", err)
 		return
 	}
 	// 返回成功响应
@@ -587,11 +539,7 @@ func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 	var req types.BatchUpdateProjectReq
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20101,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 20101, "请求参数错误", err)
 		return
 	}
 	res, err := c.projectApp.BatchUpdate(
@@ -600,11 +548,7 @@ func (c *ProjectController) BatchUpdateProjects(ctx *gin.Context) {
 		toBatchUpdateProjectInput(&req),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20102,
-			Message: "批量更新清单失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20102, "批量更新清单失败", err)
 		return
 	}
 	Success(ctx, types.ResponseData{
@@ -640,11 +584,7 @@ func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 	var updatePreferenceReq types.UpdateProjectPreferenceReq
 	err := ctx.ShouldBindJSON(&updatePreferenceReq)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20092,
-			Message: "参数错误",
-			Error:   err.Error(),
-		})
+		failBadRequestBind(ctx, 20092, "参数错误", err)
 		return
 	}
 	// 保存清单偏好（additive T163：响应补服务端权威 updatedAt）
@@ -655,11 +595,7 @@ func (c *ProjectController) SaveProjectPreference(ctx *gin.Context) {
 		toUpdateProjectPreferenceInput(&updatePreferenceReq),
 	)
 	if err != nil {
-		Failure(ctx, types.ResponseData{
-			Code:    20093,
-			Message: "保存清单偏好失败",
-			Error:   err.Error(),
-		})
+		failWithErr(ctx, 20093, "保存清单偏好失败", err)
 		return
 	}
 	// 返回成功响应

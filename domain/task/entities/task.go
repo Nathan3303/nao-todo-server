@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/types"
 )
 
@@ -87,16 +88,16 @@ func (task *Task) IsGivenUpAtValid() bool {
 // IsDatesValid 检查时间参数是否有效
 func (task *Task) IsDatesValid() error {
 	if !task.IsEndAtValid() {
-		return errors.New("时间参数无效 - 结束时间必须晚于开始时间")
+		return domerr.Publicf("时间参数无效 - 结束时间必须晚于开始时间")
 	}
 	if !task.IsArchivedAtValid() {
-		return errors.New("时间参数无效 - 归档时间必须晚于开始时间")
+		return domerr.Publicf("时间参数无效 - 归档时间必须晚于开始时间")
 	}
 	if !task.IsStarMarkAtValid() {
-		return errors.New("时间参数无效 - 收藏时间必须晚于开始时间")
+		return domerr.Publicf("时间参数无效 - 收藏时间必须晚于开始时间")
 	}
 	if !task.IsGivenUpAtValid() {
-		return errors.New("时间参数无效 - 放弃时间必须晚于开始时间")
+		return domerr.Publicf("时间参数无效 - 放弃时间必须晚于开始时间")
 	}
 	return nil
 }

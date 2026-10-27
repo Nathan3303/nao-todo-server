@@ -13,9 +13,9 @@ import (
 	"naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/persistence/cache"
+	"naotodoserver/infrastructure/persistence/dberrs"
 	"naotodoserver/infrastructure/persistence/models"
 
-	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -44,7 +44,7 @@ func (r *UserRepoImpl) CreateByVO(
 	}
 	if err := r.db.WithContext(ctx).Create(userModel).Error; err != nil {
 		// 并发注册下由唯一索引兜底，识别重复邮箱为领域错误
-		if isDuplicateKeyError(err) {
+		if dberrs.IsDuplicateKey(err) {
 			return nil, domerr.ErrEmailExists
 		}
 		return nil, err
@@ -145,7 +145,7 @@ func (r *UserRepoImpl) UpdatePassword(
 		return err
 	}
 	if !r.PasswordCompare([]byte(oldPassword), []byte(user.Password)) {
-		return errors.New("旧密码错误")
+		return domerr.Publicf("旧密码错误")
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
 	if err != nil {
@@ -167,12 +167,6 @@ func (r *UserRepoImpl) UpdatePassword(
 // PasswordCompare 密码比对
 func (r *UserRepoImpl) PasswordCompare(password, encryptedPassword []byte) bool {
 	return bcrypt.CompareHashAndPassword(encryptedPassword, password) == nil
-}
-
-// isDuplicateKeyError 判断是否为唯一索引冲突（MySQL 错误码 1062）
-func isDuplicateKeyError(err error) bool {
-	var mysqlErr *mysql.MySQLError
-	return errors.As(err, &mysqlErr) && mysqlErr.Number == 1062
 }
 
 // Deactive 注销用户

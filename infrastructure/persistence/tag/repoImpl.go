@@ -5,11 +5,13 @@ import (
 	"errors"
 	"time"
 
+	domerr "naotodoserver/domain/errors"
 	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/valueobjects"
 	"naotodoserver/domain/types"
 	"naotodoserver/infrastructure/persistence/cache"
+	"naotodoserver/infrastructure/persistence/dberrs"
 	"naotodoserver/infrastructure/persistence/dbs"
 	"naotodoserver/infrastructure/persistence/models"
 	query "naotodoserver/infrastructure/utils/query"
@@ -71,6 +73,10 @@ func (tagRepo *TagRepositoryImpl) Create(
 	// 2. 插入数据库
 	tx := tagRepo.db.WithContext(ctx).Model(&models.Tag{}).Create(createValue)
 	if tx.Error != nil {
+		// 同 ID 主键冲突 ⇒ 领域哨兵（不回显 MySQL 原文/主键值，SEC-12）
+		if dberrs.IsDuplicateKey(tx.Error) {
+			return nil, domerr.ErrIDConflict
+		}
 		return nil, tx.Error
 	}
 	// 3. 返回结果
