@@ -16,11 +16,11 @@ import (
 )
 
 // avatarFilenamePattern 头像文件名白名单（SEC-07）：
-//   - 旧格式：{userId}.jpg/.jpeg/.png（继续可读，不做批量迁移）
+//   - 旧格式：{userId}.jpg/.jpeg/.png/.webp（继续可读，不做批量迁移）
 //   - 新格式：{userId}-{32 位小写 hex}.jpg/.jpeg/.png（不可枚举）
 //
 // 同时杜绝路径穿越（..、/、\ 等字符均无法匹配）。
-var avatarFilenamePattern = regexp.MustCompile(`^[0-9]{1,20}(-[0-9a-f]{32})?\.(jpg|jpeg|png)$`)
+var avatarFilenamePattern = regexp.MustCompile(`^[0-9]{1,20}(-[0-9a-f]{32})?\.(jpg|jpeg|png|webp)$`)
 
 // isSafeAvatarFilename 判断文件名是否为合法的头像文件名
 // @param filename 目标文件名

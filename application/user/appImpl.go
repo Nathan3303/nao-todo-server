@@ -1,11 +1,13 @@
 package user
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 
 	taskApp "naotodoserver/application/task"
 	"naotodoserver/application/user/dto"
@@ -115,6 +117,13 @@ func (u *userAppImpl) UpdatePassword(
 	return nil
 }
 
+// avatarTooLargeErr 头像文件过大（可回显，不含路径）
+// @param maxSize 上限字节数
+// @return 可回显业务错误
+func avatarTooLargeErr(maxSize int64) error {
+	return domerr.Publicf("文件大小超出限制（最大 %dMB）", maxSize/1024/1024)
+}
+
 // UpdateAvatar 更新用户头像
 // @param ctx 上下文
 // @param userId 用户 ID
@@ -126,16 +135,21 @@ func (u *userAppImpl) UpdateAvatar(
 	userId int64,
 	req dto.UpdateAvatarInput,
 ) (*dto.UpdateAvatarOutput, error) {
+	// 0. URL 方式头像校验（SEC-08）：服务端不抓取，仅约束 scheme/长度/私网字面量
+	avatarURL := strings.TrimSpace(req.AvatarURL)
+	if err := valueobjects.ValidateAvatarURL(avatarURL); err != nil {
+		return nil, err
+	}
 	// 1. 更新用户头像
-	err := u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), req.AvatarURL)
+	err := u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), avatarURL)
 	if err != nil {
 		return nil, err
 	}
 	// 2. 同步评论中的用户头像
-	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", req.AvatarURL)
+	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", avatarURL)
 	// 3. 返回结果
 	return &dto.UpdateAvatarOutput{
-		AvatarURL: conf.Conf.Uploads.AvatarURL(req.AvatarURL),
+		AvatarURL: conf.Conf.Uploads.AvatarURL(avatarURL),
 	}, nil
 }
 
@@ -154,18 +168,29 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	filename string,
 	size int64,
 ) (*dto.UpdateAvatarOutput, error) {
-	// 1. 验证文件大小和类型
+	// 1. 验证文件大小与类型（SEC-08）
 	maxSize := conf.Conf.Uploads.MaxFileSize
 	if maxSize <= 0 {
 		maxSize = 1024 * 1024 * 2 // 默认 2MB
 	}
+	// 声明大小只作快速预筛（不可信，真实大小以实际读取字节数为准）
 	if size > maxSize {
-		return nil, domerr.Publicf("文件大小不能超过 %dMB", maxSize/1024/1024)
+		return nil, avatarTooLargeErr(maxSize)
 	}
-	ext := filepath.Ext(filename)
-	allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
-	if !allowedExts[ext] {
-		return nil, domerr.Publicf("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
+	ext := strings.ToLower(filepath.Ext(filename))
+	if _, ok := valueobjects.AvatarFormatOfExt(ext); !ok {
+		return nil, domerr.Publicf("头像格式不受支持（仅支持 PNG/JPEG/WebP）")
+	}
+	// 实测字节数：多读 1 字节用于判断是否超限；再按内容魔数/尺寸校验
+	data, err := io.ReadAll(io.LimitReader(file, maxSize+1))
+	if err != nil {
+		return nil, fmt.Errorf("user.UpdateAvatarByFile.Read: %w", err)
+	}
+	if int64(len(data)) > maxSize {
+		return nil, avatarTooLargeErr(maxSize)
+	}
+	if _, err := valueobjects.ValidateAvatarImage(ext, data); err != nil {
+		return nil, err
 	}
 	// 2. 记录上一张本地头像文件名（随机名后需清理，避免磁盘无界增长；查询失败不阻断上传）
 	previousFilename := ""
@@ -177,7 +202,7 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	if err != nil {
 		return nil, err
 	}
-	avatarURL, err := u.avatarStorage.Save(ctx, uniqueFilename, file)
+	avatarURL, err := u.avatarStorage.Save(ctx, uniqueFilename, bytes.NewReader(data))
 	if err != nil {
 		// Save 可能已创建文件（io.Copy 失败），尽力清理
 		_ = u.avatarStorage.Delete(ctx, uniqueFilename)
