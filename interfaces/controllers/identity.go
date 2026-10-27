@@ -14,6 +14,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// policyMessage 口令策略不通过时的统一对外文案（SEC-05）：
+// 注册与改密共用，不透露具体命中了哪一条规则
+const policyMessage = "密码长度需 8–64 位且不能过于简单"
+
 type AuthController struct {
 	authApp authApp.AuthApp
 }
@@ -146,6 +150,15 @@ func (c *AuthController) UserSignUp(ctx *gin.Context) {
 	// @step 2. 调用用户服务 - 注册
 	err = c.authApp.SignUp(ctx.Request.Context(), toSignUpInput(&req))
 	if err != nil {
+		// 口令策略不通过（SEC-05）：沿用注册的参数错误码族（10001）+ 统一可读文案，
+		// 不回显命中了哪条规则，也不回显内部错误
+		if errors.Is(err, domerr.ErrPasswordTooWeak) {
+			Failure(ctx, types.ResponseData{
+				Code:    10001,
+				Message: policyMessage,
+			})
+			return
+		}
 		msg := "注册失败"
 		if errors.Is(err, domerr.ErrEmailExists) {
 			msg = "该邮箱已被注册"

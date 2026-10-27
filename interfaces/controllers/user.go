@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"mime"
 	"net/http"
 	"path/filepath"
 
 	userApp "naotodoserver/application/user"
 	userDto "naotodoserver/application/user/dto"
+	domerr "naotodoserver/domain/errors"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/utils"
 	"naotodoserver/interfaces/types"
@@ -210,13 +212,8 @@ func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 		return
 	}
 	// 2. 验证参数
-	if utils.RuneLength(req.NewPassword) < 8 || utils.RuneLength(req.NewPassword) > 32 {
-		Failure(ctx, types.ResponseData{
-			Code:    10073,
-			Message: "新密码长度必须在 8-32 个字符之间",
-		})
-		return
-	}
+	// 口令策略（SEC-05）统一在应用/领域层校验（需邮箱做“不得等于邮箱本地部分”判定），
+	// 此处不再重复长度规则，避免两处口径漂移
 	// 3. 获取当前登录用户 ID
 	userId := iCtx.GetUserId(ctx.Request.Context())
 	if userId <= 0 {
@@ -232,6 +229,15 @@ func (c *UserController) UpdateUserPassword(ctx *gin.Context) {
 	input.Token = iCtx.GetToken(ctx.Request.Context())
 	err = c.userApp.UpdatePassword(ctx.Request.Context(), userId, input)
 	if err != nil {
+		// 口令策略不通过：沿用既有“新密码校验失败”码（10073）+ 统一可读文案，
+		// 不回显命中了哪条规则（SEC-05），也不回显内部错误
+		if errors.Is(err, domerr.ErrPasswordTooWeak) {
+			Failure(ctx, types.ResponseData{
+				Code:    10073,
+				Message: policyMessage,
+			})
+			return
+		}
 		Failure(ctx, types.ResponseData{Code: 10075, Message: err.Error()})
 		return
 	}

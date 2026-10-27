@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"naotodoserver/application/user/dto"
+	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	domaintypes "naotodoserver/domain/types"
 )
@@ -14,9 +15,15 @@ import (
 // fakeUserRepo 只实现改密路径；其余方法由嵌入接口兜底（本测试不会调用）。
 type fakeUserRepo struct {
 	repositories.User
+	email       string
 	password    string
 	updateErr   error
 	updateCalls int
+}
+
+// FindById 口令策略（SEC-05）需要用户邮箱做"不等于邮箱本地部分"判定
+func (f *fakeUserRepo) FindById(_ context.Context, _ domaintypes.UserID) (*entities.User, error) {
+	return &entities.User{Email: f.email}, nil
 }
 
 func (f *fakeUserRepo) UpdatePassword(

@@ -77,8 +77,16 @@ func (u *userAppImpl) UpdatePassword(
 	userId int64,
 	req dto.UpdatePasswordInput,
 ) error {
+	// 0. 新口令策略（SEC-05）：与注册共用同一套校验；拒绝时不触库、不撤销任何会话
+	user, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId))
+	if err != nil {
+		return fmt.Errorf("user.UpdatePassword.FindById: %w", err)
+	}
+	if err := valueobjects.ValidatePassword(req.NewPassword, user.Email); err != nil {
+		return err
+	}
 	// 1. 更新用户密码（旧密码校验 + 新密码哈希写入）；失败直接返回，不做任何会话撤销（避免误杀）
-	err := u.userRepo.UpdatePassword(
+	err = u.userRepo.UpdatePassword(
 		ctx,
 		domaintypes.UserID(userId),
 		req.OldPassword, req.NewPassword,
