@@ -11,7 +11,9 @@ import (
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/service"
+	"naotodoserver/domain/identity/valueobjects"
 	domaintypes "naotodoserver/domain/types"
+	"naotodoserver/infrastructure/logging"
 )
 
 // NewAuthApp 创建认证应用层实例
@@ -37,30 +39,46 @@ func (as *authAppImpl) SignIn(
 	ctx context.Context,
 	signInInput *dto.SignInInput,
 ) (*dto.SignInOutput, error) {
-	// 1. 通过 Email 查找用户记录
+	// 1. 账号维度节流（SEC-04）：窗口内连续失败达阈值后暂停登录。
+	//    命中时只做一次轻量计数查询即返回，不查库、不做 bcrypt，避免口令爆破的 CPU 放大。
+	if as.identityDomain.IsLoginBlocked(ctx, signInInput.Email) {
+		// 只落不可逆账号标识（哈希前缀），不记录邮箱明文
+		logging.WarnWithFields(map[string]any{
+			"event":   "login.throttled",
+			"key_tag": valueobjects.AccountKey(signInInput.Email),
+		}, "login rejected: account temporarily throttled")
+		return nil, domerr.ErrLoginThrottled
+	}
+	// 2. 通过 Email 查找用户记录
 	userEntity, err := as.userRepo.FindByEmail(ctx, signInInput.Email)
 	if err != nil {
 		return nil, fmt.Errorf("auth.SignIn.FindByEmail: %w", err)
 	}
-	// 2. 比对密码
+	// 3. 比对密码
 	isMatched := as.userRepo.PasswordCompare(
 		[]byte(signInInput.Password),
 		[]byte(userEntity.Password),
 	)
 	if !isMatched {
+		// 记录失败并可能触发暂停：仅针对已存在的账号计数（不保护不存在的邮箱，
+		// 以免任意邮箱写入计数键），降级由仓储内部处理，不改变对外语义
+		as.identityDomain.RecordLoginFailure(ctx, signInInput.Email)
 		return nil, domerr.ErrPasswordMismatch
 	}
-	// 2. 创建 JWT 令牌
+	// 4. 登录成功：清除该账号的失败计数与暂停状态
+	as.identityDomain.ClearLoginFailures(ctx, signInInput.Email)
+
+	// 5. 创建 JWT 令牌
 	jwtString, err := as.identityDomain.GenerateJWT(ctx, userEntity)
 	if err != nil {
 		return nil, fmt.Errorf("auth.SignIn.GenerateJWT: %w", err)
 	}
-	// 3. 创建 Session
+	// 6. 创建 Session
 	err = as.identityDomain.CreateSession(ctx, domaintypes.UserID(userEntity.Id), jwtString)
 	if err != nil {
 		return nil, fmt.Errorf("auth.SignIn.CreateSession: %w", err)
 	}
-	// 4. 检查是否出于待注销状态，并返回注销时间
+	// 7. 检查是否出于待注销状态，并返回注销时间
 	var pendingDeletion = false
 	var deletedAt = ""
 	if userEntity.IsDeactived() {
@@ -68,7 +86,7 @@ func (as *authAppImpl) SignIn(
 		// deactiveAt 标记，但归属于 deletedAt
 		deletedAt = userEntity.DeactivedAt.ToString(time.RFC3339)
 	}
-	// 5. 登录成功 返回 JWT
+	// 8. 登录成功 返回 JWT
 	return &dto.SignInOutput{
 		Token:           jwtString,
 		PendingDeletion: pendingDeletion,

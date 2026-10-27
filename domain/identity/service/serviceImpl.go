@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
@@ -11,15 +12,27 @@ import (
 	"naotodoserver/domain/types"
 )
 
+// LoginFailureThreshold 窗口内允许的连续登录失败次数，达到即暂停登录（SEC-04）
+const LoginFailureThreshold int64 = 5
+
+const (
+	// LoginFailureWindow 登录失败计数窗口
+	LoginFailureWindow = 5 * time.Minute
+	// LoginBlockDuration 达到阈值后的暂停登录时长（到期自动解除）
+	LoginBlockDuration = 5 * time.Minute
+)
+
 func NewIdentityDomain(
 	jwt repositories.JWT,
 	userSessionRepo repositories.UserSession,
 	rateLimitRepo repositories.RateLimit,
+	loginThrottle repositories.LoginThrottle,
 ) IdentityDomain {
 	return &identityDomainImpl{
 		jwtRepo:         jwt,
 		userSessionRepo: userSessionRepo,
 		rateLimitRepo:   rateLimitRepo,
+		loginThrottle:   loginThrottle,
 	}
 }
 
@@ -123,4 +136,25 @@ func (d *identityDomainImpl) CheckRateLimit(ctx context.Context, key string, lim
 		return errors.New("用户请求次数超过限流阈值")
 	}
 	return nil
+}
+
+// IsLoginBlocked 检查账号是否因连续登录失败被暂停（SEC-04）
+// 只做一次计数查询：命中时上层可在查库与 bcrypt 之前快速返回
+func (d *identityDomainImpl) IsLoginBlocked(ctx context.Context, email string) bool {
+	return d.loginThrottle.IsBlocked(ctx, valueobjects.AccountKey(email))
+}
+
+// RecordLoginFailure 记录一次口令失败；窗口内累计达到阈值时暂停该账号登录
+func (d *identityDomainImpl) RecordLoginFailure(ctx context.Context, email string) {
+	accountKey := valueobjects.AccountKey(email)
+	count := d.loginThrottle.RecordFailure(ctx, accountKey, LoginFailureWindow)
+	if count < LoginFailureThreshold {
+		return
+	}
+	d.loginThrottle.Block(ctx, accountKey, LoginBlockDuration)
+}
+
+// ClearLoginFailures 登录成功后清除账号的失败计数与暂停状态
+func (d *identityDomainImpl) ClearLoginFailures(ctx context.Context, email string) {
+	d.loginThrottle.Reset(ctx, valueobjects.AccountKey(email))
 }

@@ -107,6 +107,9 @@ func (c *AuthController) UserSignIn(ctx *gin.Context) {
 		// 统一提示，避免泄露邮箱是否已注册（防用户枚举）
 		// 服务端记录真实原因，便于排查与安全监控（仅记录邮箱，不记录密码）
 		switch {
+		case errors.Is(err, domerr.ErrLoginThrottled):
+			// 账号被临时暂停（SEC-04）：应用层已记 login.throttled（仅哈希前缀），
+			// 此处不再落邮箱明文；对外响应与密码错误完全一致（防账号枚举）
 		case errors.Is(err, domerr.ErrUserNotFound), errors.Is(err, domerr.ErrPasswordMismatch):
 			logging.Warnf("UserSignIn rejected: email=%s err=%v", req.Email, err)
 		default:
