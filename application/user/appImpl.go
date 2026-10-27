@@ -13,6 +13,7 @@ import (
 	"naotodoserver/application/user/dto"
 	"naotodoserver/conf"
 	domerr "naotodoserver/domain/errors"
+	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
 	domaintypes "naotodoserver/domain/types"
@@ -284,11 +285,39 @@ func (u *userAppImpl) DeleteUser(ctx context.Context, userId int64, req dto.Dele
 // @param dayOffset 注销时间偏移天数
 // @return error 错误
 func (u *userAppImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) error {
-	_, err := u.userRepo.DeleteDeactivatedUsers(ctx, dayOffset)
+	purged, err := u.userRepo.DeleteDeactivatedUsers(ctx, dayOffset)
 	if err != nil {
 		return fmt.Errorf("user.DeleteDeactivatedUsers: %w", err)
 	}
+	// 硬删已提交：清理本服务头像文件（DEF-106）。
+	// 选在此处而非注销请求时：注销是软注销 + 7 天等待期，等待期内可重新登录反悔，文件必须保留。
+	for _, user := range purged {
+		u.purgeAvatarFile(ctx, user)
+	}
 	return nil
+}
+
+// purgeAvatarFile 删除已硬删用户的本服务头像文件（DEF-106）：
+// 只删本服务头像目录内、且文件名前缀属于该用户的文件；外部 URL 直接跳过。
+// 文件不存在/删除失败不阻断清理任务（仅 Warn，日志不含路径全量）。
+// @param ctx 上下文
+// @param user 已被硬删的用户（仅 Id/Avatar 有效）
+func (u *userAppImpl) purgeAvatarFile(ctx context.Context, user *entities.User) {
+	if u.avatarStorage == nil || user == nil {
+		return
+	}
+	filename := ownedAvatarFilename(user.Avatar, user.Id)
+	if filename == "" {
+		return
+	}
+	if err := u.avatarStorage.Delete(ctx, filename); err != nil {
+		logging.WarnWithFields(map[string]any{
+			"event":       "avatar.purge_failed",
+			"user_id":     user.Id,
+			"error_kind":  fmt.Sprintf("%T", err),
+			"file_length": len(filename),
+		}, "注销硬删后清理头像失败（不阻断清理任务）")
+	}
 }
 
 // RestoreUser 激活用户（取消注销）

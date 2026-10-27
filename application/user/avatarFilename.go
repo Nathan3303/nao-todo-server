@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"naotodoserver/conf"
@@ -45,6 +47,33 @@ func localAvatarFilename(avatar string) string {
 	}
 	name := strings.TrimPrefix(avatar, prefix)
 	if name == "" || strings.ContainsAny(name, `/\`) {
+		return ""
+	}
+	return name
+}
+
+// ownedAvatarFilenamePattern 本服务头像文件名的两种合法形态：
+// 旧 {userId}.ext 与 新 {userId}-{32 位 hex}.ext（扩展名与上传白名单一致）
+var ownedAvatarFilenamePattern = regexp.MustCompile(
+	`^([0-9]{1,20})(-[0-9a-f]{32})?\.(jpg|jpeg|png|webp)$`,
+)
+
+// ownedAvatarFilename 返回「属于该 userId 且位于本服务头像目录内」的文件名（DEF-106）。
+// 用于注销硬删后清理头像：外部 URL、其它路径、文件名前缀不是该用户的，一律返回空串（跳过删除）。
+// @param avatar 用户表的头像字段
+// @param userId 用户 ID
+// @return 文件名；无法确认归属时为空串
+func ownedAvatarFilename(avatar string, userId int64) string {
+	name := localAvatarFilename(avatar)
+	if name == "" {
+		return ""
+	}
+	matches := ownedAvatarFilenamePattern.FindStringSubmatch(name)
+	if matches == nil {
+		return ""
+	}
+	owner, err := strconv.ParseInt(matches[1], 10, 64)
+	if err != nil || owner != userId {
 		return ""
 	}
 	return name

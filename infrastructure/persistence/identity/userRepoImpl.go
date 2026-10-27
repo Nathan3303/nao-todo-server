@@ -330,21 +330,35 @@ func (r *UserRepoImpl) Delete(ctx context.Context, userId types.UserID) error {
 // @param dayOffset 注销天数偏移，注销时间早于当前时间减去该天数的用户将被删除
 // @return int64 删除的用户行数
 // @return error 错误
-func (r *UserRepoImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error) {
+func (r *UserRepoImpl) DeleteDeactivatedUsers(
+	ctx context.Context,
+	dayOffset int8,
+) ([]*entities.User, error) {
 	cutoff := time.Now().AddDate(0, 0, -1*int(dayOffset))
 	var userIds []int64
-	var rowsAffected int64
+	var purged []*entities.User
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 事务内取待删用户（含头像字段）：硬删后无法再回读，必须在同一事务里拿
+		var users []models.User
 		if err := tx.
 			Model(&models.User{}).
 			Where("deactived_at < ?", cutoff).
-			Pluck("id", &userIds).
+			Find(&users).
 			Error; err != nil {
 			return err
 		}
 		// 无待删除用户时提前返回，避免空 IN 子句
-		if len(userIds) == 0 {
+		if len(users) == 0 {
 			return nil
+		}
+		userIds = make([]int64, 0, len(users))
+		purged = make([]*entities.User, 0, len(users))
+		for i := range users {
+			userIds = append(userIds, users[i].ID)
+			purged = append(purged, &entities.User{
+				EntityBase: types.EntityBase{Id: users[i].ID},
+				Avatar:     users[i].Avatar,
+			})
 		}
 		if err := tx.
 			Model(&models.UserSession{}).
@@ -430,15 +444,14 @@ func (r *UserRepoImpl) DeleteDeactivatedUsers(ctx context.Context, dayOffset int
 		if deleteTx.Error != nil {
 			return deleteTx.Error
 		}
-		rowsAffected = deleteTx.RowsAffected
 		return nil
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	// 事务提交成功后失效资料与配置缓存
 	for _, userId := range userIds {
 		r.cache.Del(ctx, cache.UserProfileKey(userId), cache.UserConfigKey(userId))
 	}
-	return rowsAffected, nil
+	return purged, nil
 }

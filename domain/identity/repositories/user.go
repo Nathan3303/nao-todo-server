@@ -40,8 +40,9 @@ type User interface {
 	// Delete 删除用户
 	Delete(ctx context.Context, userId types.UserID) error
 
-	// DeleteDeactivatedUsers 删除已注销用户
-	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) (int64, error)
+	// DeleteDeactivatedUsers 删除已注销用户（硬删）
+	// 返回本批被删除的用户（仅保证 Id 与 Avatar 有效），供调用方在事务提交后清理头像文件
+	DeleteDeactivatedUsers(ctx context.Context, dayOffset int8) ([]*entities.User, error)
 
 	// GetConfig 获取用户配置
 	GetConfig(ctx context.Context, userId types.UserID) (*entities.UserConfig, error)
