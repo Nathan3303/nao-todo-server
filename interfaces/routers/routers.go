@@ -10,6 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// avatarRateLimit 头像读取配额（每个登录用户 / 60 秒，SEC-07）。
+// 阈值取 120：首屏评论/成员列表可能批量加载不同头像（浏览器对头像有 immutable 缓存，
+// 正常浏览远低于该值），同时抑制按 ID 批量枚举。
+const avatarRateLimit int64 = 120
+
 // securityHeaders 设置安全响应头（替代 nginx add_header）
 func securityHeaders() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -102,6 +107,7 @@ func InitRouters(svc *application.Services) *gin.Engine {
 	router.GET(
 		"/static/uploads/avatars/:filename",
 		middlewares.JWTValidator(svc.Auth),
+		middlewares.UserRateLimiter(svc.Auth, avatarRateLimit, "avatar"),
 		userCtrl.GetAvatar,
 	)
 

@@ -16,8 +16,10 @@
 GET /static/uploads/avatars/{filename}
 ```
 
-- `{filename}` 形如 `453525082325651456.png`（`{userId}.{ext}`，ext ∈ jpg/jpeg/png）
-- URL 保持不变，仅访问条件变化
+- `{filename}` 支持两种形态（ext ∈ jpg/jpeg/png）：
+  - **旧**：`453525082325651456.png`（`{userId}.{ext}`）—— 历史文件继续可读，**不做批量迁移**
+  - **新**：`453525082325651456-3f9a…（32 位小写 hex）.png` —— 新上传使用不可枚举随机名（SEC-07）
+- URL 形态不变，仍由服务端 `avatar` 字段给出；**客户端不要自行拼接文件名**（随机名不可预测）
 
 ### 2.2 携带凭证的两种方式（二选一）
 
@@ -38,6 +40,7 @@ GET /static/uploads/avatars/{filename}
 |---|---|
 | 未携带 token / token 失效 | HTTP 200 + `{"code":10041,"message":"用户凭证验证失败",...}`（**不是图片**，`<img>` 渲染失败） |
 | 文件名非法（非数字+白名单后缀）或文件不存在 | HTTP 404 |
+| 头像读取超限（每用户 120 次/分钟，SEC-07） | HTTP 200 + `{"code":10051,...}`（限流） |
 | 成功 | HTTP 200，`Content-Type: image/jpeg\|image/png`，`Cache-Control: private, max-age=31536000, immutable` |
 
 > 注意：凭证失效的响应是 HTTP 200 + JSON（项目统一风格），前端**不要依赖 HTTP 状态码判断**，直接用 `<img>` 的 `error` 事件兜底即可。

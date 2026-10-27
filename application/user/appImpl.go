@@ -159,22 +159,36 @@ func (u *userAppImpl) UpdateAvatarByFile(
 	if !allowedExts[ext] {
 		return nil, errors.New("不支持的文件类型，仅支持 JPG、JPEG、PNG 格式")
 	}
-	// 2. 生成唯一文件名并保存文件
-	uniqueFilename := fmt.Sprintf("%d%s", userId, ext)
-	avatarURL, err := u.avatarStorage.Save(ctx, uniqueFilename, file)
+	// 2. 记录上一张本地头像文件名（随机名后需清理，避免磁盘无界增长；查询失败不阻断上传）
+	previousFilename := ""
+	if user, err := u.userRepo.FindById(ctx, domaintypes.UserID(userId)); err == nil {
+		previousFilename = localAvatarFilename(user.Avatar)
+	}
+	// 3. 生成不可枚举文件名并保存（SEC-07：旧 {userId}.ext 仍可读，不做批量迁移）
+	uniqueFilename, err := newAvatarFilename(userId, ext)
 	if err != nil {
 		return nil, err
 	}
-	// 3. 更新用户头像
+	avatarURL, err := u.avatarStorage.Save(ctx, uniqueFilename, file)
+	if err != nil {
+		// Save 可能已创建文件（io.Copy 失败），尽力清理
+		_ = u.avatarStorage.Delete(ctx, uniqueFilename)
+		return nil, err
+	}
+	// 4. 更新用户头像
 	err = u.userRepo.UpdateAvatar(ctx, domaintypes.UserID(userId), avatarURL)
 	if err != nil {
 		// 更新失败时删除已上传的文件
 		_ = u.avatarStorage.Delete(ctx, uniqueFilename)
 		return nil, err
 	}
-	// 4. 同步评论中的用户头像
+	// 5. 清理上一张本地头像文件（外部 URL / 非法名不处理；清理失败不阻断主流程）
+	if previousFilename != "" && previousFilename != uniqueFilename {
+		_ = u.avatarStorage.Delete(ctx, previousFilename)
+	}
+	// 6. 同步评论中的用户头像
 	_ = u.taskApp.SyncTaskCommentUserProfile(ctx, userId, "", avatarURL)
-	// 5. 返回结果
+	// 7. 返回结果
 	return &dto.UpdateAvatarOutput{
 		AvatarURL: conf.Conf.Uploads.AvatarURL(avatarURL),
 	}, nil
