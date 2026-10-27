@@ -11,6 +11,7 @@ import (
 
 	userApp "naotodoserver/application/user"
 	userDto "naotodoserver/application/user/dto"
+	domerr "naotodoserver/domain/errors"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/controllers"
 
@@ -23,6 +24,7 @@ type fakePasswordUserApp struct {
 	calls      int
 	lastUserId int64
 	lastInput  userDto.UpdatePasswordInput
+	err        error
 }
 
 func (f *fakePasswordUserApp) UpdatePassword(
@@ -33,7 +35,7 @@ func (f *fakePasswordUserApp) UpdatePassword(
 	f.calls++
 	f.lastUserId = userId
 	f.lastInput = req
-	return nil
+	return f.err
 }
 
 // newPasswordEngine 挂载真实控制器，并注入鉴权上下文（user_id + 当次 token）。
@@ -97,27 +99,42 @@ func TestUpdatePasswordInjectsCurrentToken(t *testing.T) {
 	}
 }
 
-// TestUpdatePasswordPolicyRejectsWithoutRevoke 新密码不满足策略（<8 / >32 字符）
-// ⇒ 10073 且根本不进入应用层（不可能触发会话撤销）
-func TestUpdatePasswordPolicyRejectsWithoutRevoke(t *testing.T) {
+// TestUpdatePasswordWeakPasswordMapped 口令策略拒绝（SEC-05，由应用层判定）⇒ 10073 + 统一可读文案，
+// 且不泄露命中了哪条规则；不撤销会话由应用层顺序保证（见 application/user 单测）。
+func TestUpdatePasswordWeakPasswordMapped(t *testing.T) {
 	cases := map[string]string{
-		"过短": strings.Repeat("a", 7),
-		"过长": strings.Repeat("a", 33),
+		"过短":    strings.Repeat("a", 7),
+		"过长":    strings.Repeat("a", 65),
+		"全同":    strings.Repeat("a", 8),
+		"纯数字短":  "12345678",
+		"名单命中":  "password",
+		"等于邮箱段": "victim",
 	}
 	for name, newPassword := range cases {
 		t.Run(name, func(t *testing.T) {
-			app := &fakePasswordUserApp{}
+			app := &fakePasswordUserApp{err: domerr.ErrPasswordTooWeak}
 			rec := putPassword(t, newPasswordEngine(app), "old-pass-1", newPassword)
 
-			var res passwordResponse
+			var res struct {
+				Code    int    `json:"code"`
+				Message string `json:"message"`
+			}
 			if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
 				t.Fatalf("响应不是合法 JSON: %v", err)
 			}
 			if res.Code != 10073 {
 				t.Fatalf("code = %d, want 10073", res.Code)
 			}
-			if app.calls != 0 {
-				t.Fatalf("策略拒绝时不得调用应用层（会触发撤销），实际 %d 次", app.calls)
+			if res.Message != "密码长度需 8–64 位且不能过于简单" {
+				t.Fatalf("message = %q, want 统一可读文案", res.Message)
+			}
+			for _, leak := range []string{"弱口令", "名单", "本地部分", "全同", "纯数字"} {
+				if strings.Contains(res.Message, leak) {
+					t.Fatalf("文案不得泄露规则细节（命中 %q）: %s", leak, res.Message)
+				}
+			}
+			if app.calls != 1 {
+				t.Fatalf("控制器应把口令交给应用层判定，实际调用 %d 次", app.calls)
 			}
 		})
 	}

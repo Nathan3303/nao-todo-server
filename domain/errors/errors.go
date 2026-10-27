@@ -29,4 +29,7 @@ var (
 	// ErrLoginThrottled 账号因连续登录失败被临时暂停（SEC-04）；
 	// 对外响应必须与 ErrPasswordMismatch 完全一致，避免账号枚举。
 	ErrLoginThrottled = errors.New("登录尝试过于频繁")
+	// ErrPasswordTooWeak 口令不满足密码策略（SEC-05）；
+	// 对外只回统一可读文案，不回显具体命中了哪条规则。
+	ErrPasswordTooWeak = errors.New("密码不符合安全策略")
 )

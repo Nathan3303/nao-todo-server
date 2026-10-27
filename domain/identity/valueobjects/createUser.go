@@ -26,6 +26,10 @@ func (vo *CreateUser) Validate() error {
 	if vo.Email == "" {
 		return errors.New("邮箱不能为空")
 	}
+	// 口令策略（SEC-05）：与改密共用同一套校验
+	if err := ValidatePassword(vo.Password, vo.Email); err != nil {
+		return err
+	}
 	if vo.Nickname != "" &&
 		(textutils.RuneLength(vo.Nickname) < 2 || textutils.RuneLength(vo.Nickname) > 20) {
 		return errors.New("昵称长度必须在 2-20 个字符之间")
