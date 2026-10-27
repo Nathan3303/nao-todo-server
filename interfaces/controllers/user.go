@@ -285,20 +285,12 @@ func (c *UserController) UpdateUserAvatar(ctx *gin.Context) {
 		// 表单请求：通过文件上传更新
 		fileHeader, formErr := ctx.FormFile("avatar")
 		if formErr != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    10082,
-				Message: "更新用户头像失败",
-				Error:   "文件上传失败 - " + formErr.Error(),
-			})
+			failWithErr(ctx, 10082, "更新用户头像失败", formErr)
 			return
 		}
 		f, openErr := fileHeader.Open()
 		if openErr != nil {
-			Failure(ctx, types.ResponseData{
-				Code:    10082,
-				Message: "更新用户头像失败",
-				Error:   "文件上传失败 - " + openErr.Error(),
-			})
+			failWithErr(ctx, 10082, "更新用户头像失败", openErr)
 			return
 		}
 		defer f.Close()

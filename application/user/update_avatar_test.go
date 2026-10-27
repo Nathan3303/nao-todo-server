@@ -1,6 +1,7 @@
 package user_test
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -17,6 +18,20 @@ import (
 	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/infrastructure/storage"
 )
+
+// readAvatarFixture 读取真实图片样本（与 domain 层共用同一份 testdata）
+// @param name 样本文件名
+// @return 文件字节
+func readAvatarFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(
+		"..", "..", "domain", "identity", "valueobjects", "testdata", "avatar", name,
+	))
+	if err != nil {
+		t.Fatalf("读取样本 %s 失败: %v", name, err)
+	}
+	return data
+}
 
 // fakeAvatarUserRepo 只实现头像路径用到的两个方法
 type fakeAvatarUserRepo struct {
@@ -82,7 +97,7 @@ func TestUpdateAvatarByFileUsesRandomFilename(t *testing.T) {
 	userRepo := &fakeAvatarUserRepo{}
 	commentApp := &fakeCommentApp{}
 	app, avatarDir := newAvatarTestApp(t, userRepo, commentApp)
-	content := "png-bytes"
+	content := string(readAvatarFixture(t, "sample.png"))
 
 	out, err := app.UpdateAvatarByFile(
 		context.Background(), 42, strings.NewReader(content), "me.png", int64(len(content)),
@@ -141,8 +156,9 @@ func TestUpdateAvatarByFileRemovesPreviousLocalFile(t *testing.T) {
 	}
 	_ = f.Close()
 
+	fixture := readAvatarFixture(t, "sample.png")
 	out, err := app.UpdateAvatarByFile(
-		context.Background(), 42, strings.NewReader("new"), "me.png", 3,
+		context.Background(), 42, bytes.NewReader(fixture), "me.png", int64(len(fixture)),
 	)
 	if err != nil {
 		t.Fatalf("上传失败: %v", err)
@@ -160,8 +176,9 @@ func TestUpdateAvatarByFileExternalPreviousAvatar(t *testing.T) {
 	userRepo := &fakeAvatarUserRepo{avatar: "https://cdn.example.com/x.png"}
 	app, avatarDir := newAvatarTestApp(t, userRepo, &fakeCommentApp{})
 
+	fixture := readAvatarFixture(t, "sample.png")
 	out, err := app.UpdateAvatarByFile(
-		context.Background(), 42, strings.NewReader("new"), "me.png", 3,
+		context.Background(), 42, bytes.NewReader(fixture), "me.png", int64(len(fixture)),
 	)
 	if err != nil {
 		t.Fatalf("上传失败: %v", err)
@@ -176,8 +193,9 @@ func TestUpdateAvatarByFileFindFailureStillUploads(t *testing.T) {
 	userRepo := &fakeAvatarUserRepo{findErr: io.ErrUnexpectedEOF}
 	app, _ := newAvatarTestApp(t, userRepo, &fakeCommentApp{})
 
+	fixture := readAvatarFixture(t, "sample.png")
 	if _, err := app.UpdateAvatarByFile(
-		context.Background(), 42, strings.NewReader("new"), "me.png", 3,
+		context.Background(), 42, bytes.NewReader(fixture), "me.png", int64(len(fixture)),
 	); err != nil {
 		t.Fatalf("查询旧头像失败不应阻断上传: %v", err)
 	}
@@ -190,7 +208,7 @@ func TestUpdateAvatarByFileValidationRegression(t *testing.T) {
 
 	if _, err := app.UpdateAvatarByFile(
 		context.Background(), 42, strings.NewReader("gif"), "me.gif", 3,
-	); err == nil || !strings.Contains(err.Error(), "不支持的文件类型") {
+	); err == nil || !strings.Contains(err.Error(), "头像格式不受支持") {
 		t.Fatalf("非图片扩展名应被拒，实际: %v", err)
 	}
 
