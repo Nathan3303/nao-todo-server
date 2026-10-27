@@ -26,6 +26,8 @@ type GetProfileOutput struct {
 type UpdatePasswordInput struct {
 	OldPassword string
 	NewPassword string
+	// Token 当前请求的会话令牌（改密成功后保留当前设备、撤销其它设备；SEC-03 / T564）
+	Token string
 }
 
 // UpdateAvatarInput 更新用户头像入参

@@ -14,6 +14,7 @@ import (
 	"naotodoserver/domain/identity/repositories"
 	"naotodoserver/domain/identity/valueobjects"
 	domaintypes "naotodoserver/domain/types"
+	"naotodoserver/infrastructure/logging"
 )
 
 // NewUserApp 创建用户应用层实例
@@ -76,7 +77,7 @@ func (u *userAppImpl) UpdatePassword(
 	userId int64,
 	req dto.UpdatePasswordInput,
 ) error {
-	// 1. 更新用户密码
+	// 1. 更新用户密码（旧密码校验 + 新密码哈希写入）；失败直接返回，不做任何会话撤销（避免误杀）
 	err := u.userRepo.UpdatePassword(
 		ctx,
 		domaintypes.UserID(userId),
@@ -85,6 +86,24 @@ func (u *userAppImpl) UpdatePassword(
 	if err != nil {
 		return fmt.Errorf("user.UpdatePassword: %w", err)
 	}
+	// 2. 改密自救（SEC-03 / T564）：撤销其它设备会话，保留当前设备
+	// req.Token 由控制器从鉴权上下文注入；为空（理论上鉴权路由不会发生）时退化为
+	// 「全部撤销并要求重新登录」，保证改密后旧会话必然失效。
+	revoked, err := u.sessionRepo.DeleteByUserIdExceptToken(
+		ctx,
+		domaintypes.UserID(userId),
+		req.Token,
+	)
+	if err != nil {
+		// 密码已更新而撤销失败：如实报错，便于前端提示重试「退出其他设备」
+		return fmt.Errorf("user.UpdatePassword.RevokeOtherSessions: %w", err)
+	}
+	// 3. 审计日志：结构化，只含 user_id 与撤销条数，不含 token
+	logging.InfoWithFields(map[string]any{
+		"event":         "password_change.revoke_other_sessions",
+		"user_id":       userId,
+		"revoked_count": revoked,
+	}, "改密成功，已撤销其它设备会话")
 	return nil
 }
 
