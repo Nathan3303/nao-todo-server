@@ -43,7 +43,10 @@ func CreateProjectVOToUpdateMap(vo *valueobjects.CreateProject) map[string]any {
 	updateMap := map[string]any{
 		"Name":        vo.Name,
 		"Description": vo.Description,
-		"SortId":      vo.SortId,
+	}
+	// sortId 存在性（F-06）：客户端未提供 ⇒ 不产键 ⇒ 不写列（保留库中原值，修复每次 push 归零）
+	if vo.SortIdSet {
+		updateMap["SortId"] = vo.SortId
 	}
 	// 归档时间三态（T322 / DEF-42）：Valid=true 时写列（IsNull=true ⇒ 写 NULL 清空）
 	if vo.ArchivedAt.ShouldUpdate() {

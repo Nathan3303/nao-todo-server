@@ -249,9 +249,10 @@ func toGetTaskCheckItemResList(
 // @return 应用层创建任务检查项入参
 func toCreateTaskCheckItemReq(req *types.CreateTaskCheckItemReq) *taskDto.CreateTaskCheckItemReq {
 	return &taskDto.CreateTaskCheckItemReq{
-		TaskId:      req.TaskId,
-		Name:        req.Name,
-		Description: req.Description,
+		TaskId: req.TaskId,
+		Name:   req.Name,
+		// REST create 视 description 为「已提供」（保持既有创建语义）
+		Description: &req.Description,
 		Id:          req.Id,
 		CreatedAt:   req.CreatedAt,
 		UpdatedAt:   req.UpdatedAt,
@@ -357,11 +358,13 @@ func toTaskCommentResList(outputList []*taskDto.TaskCommentRes) []*types.TaskCom
 // @return 应用层创建任务评论入参
 func toCreateTaskCommentReq(req *types.CreateTaskCommentReq) *taskDto.CreateTaskCommentReq {
 	return &taskDto.CreateTaskCommentReq{
-		TaskId:    req.TaskId,
-		Content:   req.Content,
-		Id:        req.Id,
-		CreatedAt: req.CreatedAt,
-		UpdatedAt: req.UpdatedAt,
+		TaskId:      req.TaskId,
+		Content:     req.Content,
+		Attachments: req.Attachments,
+		IsTopUp:     req.IsTopUp,
+		Id:          req.Id,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
 	}
 }
 

@@ -18,7 +18,11 @@ type CreateTaskComment struct {
 	TaskId      int64
 	Content     string
 	Attachments []string
-	IsTopUp     bool
+	// AttachmentsSet 附件是否存在（F-06）：false ⇒ update map 不写该列，保留库中原值
+	AttachmentsSet bool
+	IsTopUp        bool
+	// IsTopUpSet 置顶标记是否存在（F-06）：false ⇒ update map 不写该列
+	IsTopUpSet bool
 
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
 	BaseUpdatedAt time.Time

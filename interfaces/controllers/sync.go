@@ -192,6 +192,8 @@ func (c *SyncController) Push(ctx *gin.Context) {
 	}
 	for i := range req.TaskCheckItems {
 		itemReq := toCreateTaskCheckItemReq(&req.TaskCheckItems[i].CreateTaskCheckItemReq)
+		// description 存在性（F-06）：absent ⇒ nil（不写列）；null / "" ⇒ ptr("")（显式清空）
+		itemReq.Description = syncNullableString(req.TaskCheckItems[i].Description)
 		itemReq.BaseUpdatedAt = basePtr(req.TaskCheckItems[i].BaseUpdatedAt)
 		res, upsert, err := c.checkItemApp.CreateTaskCheckItem(
 			ctx.Request.Context(), userId, itemReq,
@@ -352,6 +354,25 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			DerivedUpdates: derivedUpdates,
 		},
 	})
+}
+
+// syncNullableString 将 sync 三态遮蔽归一为应用层的存在性指针（F-06）：
+//   - absent（Present=false）⇒ nil：update map 不写列，保留库中原值
+//   - null（Null=true）或 "" ⇒ ptr("")：显式清空
+//   - 值 ⇒ ptr(值)
+//
+// @param n 三态字段
+// @return 应用层入参使用的 *string（nil = 未提供）
+func syncNullableString(n types.NullableString) *string {
+	if !n.Present {
+		return nil
+	}
+	if n.Null {
+		empty := ""
+		return &empty
+	}
+	value := n.Value
+	return &value
 }
 
 // syncNullableTime 将 sync 三态字段归一为共享 create DTO 的 *string 契约（复用既有清空链路）：

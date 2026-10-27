@@ -195,6 +195,10 @@ type TaskCommentRes struct {
 type CreateTaskCommentReq struct {
 	TaskId  string `json:"taskId" binding:"required"`
 	Content string `json:"content" binding:"required"`
+	// Attachments 附件（F-06）：nil = 未提供（不写列）；空数组 = 显式清空
+	Attachments *[]string `json:"attachments"`
+	// IsTopUp 是否置顶（F-06）：nil = 未提供（不写列）
+	IsTopUp *bool `json:"isTopUp"`
 	// 同步元数据：客户端预置 id/createdAt/updatedAt（可空，桌面端同步用）
 	Id        *string `json:"id"`
 	CreatedAt *string `json:"createdAt"`

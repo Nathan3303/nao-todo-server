@@ -16,12 +16,13 @@ import (
 )
 
 // TestSyncDroppedFields_UncarriedKeysFlagged 载荷含未承载字段 ⇒ 逐条上报（字典序）。
-// 用例字段：projects 的 `icon`（未承载）与 `sortId`（未承载，DEF-47 族）。
+// 用例字段：projects 的 `icon`（服务端无承载层，F-06 单列 DDL 评估）。
+// `sortId` 自 F-06 起已被 sync 条目 DTO 承载 ⇒ 不再上报（见 CarriedPayloadSilent）。
 func TestSyncDroppedFields_UncarriedKeysFlagged(t *testing.T) {
 	d := newSyncDroppedFields([]byte(
 		`{"projects":[{"name":"清单","description":"","icon":"star","sortId":3}]}`))
 	got := d.at("projects", 0)
-	want := []string{"icon", "sortId"}
+	want := []string{"icon"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("droppedFields = %v, want %v", got, want)
 	}
@@ -35,6 +36,21 @@ func TestSyncDroppedFields_CarriedPayloadSilent(t *testing.T) {
 			`"archivedAt":null,"deactivedAt":null,"baseUpdatedAt":"2026-01-01T00:00:00Z"}]}`))
 	if got := d.at("projects", 0); got != nil {
 		t.Fatalf("已承载字段不应告警, got %v", got)
+	}
+}
+
+// TestSyncDroppedFields_F06CarriedPayloadSilent F-06 收口的字段不再进 droppedFields：
+// projects/tags.sortId、taskComments.attachments/isTopUp、taskCheckItems.description。
+func TestSyncDroppedFields_F06CarriedPayloadSilent(t *testing.T) {
+	d := newSyncDroppedFields([]byte(
+		`{"projects":[{"name":"a","sortId":1}],` +
+			`"tags":[{"name":"g","color":"#fff","sortId":2}],` +
+			`"taskComments":[{"taskId":"1","content":"c","attachments":[],"isTopUp":false}],` +
+			`"taskCheckItems":[{"taskId":"1","name":"n","description":"备注"}]}`))
+	for _, table := range []string{"projects", "tags", "taskComments", "taskCheckItems"} {
+		if got := d.at(table, 0); got != nil {
+			t.Fatalf("%s 已承载字段不应告警, got %v", table, got)
+		}
 	}
 }
 
@@ -80,8 +96,8 @@ func TestSyncDroppedFields_AttachByTableOrder(t *testing.T) {
 	if !reflect.DeepEqual(results[1].DroppedFields, []string{"icon"}) {
 		t.Fatalf("projects[1] = %v", results[1].DroppedFields)
 	}
-	if !reflect.DeepEqual(results[2].DroppedFields, []string{"sortId"}) {
-		t.Fatalf("tags[0] = %v", results[2].DroppedFields)
+	if results[2].DroppedFields != nil {
+		t.Fatalf("tags[0] 的 sortId 已承载，不应告警: %v", results[2].DroppedFields)
 	}
 }
 

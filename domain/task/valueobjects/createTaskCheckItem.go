@@ -16,8 +16,10 @@ type CreateTaskCheckItem struct {
 	TaskId      int64
 	Name        string
 	Description string
-	IsDone      bool
-	SortId      uint16
+	// DescriptionSet 描述是否存在（F-06）：false ⇒ update map 不写该列，保留库中原值
+	DescriptionSet bool
+	IsDone         bool
+	SortId         uint16
 
 	// BaseUpdatedAt OCC：客户端回传的服务端 updated_at 快照（零值 = 未提供，回退 LWW）
 	BaseUpdatedAt time.Time

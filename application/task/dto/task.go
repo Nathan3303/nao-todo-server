@@ -149,9 +149,10 @@ type GetTaskCheckItemRes struct {
 
 // CreateTaskCheckItemReq 创建任务检查项入参
 type CreateTaskCheckItemReq struct {
-	TaskId      string  // 所属任务 ID
-	Name        string  // 检查项名称
-	Description string  // 检查项描述
+	TaskId string // 所属任务 ID
+	Name   string // 检查项名称
+	// Description 检查项描述（F-06）：nil = 未提供（update map 不写该列）；ptr("") = 显式清空
+	Description *string
 	Id          *string // 同步元数据：客户端预置 id
 	CreatedAt   *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
@@ -225,8 +226,12 @@ type TaskCommentRes struct {
 
 // CreateTaskCommentReq 创建任务评论入参
 type CreateTaskCommentReq struct {
-	TaskId    string  // 所属任务 ID
-	Content   string  // 评论内容
+	TaskId  string // 所属任务 ID
+	Content string // 评论内容
+	// Attachments 附件（F-06）：nil = 未提供（不写列）；非 nil（含空切片）= 显式覆盖
+	Attachments *[]string
+	// IsTopUp 是否置顶（F-06）：nil = 未提供（不写列）
+	IsTopUp   *bool
 	Id        *string // 同步元数据：客户端预置 id
 	CreatedAt *string // 同步元数据：客户端预置 createdAt
 	UpdatedAt *string // 同步元数据：客户端预置 updatedAt

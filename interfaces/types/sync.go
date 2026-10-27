@@ -42,6 +42,10 @@ type SyncTaskPushItem struct {
 type SyncCheckItemPushItem struct {
 	CreateTaskCheckItemReq
 	BaseUpdatedAt string `json:"baseUpdatedAt,omitempty"`
+	// Description 存在性遮蔽（F-06）：客户端可能完全不发送该键（当前桌面端即如此）。
+	// absent ⇒ 不写列（保留库中原值）；null / "" ⇒ 显式清空；值 ⇒ 写入。
+	// 与 tasks 的可空时间三态遮蔽同机制：同名 JSON 键、浅层优先。
+	Description NullableString `json:"description"`
 }
 
 type SyncCommentPushItem struct {

@@ -21,10 +21,12 @@ type GetProjectRes struct {
 type CreateProjectReq struct {
 	Name        string
 	Description string
-	Id          *string // 同步元数据：客户端预置 id
-	CreatedAt   *string // 同步元数据：客户端预置 createdAt
-	UpdatedAt   *string // 同步元数据：客户端预置 updatedAt
-	DeletedAt   *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
+	// SortId 组内排序（F-06）：nil = 未提供（不写列）；显式 0 合法
+	SortId    *uint16
+	Id        *string // 同步元数据：客户端预置 id
+	CreatedAt *string // 同步元数据：客户端预置 createdAt
+	UpdatedAt *string // 同步元数据：客户端预置 updatedAt
+	DeletedAt *string // 同步元数据：客户端预置 deletedAt（推送本地墓碑时携带）
 	// ArchivedAt 同步专用（T322 / DEF-42）：nil=缺省不写列；""=显式清空（写 NULL）；时间串=写入
 	// json:"-" 关闭 JSON 注入面：该字段仅由 sync 控制器在 Go 侧显式赋值，create REST 不可经请求体注入
 	ArchivedAt *string `json:"-"`
