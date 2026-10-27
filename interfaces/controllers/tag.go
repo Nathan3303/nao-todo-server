@@ -7,6 +7,7 @@ import (
 	tagApp "naotodoserver/application/tag"
 	tagDto "naotodoserver/application/tag/dto"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/utils/query"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -336,6 +337,8 @@ func (c *TagController) ListTag(ctx *gin.Context) {
 		if updatedAt := ctx.Query("updatedAt"); updatedAt != "" {
 			cursorId := ctx.Query("cursorId")
 			limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "100"))
+			// 分页上限（SEC-01）：limit 夹取到上限
+			limit = query.ClampLimit(limit)
 			res, err := c.tagApp.ListTagSync(
 				ctx.Request.Context(), userId, updatedAt, cursorId, limit,
 			)

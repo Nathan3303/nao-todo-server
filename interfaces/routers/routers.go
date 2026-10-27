@@ -40,6 +40,13 @@ func InitRouters(svc *application.Services) *gin.Engine {
 	// 安全响应头（替代 nginx add_header）
 	router.Use(securityHeaders())
 
+	// 请求体上限（SEC-01 / T561）：全局默认 2 MB，头像上传单独放宽 5 MB。
+	// 必须在任何 ShouldBind / io.ReadAll 之前生效；超限 413，不静默截断。
+	router.Use(middlewares.BodyLimit(
+		conf.Conf.Server.MaxRequestBodyBytes,
+		map[string]int64{"/api/users/avatar": conf.Conf.Server.MaxUploadBodyBytes},
+	))
+
 	// 添加 Gzip 压缩（排除 SSE 路径，避免缓冲破坏实时推送）
 	router.Use(gzip.Gzip(
 		gzip.DefaultCompression,
