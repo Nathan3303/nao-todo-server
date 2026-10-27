@@ -21,6 +21,7 @@
 | --- | --- | --- |
 | SEC-01 无界输入 | 请求体上限中间件、`limit`/`page` 上限、`/sync/push` 批量上限 | 无需操作（可按需调大 env） |
 | SEC-02 默认凭据 | 启动 fail-fast 校验 | **轮换凭据**；收口端口绑定；改用最小权限库账号 |
+| SEC-06 凭据经 URL | `?token=` 仅头像 / SSE 可用，其余接口只认 `Authorization` | 反代/CDN 访问日志去掉 query（见 §6） |
 
 > ⛔ **本仓库不修改 `docker-compose.yml`**（用户工作区存在未提交改动）。下文 compose 片段请**由用户在自己的 compose 文件上照抄执行**，仓库侧不代改。
 > 部署目录按现网约定写作 `/opt/nao-todo-server`，与实际不符时自行替换。
@@ -223,7 +224,52 @@ docker exec naotodo-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N -e \
 
 ---
 
-## 6. 上线前自查清单
+## 6. 反代 / CDN 访问日志去掉 query（SEC-06 配套，建议）
+
+> 应用侧已收口：`?token=` **仅在** `GET /static/uploads/avatars/*` 与 `GET /api/sse/*` 生效，其余接口一律只认 `Authorization: Bearer`。
+> 但头像 / SSE 的 URL 仍会带 token（浏览器 `<img>` 与 `EventSource` 无法自定义请求头），**是否泄露取决于反代 / CDN 是否记录完整 URL**。
+> 本节改动**由用户在自己的 nginx / CDN 上执行**；本仓库不改 `docker-compose.yml`、不改 nginx 配置。
+
+### 6.1 为什么必须改
+
+nginx 默认 `combined` 日志格式里的 `$request`（以及 `$request_uri`）**含完整 query**：
+`GET /static/uploads/avatars/1.png?token=<JWT> HTTP/1.1` 会原样写进 `access.log`。
+该 token 有效期最长 7 天，拿到即可接管账号。`$uri` 是归一化后的**路径**（不含 query），用它替换即可。
+
+### 6.2 nginx 片段（照抄到自己的配置）
+
+```nginx
+# /etc/nginx/conf.d/naotodo-log.conf（或 server {} 内）
+log_format naotodo '$remote_addr - $remote_user [$time_local] '
+                   '"$request_method $uri $server_protocol" $status $body_bytes_sent '
+                   '"$http_referer" "$http_user_agent"';
+
+access_log /var/log/nginx/access.log naotodo;
+```
+
+- ⛔ 不要再使用 `$request` / `$request_uri`（二者都含 query）。
+- 若排障确需看 query：只记录**白名单参数**，禁止整段 `$args` / `$request`；`token=` 必须脱敏或丢弃。
+- 已有历史日志：按保留策略轮转/清理（日志里可能已存在带 token 的 URL）。
+
+### 6.3 CDN / 网关
+
+- 关闭「记录完整 query string」或在采集侧对 `token=` 脱敏；
+- 访问日志的保留期与读权限按最小权限收敛（日志本身含用户 IP / UA）。
+
+### 6.4 验证
+
+```bash
+# 先请求一次头像（带 query token），再确认新增日志行不含 token
+sudo grep -c 'token=' /var/log/nginx/access.log
+# 期望：0（若历史日志有旧记录，先按时间过滤本次新增行再判断）
+```
+
+### 6.5 回滚
+
+恢复原 `log_format` / `access_log` 配置 → `nginx -t && systemctl reload nginx`。
+回滚只会让日志重新记录 query，不影响业务功能。
+
+## 7. 上线前自查清单
 
 - [ ] `.env` 中 `JWT_SECRET` / `MYSQL_PASSWORD` / `REDIS_PASSWORD` 已轮换（非空、非默认、JWT ≥ 32 字节）
 - [ ] 已确认轮换 `JWT_SECRET` 会导致全员重新登录，并已选好窗口
@@ -231,14 +277,16 @@ docker exec naotodo-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N -e \
 - [ ] `sudo ss -ltnp` 中 3306 / 6379 只监听回环
 - [ ] 应用已改用 `naotodo_app`（非 root）连库，且启动日志无权限错误
 - [ ] 新版本启动日志无 fail-fast 报错（若报错，按提示修 env 后重启，不要跳过）
+- [ ] 反代 / CDN 访问日志已不再记录完整 query（`grep 'token='` 新增行为 0，见 §6）
 
 ---
 
-## 7. 附：相关代码位置
+## 8. 附：相关代码位置
 
 | 内容 | 位置 |
 | --- | --- |
 | 启动 fail-fast 校验 | `conf/security.go`（`ValidateSecurity`）、`cmd/main.go` |
 | 请求体上限中间件 | `interfaces/middlewares/bodyLimit.go`、`interfaces/routers/routers.go` |
 | 分页/批量上限 | `infrastructure/utils/query/pagination.go`、`interfaces/controllers/sync.go` |
+| `?token=` 收口 | `interfaces/middlewares/jwtValidator.go`（仅头像 / SSE 允许 query token） |
 | 审计原始报告 | `docs/reports/2026-10-27-T560-security-audit.md` |

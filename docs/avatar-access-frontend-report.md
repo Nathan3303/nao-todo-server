@@ -28,6 +28,10 @@ GET /static/uploads/avatars/{filename}
 
 服务端两种方式均支持（`?token=` 与 SSE 事件流为同一套机制，前端已有先例）。
 
+> **SEC-06 起（#67）**：`?token=` 仅对**头像**与 **SSE** 路由生效；其余 API 一律只认 `Authorization: Bearer`。
+> 请求同时带 `Authorization` 与 `?token=` 时**以 header 为准**（坏 query 不会再顶掉合法 header）。
+> 头像继续用 `?token=` 不受影响；若后续改为 blob 加载，可完全去掉 URL 中的凭证。
+
 ### 2.3 响应语义
 
 | 场景 | 结果 |
