@@ -26,6 +26,14 @@ func securityHeaders() gin.HandlerFunc {
 	}
 }
 
+// bodyLimitOverrides 请求体上限的按路径覆盖表（SEC-01 / T561）。
+// 路径必须与真实注册路径**逐字一致**：头像上传放宽到 MaxUploadBodyBytes（5 MB）。
+// 注意：实际路由是 PUT /api/user/avatar（见 userRouter.go），不是 /api/users/avatar（F2）。
+// @return 路径 → 上限（字节）
+func bodyLimitOverrides() map[string]int64 {
+	return map[string]int64{"/api/user/avatar": conf.Conf.Server.MaxUploadBodyBytes}
+}
+
 // InitRouters 初始化路由
 func InitRouters(svc *application.Services) *gin.Engine {
 	// 是否启用 Debug模式
@@ -49,7 +57,7 @@ func InitRouters(svc *application.Services) *gin.Engine {
 	// 必须在任何 ShouldBind / io.ReadAll 之前生效；超限 413，不静默截断。
 	router.Use(middlewares.BodyLimit(
 		conf.Conf.Server.MaxRequestBodyBytes,
-		map[string]int64{"/api/users/avatar": conf.Conf.Server.MaxUploadBodyBytes},
+		bodyLimitOverrides(),
 	))
 
 	// 添加 Gzip 压缩（排除 SSE 路径，避免缓冲破坏实时推送）

@@ -62,9 +62,13 @@ func failWithErr(ctx *gin.Context, code int, userMsg string, err error) {
 	case isNotFoundErr(err):
 		logServerErr(ctx, code, err)
 		text = publicMsgNotFound
-	case isPublicErr(err):
-		text = err.Error()
 	default:
+		publicText, ok := publicTextOf(err)
+		if ok {
+			// 只用规范文案：err.Error() 可能带 "包.函数: " 的 wrap 前缀（F1）
+			text = publicText
+			break
+		}
 		logServerErr(ctx, code, err)
 		text = publicMsgInternal
 	}
@@ -82,10 +86,10 @@ func failWithErr(ctx *gin.Context, code int, userMsg string, err error) {
 // @param fallbackMsg 基础设施/未知失败时的固定文案
 // @param err 原始错误
 func failWithErrMessage(ctx *gin.Context, code int, fallbackMsg string, err error) {
-	if isPublicErr(err) {
+	if publicText, ok := publicTextOf(err); ok {
 		Failure(ctx, types.ResponseData{
 			Code:    code,
-			Message: err.Error(),
+			Message: publicText,
 		})
 		return
 	}
@@ -115,11 +119,32 @@ func publicErrText(err error) string {
 		return ""
 	case isNotFoundErr(err):
 		return publicMsgNotFound
-	case isPublicErr(err):
-		return err.Error()
 	default:
+		if publicText, ok := publicTextOf(err); ok {
+			return publicText
+		}
 		return publicMsgInternal
 	}
+}
+
+// publicTextOf 返回可显式回显的规范文案（不含 wrap 前缀），
+// 用于避免把 fmt.Errorf("pkg.Fn: %w", ...) 的内部前缀回给客户端（F1）。
+// @param err 原始错误（可被多层 %w 包装）
+// @return 规范文案 / 是否可回显
+func publicTextOf(err error) (string, bool) {
+	if err == nil {
+		return "", false
+	}
+	var publicErr *domerr.PublicError
+	if errors.As(err, &publicErr) {
+		return publicErr.Message, true
+	}
+	for _, sentinel := range publicErrSentinels {
+		if errors.Is(err, sentinel) {
+			return sentinel.Error(), true
+		}
+	}
+	return "", false
 }
 
 // isPublicErr 判断错误文案是否可安全回显：
@@ -127,18 +152,8 @@ func publicErrText(err error) string {
 // @param err 原始错误
 // @return 可回显返回 true
 func isPublicErr(err error) bool {
-	if err == nil {
-		return false
-	}
-	if domerr.IsPublicError(err) {
-		return true
-	}
-	for _, sentinel := range publicErrSentinels {
-		if errors.Is(err, sentinel) {
-			return true
-		}
-	}
-	return false
+	_, ok := publicTextOf(err)
+	return ok
 }
 
 // isNotFoundErr 判断是否为资源存在性错误（含 ORM 的 record not found）
