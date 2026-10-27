@@ -4,6 +4,7 @@ import (
 	pomodoroApp "naotodoserver/application/pomodoro"
 	pomodoroDto "naotodoserver/application/pomodoro/dto"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/utils/query"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -308,6 +309,12 @@ func (c *PomodoroController) ListPomodoroRecord(ctx *gin.Context) {
 			Code:    70031,
 			Message: err.Error(),
 		})
+		return
+	}
+	// 分页上限（SEC-01）：游标同步不使用 page，仅夹取 limit；分页列表才做深分页拒绝
+	if req.UpdatedAt != "" {
+		req.Limit = query.ClampLimit(req.Limit)
+	} else if !normalizePagination(ctx, &req.Page, &req.Limit, 70031) {
 		return
 	}
 	// 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序）
@@ -621,6 +628,12 @@ func (c *PomodoroController) ListPomodoro(ctx *gin.Context) {
 			Code:    70091,
 			Message: err.Error(),
 		})
+		return
+	}
+	// 分页上限（SEC-01）：游标同步不使用 page，仅夹取 limit；分页列表才做深分页拒绝
+	if req.UpdatedAt != "" {
+		req.Limit = query.ClampLimit(req.Limit)
+	} else if !normalizePagination(ctx, &req.Page, &req.Limit, 70091) {
 		return
 	}
 	// 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序）

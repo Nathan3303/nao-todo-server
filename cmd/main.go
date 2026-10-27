@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"runtime"
 	"time"
@@ -15,6 +16,12 @@ import (
 func main() {
 	// @step 0. 加载配置文件
 	conf.InitConfig()
+
+	// @step 0.1 安全默认值校验（SEC-02 / T561）：凭据为空/过短/仍为仓库默认值时拒绝启动。
+	// 必须在监听与初始化 DB/Redis 之前失败，避免带默认凭据对外提供服务。
+	if err := conf.Conf.ValidateSecurity(); err != nil {
+		log.Fatalf("%v", err)
+	}
 
 	// @step 1. 限制 Go 进程资源
 	runtime.GOMAXPROCS(conf.Conf.Server.GoMaxProc)

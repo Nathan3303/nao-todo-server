@@ -6,6 +6,7 @@ import (
 	projectApp "naotodoserver/application/project"
 	projectDto "naotodoserver/application/project/dto"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/utils/query"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -478,6 +479,8 @@ func (c *ProjectController) ListProject(ctx *gin.Context) {
 	if updatedAt := ctx.Query("updatedAt"); updatedAt != "" {
 		cursorId := ctx.Query("cursorId")
 		limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "100"))
+		// 分页上限（SEC-01）：limit 夹取到上限
+		limit = query.ClampLimit(limit)
 		res, err := c.projectApp.ListSync(ctx.Request.Context(), userId, updatedAt, cursorId, limit)
 		if err != nil {
 			Failure(ctx, types.ResponseData{

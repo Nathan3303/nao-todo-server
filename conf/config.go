@@ -113,7 +113,17 @@ type Server struct {
 	CertFile  string `yaml:"certFile"` // TLS 证书路径（空=HTTP）
 	KeyFile   string `yaml:"keyFile"`  // TLS 私钥路径（空=HTTP）
 	Debug     bool   `yaml:"debug"`    // 是否开启调试模式
+	// MaxRequestBodyBytes 全局请求体上限（字节，SEC-01）；<=0 时取默认 2 MB
+	MaxRequestBodyBytes int64 `yaml:"maxRequestBodyBytes"`
+	// MaxUploadBodyBytes 上传路由（头像）请求体上限（字节，SEC-01）；<=0 时取默认 5 MB
+	MaxUploadBodyBytes int64 `yaml:"maxUploadBodyBytes"`
 }
+
+// 请求体上限默认值（SEC-01 / T561）
+const (
+	DefaultMaxRequestBodyBytes int64 = 2 << 20 // 2 MB
+	DefaultMaxUploadBodyBytes  int64 = 5 << 20 // 5 MB（头像上传单独放宽）
+)
 
 type MySQL struct {
 	Host      string `yaml:"host"`
@@ -216,6 +226,31 @@ func overrideWithEnv() {
 	}
 	overrideSessionCleanupWithEnv(&Conf.Session.Cleanup)
 	Conf.Session.Cleanup.applyDefaults()
+	overrideBodyLimitsWithEnv(Conf.Server)
+}
+
+// overrideBodyLimitsWithEnv 用 MAX_REQUEST_BODY_BYTES / MAX_UPLOAD_BODY_BYTES 覆盖请求体上限，
+// 非法值（非正整数）忽略；缺省或 <=0 时取默认值（SEC-01 / T561）。
+func overrideBodyLimitsWithEnv(server *Server) {
+	if server == nil {
+		return
+	}
+	if v := os.Getenv("MAX_REQUEST_BODY_BYTES"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
+			server.MaxRequestBodyBytes = n
+		}
+	}
+	if v := os.Getenv("MAX_UPLOAD_BODY_BYTES"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
+			server.MaxUploadBodyBytes = n
+		}
+	}
+	if server.MaxRequestBodyBytes <= 0 {
+		server.MaxRequestBodyBytes = DefaultMaxRequestBodyBytes
+	}
+	if server.MaxUploadBodyBytes <= 0 {
+		server.MaxUploadBodyBytes = DefaultMaxUploadBodyBytes
+	}
 }
 
 // overrideSessionCleanupWithEnv 用 SESSION_CLEANUP_* 环境变量覆盖会话清理配置

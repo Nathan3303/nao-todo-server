@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	domaintypes "naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/derived"
+	"naotodoserver/infrastructure/utils/query"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -82,6 +84,39 @@ func syncErrOutcome(err error) string {
 	return types.SyncOutcomeError
 }
 
+// maxSyncPushBatch 单表单次推送条数上限（SEC-01 / T561），与列表分页 limit 上限同口径。
+const maxSyncPushBatch = query.MaxLimit
+
+// validateSyncPushBatch 校验各表单次条数上限（SEC-01 / T561）。
+// 覆盖全部 8 个数组（含 deletions）：超限返回含表名与实际条数的可读错误；
+// ≤ 上限的合法请求不受影响（向后兼容，不拒绝合法请求）。
+// @param req 批量推送请求
+// @return error 超限时非 nil
+func validateSyncPushBatch(req *types.SyncPushReq) error {
+	batches := []struct {
+		table string
+		count int
+	}{
+		{"tasks", len(req.Tasks)},
+		{"taskCheckItems", len(req.TaskCheckItems)},
+		{"taskComments", len(req.TaskComments)},
+		{"projects", len(req.Projects)},
+		{"tags", len(req.Tags)},
+		{"pomodoros", len(req.Pomodoros)},
+		{"pomodoroRecords", len(req.PomodoroRecords)},
+		{"deletions", len(req.Deletions)},
+	}
+	for _, batch := range batches {
+		if batch.count > maxSyncPushBatch {
+			return fmt.Errorf(
+				"%s 单次最多 %d 条，本次 %d 条",
+				batch.table, maxSyncPushBatch, batch.count,
+			)
+		}
+	}
+	return nil
+}
+
 // Push 批量推送控制器
 // @code 9001x
 // 多表批量 upsert（客户端预置 id 时走 LWW 幂等）+ 删除墓碑同步
@@ -112,6 +147,15 @@ func (c *SyncController) Push(ctx *gin.Context) {
 	}
 	if err := binding.JSON.BindBody(rawBody, &req); err != nil {
 		Failure(ctx, types.ResponseData{
+			Code:    90011,
+			Message: "参数错误",
+			Error:   err.Error(),
+		})
+		return
+	}
+	// 批量上限（SEC-01）：单表 > maxSyncPushBatch 直接 400，不再逐条落库（避免长事务/连接池耗尽）
+	if err := validateSyncPushBatch(&req); err != nil {
+		FailureByHttpStatus(ctx, http.StatusBadRequest, types.ResponseData{
 			Code:    90011,
 			Message: "参数错误",
 			Error:   err.Error(),
@@ -400,6 +444,15 @@ func (c *SyncController) Pull(ctx *gin.Context) {
 			Error:   err.Error(),
 		})
 		return
+	}
+	// 分页上限（SEC-01）：各表 limit 夹取到上限，避免单次拉取长时间占用连接池
+	for _, table := range []*types.SyncPullTableReq{
+		req.Tasks, req.TaskCheckItems, req.TaskComments, req.Projects,
+		req.Tags, req.Pomodoros, req.PomodoroRecords,
+	} {
+		if table != nil {
+			table.Limit = query.ClampLimit(table.Limit)
+		}
 	}
 	// 3. 按表增量拉取
 	data := make(map[string]types.SyncPullTableRes)

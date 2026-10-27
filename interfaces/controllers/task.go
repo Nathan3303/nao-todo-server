@@ -4,6 +4,7 @@ import (
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/utils/query"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
@@ -643,6 +644,12 @@ func (c *TaskController) ListTask(ctx *gin.Context) {
 			Code:    40051,
 			Message: err.Error(),
 		})
+		return
+	}
+	// 分页上限（SEC-01）：游标同步不使用 page，仅夹取 limit；分页列表才做深分页拒绝
+	if req.UpdatedAt != "" {
+		req.Limit = query.ClampLimit(req.Limit)
+	} else if !normalizePagination(ctx, &req.Page, &req.Limit, 40051) {
 		return
 	}
 	// 3. 增量同步：携带 updatedAt 游标时走增量路径（含软删墓碑、稳定排序）
