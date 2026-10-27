@@ -128,6 +128,17 @@ func Warn(args ...any) {
 	Logger.Warn(args...)
 }
 
+// WarnWithFields 输出带结构化字段的 warn 日志（JSON 格式下按字段落盘）
+// Logger 未初始化时静默返回：便于不依赖日志系统的单测直接复用业务代码
+// @param fields 结构化字段
+// @param msg 日志消息
+func WarnWithFields(fields map[string]any, msg string) {
+	if Logger == nil {
+		return
+	}
+	Logger.WithFields(logrus.Fields(fields)).Warn(msg)
+}
+
 // Warnf 输出格式化警告日志
 func Warnf(format string, args ...any) {
 	Logger.Warnf(format, args...)

@@ -26,4 +26,7 @@ var (
 	// ErrSortIdOverflow 组内排序值已耗尽（组内 max+1 超出 uint16 上界 65535）：
 	// 不写入任何数据，客户端应捕获后对本组重建（1000,2000,…）再重试。
 	ErrSortIdOverflow = errors.New("组内排序值已超出上限（65535），请对本组重建后重试")
+	// ErrLoginThrottled 账号因连续登录失败被临时暂停（SEC-04）；
+	// 对外响应必须与 ErrPasswordMismatch 完全一致，避免账号枚举。
+	ErrLoginThrottled = errors.New("登录尝试过于频繁")
 )

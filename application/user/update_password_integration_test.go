@@ -188,7 +188,7 @@ func TestUpdatePasswordRevokesOtherSessionsIntegration(t *testing.T) {
 	otherToken, currentToken := seedTwoSessions(t, userId)
 
 	identityDomain := service.NewIdentityDomain(
-		identity.NewJWTRepo(), itSessionRepo, nil,
+		identity.NewJWTRepo(), itSessionRepo, nil, nil,
 	)
 	auth := authApp.NewAuthApp(identityDomain, itUserRepo, itSessionRepo)
 	app := userApp.NewUserApp(itUserRepo, itSessionRepo, nil, nil)
@@ -233,7 +233,7 @@ func TestUpdatePasswordFailureKeepsSessionsIntegration(t *testing.T) {
 	otherToken, currentToken := seedTwoSessions(t, userId)
 
 	identityDomain := service.NewIdentityDomain(
-		identity.NewJWTRepo(), itSessionRepo, nil,
+		identity.NewJWTRepo(), itSessionRepo, nil, nil,
 	)
 	auth := authApp.NewAuthApp(identityDomain, itUserRepo, itSessionRepo)
 	app := userApp.NewUserApp(itUserRepo, itSessionRepo, nil, nil)

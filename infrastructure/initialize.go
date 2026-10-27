@@ -55,10 +55,13 @@ func LoadDomains() *application.Services {
 	// 初始化身份领域模型
 	userRepoInst := identityRepo.NewUserRepo(dbs.DB, cacheInst)
 	sessionRepoInst := identityRepo.NewSessionRepo(dbs.DB, cacheInst)
+	// 进程内兜底计数器：Redis 不可用时供限流（SEC-10）与账号节流（SEC-04）共用
+	localFallback := identityRepo.NewLocalFallback()
 	identityDomain := identityService.NewIdentityDomain(
 		identityRepo.NewJWTRepo(),
 		sessionRepoInst,
-		identityRepo.NewRateLimitRepo(dbs.RdsCli),
+		identityRepo.NewRateLimitRepo(dbs.RdsCli, localFallback),
+		identityRepo.NewLoginThrottleRepo(dbs.RdsCli, localFallback),
 	)
 	// 初始化通知发布端口(SSE Hub 适配)
 	notificationPublisher := sse.NewNotificationPublisher()
