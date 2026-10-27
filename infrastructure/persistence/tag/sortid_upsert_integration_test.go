@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"naotodoserver/domain/tag/valueobjects"
+	"naotodoserver/infrastructure/persistence/models"
 )
 
 func TestUpsertTagKeepsSortIdWhenAbsentIntegration(t *testing.T) {
 	cleanTags(t)
+	// 本包 TestMain 未初始化雪花节点（既有用例均显式给 Id）；本用例走 Id=0 创建路径，需先初始化
+	models.InitSnowflake(1)
 	ctx := context.Background()
 	const uid = int64(3012)
 	now := time.Now().UTC().Truncate(time.Millisecond)
