@@ -26,8 +26,12 @@ func (p *ProjectDomainImpl) Create(
 	ctx context.Context,
 	createProjectValueObject *valueobjects.CreateProject,
 ) (*entities.Project, domaintypes.UpsertResult, error) {
-	// 设置排序 ID
-	createProjectValueObject.SortId = p.repo.GetMaxSortId(ctx, createProjectValueObject.UserId) + 1
+	// 设置排序 ID（F-06 三态，R1）：显式 >0 原样保留（跨端手动排序的前提）；
+	// 未提供或显式 0（约定 0 = 未设置）⇒ 既有「新建即组末」语义（max+1）
+	if !createProjectValueObject.SortIdSet || createProjectValueObject.SortId == 0 {
+		maxSortId := p.repo.GetMaxSortId(ctx, createProjectValueObject.UserId)
+		createProjectValueObject.SortId = maxSortId + 1
+	}
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
 	projectEntity, result, err := p.repo.Upsert(
 		ctx,

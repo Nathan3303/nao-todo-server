@@ -33,8 +33,11 @@ func (tagDomain *TagDomainImpl) Create(
 	userId int64,
 	createTagValueObject *valueobjects.CreateTag,
 ) (*entities.Tag, domaintypes.UpsertResult, error) {
-	// 设置排序 ID
-	createTagValueObject.SortId = tagDomain.tagRepo.GetMaxSortId(ctx, userId) + 1
+	// 设置排序 ID（F-06 三态，R1）：显式 >0 原样保留（跨端手动排序的前提）；
+	// 未提供或显式 0（约定 0 = 未设置）⇒ 既有「新建即组末」语义（max+1）
+	if !createTagValueObject.SortIdSet || createTagValueObject.SortId == 0 {
+		createTagValueObject.SortId = tagDomain.tagRepo.GetMaxSortId(ctx, userId) + 1
+	}
 	// 幂等创建：客户端指定 id 时走 upsert（LWW + create 冲突检测）
 	tagEntity, result, err := tagDomain.tagRepo.Upsert(ctx, userId, createTagValueObject)
 	if err != nil {
