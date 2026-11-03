@@ -295,14 +295,14 @@ func TestCount_CheckItemCommentLifecycle(t *testing.T) {
 	}
 
 	// 删除检查项/评论 ⇒ 各自 -1
-	if err := s.taskApp.DeleteTaskCheckItem(context.Background(), testUserID, ciRes.Id); err != nil {
+	if _, _, err := s.taskApp.DeleteTaskCheckItem(context.Background(), testUserID, ciRes.Id, time.Time{}); err != nil {
 		t.Fatalf("DeleteTaskCheckItem: %v", err)
 	}
 	ci, _, _ = taskCountsOf(t, taskID)
 	if ci != 0 {
 		t.Fatalf("删除检查项后 check_item_count = %d, want 0", ci)
 	}
-	if err := s.taskApp.DeleteTaskComment(context.Background(), testUserID, cmRes.Id); err != nil {
+	if _, _, err := s.taskApp.DeleteTaskComment(context.Background(), testUserID, cmRes.Id, time.Time{}); err != nil {
 		t.Fatalf("DeleteTaskComment: %v", err)
 	}
 	_, cc, _ = taskCountsOf(t, taskID)
@@ -332,7 +332,7 @@ func TestCount_B2_UpdatedAtAdvances(t *testing.T) {
 
 	// 检查项删
 	baseline = backdateTask(t, taskID)
-	if err := s.taskApp.DeleteTaskCheckItem(ctx, testUserID, ci.Id); err != nil {
+	if _, _, err := s.taskApp.DeleteTaskCheckItem(ctx, testUserID, ci.Id, time.Time{}); err != nil {
 		t.Fatalf("DeleteTaskCheckItem: %v", err)
 	}
 	assertAdvanced(t, "检查项删", baseline, taskUpdatedAt(t, taskID))
@@ -365,7 +365,7 @@ func TestCount_B2_UpdatedAtAdvances_AllWritePaths(t *testing.T) {
 	assertAdvanced(t, "评论增", base, taskUpdatedAt(t, taskID))
 
 	base = backdateTask(t, taskID)
-	if err := s.taskApp.DeleteTaskComment(ctx, testUserID, comment.Id); err != nil {
+	if _, _, err := s.taskApp.DeleteTaskComment(ctx, testUserID, comment.Id, time.Time{}); err != nil {
 		t.Fatalf("DeleteTaskComment: %v", err)
 	}
 	assertAdvanced(t, "评论删", base, taskUpdatedAt(t, taskID))
@@ -400,7 +400,7 @@ func TestCount_B2_UpdatedAtAdvances_AllWritePaths(t *testing.T) {
 	assertAdvanced(t, "任务创建-项目A", baseA, projectUpdatedAt(t, testProjA))
 
 	baseA = backdateProject(t, testProjA)
-	if err := s.taskApp.DeleteTask(ctx, testUserID, idutil.FormatID(t2)); err != nil {
+	if _, _, err := s.taskApp.DeleteTask(ctx, testUserID, idutil.FormatID(t2), time.Time{}); err != nil {
 		t.Fatalf("DeleteTask: %v", err)
 	}
 	assertAdvanced(t, "任务删除-项目A", baseA, projectUpdatedAt(t, testProjA))
@@ -546,7 +546,7 @@ func TestCount_TombstoneRevive_CountsAsCreated(t *testing.T) {
 	insertProject(t, testProjA)
 	taskID := createTask(t, s, taskReq("T", testProjA, 0, nil))
 
-	if err := s.taskApp.DeleteTask(context.Background(), testUserID, idutil.FormatID(taskID)); err != nil {
+	if _, _, err := s.taskApp.DeleteTask(context.Background(), testUserID, idutil.FormatID(taskID), time.Time{}); err != nil {
 		t.Fatalf("DeleteTask: %v", err)
 	}
 	if got := projectTaskCount(t, testProjA); got != 0 {
@@ -649,7 +649,7 @@ func TestCount_ProjectCascadeDeleteRestore_Recount(t *testing.T) {
 		t.Fatalf("删除前项目A task_count = %d, want 3", got)
 	}
 
-	if err := s.projApp.Delete(context.Background(), testUserID, idutil.FormatID(testProjA)); err != nil {
+	if _, _, err := s.projApp.Delete(context.Background(), testUserID, idutil.FormatID(testProjA), time.Time{}); err != nil {
 		t.Fatalf("Project Delete: %v", err)
 	}
 	if got := projectTaskCount(t, testProjA); got != 0 {
@@ -848,7 +848,7 @@ func TestCount_UpsertRevive_NoDoubleDecrement(t *testing.T) {
 	}
 
 	// 删除 T（push 墓碑）：A -1、父P -1
-	if err := s.taskApp.DeleteTask(ctx, testUserID, idutil.FormatID(taskID)); err != nil {
+	if _, _, err := s.taskApp.DeleteTask(ctx, testUserID, idutil.FormatID(taskID), time.Time{}); err != nil {
 		t.Fatalf("DeleteTask: %v", err)
 	}
 	if got := projectTaskCount(t, testProjA); got != 1 {

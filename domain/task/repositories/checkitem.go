@@ -18,6 +18,14 @@ type TaskCheckItem interface {
 		checkItemId int64,
 	) (*entities.TaskCheckItem, error)
 
+	// GetCheckItemByIdIncludingDeleted 获取单个任务检查项信息（含软删墓碑）
+	// 同步删除裁决（T642 / A4）与 serverCurrent 需要读到墓碑行的 updated_at / deleted_at
+	GetCheckItemByIdIncludingDeleted(
+		ctx context.Context,
+		userId int64,
+		checkItemId int64,
+	) (*entities.TaskCheckItem, error)
+
 	// CreateCheckItem 创建任务检查项
 	CreateCheckItem(
 		ctx context.Context,

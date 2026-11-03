@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	taskApp "naotodoserver/application/task"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
@@ -155,7 +157,9 @@ func (c *CommentController) DeleteComment(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层删除评论
-	err := c.taskApp.DeleteTaskComment(ctx.Request.Context(), userId, commentId)
+	_, _, err := c.taskApp.DeleteTaskComment(
+		ctx.Request.Context(), userId, commentId, time.Time{},
+	)
 	if err != nil {
 		failWithErr(ctx, 60032, "删除评论失败", err)
 		return

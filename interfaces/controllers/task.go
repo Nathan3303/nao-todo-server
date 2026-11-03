@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
 	iCtx "naotodoserver/infrastructure/context"
@@ -518,7 +520,9 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层删除任务
-	err := c.taskApp.DeleteTask(ctx.Request.Context(), userId, taskId)
+	_, _, err := c.taskApp.DeleteTask(
+		ctx.Request.Context(), userId, taskId, time.Time{},
+	)
 	if err != nil {
 		failWithErrMessage(ctx, 40032, "删除待办任务失败", err)
 		return

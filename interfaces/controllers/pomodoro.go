@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	pomodoroApp "naotodoserver/application/pomodoro"
 	pomodoroDto "naotodoserver/application/pomodoro/dto"
 	iCtx "naotodoserver/infrastructure/context"
@@ -482,7 +484,9 @@ func (c *PomodoroController) DeletePomodoro(ctx *gin.Context) {
 		})
 		return
 	}
-	err := c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), userId, id)
+	_, _, err := c.pomodoroApp.DeletePomodoro(
+		ctx.Request.Context(), userId, id, time.Time{},
+	)
 	if err != nil {
 		failWithErr(ctx, 70102, "删除常用番茄工作失败", err)
 		return

@@ -145,6 +145,29 @@ func (projectRepo *ProjectRepoImpl) GetById(
 	return Model2Entity(&m), nil
 }
 
+// GetByIdIncludingDeleted 获取任务清单（含软删墓碑）
+// 同步删除裁决（T642 / A4）与 serverCurrent 需要墓碑行的 updated_at
+// @param ctx 上下文
+// @param userId 用户ID
+// @param projectId 任务清单ID
+// @return entities.Project 任务清单实体（可能为墓碑）
+// @return error 错误
+func (projectRepo *ProjectRepoImpl) GetByIdIncludingDeleted(
+	ctx context.Context,
+	userId int64,
+	projectId int64,
+) (*entities.Project, error) {
+	var m models.Project
+	tx := dbs.DBFrom(ctx, projectRepo.db).WithContext(ctx).
+		Unscoped().
+		Where("user_id = ? AND id = ?", userId, projectId).
+		First(&m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return Model2Entity(&m), nil
+}
+
 // Update 更新清单
 // @param ctx 上下文
 // @param userId 用户ID

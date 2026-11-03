@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	projectApp "naotodoserver/application/project"
 	projectDto "naotodoserver/application/project/dto"
 	tagApp "naotodoserver/application/tag"
+	tagDto "naotodoserver/application/tag/dto"
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
 	domerr "naotodoserver/domain/errors"
@@ -67,6 +69,89 @@ func syncOutcomeOf(result domaintypes.UpsertResult) string {
 	default:
 		return types.SyncOutcomeApplied
 	}
+}
+
+// syncDeleteOutcome 将删除裁决映射为同步回执语义（唯一映射点）：
+//   - base 不匹配 ⇒ stale（未写入）
+//   - 允许软删 / 已是墓碑幂等 ⇒ applied
+func syncDeleteOutcome(decision domaintypes.DeleteDecision) string {
+	if decision == domaintypes.DeleteStale {
+		return types.SyncOutcomeStale
+	}
+	return types.SyncOutcomeApplied
+}
+
+// syncUpsertResult 构造单条 upsert 回执；仅 stale / noop 附带 serverCurrent（T642）。
+// applied 不回当前行（避免体积），conflict / skipped / error 由调用方另行构造。
+func (c *SyncController) syncUpsertResult(
+	ctx context.Context,
+	userId int64,
+	table, id, serverUpdatedAt string,
+	upsert domaintypes.UpsertResult,
+) types.SyncResult {
+	outcome := syncOutcomeOf(upsert)
+	item := types.SyncResult{
+		Table: table, Id: id, ServerUpdatedAt: serverUpdatedAt, Outcome: outcome,
+	}
+	if outcome == types.SyncOutcomeStale || outcome == types.SyncOutcomeNoop {
+		item.ServerCurrent = c.serverCurrent(ctx, userId, table, id)
+	}
+	return item
+}
+
+// serverCurrent 读取单行的「sync 条目形状」（含墓碑），形状与 /sync/pull 同表条目同源。
+// 读取失败返回 nil ⇒ 回执省略该字段（additive，不影响 outcome）。
+func (c *SyncController) serverCurrent(
+	ctx context.Context,
+	userId int64,
+	table, id string,
+) any {
+	switch table {
+	case "tasks":
+		row, err := c.taskApp.GetTaskById(ctx, userId, id, true)
+		if err != nil {
+			return nil
+		}
+		return toGetTaskRes(row)
+	case "taskCheckItems":
+		row, err := c.checkItemApp.GetTaskCheckItemSyncRow(ctx, userId, id)
+		if err != nil {
+			return nil
+		}
+		return toGetTaskCheckItemRes(row)
+	case "taskComments":
+		row, err := c.commentApp.GetTaskCommentSyncRow(ctx, userId, id)
+		if err != nil {
+			return nil
+		}
+		return toTaskCommentRes(row)
+	case "projects":
+		row, err := c.projectApp.GetProjectSyncRow(ctx, userId, id)
+		if err != nil {
+			return nil
+		}
+		return toGetProjectRes(row)
+	case "tags":
+		row, err := c.tagApp.GetTagSyncRow(ctx, userId, id)
+		if err != nil {
+			return nil
+		}
+		return toGetTagRes(row)
+	case "pomodoros":
+		row, err := c.pomodoroApp.GetPomodoroSyncRow(ctx, userId, id)
+		if err != nil {
+			return nil
+		}
+		return toPomodoroRes(row)
+	case "pomodoroRecords":
+		// 只追加资源：无墓碑，按普通 Get 读取即可（读取失败 ⇒ 省略该字段）
+		row, err := c.pomodoroApp.Get(ctx, userId, &pomodoroDto.GetPomodoroRecordReq{Id: id})
+		if err != nil {
+			return nil
+		}
+		return toGetPomodoroRecordRes(row)
+	}
+	return nil
 }
 
 // basePtr 返回 sync 条目 baseUpdatedAt 的指针；空串返回 nil（= 未提供，回退 LWW）
@@ -219,10 +304,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "tasks", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "tasks", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 	for i := range req.TaskCheckItems {
 		itemReq := toCreateTaskCheckItemReq(&req.TaskCheckItems[i].CreateTaskCheckItemReq)
@@ -240,10 +324,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "taskCheckItems", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "taskCheckItems", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 	for i := range req.TaskComments {
 		commentReq := toCreateTaskCommentReq(&req.TaskComments[i].CreateTaskCommentReq)
@@ -259,10 +342,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "taskComments", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "taskComments", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 	for i := range req.Projects {
 		projectReq := toCreateProjectInputFromSync(&req.Projects[i])
@@ -276,10 +358,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "projects", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "projects", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 	for i := range req.Tags {
 		tagReq := toCreateTagInput(&req.Tags[i].CreateTagReq)
@@ -293,10 +374,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "tags", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "tags", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 	for i := range req.Pomodoros {
 		pomodoroReq := toCreatePomodoroInputFromSync(&req.Pomodoros[i])
@@ -310,10 +390,9 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "pomodoros", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "pomodoros", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 	for i := range req.PomodoroRecords {
 		recordReq := toCreatePomodoroRecordInput(req.PomodoroRecords[i].CreatePomodoroRecordReq)
@@ -327,32 +406,76 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
-			Table: "pomodoroRecords", Id: res.Id, ServerUpdatedAt: res.UpdatedAt,
-			Outcome: syncOutcomeOf(upsert),
-		})
+		results = append(results, c.syncUpsertResult(
+			ctx.Request.Context(), userId, "pomodoroRecords", res.Id, res.UpdatedAt, upsert,
+		))
 	}
 
 	// 3b. 护栏回填（T466 / DEF-44）：仅覆盖上面 7 表 create 结果（删除墓碑不参与）。
 	dropped.attach(results)
 
 	// 4. 删除墓碑（软删，服务端推进 updated_at）
+	// T642 / A4：携带 baseUpdatedAt 时按 OCC 裁决（不匹配 ⇒ stale，不写库、不产生新墓碑）；
+	// 缺省（老客户端）⇒ 现行「删除优先」，行为逐字不变（R-D）。
+	// 回执的 serverUpdatedAt 是**库中真实值**（删除后回读，R-20），不再是循环前的 now。
 	now := time.Now()
 	for _, d := range req.Deletions {
-		var err error
+		base, err := idutil.ParseBaseUpdatedAt(d.BaseUpdatedAt)
+		if err != nil {
+			// 逐条失败语义（与其余字段一致）：非法 base 只影响该条，不整批 400
+			results = append(results, types.SyncResult{
+				Table: d.Table, Id: d.Id, Error: syncErrInvalid, Outcome: types.SyncOutcomeError,
+			})
+			continue
+		}
+		var (
+			decision  domaintypes.DeleteDecision
+			current   any    // 库中当前行的 sync 条目形状（nil = 行不存在）
+			currentAt string // 库中当前行的真实 updated_at（RFC3339Milli）
+		)
 		switch d.Table {
 		case "tasks":
-			err = c.taskApp.DeleteTask(ctx.Request.Context(), userId, d.Id)
+			var row *taskDto.GetTaskRes
+			row, decision, err = c.taskApp.DeleteTask(ctx.Request.Context(), userId, d.Id, base)
+			if row != nil {
+				current, currentAt = toGetTaskRes(row), row.UpdatedAt
+			}
 		case "taskCheckItems":
-			err = c.checkItemApp.DeleteTaskCheckItem(ctx.Request.Context(), userId, d.Id)
+			var row *taskDto.GetTaskCheckItemRes
+			row, decision, err = c.checkItemApp.DeleteTaskCheckItem(
+				ctx.Request.Context(), userId, d.Id, base,
+			)
+			if row != nil {
+				current, currentAt = toGetTaskCheckItemRes(row), row.UpdatedAt
+			}
 		case "taskComments":
-			err = c.commentApp.DeleteTaskComment(ctx.Request.Context(), userId, d.Id)
+			var row *taskDto.TaskCommentRes
+			row, decision, err = c.commentApp.DeleteTaskComment(
+				ctx.Request.Context(), userId, d.Id, base,
+			)
+			if row != nil {
+				current, currentAt = toTaskCommentRes(row), row.UpdatedAt
+			}
 		case "projects":
-			err = c.projectApp.Delete(ctx.Request.Context(), userId, d.Id)
+			var row *projectDto.GetProjectRes
+			row, decision, err = c.projectApp.Delete(ctx.Request.Context(), userId, d.Id, base)
+			if row != nil {
+				current, currentAt = toGetProjectRes(row), row.UpdatedAt
+			}
 		case "tags":
-			err = c.tagApp.DeleteTag(ctx.Request.Context(), userId, d.Id)
+			var row *tagDto.GetTagRes
+			row, decision, err = c.tagApp.DeleteTag(ctx.Request.Context(), userId, d.Id, base)
+			if row != nil {
+				current, currentAt = toGetTagRes(row), row.UpdatedAt
+			}
 		case "pomodoros":
-			err = c.pomodoroApp.DeletePomodoro(ctx.Request.Context(), userId, d.Id)
+			var row *pomodoroDto.PomodoroRes
+			row, decision, err = c.pomodoroApp.DeletePomodoro(
+				ctx.Request.Context(), userId, d.Id, base,
+			)
+			if row != nil {
+				current, currentAt = toPomodoroRes(row), row.UpdatedAt
+			}
 		case "pomodoroRecords":
 			// PomodoroRecord 为只追加记录，无删除接口，忽略删除请求并明确标记
 			results = append(results, types.SyncResult{
@@ -369,10 +492,18 @@ func (c *SyncController) Push(ctx *gin.Context) {
 			})
 			continue
 		}
-		results = append(results, types.SyncResult{
+		item := types.SyncResult{
 			Table: d.Table, Id: d.Id, ServerUpdatedAt: idutil.FormatTimeMilli(now),
-			Outcome: types.SyncOutcomeApplied,
-		})
+			Outcome: syncDeleteOutcome(decision),
+		}
+		if current != nil {
+			item.ServerUpdatedAt = currentAt
+			// 删除 stale：回传服务端当前行（客户端据此展示败方内容 / 判伪 stale）
+			if decision == domaintypes.DeleteStale {
+				item.ServerCurrent = current
+			}
+		}
+		results = append(results, item)
 	}
 
 	// 5. 返回结果

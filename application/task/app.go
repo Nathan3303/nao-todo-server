@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"time"
 
 	"naotodoserver/application/task/dto"
 	"naotodoserver/domain/task/repositories"
@@ -21,7 +22,11 @@ type TaskApp interface {
 		req *dto.CreateTaskReq,
 	) (*dto.GetTaskRes, domaintypes.UpsertResult, error)
 	UpdateTask(ctx context.Context, userId int64, taskId string, req *dto.UpdateTaskReq) error
-	DeleteTask(ctx context.Context, userId int64, taskId string) error
+	// DeleteTask 删除任务（含 OCC 裁决，T642 / A4）：baseUpdatedAt 为零值 = 未提供（回退现行「删除优先」）
+	// 返回库中当前版本（sync 条目形状，含墓碑；行不存在时为 nil）与删除裁决
+	DeleteTask(
+		ctx context.Context, userId int64, taskId string, baseUpdatedAt time.Time,
+	) (*dto.GetTaskRes, domaintypes.DeleteDecision, error)
 	RestoreTask(ctx context.Context, userId int64, taskId string) error
 	CopyTask(ctx context.Context, userId int64, taskId string) (*dto.GetTaskRes, error)
 	ListTask(

@@ -57,6 +57,33 @@ func (tagRepo *TagRepositoryImpl) GetById(
 	return TagModel2Entity(tagModel), nil
 }
 
+// GetByIdIncludingDeleted 获取标签信息（含软删墓碑）
+// 同步删除裁决（T642 / A4）与 serverCurrent 需要墓碑行的 updated_at / deleted_at
+// @param ctx 上下文
+// @param userId 用户ID
+// @param tagId 标签ID
+// @return entities.Tag 标签实体（可能为墓碑）
+// @return error 错误
+func (tagRepo *TagRepositoryImpl) GetByIdIncludingDeleted(
+	ctx context.Context,
+	userId int64,
+	tagId int64,
+) (*entities.Tag, error) {
+	var findCond models.Tag
+	findCond.UserId = userId
+	findCond.ID = tagId
+	tagModel := &models.Tag{}
+	// 走 dbs.DBFrom：事务内调用需读到同事务未提交的删除（回读真实 updated_at）
+	tx := dbs.DBFrom(ctx, tagRepo.db).WithContext(ctx).
+		Unscoped().
+		Where(&findCond).
+		First(tagModel)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return TagModel2Entity(tagModel), nil
+}
+
 // Create 创建标签
 // @param ctx 上下文
 // @param userId 用户ID

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	taskApp "naotodoserver/application/task"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
@@ -161,7 +163,9 @@ func (c *EventController) DeleteEvent(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层删除检查事项
-	err := c.taskApp.DeleteTaskCheckItem(ctx.Request.Context(), userId, eventId)
+	_, _, err := c.taskApp.DeleteTaskCheckItem(
+		ctx.Request.Context(), userId, eventId, time.Time{},
+	)
 	if err != nil {
 		failWithErr(ctx, 50032, "删除检查事项失败", err)
 		return

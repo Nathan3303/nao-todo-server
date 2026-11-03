@@ -3,6 +3,7 @@ package controllers
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	tagApp "naotodoserver/application/tag"
 	tagDto "naotodoserver/application/tag/dto"
@@ -283,7 +284,9 @@ func (c *TagController) DeleteTag(ctx *gin.Context) {
 		return
 	}
 	// 3. 删除标签
-	err := c.tagApp.DeleteTag(ctx.Request.Context(), userId, tagId)
+	_, _, err := c.tagApp.DeleteTag(
+		ctx.Request.Context(), userId, tagId, time.Time{},
+	)
 	if err != nil {
 		failWithErr(ctx, 30032, "删除标签失败", err)
 		return

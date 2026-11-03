@@ -3,9 +3,17 @@ package types
 // --- SyncPush ---
 
 // SyncDeletion 删除墓碑：按表名 + id 软删
+// BaseUpdatedAt 为客户端持有的服务端版本快照（RFC3339Milli，additive，T642 / A4）：
+//   - 缺省/空 ⇒ 回退现行「删除优先」（老客户端行为逐字不变，R-D）
+//   - 与库中 updated_at 相等 ⇒ 软删
+//   - 与库中 updated_at 不等 ⇒ outcome=stale，不写库、不产生新墓碑
+//   - 已是墓碑（同向重复删除）⇒ outcome=applied，幂等不推进 updated_at
+//
+// ⛔ pomodoroRecords（只追加）仍忽略删除请求并回 skipped。
 type SyncDeletion struct {
-	Table string `json:"table" binding:"required"`
-	Id    string `json:"id" binding:"required"`
+	Table         string  `json:"table" binding:"required"`
+	Id            string  `json:"id" binding:"required"`
+	BaseUpdatedAt *string `json:"baseUpdatedAt,omitempty"`
 }
 
 // SyncPushReq 批量推送请求
@@ -108,6 +116,11 @@ type SyncResult struct {
 	// outcome 语义**不变**（仍可能是 applied）。⚠️ 客户端需消费本字段才能阻止「出队即已同步」；
 	// 服务端只负责如实上报，不在本端拒绝或改写 outcome。
 	DroppedFields []string `json:"droppedFields,omitempty"`
+	// ServerCurrent 服务端当前行（additive，T642）：**仅 stale / noop 返回**（含删除 stale），
+	// applied 不回（避免体积）。形状与 /sync/pull 同表条目**完全一致**（同一套 converter，
+	// 含 updatedAt 与 deletedAt），供客户端「保留服务端版本」/判伪 stale/删除败方内容使用。
+	// 为 nil 时省略 ⇒ 旧客户端对新增字段无感（R-D 向后兼容）。
+	ServerCurrent any `json:"serverCurrent,omitempty"`
 }
 
 // 单条推送结果语义常量（SyncResult.Outcome）

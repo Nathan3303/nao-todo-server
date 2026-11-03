@@ -4,14 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/project/dto"
 	domerr "naotodoserver/domain/errors"
+	"naotodoserver/domain/project/entities"
 	"naotodoserver/domain/project/repositories"
 	"naotodoserver/domain/project/service"
 	taskRepo "naotodoserver/domain/task/repositories"
 	domaintypes "naotodoserver/domain/types"
+
+	"gorm.io/gorm"
 )
 
 // NewProjectApp 创建任务清单应用层实例
@@ -131,19 +135,43 @@ func (app *projectAppImpl) Update(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param projectId 任务清单 ID
+// @param baseUpdatedAt 客户端回传的 OCC base（零值 = 未提供 ⇒ 回退现行「删除优先」）
+// @return 库中当前版本（sync 条目形状，含墓碑）
+// @return 删除裁决（不匹配 = DeleteStale，其余 = 已删除/幂等）
 // @return error 验证失败返回错误，否则返回 nil
 func (app *projectAppImpl) Delete(
 	ctx context.Context,
 	userId int64,
 	projectId string,
-) error {
+	baseUpdatedAt time.Time,
+) (*dto.GetProjectRes, domaintypes.DeleteDecision, error) {
 	// 获取清单 ID
 	projectIdInt64, err := idutil.ParseID(projectId)
 	if err != nil {
-		return domerr.ErrInvalidProjectID
+		return nil, domaintypes.DeleteApply, domerr.ErrInvalidProjectID
 	}
 
+	var current *entities.Project
+	decision := domaintypes.DeleteApply
 	err = app.txManager.Do(ctx, func(ctx context.Context) error {
+		// 0. OCC 裁决（T642 / A4）：清单的删除标记是 deactived_at（GORM deleted_at 不参与），
+		// Stale/幂等均不写库 —— 尤其不得级联删掉清单下的任务
+		existing, err := app.repo.GetByIdIncludingDeleted(ctx, userId, projectIdInt64)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("删除任务清单失败")
+			}
+			return err
+		}
+		decision = domaintypes.DecideDelete(
+			existing.UpdatedAt,
+			existing.DeactivedAt.Valid,
+			baseUpdatedAt,
+		)
+		if decision != domaintypes.DeleteApply {
+			current = existing
+			return nil
+		}
 		// 1. 删除 Project（领域服务负责 Project 自身 + Preference）
 		if err := app.projectDomain.Delete(ctx, userId, projectIdInt64); err != nil {
 			return errors.New("删除任务清单失败")
@@ -154,16 +182,46 @@ func (app *projectAppImpl) Delete(
 			return err
 		}
 		// 3. E7：批量重算项目任务数（写最终值，不逐事件）
-		return app.publishCountEvent(ctx, domaintypes.CountEvent{
+		if err := app.publishCountEvent(ctx, domaintypes.CountEvent{
 			Type:      domaintypes.CountEventTaskCountRecounted,
 			UserId:    userId,
 			ProjectId: projectIdInt64,
-		})
+		}); err != nil {
+			return err
+		}
+		// 4. 回传真实写入的 updated_at（R-20）：事务内回读库中行
+		written, err := app.repo.GetByIdIncludingDeleted(ctx, userId, projectIdInt64)
+		if err != nil {
+			return err
+		}
+		current = written
+		return nil
 	})
 	if err != nil {
-		return err
+		return nil, decision, err
 	}
-	return nil
+	if current == nil {
+		return nil, decision, nil
+	}
+	return ProjectEntityToGetRes(current), decision, nil
+}
+
+// GetProjectSyncRow 读取单行任务清单的同步形状（含墓碑）
+// 供 /sync/push 的 serverCurrent（stale / noop 败方内容）使用；形状与 /sync/pull 条目一致
+func (app *projectAppImpl) GetProjectSyncRow(
+	ctx context.Context,
+	userId int64,
+	projectId string,
+) (*dto.GetProjectRes, error) {
+	projectIdInt64, err := idutil.ParseID(projectId)
+	if err != nil {
+		return nil, domerr.ErrInvalidProjectID
+	}
+	projectEntity, err := app.repo.GetByIdIncludingDeleted(ctx, userId, projectIdInt64)
+	if err != nil {
+		return nil, fmt.Errorf("GetProjectSyncRow: %w", err)
+	}
+	return ProjectEntityToGetRes(projectEntity), nil
 }
 
 // 恢复任务清单
