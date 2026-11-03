@@ -6,6 +6,7 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 type CommentController struct {
@@ -155,7 +156,9 @@ func (c *CommentController) DeleteComment(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用服务层删除评论
-	err := c.taskApp.DeleteTaskComment(ctx.Request.Context(), userId, commentId)
+	_, _, err := c.taskApp.DeleteTaskComment(
+		ctx.Request.Context(), userId, commentId, time.Time{},
+	)
 	if err != nil {
 		failWithErr(ctx, 60032, "删除评论失败", err)
 		return

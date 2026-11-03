@@ -14,6 +14,14 @@ type TaskComment interface {
 	// GetCommentById 获取单个任务评论信息
 	GetCommentById(ctx context.Context, userId, commentId int64) (*entities.TaskComment, error)
 
+	// GetCommentByIdIncludingDeleted 获取单个任务评论信息（含软删墓碑）
+	// 同步删除裁决（T642 / A4）与 serverCurrent 需要读到墓碑行的 updated_at / deleted_at
+	GetCommentByIdIncludingDeleted(
+		ctx context.Context,
+		userId int64,
+		commentId int64,
+	) (*entities.TaskComment, error)
+
 	// CreateComment 创建任务评论
 	CreateComment(
 		ctx context.Context,

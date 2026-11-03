@@ -28,6 +28,10 @@ type Pomodoro interface {
 	// GetById 根据 ID 获取常用番茄工作
 	GetById(ctx context.Context, userId int64, id int64) (*entities.Pomodoro, error)
 
+	// GetByIdIncludingDeleted 根据 ID 获取常用番茄工作（含软删墓碑）
+	// 同步删除裁决（T642 / A4）与 serverCurrent 需要读到墓碑行的 updated_at / deleted_at
+	GetByIdIncludingDeleted(ctx context.Context, userId int64, id int64) (*entities.Pomodoro, error)
+
 	// Update 更新常用番茄工作（PATCH 语义）
 	Update(
 		ctx context.Context,

@@ -399,28 +399,41 @@ func (taskApp *TaskAppImpl) UpdateTask(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param taskId 任务 ID
-// @return 删除任务响应
+// @param baseUpdatedAt 客户端回传的 OCC base（零值 = 未提供 ⇒ 回退现行「删除优先」）
+// @return 库中当前版本（sync 条目形状，含墓碑；行不存在时为 nil）
+// @return 删除裁决（applied / 幂等 = DeleteApply|DeleteIdempotent，不匹配 = DeleteStale）
 // @return error 错误信息
 func (taskApp *TaskAppImpl) DeleteTask(
 	ctx context.Context,
 	userId int64,
 	taskId string,
-) error {
+	baseUpdatedAt time.Time,
+) (*dto.GetTaskRes, domaintypes.DeleteDecision, error) {
 	// 1. 转换待办任务 ID
 	taskId64, err := idutil.ParseID(taskId)
 	if err != nil {
-		return domerr.ErrInvalidTaskID
+		return nil, domaintypes.DeleteApply, domerr.ErrInvalidTaskID
 	}
-	// 2. 写路径包事务：读旧值（E4/E3 需 projectId/parentTaskId）+ 软删 + 计数事件
+	// 2. 写路径包事务：OCC 裁决 + 软删 + 计数事件 + 回读真实版本（T642 / A4）
+	var current *entities.Task
+	decision := domaintypes.DeleteApply
 	err = taskApp.txManager.Do(ctx, func(ctx context.Context) error {
-		taskEntity, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, false)
+		// 2.1 OCC 裁决：含墓碑读取当前版本（读取放在删除前，Stale/幂等均不写库、不产生新墓碑）
+		existing, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, true)
 		if err != nil {
-			// 不存在或已软删 ⇒ no-op（墓碑重放防重复递减，口径 §6e 删除即出局）
+			// 不存在 ⇒ no-op（墓碑重放防重复递减，口径 §6e 删除即出局）
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil
 			}
 			return err
 		}
+		decision = domaintypes.DecideDelete(existing.UpdatedAt, existing.DeletedAt.Valid, baseUpdatedAt)
+		if decision != domaintypes.DeleteApply {
+			current = existing
+			return nil
+		}
+		// 2.2 读旧值（E4/E3 需 projectId/parentTaskId）+ 软删 + 计数事件
+		taskEntity := existing
 		if err := taskApp.taskRepo.Delete(ctx, userId, taskId64); err != nil {
 			return err
 		}
@@ -444,12 +457,22 @@ func (taskApp *TaskAppImpl) DeleteTask(
 				return err
 			}
 		}
+		// 2.3 回传真实写入的 updated_at（R-20）：事务内回读库中行，
+		// 不复用删除前的 now —— 仓储自行 time.Now()，两者可差 1ms ⇒ 客户端写回 base 后永久 stale
+		written, err := taskApp.taskRepo.GetById(ctx, userId, taskId64, true)
+		if err != nil {
+			return err
+		}
+		current = written
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("DeleteTask: %w", err)
+		return nil, decision, fmt.Errorf("DeleteTask: %w", err)
 	}
-	return nil
+	if current == nil {
+		return nil, decision, nil
+	}
+	return TaskEntityToGetRes(current), decision, nil
 }
 
 // RestoreTask 恢复任务
@@ -792,39 +815,63 @@ func (impl *TaskAppImpl) UpdateTaskCheckItem(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param itemId 检查事项 ID
+// @param baseUpdatedAt 客户端回传的 OCC base（零值 = 未提供 ⇒ 回退现行「删除优先」）
+// @return 库中当前版本（sync 条目形状，含墓碑；行不存在时为 nil）
+// @return 删除裁决（不匹配 = DeleteStale，其余 = 已删除/幂等）
 // @return error 错误信息
 func (impl *TaskAppImpl) DeleteTaskCheckItem(
 	ctx context.Context,
 	userId int64,
 	itemId string,
-) error {
+	baseUpdatedAt time.Time,
+) (*dto.GetTaskCheckItemRes, domaintypes.DeleteDecision, error) {
 	id64, err := idutil.ParseID(itemId)
 	if err != nil {
-		return domerr.ErrInvalidItemID
+		return nil, domaintypes.DeleteApply, domerr.ErrInvalidItemID
 	}
-	// 写路径包事务：读所属任务 + 软删 + E1 计数事件（不存在/已删 ⇒ no-op）
+	// 写路径包事务：OCC 裁决 + 读所属任务 + 软删 + E1 计数事件 + 回读真实版本
+	var current *entities.TaskCheckItem
+	decision := domaintypes.DeleteApply
 	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
-		item, err := impl.checkItemRepo.GetCheckItemById(ctx, userId, id64)
+		item, err := impl.checkItemRepo.GetCheckItemByIdIncludingDeleted(ctx, userId, id64)
 		if err != nil {
+			// 不存在 ⇒ no-op（旧行为）
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil
 			}
 			return err
 		}
+		decision = domaintypes.DecideDelete(item.UpdatedAt, item.DeletedAt.Valid, baseUpdatedAt)
+		if decision != domaintypes.DeleteApply {
+			current = item
+			return nil
+		}
 		if err := impl.checkItemRepo.DeleteCheckItem(ctx, userId, id64); err != nil {
 			return err
 		}
-		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
+		if err := impl.publishCountEvent(ctx, domaintypes.CountEvent{
 			Type:   domaintypes.CountEventCheckItemChanged,
 			UserId: userId,
 			TaskId: int64(item.TaskId),
 			Delta:  -1,
-		})
+		}); err != nil {
+			return err
+		}
+		// 回传真实写入的 updated_at（R-20）：事务内回读，不复用删除前的 now
+		written, err := impl.checkItemRepo.GetCheckItemByIdIncludingDeleted(ctx, userId, id64)
+		if err != nil {
+			return err
+		}
+		current = written
+		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("DeleteCheckItem: %w", err)
+		return nil, decision, fmt.Errorf("DeleteCheckItem: %w", err)
 	}
-	return nil
+	if current == nil {
+		return nil, decision, nil
+	}
+	return TaskCheckItemEntityToGetRes(current), decision, nil
 }
 
 // ListTaskCheckItems 获取检查事项列表
@@ -847,6 +894,29 @@ func (impl *TaskAppImpl) ListTaskCheckItems(
 		return nil, fmt.Errorf("ListCheckItems: %w", err)
 	}
 	return TaskCheckItemEntitiesToReses(items), nil
+}
+
+// GetTaskCheckItemSyncRow 读取单行检查项的同步形状（含墓碑）
+// 供 /sync/push 的 serverCurrent（stale / noop 败方内容）使用；形状与 /sync/pull 条目一致
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param itemId 检查事项 ID
+// @return 同步形状当前行（含墓碑）
+// @return error 错误信息
+func (impl *TaskAppImpl) GetTaskCheckItemSyncRow(
+	ctx context.Context,
+	userId int64,
+	itemId string,
+) (*dto.GetTaskCheckItemRes, error) {
+	id64, err := idutil.ParseID(itemId)
+	if err != nil {
+		return nil, domerr.ErrInvalidItemID
+	}
+	item, err := impl.checkItemRepo.GetCheckItemByIdIncludingDeleted(ctx, userId, id64)
+	if err != nil {
+		return nil, fmt.Errorf("GetTaskCheckItemSyncRow: %w", err)
+	}
+	return TaskCheckItemEntityToGetRes(item), nil
 }
 
 // ListTaskCheckItemSync 增量同步检查事项列表
@@ -1021,39 +1091,63 @@ func (impl *TaskAppImpl) UpdateTaskComment(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param commentId 评论 ID
+// @param baseUpdatedAt 客户端回传的 OCC base（零值 = 未提供 ⇒ 回退现行「删除优先」）
+// @return 库中当前版本（sync 条目形状，含墓碑；行不存在时为 nil）
+// @return 删除裁决（不匹配 = DeleteStale，其余 = 已删除/幂等）
 // @return error 错误信息
 func (impl *TaskAppImpl) DeleteTaskComment(
 	ctx context.Context,
 	userId int64,
 	commentId string,
-) error {
+	baseUpdatedAt time.Time,
+) (*dto.TaskCommentRes, domaintypes.DeleteDecision, error) {
 	id64, err := idutil.ParseID(commentId)
 	if err != nil {
-		return domerr.ErrInvalidCommentID
+		return nil, domaintypes.DeleteApply, domerr.ErrInvalidCommentID
 	}
-	// 写路径包事务：读所属任务 + 软删 + E2 计数事件（不存在/已删 ⇒ no-op）
+	// 写路径包事务：OCC 裁决 + 读所属任务 + 软删 + E2 计数事件 + 回读真实版本
+	var current *entities.TaskComment
+	decision := domaintypes.DeleteApply
 	err = impl.txManager.Do(ctx, func(ctx context.Context) error {
-		comment, err := impl.commentRepo.GetCommentById(ctx, userId, id64)
+		comment, err := impl.commentRepo.GetCommentByIdIncludingDeleted(ctx, userId, id64)
 		if err != nil {
+			// 不存在 ⇒ no-op（旧行为）
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil
 			}
 			return err
 		}
+		decision = domaintypes.DecideDelete(comment.UpdatedAt, comment.DeletedAt.Valid, baseUpdatedAt)
+		if decision != domaintypes.DeleteApply {
+			current = comment
+			return nil
+		}
 		if err := impl.commentRepo.DeleteComment(ctx, userId, id64); err != nil {
 			return err
 		}
-		return impl.publishCountEvent(ctx, domaintypes.CountEvent{
+		if err := impl.publishCountEvent(ctx, domaintypes.CountEvent{
 			Type:   domaintypes.CountEventCommentChanged,
 			UserId: userId,
 			TaskId: int64(comment.TaskId),
 			Delta:  -1,
-		})
+		}); err != nil {
+			return err
+		}
+		// 回传真实写入的 updated_at（R-20）：事务内回读，不复用删除前的 now
+		written, err := impl.commentRepo.GetCommentByIdIncludingDeleted(ctx, userId, id64)
+		if err != nil {
+			return err
+		}
+		current = written
+		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("DeleteComment: %w", err)
+		return nil, decision, fmt.Errorf("DeleteComment: %w", err)
 	}
-	return nil
+	if current == nil {
+		return nil, decision, nil
+	}
+	return TaskCommentEntityToRes(current), decision, nil
 }
 
 // ListTaskComments 获取评论列表
@@ -1080,6 +1174,29 @@ func (impl *TaskAppImpl) ListTaskComments(
 
 // ListTaskCommentSync 增量同步评论列表
 // 包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页
+// GetTaskCommentSyncRow 读取单行评论的同步形状（含墓碑）
+// 供 /sync/push 的 serverCurrent（stale / noop 败方内容）使用；形状与 /sync/pull 条目一致
+// @param ctx 上下文
+// @param userId 用户 ID
+// @param commentId 评论 ID
+// @return 同步形状当前行（含墓碑）
+// @return error 错误信息
+func (impl *TaskAppImpl) GetTaskCommentSyncRow(
+	ctx context.Context,
+	userId int64,
+	commentId string,
+) (*dto.TaskCommentRes, error) {
+	id64, err := idutil.ParseID(commentId)
+	if err != nil {
+		return nil, domerr.ErrInvalidCommentID
+	}
+	comment, err := impl.commentRepo.GetCommentByIdIncludingDeleted(ctx, userId, id64)
+	if err != nil {
+		return nil, fmt.Errorf("GetTaskCommentSyncRow: %w", err)
+	}
+	return TaskCommentEntityToRes(comment), nil
+}
+
 func (impl *TaskAppImpl) ListTaskCommentSync(
 	ctx context.Context,
 	userId int64,

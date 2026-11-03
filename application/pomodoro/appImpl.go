@@ -2,7 +2,9 @@ package pomodoro
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/pomodoro/dto"
@@ -10,6 +12,8 @@ import (
 	"naotodoserver/domain/pomodoro/repositories"
 	"naotodoserver/domain/pomodoro/service"
 	domaintypes "naotodoserver/domain/types"
+
+	"gorm.io/gorm"
 )
 
 // NewPomodoroApp 创建专注应用应用层实例
@@ -198,20 +202,65 @@ func (app *PomodoroAppImpl) UpdatePomodoro(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param id 常用番茄工作 ID
+// @param baseUpdatedAt 客户端回传的 OCC base（零值 = 未提供 ⇒ 回退现行「删除优先」）
+// @return 库中当前版本（sync 条目形状，含墓碑；行不存在时为 nil）
+// @return 删除裁决（不匹配 = DeleteStale，其余 = 已删除/幂等）
 // @return error 错误
 func (app *PomodoroAppImpl) DeletePomodoro(
 	ctx context.Context,
 	userId int64,
 	id string,
-) error {
+	baseUpdatedAt time.Time,
+) (*dto.PomodoroRes, domaintypes.DeleteDecision, error) {
 	idInt64, err := idutil.ParseID(id)
 	if err != nil {
-		return domerr.ErrInvalidPomodoroID
+		return nil, domaintypes.DeleteApply, domerr.ErrInvalidPomodoroID
+	}
+	decision := domaintypes.DeleteApply
+	// OCC 裁决（T642 / A4）：含墓碑读取当前版本；Stale/幂等不写库、不产生新墓碑
+	existing, err := app.pomodoroRepo.GetByIdIncludingDeleted(ctx, userId, idInt64)
+	if err != nil {
+		// 不存在 ⇒ 保持旧行为（软删 0 行无错，回执 applied）
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, decision, fmt.Errorf("pomodoro.GetById: %w", err)
+		}
+	} else {
+		decision = domaintypes.DecideDelete(
+			existing.UpdatedAt,
+			existing.DeletedAt.Valid,
+			baseUpdatedAt,
+		)
+		if decision != domaintypes.DeleteApply {
+			return PomodoroEntityToGetRes(existing), decision, nil
+		}
 	}
 	if err := app.pomodoroRepo.Delete(ctx, userId, idInt64); err != nil {
-		return fmt.Errorf("pomodoro.Delete: %w", err)
+		return nil, decision, fmt.Errorf("pomodoro.Delete: %w", err)
 	}
-	return nil
+	// 回传真实写入的 updated_at（R-20）：删除后回读库中行，不复用删除前的 now
+	written, err := app.pomodoroRepo.GetByIdIncludingDeleted(ctx, userId, idInt64)
+	if err != nil {
+		return nil, decision, fmt.Errorf("pomodoro.GetById: %w", err)
+	}
+	return PomodoroEntityToGetRes(written), decision, nil
+}
+
+// GetPomodoroSyncRow 读取单行常用番茄工作的同步形状（含墓碑）
+// 供 /sync/push 的 serverCurrent（stale / noop 败方内容）使用；形状与 /sync/pull 条目一致
+func (app *PomodoroAppImpl) GetPomodoroSyncRow(
+	ctx context.Context,
+	userId int64,
+	id string,
+) (*dto.PomodoroRes, error) {
+	idInt64, err := idutil.ParseID(id)
+	if err != nil {
+		return nil, domerr.ErrInvalidPomodoroID
+	}
+	pomodoroEntity, err := app.pomodoroRepo.GetByIdIncludingDeleted(ctx, userId, idInt64)
+	if err != nil {
+		return nil, fmt.Errorf("GetPomodoroSyncRow: %w", err)
+	}
+	return PomodoroEntityToGetRes(pomodoroEntity), nil
 }
 
 // ArchivePomodoro 归档常用番茄工作

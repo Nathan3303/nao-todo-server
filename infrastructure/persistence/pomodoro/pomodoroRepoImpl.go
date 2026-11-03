@@ -121,6 +121,25 @@ func (r *PomodoroRepoImpl) GetById(
 	return PomodoroModel2Entity(&m), nil
 }
 
+// GetByIdIncludingDeleted 根据 ID 获取常用番茄工作（含软删墓碑）
+// 同步删除裁决（T642 / A4）与 serverCurrent 需要墓碑行的 updated_at / deleted_at
+func (r *PomodoroRepoImpl) GetByIdIncludingDeleted(
+	ctx context.Context,
+	userId int64,
+	id int64,
+) (*entities.Pomodoro, error) {
+	var m models.Pomodoro
+	tx := r.db.
+		WithContext(ctx).
+		Unscoped().
+		Where("id = ? AND user_id = ?", id, userId).
+		First(&m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return PomodoroModel2Entity(&m), nil
+}
+
 // Update 更新常用番茄工作（PATCH 语义）
 func (r *PomodoroRepoImpl) Update(
 	ctx context.Context,

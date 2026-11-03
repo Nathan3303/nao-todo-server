@@ -19,6 +19,10 @@ type TagRepository interface {
 	// @return error 错误
 	GetById(ctx context.Context, userId int64, tagId int64) (*entities.Tag, error)
 
+	// GetByIdIncludingDeleted 获取标签（含软删墓碑）
+	// 同步删除裁决（T642 / A4）与 serverCurrent 需要读到墓碑行的 updated_at / deleted_at
+	GetByIdIncludingDeleted(ctx context.Context, userId int64, tagId int64) (*entities.Tag, error)
+
 	// ListSync 增量同步列表：包含软删墓碑，(updated_at, id) keyset 游标稳定排序分页（不缓存）
 	ListSync(
 		ctx context.Context,

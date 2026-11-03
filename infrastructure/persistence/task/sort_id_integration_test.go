@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"naotodoserver/application/idutil"
 	taskDto "naotodoserver/application/task/dto"
@@ -49,7 +50,7 @@ func updateTaskViaApp(t *testing.T, s *fullStack, taskID int64, req *taskDto.Upd
 // deleteTaskViaApp 经 app 层软删任务（墓碑）
 func deleteTaskViaApp(t *testing.T, s *fullStack, taskID int64) {
 	t.Helper()
-	if err := s.taskApp.DeleteTask(context.Background(), testUserID, idutil.FormatID(taskID)); err != nil {
+	if _, _, err := s.taskApp.DeleteTask(context.Background(), testUserID, idutil.FormatID(taskID), time.Time{}); err != nil {
 		t.Fatalf("DeleteTask: %v", err)
 	}
 }

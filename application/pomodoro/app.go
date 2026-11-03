@@ -2,6 +2,7 @@ package pomodoro
 
 import (
 	"context"
+	"time"
 
 	"naotodoserver/application/pomodoro/dto"
 	"naotodoserver/domain/pomodoro/repositories"
@@ -65,8 +66,14 @@ type PomodoroApp interface {
 		req *dto.UpdatePomodoroReq,
 	) error
 
-	// DeletePomodoro 删除常用番茄工作（软删除）
-	DeletePomodoro(ctx context.Context, userId int64, id string) error
+	// DeletePomodoro 删除常用番茄工作（软删除；含 OCC 裁决，T642 / A4）
+	// 返回库中当前版本（sync 条目形状）与裁决
+	DeletePomodoro(
+		ctx context.Context, userId int64, id string, baseUpdatedAt time.Time,
+	) (*dto.PomodoroRes, domaintypes.DeleteDecision, error)
+
+	// GetPomodoroSyncRow 读取单行常用番茄工作的同步形状（含墓碑），供 serverCurrent 使用
+	GetPomodoroSyncRow(ctx context.Context, userId int64, id string) (*dto.PomodoroRes, error)
 
 	// ArchivePomodoro 归档常用番茄工作
 	ArchivePomodoro(ctx context.Context, userId int64, id string) error

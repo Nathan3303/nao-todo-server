@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"time"
 
 	"naotodoserver/application/task/dto"
 	domaintypes "naotodoserver/domain/types"
@@ -18,7 +19,14 @@ type TaskCommentApp interface {
 	UpdateTaskComment(
 		ctx context.Context, userId int64, commentId string, req *dto.UpdateTaskCommentReq,
 	) error
-	DeleteTaskComment(ctx context.Context, userId int64, commentId string) error
+	// DeleteTaskComment 删除评论（含 OCC 裁决，T642 / A4）：返回库中当前版本与裁决
+	DeleteTaskComment(
+		ctx context.Context, userId int64, commentId string, baseUpdatedAt time.Time,
+	) (*dto.TaskCommentRes, domaintypes.DeleteDecision, error)
+	// GetTaskCommentSyncRow 读取单行评论的同步形状（含墓碑），供 serverCurrent 使用
+	GetTaskCommentSyncRow(
+		ctx context.Context, userId int64, commentId string,
+	) (*dto.TaskCommentRes, error)
 	ListTaskComments(
 		ctx context.Context, userId int64, taskId string,
 	) ([]*dto.TaskCommentRes, error)

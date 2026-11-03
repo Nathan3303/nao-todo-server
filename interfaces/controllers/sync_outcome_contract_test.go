@@ -292,3 +292,43 @@ func TestSyncPushOutcome_NoOutcomeFieldRegression(t *testing.T) {
 		t.Fatal("serverTime 不应为空（既有字段语义不得破坏）")
 	}
 }
+
+// --- T642 serverCurrent：fake 读取「库中当前行」的方法（仅 stale / noop 会被调用） ---
+
+func (f *fakeTaskApp) GetTaskById(
+	_ context.Context, _ int64, id string, _ bool,
+) (*taskDto.GetTaskRes, error) {
+	return &taskDto.GetTaskRes{Id: id, UpdatedAt: "2026-09-24T00:00:00Z"}, nil
+}
+
+func (f *fakeCheckItemApp) GetTaskCheckItemSyncRow(
+	_ context.Context, _ int64, id string,
+) (*taskDto.GetTaskCheckItemRes, error) {
+	return &taskDto.GetTaskCheckItemRes{Id: id, UpdatedAt: "2026-09-24T00:00:00Z"}, nil
+}
+
+func (f *fakeCommentApp) GetTaskCommentSyncRow(
+	_ context.Context, _ int64, id string,
+) (*taskDto.TaskCommentRes, error) {
+	return &taskDto.TaskCommentRes{Id: id, UpdatedAt: "2026-09-24T00:00:00Z"}, nil
+}
+
+func (f *fakeProjectApp) GetProjectSyncRow(
+	_ context.Context, _ int64, id string,
+) (*projectDto.GetProjectRes, error) {
+	return &projectDto.GetProjectRes{Id: id, UpdatedAt: "2026-09-24T00:00:00Z"}, nil
+}
+
+func (f *fakeTagApp) GetTagSyncRow(
+	_ context.Context, _ int64, id string,
+) (*tagDto.GetTagRes, error) {
+	return &tagDto.GetTagRes{Id: id, UpdatedAt: "2026-09-24T00:00:00Z"}, nil
+}
+
+func (f *fakePomodoroApp) GetPomodoroSyncRow(
+	_ context.Context, _ int64, id string,
+) (*pomodoroDto.PomodoroRes, error) {
+	return &pomodoroDto.PomodoroRes{
+		ResBase: pomodoroDto.ResBase{Id: id, UpdatedAt: "2026-09-24T00:00:00Z"},
+	}, nil
+}

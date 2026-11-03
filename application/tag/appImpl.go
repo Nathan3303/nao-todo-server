@@ -2,15 +2,20 @@ package tag
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"naotodoserver/application/idutil"
 	"naotodoserver/application/tag/dto"
 	domerr "naotodoserver/domain/errors"
+	"naotodoserver/domain/tag/entities"
 	"naotodoserver/domain/tag/repositories"
 	"naotodoserver/domain/tag/service"
 	taskService "naotodoserver/domain/task/service"
 	"naotodoserver/domain/types"
+
+	"gorm.io/gorm"
 )
 
 // NewTagApp 创建标签应用层实例
@@ -124,31 +129,84 @@ func (tagApp *TagAppImpl) UpdateTag(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param tagId 标签 ID
+// @param baseUpdatedAt 客户端回传的 OCC base（零值 = 未提供 ⇒ 回退现行「删除优先」）
+// @return 库中当前版本（sync 条目形状，含墓碑；行不存在时为 nil）
+// @return 删除裁决（不匹配 = DeleteStale，其余 = 已删除/幂等）
 // @return error
 func (tagApp *TagAppImpl) DeleteTag(
 	ctx context.Context,
 	userId int64,
 	tagId string,
-) error {
+	baseUpdatedAt time.Time,
+) (*dto.GetTagRes, types.DeleteDecision, error) {
 	// 转换 tagId
 	tagId64, err := idutil.ParseID(tagId)
 	if err != nil {
-		return domerr.ErrInvalidTagID
+		return nil, types.DeleteApply, domerr.ErrInvalidTagID
 	}
-	// 事务内级联删除：软删标签 + 从所有任务中移除该标签引用
+	var current *entities.Tag
+	decision := types.DeleteApply
+	// 事务内级联删除：OCC 裁决 + 软删标签 + 从所有任务中移除该标签引用
 	err = tagApp.txManager.Do(ctx, func(ctx context.Context) error {
+		// 0. OCC 裁决（T642 / A4）：含墓碑读取当前版本；Stale/幂等不写库、不产生新墓碑
+		existing, err := tagApp.tagRepo.GetByIdIncludingDeleted(ctx, userId, tagId64)
+		if err != nil {
+			// 不存在 ⇒ 保持旧行为（软删 0 行无错，回执 applied）
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		} else {
+			decision = types.DecideDelete(
+				existing.UpdatedAt,
+				existing.DeletedAt.Valid,
+				baseUpdatedAt,
+			)
+			if decision != types.DeleteApply {
+				current = existing
+				return nil
+			}
+		}
 		// 1. 软删标签（领域服务负责 Tag 自身 + Preference）
 		if err := tagApp.tagDomain.Delete(ctx, userId, tagId64); err != nil {
 			return err
 		}
 		// 2. 级联清理任务中的标签引用（推进任务 updated_at，增量同步可发现）
-		return tagApp.taskDomain.RemoveTagFromTasks(ctx, userId, tagId64)
+		if err := tagApp.taskDomain.RemoveTagFromTasks(ctx, userId, tagId64); err != nil {
+			return err
+		}
+		// 3. 回传真实写入的 updated_at（R-20）：事务内回读库中行
+		written, err := tagApp.tagRepo.GetByIdIncludingDeleted(ctx, userId, tagId64)
+		if err != nil {
+			return err
+		}
+		current = written
+		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("tag.Delete: %w", err)
+		return nil, decision, fmt.Errorf("tag.Delete: %w", err)
 	}
-	// 转换结果并返回
-	return nil
+	if current == nil {
+		return nil, decision, nil
+	}
+	return TagEntityToGetRes(current), decision, nil
+}
+
+// GetTagSyncRow 读取单行标签的同步形状（含墓碑）
+// 供 /sync/push 的 serverCurrent（stale / noop 败方内容）使用；形状与 /sync/pull 条目一致
+func (tagApp *TagAppImpl) GetTagSyncRow(
+	ctx context.Context,
+	userId int64,
+	tagId string,
+) (*dto.GetTagRes, error) {
+	tagId64, err := idutil.ParseID(tagId)
+	if err != nil {
+		return nil, domerr.ErrInvalidTagID
+	}
+	tagEntity, err := tagApp.tagRepo.GetByIdIncludingDeleted(ctx, userId, tagId64)
+	if err != nil {
+		return nil, fmt.Errorf("GetTagSyncRow: %w", err)
+	}
+	return TagEntityToGetRes(tagEntity), nil
 }
 
 // ListTag 获取所有标签信息

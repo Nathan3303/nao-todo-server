@@ -514,6 +514,30 @@ func (repo *TaskRepoImpl) GetCheckItemById(
 	return TaskCheckItemModel2Entity(&m), nil
 }
 
+// GetCheckItemByIdIncludingDeleted 获取单个任务检查项信息（含软删墓碑）
+// 同步删除裁决（T642 / A4）与 serverCurrent 需要墓碑行的 updated_at / deleted_at
+// @param ctx 上下文
+// @param userId 用户ID
+// @param checkItemId 检查项ID
+// @return 检查项实体（可能为墓碑）
+// @return error 错误
+func (repo *TaskRepoImpl) GetCheckItemByIdIncludingDeleted(
+	ctx context.Context,
+	userId int64,
+	checkItemId int64,
+) (*entities.TaskCheckItem, error) {
+	var m models.TaskCheckItem
+	tx := dbs.DBFrom(ctx, repo.db).
+		WithContext(ctx).
+		Unscoped().
+		Where("id = ? AND user_id = ?", checkItemId, userId).
+		First(&m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return TaskCheckItemModel2Entity(&m), nil
+}
+
 // CreateCheckItem 创建任务检查项
 // @param ctx 上下文
 // @param userId 用户ID
@@ -768,6 +792,30 @@ func (repo *TaskRepoImpl) GetCommentById(
 	tx := dbs.DBFrom(ctx, repo.db).
 		WithContext(ctx).
 		Model(&models.TaskComment{}).
+		Where("user_id = ? AND id = ?", userId, commentId).
+		First(&m)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+	return TaskCommentModel2Entity(&m), nil
+}
+
+// GetCommentByIdIncludingDeleted 获取单个任务评论信息（含软删墓碑）
+// 同步删除裁决（T642 / A4）与 serverCurrent 需要墓碑行的 updated_at / deleted_at
+// @param ctx 上下文
+// @param userId 用户ID
+// @param commentId 评论ID
+// @return 评论实体（可能为墓碑）
+// @return error 错误
+func (repo *TaskRepoImpl) GetCommentByIdIncludingDeleted(
+	ctx context.Context,
+	userId int64,
+	commentId int64,
+) (*entities.TaskComment, error) {
+	var m models.TaskComment
+	tx := dbs.DBFrom(ctx, repo.db).
+		WithContext(ctx).
+		Unscoped().
 		Where("user_id = ? AND id = ?", userId, commentId).
 		First(&m)
 	if tx.Error != nil {

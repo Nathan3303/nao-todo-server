@@ -2,6 +2,7 @@ package tag
 
 import (
 	"context"
+	"time"
 
 	"naotodoserver/application/tag/dto"
 	"naotodoserver/domain/tag/repositories"
@@ -30,8 +31,13 @@ type TagApp interface {
 		updateTagReq *dto.UpdateTagReq,
 	) error
 
-	// 删除标签
-	DeleteTag(ctx context.Context, userId int64, tagId string) error
+	// 删除标签（含 OCC 裁决，T642 / A4）：返回库中当前版本（sync 条目形状）与裁决
+	DeleteTag(
+		ctx context.Context, userId int64, tagId string, baseUpdatedAt time.Time,
+	) (*dto.GetTagRes, types.DeleteDecision, error)
+
+	// GetTagSyncRow 读取单行标签的同步形状（含墓碑），供 serverCurrent 使用
+	GetTagSyncRow(ctx context.Context, userId int64, tagId string) (*dto.GetTagRes, error)
 
 	// 获取标签列表
 	ListTag(ctx context.Context, userId int64) ([]*dto.GetTagRes, error)

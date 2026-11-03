@@ -8,6 +8,7 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 type TaskController struct {
@@ -518,7 +519,9 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 		return
 	}
 	// 3. 调用应用层删除任务
-	err := c.taskApp.DeleteTask(ctx.Request.Context(), userId, taskId)
+	_, _, err := c.taskApp.DeleteTask(
+		ctx.Request.Context(), userId, taskId, time.Time{},
+	)
 	if err != nil {
 		failWithErrMessage(ctx, 40032, "删除待办任务失败", err)
 		return

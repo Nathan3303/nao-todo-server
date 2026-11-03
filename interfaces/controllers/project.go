@@ -10,6 +10,7 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 type ProjectController struct {
@@ -297,7 +298,9 @@ func (c *ProjectController) DeleteProject(ctx *gin.Context) {
 		return
 	}
 	// 2. 调用应用函数 - 删除清单
-	err := c.projectApp.Delete(ctx.Request.Context(), userId, projectId)
+	_, _, err := c.projectApp.Delete(
+		ctx.Request.Context(), userId, projectId, time.Time{},
+	)
 	if err != nil {
 		failWithErr(ctx, 20032, "删除清单失败", err)
 		return
