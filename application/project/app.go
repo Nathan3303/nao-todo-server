@@ -34,7 +34,9 @@ type ProjectApp interface {
 	) (*dto.GetProjectRes, domaintypes.DeleteDecision, error)
 
 	// GetProjectSyncRow 读取单行任务清单的同步形状（含墓碑），供 serverCurrent 使用
-	GetProjectSyncRow(ctx context.Context, userId int64, projectId string) (*dto.GetProjectRes, error)
+	GetProjectSyncRow(
+		ctx context.Context, userId int64, projectId string,
+	) (*dto.GetProjectRes, error)
 
 	// 恢复任务清单
 	Restore(ctx context.Context, userId int64, projectId string) error

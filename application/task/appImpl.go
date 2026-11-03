@@ -427,7 +427,9 @@ func (taskApp *TaskAppImpl) DeleteTask(
 			}
 			return err
 		}
-		decision = domaintypes.DecideDelete(existing.UpdatedAt, existing.DeletedAt.Valid, baseUpdatedAt)
+		decision = domaintypes.DecideDelete(
+			existing.UpdatedAt, existing.DeletedAt.Valid, baseUpdatedAt,
+		)
 		if decision != domaintypes.DeleteApply {
 			current = existing
 			return nil
@@ -1117,7 +1119,9 @@ func (impl *TaskAppImpl) DeleteTaskComment(
 			}
 			return err
 		}
-		decision = domaintypes.DecideDelete(comment.UpdatedAt, comment.DeletedAt.Valid, baseUpdatedAt)
+		decision = domaintypes.DecideDelete(
+			comment.UpdatedAt, comment.DeletedAt.Valid, baseUpdatedAt,
+		)
 		if decision != domaintypes.DeleteApply {
 			current = comment
 			return nil

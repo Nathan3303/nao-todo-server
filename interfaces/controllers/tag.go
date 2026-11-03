@@ -3,6 +3,7 @@ package controllers
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	tagApp "naotodoserver/application/tag"
 	tagDto "naotodoserver/application/tag/dto"
@@ -11,7 +12,6 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 type TagController struct {

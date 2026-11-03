@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"time"
 
 	projectApp "naotodoserver/application/project"
 	projectDto "naotodoserver/application/project/dto"
@@ -10,7 +11,6 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 type ProjectController struct {

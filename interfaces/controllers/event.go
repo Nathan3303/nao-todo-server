@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"time"
+
 	taskApp "naotodoserver/application/task"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 type EventController struct {

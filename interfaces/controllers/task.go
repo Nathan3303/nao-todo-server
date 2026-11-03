@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	taskApp "naotodoserver/application/task"
 	taskDto "naotodoserver/application/task/dto"
 	iCtx "naotodoserver/infrastructure/context"
@@ -8,7 +10,6 @@ import (
 	"naotodoserver/interfaces/types"
 
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 type TaskController struct {
