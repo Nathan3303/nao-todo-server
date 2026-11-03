@@ -55,7 +55,9 @@ jobs:
           # 与本地实测版本一致（v2.14.0，built with go1.27.0）
           version: v2.14.0
           # 保留 v1 配置里的 run.timeout: 5m 意图（v2 schema 已移除该字段）
-          args: --timeout=5m
+          # T655：关闭同类问题截断（默认 --max-same-issues=3 / --max-issues-per-linter=50 会漏报），
+          #       否则红单条数不可信（T647 实测：只报 6 条、实际 9 条）
+          args: --timeout=5m --max-same-issues=0 --max-issues-per-linter=0
 
   integration:
     name: integration
