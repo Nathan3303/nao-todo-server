@@ -91,3 +91,61 @@ func TestSessionCleanupDefaults(t *testing.T) {
 		t.Fatal("缺省配置下 enabled 应保持 false（不删除任何行）")
 	}
 }
+
+var syncRateLimitEnvKeys = []string{
+	"SYNC_RATE_LIMIT_IP_PER_MIN",
+	"SYNC_RATE_LIMIT_PULL_PER_MIN",
+	"SYNC_RATE_LIMIT_PUSH_PER_MIN",
+}
+
+// clearSyncRateLimitEnv 清空相关环境变量，保证用例互不影响
+func clearSyncRateLimitEnv(t *testing.T) {
+	t.Helper()
+	for _, key := range syncRateLimitEnvKeys {
+		t.Setenv(key, "")
+	}
+}
+
+// TestSyncRateLimitDefaults #88 / C2：缺省配额 120 / 12 / 24（拆桶不放宽 IP 地板）
+func TestSyncRateLimitDefaults(t *testing.T) {
+	clearSyncRateLimitEnv(t)
+
+	sl := &SyncRateLimit{}
+	sl.applyDefaults()
+
+	if sl.IPPerMin != 120 || sl.PullPerMin != 12 || sl.PushPerMin != 24 {
+		t.Fatalf("默认配额 = %d/%d/%d, want 120/12/24", sl.IPPerMin, sl.PullPerMin, sl.PushPerMin)
+	}
+}
+
+// TestSyncRateLimitEnvOverride #88 / C2：两桶配额显式可配且互不影响
+func TestSyncRateLimitEnvOverride(t *testing.T) {
+	clearSyncRateLimitEnv(t)
+	t.Setenv("SYNC_RATE_LIMIT_IP_PER_MIN", "60")
+	t.Setenv("SYNC_RATE_LIMIT_PULL_PER_MIN", "30")
+	t.Setenv("SYNC_RATE_LIMIT_PUSH_PER_MIN", "40")
+
+	sl := &SyncRateLimit{}
+	overrideSyncRateLimitWithEnv(sl)
+	sl.applyDefaults()
+
+	if sl.IPPerMin != 60 || sl.PullPerMin != 30 || sl.PushPerMin != 40 {
+		t.Fatalf("覆盖后配额 = %d/%d/%d, want 60/30/40", sl.IPPerMin, sl.PullPerMin, sl.PushPerMin)
+	}
+}
+
+// TestSyncRateLimitInvalidEnvFallsBack 非法值（0 / 负数 / 非数字）不生效，按默认值兜底
+func TestSyncRateLimitInvalidEnvFallsBack(t *testing.T) {
+	clearSyncRateLimitEnv(t)
+	t.Setenv("SYNC_RATE_LIMIT_IP_PER_MIN", "0")
+	t.Setenv("SYNC_RATE_LIMIT_PULL_PER_MIN", "-3")
+	t.Setenv("SYNC_RATE_LIMIT_PUSH_PER_MIN", "abc")
+
+	sl := &SyncRateLimit{}
+	overrideSyncRateLimitWithEnv(sl)
+	sl.applyDefaults()
+
+	if sl.IPPerMin != 120 || sl.PullPerMin != 12 || sl.PushPerMin != 24 {
+		t.Fatalf("非法值应回落默认，实际 %d/%d/%d", sl.IPPerMin, sl.PullPerMin, sl.PushPerMin)
+	}
+}

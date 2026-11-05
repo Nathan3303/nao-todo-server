@@ -18,6 +18,44 @@ type Config struct {
 	Uploads  *Uploads   `yaml:"uploads"`
 	Reminder Reminder   `yaml:"reminder"` // 值类型：配置缺省时取零值，等价于「停用字段改写」
 	Session  Session    `yaml:"session"`  // 值类型：配置缺省时取零值，等价于「停用会话清理」
+	Sync     Sync       `yaml:"sync"`     // 值类型：缺省配额由 applyDefaults 兜底
+}
+
+// Sync 同步接口配置（nao-todo-server#88）
+type Sync struct {
+	RateLimit SyncRateLimit `yaml:"rateLimit"`
+}
+
+// SyncRateLimit /sync 限流配额（每分钟，固定 60 秒窗口）。
+// 鉴权前保留 IP 粗桶作滥用地板；鉴权后按 userId 分 pull / push 两桶，
+// 让频繁 pull 不挤占 push 配额，且两桶配额独立可配（#88 / C2）。
+type SyncRateLimit struct {
+	IPPerMin   int64 `yaml:"ipPerMin"`   // 鉴权前 IP 粗桶（未鉴权洪水地板）
+	PullPerMin int64 `yaml:"pullPerMin"` // 已鉴权用户 pull 桶
+	PushPerMin int64 `yaml:"pushPerMin"` // 已鉴权用户 push 桶
+}
+
+// /sync 限流默认配额（#88 / T656 C2）。
+// pull 12：A′ 30s = 2/min/端 × 3 端 = 6/min，留 2 倍余量；
+// push 24：覆盖 2s 防抖下的合法编辑峰值；
+// IP 120：仅作鉴权前滥用地板，不随账号数放大。
+const (
+	DefaultSyncIPPerMin   int64 = 120
+	DefaultSyncPullPerMin int64 = 12
+	DefaultSyncPushPerMin int64 = 24
+)
+
+// applyDefaults 缺省或非法配额回落到默认值（显式配置优先）。
+func (sl *SyncRateLimit) applyDefaults() {
+	if sl.IPPerMin <= 0 {
+		sl.IPPerMin = DefaultSyncIPPerMin
+	}
+	if sl.PullPerMin <= 0 {
+		sl.PullPerMin = DefaultSyncPullPerMin
+	}
+	if sl.PushPerMin <= 0 {
+		sl.PushPerMin = DefaultSyncPushPerMin
+	}
 }
 
 // Session 会话相关配置
@@ -227,6 +265,31 @@ func overrideWithEnv() {
 	overrideSessionCleanupWithEnv(&Conf.Session.Cleanup)
 	Conf.Session.Cleanup.applyDefaults()
 	overrideBodyLimitsWithEnv(Conf.Server)
+	overrideSyncRateLimitWithEnv(&Conf.Sync.RateLimit)
+	Conf.Sync.RateLimit.applyDefaults()
+}
+
+// overrideSyncRateLimitWithEnv 用 SYNC_RATE_LIMIT_* 环境变量覆盖 /sync 配额，
+// 非法值（非正整数）忽略；缺省或 <=0 时由 applyDefaults 取默认值（#88 / C2）。
+func overrideSyncRateLimitWithEnv(sl *SyncRateLimit) {
+	if sl == nil {
+		return
+	}
+	if v := os.Getenv("SYNC_RATE_LIMIT_IP_PER_MIN"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
+			sl.IPPerMin = n
+		}
+	}
+	if v := os.Getenv("SYNC_RATE_LIMIT_PULL_PER_MIN"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
+			sl.PullPerMin = n
+		}
+	}
+	if v := os.Getenv("SYNC_RATE_LIMIT_PUSH_PER_MIN"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
+			sl.PushPerMin = n
+		}
+	}
 }
 
 // overrideBodyLimitsWithEnv 用 MAX_REQUEST_BODY_BYTES / MAX_UPLOAD_BODY_BYTES 覆盖请求体上限，
