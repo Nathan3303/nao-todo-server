@@ -64,3 +64,15 @@ session:
         maxBatches: 20
         # 进程启动后立即执行一次（仅部署验证窗口临时开，验证完改回 false）
         runOnStart: false
+
+sync:
+    # /sync 限流配额（每分钟，固定 60 秒窗口；nao-todo-server#88 / T656 C2）。
+    # 鉴权前保留 IP 粗桶作未鉴权滥用地板；鉴权后按 userId 分 pull / push 两桶。
+    # 缺省或非法（<=0）时回落到 120 / 12 / 24；也可用 SYNC_RATE_LIMIT_*_PER_MIN 覆盖。
+    rateLimit:
+        # 鉴权前 IP 粗桶（tag=sync-ip）
+        ipPerMin: 120
+        # 已鉴权用户 pull 桶（tag=sync-pull）：30s×2/min×3 端×2 倍余量
+        pullPerMin: 12
+        # 已鉴权用户 push 桶（tag=sync-push）：覆盖 2s 防抖峰值
+        pushPerMin: 24
