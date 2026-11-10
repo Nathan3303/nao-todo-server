@@ -2,6 +2,7 @@ package identity
 
 import (
 	"database/sql"
+	"errors"
 
 	"naotodoserver/domain/identity/entities"
 	"naotodoserver/domain/identity/valueobjects"
@@ -118,11 +119,23 @@ func SessionEntity2Model(e *entities.UserSession) *models.UserSession {
 }
 
 // Claims2JWTClaimsVO 转换 JWT 断言为 JWT 令牌对象
-func Claims2JWTClaimsVO(c *auth.Claims) *valueobjects.JWTClaims {
+// @param c JWT 断言
+// @return JWT 令牌对象（出错时为 nil）
+// @return error 断言为空 / 缺少有效签发时间（iat）时返回显式错误
+// @note DEF-157：修复前直接解引用 `c.IssuedAt.Time`，遇到缺失 `iat` 的断言会 panic
+// ⇒ gin Recovery 后返回 500 空体。手工构造的合法签名 token 即可触发，故必须显式报错。
+func Claims2JWTClaimsVO(c *auth.Claims) (*valueobjects.JWTClaims, error) {
+	if c == nil {
+		return nil, errors.New("JWT 断言为空")
+	}
+	// iat 缺失（非 nil 判定）或显式 null（解析成零值时间）都视为非法断言
+	if c.IssuedAt == nil || c.IssuedAt.IsZero() {
+		return nil, errors.New("JWT 断言缺少有效的签发时间（iat）")
+	}
 	var vo valueobjects.JWTClaims
 	vo.UserId = c.Id
 	vo.Email = c.Payload
 	vo.IssuedAt = c.IssuedAt.Time
 	vo.Issuer = c.Issuer
-	return &vo
+	return &vo, nil
 }

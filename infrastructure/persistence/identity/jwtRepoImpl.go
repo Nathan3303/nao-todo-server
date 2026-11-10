@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"naotodoserver/domain/identity/repositories"
@@ -44,5 +45,11 @@ func (r *JWTRepoImpl) Parse(
 	if err != nil {
 		return nil, err
 	}
-	return Claims2JWTClaimsVO(claims), nil
+	// 断言字段残缺（如缺 iat / iat 为 null）显式报错：调用方已把解析错误归为凭证类，
+	// 不得解引用 nil 指针 panic（DEF-157）
+	claimsVO, err := Claims2JWTClaimsVO(claims)
+	if err != nil {
+		return nil, fmt.Errorf("jwtRepo.Parse: %w", err)
+	}
+	return claimsVO, nil
 }
