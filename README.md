@@ -222,6 +222,20 @@ server:
 
 详细设计见 `docs/plans/data-sync/`。
 
+## 测试
+
+```bash
+# 单元测试（不依赖外部服务）
+go test ./... -count=1
+
+# 集成测试（需本机 MySQL + Redis；连接串可用 NAO_TEST_MYSQL_DSN / NAO_TEST_REDIS_* 覆盖）
+go test -tags integration -p 1 -count=1 ./...
+```
+
+> **集成测试必须带 `-p 1`**：各包的 `TestMain` 会各自 `AutoMigrate` / 清表**同一个测试库**，
+> 并行（默认 `-p` = CPU 核数）时会互相建表、互相删数据 ⇒ 出现 `Table 'users' already exists`、
+> `record not found` 这类**假红**（单包单跑全过，CI 与本地都按 `-p 1` 跑）。
+
 ## 部署
 
 ### 直接部署

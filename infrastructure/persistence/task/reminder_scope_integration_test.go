@@ -6,12 +6,35 @@ package task
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
 	"naotodoserver/domain/task/entities"
 	"naotodoserver/domain/types"
 )
+
+// dbNow 读取数据库当前时间，作为「到期 / 未到期」的造数基准。
+//
+// DEF-158：生产侧筛选条件是 SQL `remind_at <= NOW()`，`NOW()` 用的是 **DB 会话时区**
+// （本机 MySQL 为 Asia/Shanghai），而入库时间由驱动按 DSN 的 `loc=UTC` 格式化。
+// 若测试用 `time.Now().UTC()` 造数，两类时间就错开了时区偏移（本机 8 小时）
+// ⇒ 明明是「1 小时后到期」的任务也会被 `NOW()` 判为已到期。
+//
+// 这里改用 DB 自己的当前时钟（读出 → 原样写回）：驱动读、写两端都用 `loc`，往返是**同一个 wall-clock**，
+// 故造出的 due/future 与 `NOW()` 同域。判据语义与生产完全一致（就是「相对数据库当前时间」），
+// 断言一个都没有改动、也没有放宽。
+func dbNow(t *testing.T) time.Time {
+	t.Helper()
+	var current sql.NullTime
+	if err := testDB.Raw("SELECT NOW()").Scan(&current).Error; err != nil {
+		t.Fatalf("读取数据库当前时间: %v", err)
+	}
+	if !current.Valid {
+		t.Fatal("读取数据库当前时间为 NULL")
+	}
+	return current.Time.Truncate(time.Second)
+}
 
 // TestGetDueReminders_ExcludesInactive 到期扫描排除维度扫描：
 // state=done / archived_at 非空 / given_up_at 非空 / 未到期 / remind_at NULL / 软删
@@ -21,7 +44,8 @@ func TestGetDueReminders_ExcludesInactive(t *testing.T) {
 	ctx := context.Background()
 	const userID = 1910
 
-	now := time.Now().UTC().Truncate(time.Second)
+	// 以数据库时钟为基准造数（DEF-158：不能用 time.Now() 造，否则与 SQL NOW() 错时区）
+	now := dbNow(t)
 	due := now.Add(-time.Minute) // 已到期
 	future := now.Add(time.Hour) // 未到期
 
