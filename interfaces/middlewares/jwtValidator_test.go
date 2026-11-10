@@ -3,12 +3,12 @@ package middlewares
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	authApp "naotodoserver/application/auth"
+	domerr "naotodoserver/domain/errors"
 	domaintypes "naotodoserver/domain/types"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +24,7 @@ func (f *fakeAuthApp) Validate(_ context.Context, token string) (domaintypes.Use
 	if f.valid[token] {
 		return domaintypes.UserID(42), nil
 	}
-	return 0, errors.New("invalid token")
+	return 0, domerr.ErrTokenExpired
 }
 
 // newJWTTestEngine 注册与线上同形的路由：/api 组 + 头像路由 + 前缀边界路由

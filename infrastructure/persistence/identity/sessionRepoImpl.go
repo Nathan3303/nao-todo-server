@@ -13,7 +13,6 @@ import (
 	"naotodoserver/domain/types"
 	iCtx "naotodoserver/infrastructure/context"
 	"naotodoserver/infrastructure/ip2region"
-	"naotodoserver/infrastructure/logging"
 	"naotodoserver/infrastructure/persistence/cache"
 	"naotodoserver/infrastructure/persistence/models"
 
@@ -112,7 +111,14 @@ func (sr *sessionRepoImpl) assertSessionVisible(
 	token string,
 ) error {
 	// 1. 走与鉴权相同的读路径（GORM 软删作用域 + IsValid 过期判定）
-	if session := sr.FindByUserIdAndToken(ctx, userId, token); session.IsValid() {
+	session, err := sr.FindByUserIdAndToken(ctx, userId, token)
+	if err != nil {
+		return fmt.Errorf(
+			"会话写入后不可见（回读查询失败）: user_id=%d token_len=%d: %w",
+			int64(userId), len(token), err,
+		)
+	}
+	if session.IsValid() {
 		return nil
 	}
 	// 2. 失败路径诊断：raw 查询绕过软删作用域，区分具体原因（便于线上一次定位）
@@ -121,7 +127,7 @@ func (sr *sessionRepoImpl) assertSessionVisible(
 		DeletedAt sql.NullTime
 		ExpiredAt sql.NullTime
 	}
-	err := sr.db.WithContext(ctx).Raw(
+	err = sr.db.WithContext(ctx).Raw(
 		"SELECT id, deleted_at, expired_at FROM user_sessions "+
 			"WHERE user_id = ? AND token = ? LIMIT 1",
 		int64(userId),
@@ -340,33 +346,35 @@ func (sr *sessionRepoImpl) DeleteRevokedBefore(
 // @param ctx 上下文
 // @param userId 用户 ID
 // @param token 会话令牌
-// @return 会话实体
-// @note 会话不存在时返回 nil
+// @return 会话实体（查不到时为 nil）
+// @return error 仅表示查询失败（DB/连接类）；「查不到」返回 (nil, nil)
 func (sr *sessionRepoImpl) FindByUserIdAndToken(
 	ctx context.Context,
 	userId types.UserID,
 	token string,
-) *entities.UserSession {
+) (*entities.UserSession, error) {
 	// 1. 创建结果模型
 	session := &models.UserSession{}
 	// 2. 创建查找模型（仅按用户 ID 与令牌匹配；Region/DeviceType 仅为记录字段，不参与匹配）
 	findCond := &models.UserSession{UserId: int64(userId), Token: token}
 	// 3. 执行查找
-	// 查不到（软删/无此行）是正常结果；其余 DB 故障必须留痕，否则会被上层统一折叠成
-	// 「用户凭证验证失败（10041）」，线上无法区分「会话不存在」与「数据库故障」
-	if err := sr.db.
+	// 「查不到」（软删/无此行）是正常结果 ⇒ (nil, nil)；其余 DB/连接类故障必须上抛，
+	// 否则会被上层折叠成「用户凭证验证失败（10041）」，
+	// 线上无法区分「会话不存在」与「数据库故障」（DEF-143）。
+	err := sr.db.
 		WithContext(ctx).
 		Model(&models.UserSession{}).
 		Where(findCond).
-		First(&session).
-		Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		logging.Warnf(
-			"会话查询失败（按 user_id + token）: user_id=%d token_len=%d err=%v",
-			int64(userId), len(token), err,
-		)
+		First(session).
+		Error
+	switch {
+	case err == nil:
+		return SessionModel2Entity(session), nil
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("sessionRepo.FindByUserIdAndToken: %w", err)
 	}
-	// 4. 模型转换并返回
-	return SessionModel2Entity(session)
 }
 
 // FindByUserId 根据用户 ID 查找现存会话（未过期）
