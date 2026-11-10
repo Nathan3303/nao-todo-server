@@ -12,6 +12,7 @@ import (
 
 	authApp "naotodoserver/application/auth"
 	"naotodoserver/conf"
+	domerr "naotodoserver/domain/errors"
 	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/interfaces/controllers"
 
@@ -38,7 +39,8 @@ func (f *fakeSyncRouterAuth) Validate(_ context.Context, _ string) (
 	defer f.mu.Unlock()
 	f.validateCalls++
 	if f.userId <= 0 {
-		return 0, errors.New("invalid token")
+		// 夹具对齐 DEF-143：凭证类必须用显式哨兵（断言值仍为 10041）
+		return 0, domerr.ErrTokenExpired
 	}
 	return domaintypes.UserID(f.userId), nil
 }

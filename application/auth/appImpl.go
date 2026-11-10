@@ -226,7 +226,8 @@ func (as *authAppImpl) Validate(
 	// 1. 解析 JWT（仅验签，不校验过期）
 	userId, err := as.identityDomain.ParseJWT(ctx, token)
 	if err != nil {
-		return 0, fmt.Errorf("auth.Validate.ParseJWT: %w", err)
+		// 显式标记为凭证类（AC-4①）：否则会被当作「未知错误」而不再触发器凭证失效
+		return 0, fmt.Errorf("auth.Validate.ParseJWT: %w: %w", domerr.ErrTokenExpired, err)
 	}
 	// 2. 检查 JWT 是否过期（会话有效期长于 JWT 有效期，须单独校验）
 	if as.identityDomain.IsJWTExpired(ctx, token) {
@@ -235,9 +236,17 @@ func (as *authAppImpl) Validate(
 	// 3. 检查会话
 	session, err := as.identityDomain.FindSessionByUserIdAndToken(ctx, userId, token)
 	if err != nil {
-		return 0, fmt.Errorf("auth.Validate.FindSession: %w", err)
+		// 「查不到/无效」仍是凭证类；查询失败（DB/连接/未知）不是（DEF-143）
+		if errors.Is(err, domerr.ErrSessionNotFound) {
+			return 0, err
+		}
+		// 保留 userId：故障时靠它统计受影响用户（AC-7 distinct(user_id)）
+		return userId, fmt.Errorf(
+			"auth.Validate.FindSession: %w: %w",
+			domerr.ErrStoreUnavailable, err,
+		)
 	}
-	if !session.IsValid() {
+	if session == nil || !session.IsValid() {
 		return 0, domerr.ErrTokenExpired
 	}
 	// 4. 返回结果

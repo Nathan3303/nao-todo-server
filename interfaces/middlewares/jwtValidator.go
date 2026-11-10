@@ -1,10 +1,14 @@
 package middlewares
 
 import (
+	"errors"
+	"net/http"
 	"strings"
 
 	authApp "naotodoserver/application/auth"
+	domerr "naotodoserver/domain/errors"
 	iCtx "naotodoserver/infrastructure/context"
+	"naotodoserver/infrastructure/logging"
 	"naotodoserver/interfaces/controllers"
 	"naotodoserver/interfaces/types"
 
@@ -59,6 +63,25 @@ func isQueryTokenAllowed(ctx *gin.Context) bool {
 		strings.HasPrefix(route, sseRoutePrefix)
 }
 
+// 鉴权失败码型（DEF-143 / ADR 2026-11-10）
+//
+// 凭证类（10041）只能由**显式证据**触发：JWT 解析失败 / 过期 / 会话不存在或无效。
+// 其余一切错误（含 DB/连接类与未知错误）一律回 HTTP 503 + 50300：
+//   - 不得再折叠成 10041 —— 客户端会据此清认证并踢用户回登录页；
+//   - 未知错误也按「不登出」处理（fail-safe：宁可少登出，不误登出）。
+const (
+	authFailureCode         = 10041
+	authFailureMessage      = "用户凭证验证失败"
+	storeUnavailableCode    = 50300
+	storeUnavailableMessage = "服务暂时不可用，请稍后重试"
+)
+
+// event 名（告警口径，稳定关键字，不得随文案变动）
+const (
+	eventAuthRejected      = "auth.credential_rejected"
+	eventSessionLookupFail = "auth.session_lookup_failed"
+)
+
 func JWTValidator(auth authApp.AuthApp) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// 1. 验证 JWT
@@ -66,9 +89,39 @@ func JWTValidator(auth authApp.AuthApp) gin.HandlerFunc {
 		userId, err := auth.Validate(ctx, jwtString)
 		if err != nil {
 			// 不向客户端暴露内部错误细节（会话不存在、token 过期等）
-			controllers.Failure(ctx, types.ResponseData{
-				Code:    10041,
-				Message: "用户凭证验证失败",
+			if errors.Is(err, domerr.ErrTokenExpired) || errors.Is(err, domerr.ErrSessionNotFound) {
+				logging.WarnWithFields(map[string]any{
+					"event":      eventAuthRejected,
+					"request_id": iCtx.GetRequestId(ctx.Request.Context()),
+					"path":       ctx.Request.URL.Path,
+				}, "凭证校验未通过")
+				controllers.Failure(ctx, types.ResponseData{
+					Code:    authFailureCode,
+					Message: authFailureMessage,
+				})
+				ctx.Abort()
+				return
+			}
+			// 基础设施类失败：不登出，回 503（AC-2）+ error 级结构化事件（AC-5）
+			reason := "unknown"
+			if errors.Is(err, domerr.ErrStoreUnavailable) {
+				reason = "infrastructure"
+			}
+			logging.ErrorWithFields(map[string]any{
+				"event":      eventSessionLookupFail,
+				"request_id": iCtx.GetRequestId(ctx.Request.Context()),
+				"user_id":    int64(userId),
+				"path":       ctx.Request.URL.Path,
+				"reason":     reason,
+				"error":      err.Error(),
+			}, "鉴权依赖失败（不折叠为凭证失效）")
+			// 先写 user_id：访问日志（status>=500 自动 error）需要按用户归属（AC-7）
+			ctx.Request = ctx.Request.WithContext(
+				iCtx.SetUserId(ctx.Request.Context(), int64(userId)),
+			)
+			controllers.FailureByHttpStatus(ctx, http.StatusServiceUnavailable, types.ResponseData{
+				Code:    storeUnavailableCode,
+				Message: storeUnavailableMessage,
 			})
 			ctx.Abort()
 			return

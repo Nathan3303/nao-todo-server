@@ -14,6 +14,7 @@ import (
 	authApp "naotodoserver/application/auth"
 	userApp "naotodoserver/application/user"
 	"naotodoserver/conf"
+	domerr "naotodoserver/domain/errors"
 	domaintypes "naotodoserver/domain/types"
 	"naotodoserver/infrastructure/storage"
 	"naotodoserver/interfaces/controllers"
@@ -35,7 +36,7 @@ func (f *fakeAvatarAuth) Validate(
 	if token == f.validToken {
 		return domaintypes.UserID(42), nil
 	}
-	return 0, errors.New("invalid token")
+	return 0, domerr.ErrTokenExpired
 }
 
 func (f *fakeAvatarAuth) RateLimit(_ context.Context, _ string, _ int64) error {

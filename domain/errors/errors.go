@@ -23,9 +23,13 @@ var (
 	ErrUserNotFound      = errors.New("用户不存在")
 	ErrTokenExpired      = errors.New("凭证无效")
 	ErrSessionNotFound   = errors.New("会话不存在")
-	ErrCreateFailed      = errors.New("创建失败")
-	ErrDeleteFailed      = errors.New("删除失败")
-	ErrIDConflict        = errors.New("ID 冲突：本地生成 ID 与远程已存在实体碰撞，请重新分配")
+	// ErrStoreUnavailable 数据存储（MySQL/连接池）暂时不可用：属基础设施故障，
+	// 不是凭证失效（DEF-143）。鉴权中间件据此回 HTTP 503 + 50300，不得触发客户端清认证。
+	// 不得加入 controllers 的 publicErrSentinels / notFoundSentinels。
+	ErrStoreUnavailable = errors.New("数据存储暂时不可用")
+	ErrCreateFailed     = errors.New("创建失败")
+	ErrDeleteFailed     = errors.New("删除失败")
+	ErrIDConflict       = errors.New("ID 冲突：本地生成 ID 与远程已存在实体碰撞，请重新分配")
 	// ErrSortIdOverflow 组内排序值已耗尽（组内 max+1 超出 uint16 上界 65535）：
 	// 不写入任何数据，客户端应捕获后对本组重建（1000,2000,…）再重试。
 	ErrSortIdOverflow = errors.New("组内排序值已超出上限（65535），请对本组重建后重试")

@@ -55,8 +55,13 @@ func (d *identityDomainImpl) FindSessionByUserIdAndToken(
 	userId types.UserID,
 	token string,
 ) (*entities.UserSession, error) {
-	session := d.userSessionRepo.FindByUserIdAndToken(ctx, userId, token)
-	if !session.IsValid() {
+	session, err := d.userSessionRepo.FindByUserIdAndToken(ctx, userId, token)
+	// 查询失败（DB/连接类）必须原样上抛：它不是凭证失效（DEF-143）
+	if err != nil {
+		return nil, err
+	}
+	// nil 必须前置判：IsValid() 会解引用 receiver，nil 直接 panic
+	if session == nil || !session.IsValid() {
 		return nil, domerr.ErrSessionNotFound
 	}
 	return session, nil

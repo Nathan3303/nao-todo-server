@@ -1,6 +1,8 @@
 package dbs
 
 import (
+	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -28,8 +31,21 @@ func InitMySQL() {
 	}, "")
 
 	// @step 2. 连接数据库
+	// 语句日志参数化（DEF-152）：gorm 默认会把参数值直接拼进日志，
+	// 而 user_sessions.token 是完整 JWT 明文 ⇒ 任何慢查询/错误 SQL 都会造成凭证泄漏。
+	// 参数化后 SQL 中只留 `?`；错误原因仍由鉴权中间件以 err 原文记入结构化日志（AC-5）。
+	gormLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true,
+			ParameterizedQueries:      true,
+		},
+	)
 	db, err := gorm.Open(mysql.Open(openString), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   gormLogger,
 	})
 	if err != nil {
 		panic(err)

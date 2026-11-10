@@ -465,7 +465,10 @@ func TestCreate_RevivesSoftDeletedSameDevice(t *testing.T) {
 		t.Fatalf("复活不应新增行，got %d 行 want 1", got)
 	}
 	// 4. 鉴权路径（软删作用域 + 过期判定）必须命中新 token
-	session := repo.FindByUserIdAndToken(context.Background(), userID, "token-new")
+	session, err := repo.FindByUserIdAndToken(context.Background(), userID, "token-new")
+	if err != nil {
+		t.Fatalf("FindByUserIdAndToken: %v", err)
+	}
 	if !session.IsValid() {
 		t.Fatalf("复活后新 token 仍不可被鉴权查询命中（session=%+v）", session)
 	}
@@ -493,7 +496,11 @@ func TestCreate_InsertBranchUnaffected(t *testing.T) {
 	if got := countSessionRows(t, userID); got != 1 {
 		t.Fatalf("应有 1 行，got %d", got)
 	}
-	if !repo.FindByUserIdAndToken(context.Background(), userID, "token-fresh").IsValid() {
+	freshSession, err := repo.FindByUserIdAndToken(context.Background(), userID, "token-fresh")
+	if err != nil {
+		t.Fatalf("FindByUserIdAndToken: %v", err)
+	}
+	if !freshSession.IsValid() {
 		t.Fatal("新 token 应可被鉴权查询命中")
 	}
 }
@@ -583,7 +590,11 @@ func TestDelete_FreshTokenRemovesSession(t *testing.T) {
 		t.Fatalf("Delete(新鲜 token) 应成功, got %v", err)
 	}
 	// ③ 正常路径不变：此后鉴权查不到该 token，行是软删行
-	if repo.FindByUserIdAndToken(context.Background(), userID, "token-fresh-so").IsValid() {
+	signedOut, err := repo.FindByUserIdAndToken(context.Background(), userID, "token-fresh-so")
+	if err != nil {
+		t.Fatalf("FindByUserIdAndToken: %v", err)
+	}
+	if signedOut.IsValid() {
 		t.Fatal("登出后会话不应再被鉴权查询命中")
 	}
 	if row := readSessionRow(t, userID, "token-fresh-so"); !row.DeletedAt.Valid {
@@ -625,7 +636,11 @@ func TestDelete_StaleTokenReportsNotFoundAndDeletesNothing(t *testing.T) {
 	if rowsAfter := countSessionRows(t, userID); rowsAfter != rowsBefore {
 		t.Fatalf("登出失败不得误删行: rows %d → %d", rowsBefore, rowsAfter)
 	}
-	if !repo.FindByUserIdAndToken(context.Background(), userID, "token-new-so").IsValid() {
+	rotated, err := repo.FindByUserIdAndToken(context.Background(), userID, "token-new-so")
+	if err != nil {
+		t.Fatalf("FindByUserIdAndToken: %v", err)
+	}
+	if !rotated.IsValid() {
 		t.Fatal("轮换后的新 token 不应受影响")
 	}
 	t.Logf("旧 token 登出被正确拒绝：err=%v，行数仍为 %d，新 token 仍可鉴权", err, rowsBefore)
