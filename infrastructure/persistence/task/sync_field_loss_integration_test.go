@@ -21,8 +21,14 @@ import (
 )
 
 // seedUser 插入评论创建所需用户行（CreateComment 会读取昵称/头像）
+// @note 幂等：先硬删除同 ID 旧行再插入，否则同一测试库重复跑会撞主键
+// （DEF-141：`Duplicate entry '1062' for key 'users.PRIMARY'`）。
+// 用 Unscoped 因为 ModelBase.DeletedAt 是软删，普通 Delete 会留下行继续撞主键。
 func seedUser(t *testing.T, userID int64) {
 	t.Helper()
+	if err := testDB.Unscoped().Where("id = ?", userID).Delete(&models.User{}).Error; err != nil {
+		t.Fatalf("清理旧种子用户 %d: %v", userID, err)
+	}
 	user := &models.User{
 		ModelBase: models.ModelBase{ID: userID},
 		Account:   fmt.Sprintf("u%d", userID),
